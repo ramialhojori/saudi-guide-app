@@ -51,6 +51,8 @@ var css='<style id="g2css">@import url("https://fonts.googleapis.com/css2?family
 '.g2-qb:active .i{transform:scale(.92)}'+
 '.g2-qb svg{width:26px;height:26px}'+
 '.g2-qb:focus-visible{outline:none}.g2-qb:focus-visible .i,.g2-search:focus-visible{outline:2px solid #F89743;outline-offset:2px}'+
+'#hero,#hero .slide{height:380px!important}'+
+'#hero .slide:after{background:linear-gradient(180deg,rgba(28,18,52,.25) 0,rgba(28,18,52,0) 22%,rgba(28,18,52,0) 42%,rgba(36,24,66,.92) 100%)!important}'+
 '#hero .hlabel{background:#F89743!important;color:#2E1A07!important;font:700 12px/1 "IBM Plex Sans Arabic",sans-serif!important;padding:7px 11px!important;border-radius:10px!important;backdrop-filter:none!important;border:0!important}'+
 '#hero .cap h2{font-family:"Readex Pro","IBM Plex Sans Arabic",sans-serif!important;font-weight:700!important;letter-spacing:0!important}'+
 '#hero .cap small{color:#F9B57C!important}'+
