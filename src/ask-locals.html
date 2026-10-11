@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>اسأل أهل المدينة - دليل السعودية</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F0EFEF;--ink:#373D63;--mut:#5A5F80;--line:rgba(55,61,99,.12);--p:#604C87;--or:#F89743;--acc:#B5551A;--grn:#16714A;--shadow:0 8px 24px rgba(55,61,99,.10)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif}
+html.lock,html.lock body{overflow:hidden}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid #F89743;outline-offset:2px}
+.wrap{position:relative;max-width:640px;margin:0 auto;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px);overflow:hidden}
+/* الهيدر (نفس صفحة الكوبونات) */
+.hdr{position:relative;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px 46px;border-radius:0 0 30px 30px;background:#604C87;color:#fff}
+.hpat{position:absolute;left:-50px;top:4%;height:74%;width:auto;aspect-ratio:860/624;z-index:0;pointer-events:none}
+.hfade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to left,#604C87 40%,rgba(96,76,135,0) 62%)}
+.hdr>:not(.hpat):not(.hfade){position:relative;z-index:2}
+.hdr small{display:block;font-size:13px;color:#F8C08A;font-weight:700}
+.hdr h1{margin:4px 0 4px;font-size:29px;line-height:1.3;max-width:66%}
+.hdr p{margin:0 0 14px;font-size:14px;color:#DCD3EA;max-width:62%;line-height:1.6}
+.hrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.demo{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:5px 11px;font-size:12px;font-weight:700}
+.demo i{width:7px;height:7px;border-radius:50%;background:#F89743;display:inline-block}
+.mebtn{min-height:44px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.08);color:#fff;font-size:13px;font-weight:700}
+.mebtn.set{border:0;background:#F89743;color:#2A2142}
+/* البحث */
+.srch{display:flex;align-items:center;gap:10px;height:52px;margin:-26px 16px 0;padding:0 14px;border-radius:16px;background:#fff;box-shadow:0 12px 30px rgba(55,61,99,.16);position:relative;z-index:5;border:1.5px solid transparent}
+.srch:focus-within{border-color:#F89743}
+.srch input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);min-width:0}
+.srch input::placeholder{color:var(--mut)}.srch input::-webkit-search-cancel-button{display:none}
+.srch button{flex:none;border:0;background:#F3F0F8;color:var(--mut);width:36px;height:36px;border-radius:18px;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0}
+mark{background:rgba(248,151,67,.3);color:inherit;border-radius:4px;padding:0 1px}
+/* القواعد */
+.rules{margin:14px 16px 0;background:#fff;border-radius:18px;box-shadow:var(--shadow);border-right:4px solid var(--or);overflow:hidden}
+.rules>button{width:100%;min-height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;border:0;background:none;font-size:14px;font-weight:700;text-align:right}
+.rules>button span{flex:1}
+.rules>button svg.chev{transition:transform .25s}
+.rules.open>button svg.chev{transform:rotate(180deg)}
+.rules ul{margin:0;padding:0 34px 14px 14px;font-size:13.5px;line-height:1.85;color:var(--mut);display:none}
+.rules.open ul{display:block}
+.rules li::marker{color:var(--or)}
+/* الشرائح */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.chip{position:relative;flex:none;height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13.5px;font-weight:700;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--shadow)}
+.chip.on{background:#604C87;color:#fff;border-color:#604C87}
+.chip.sm{height:40px;padding:0 13px;font-size:13px;box-shadow:none}
+.chip.sm::after{content:"";position:absolute;inset:-3px -2px}
+.chip .dot{width:8px;height:8px;border-radius:3px;transform:rotate(45deg);display:inline-block}
+.chip.on .dot{box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.chip .home{width:6px;height:6px;border-radius:50%;background:#F89743}
+/* الترتيب */
+.seg{display:flex;gap:4px;margin:12px 16px 0;background:#fff;border-radius:16px;padding:4px;box-shadow:var(--shadow)}
+.seg button{flex:1;min-height:44px;border:0;background:none;border-radius:12px;font-size:13.5px;font-weight:700;color:var(--mut);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 4px}
+.seg button.on{background:#604C87;color:#fff}
+.seg em{font-style:normal;font-size:11px;min-width:20px;height:20px;border-radius:10px;background:#FDEBDB;color:#9A4510;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.seg button.on em{background:#F89743;color:#2A2142}
+.sec{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 16px 10px}
+.sec h3{margin:0;font-size:18px;display:flex;align-items:center;gap:8px;min-width:0}
+.sec h3 i{flex:none;width:10px;height:10px;border-radius:3px;transform:rotate(45deg);display:inline-block;background:#F89743}
+.sec span{flex:none;font-size:13px;color:var(--mut);font-weight:600}
+/* شريط أهل المدينة */
+.locbar{margin:0 16px 12px;padding:12px 14px;border-radius:18px;background:#373D63;color:#fff;display:flex;align-items:center;gap:12px}
+.locbar div{flex:1;min-width:0;font-size:13px;line-height:1.6;color:#D9D4E8}.locbar b{display:block;color:#fff;font-size:14.5px}
+.locbar button{flex:none;min-height:44px;padding:0 14px;border-radius:12px;border:0;background:#F89743;color:#2A2142;font-weight:700;font-size:13px}
+/* بطاقة السؤال */
+.list{display:flex;flex-direction:column;gap:14px;padding:0 16px}
+.qc{background:#fff;border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.qc.pend{outline:1.5px dashed rgba(96,76,135,.4);outline-offset:-1.5px}
+.qh{display:flex;align-items:center;gap:10px;padding:14px 14px 0}
+.av{flex:none;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
+.av.s{width:32px;height:32px;border-radius:10px;font-size:13.5px}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span{display:block;font-size:12px;color:var(--mut)}
+.tag{flex:none;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:10px;background:#F3F0F8;color:#4D3B70;white-space:nowrap}
+.pill.pnd{background:#FDEBDB;color:#9A4510}
+.pill.pnd::before{content:"";width:6px;height:6px;border-radius:50%;background:#F89743}
+.pill.inans{background:#EAF3FB;color:#1F6E9E}
+.qb{display:block;width:100%;text-align:right;border:0;background:none;padding:10px 14px 2px;font:inherit;font-size:15.5px;line-height:1.75;color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.qpills{display:flex;flex-wrap:wrap;gap:6px;padding:6px 14px 0}
+.qf{display:flex;align-items:center;gap:2px;padding:4px 8px 6px;margin-top:8px;border-top:1px solid var(--line)}
+.act{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:0;background:none;border-radius:12px;color:var(--mut);font-size:13px;font-weight:700;white-space:nowrap}
+.act:active{background:#F3F0F8}
+.act.on{color:#B5551A}
+.act.first{color:#B5551A}
+.act.open{color:var(--p)}
+.act.end{margin-inline-start:auto}
+.act svg{flex:none}
+/* الإجابات */
+.ans{background:#F7F5FA;border-top:1px solid var(--line);padding:12px 12px 14px;display:flex;flex-direction:column;gap:10px}
+.an{background:#fff;border-radius:16px;padding:12px 12px 4px;border:1px solid var(--line)}
+.an.best{border:1.5px solid var(--or);box-shadow:0 6px 16px rgba(248,151,67,.18)}
+.an.pend{border:1.5px dashed rgba(96,76,135,.35)}
+.bestlbl{display:inline-flex;align-items:center;gap:5px;background:#FDEBDB;color:#9A4510;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:10px;margin-bottom:8px}
+.anh{display:flex;align-items:center;gap:8px}
+.anh .who b{font-size:13.5px}
+.anh .who span{font-size:11.5px}
+.loc{display:inline-flex;align-items:center;gap:4px;background:#E3F4EC;color:#16714A;font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap;vertical-align:middle}
+.nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nm b{display:inline!important;max-width:100%}
+.anb{margin:8px 0 2px;font-size:14.5px;line-height:1.8;overflow-wrap:anywhere}
+.anf{display:flex;align-items:center;gap:2px;margin:0 -6px}
+.noans{text-align:center;padding:14px 10px 4px;color:var(--mut);font-size:13.5px;line-height:1.7}
+.noans b{display:block;color:var(--ink);font-size:15px}
+.cmp{background:#fff;border-radius:16px;padding:10px 12px;border:1.5px solid var(--line)}
+.cmp:focus-within{border-color:var(--or)}
+.cmp textarea{display:block;width:100%;border:0;outline:0;resize:none;font:inherit;font-size:16px;min-height:76px;color:var(--ink);background:transparent;line-height:1.65;padding:0}
+.cmp input{width:100%;min-height:44px;border:0;border-top:1px solid var(--line);outline:0;font:inherit;font-size:16px;color:var(--ink);background:transparent;padding:0}
+.cmp .row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.cmp .hint{flex:1;min-width:0;font-size:12px;color:var(--mut);line-height:1.5}
+.cmp .hint button{border:0;background:none;padding:0;color:var(--p);font-weight:700;font-size:12px;text-decoration:underline;min-height:24px}
+.send{flex:none;min-height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--or);color:#2A2142;font-weight:700;font-size:14px}
+.send:disabled{opacity:.45}
+.cmp .cnt{font-size:11.5px;color:var(--mut)}
+.lockmsg{font-size:13px;color:var(--mut);text-align:center;padding:4px 0}
+/* حالات فارغة */
+.empty{margin:0 16px;padding:26px 20px;border-radius:22px;background:#fff;text-align:center;color:var(--mut);box-shadow:var(--shadow);line-height:1.7;font-size:14px}
+.empty b{display:block;color:var(--ink);font-size:17px;margin:10px 0 2px}
+.empty button{margin-top:14px;min-height:46px;padding:0 20px;border-radius:14px;border:0;background:#604C87;color:#fff;font-weight:700;font-size:14.5px}
+.sk{height:150px;border-radius:20px;background:linear-gradient(90deg,#fff 0,#F6F4F9 50%,#fff 100%);background-size:200% 100%;animation:sk 1.2s infinite;box-shadow:var(--shadow)}
+@keyframes sk{to{background-position:-200% 0}}
+/* زر اسأل */
+.fab{position:fixed;left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:30;height:56px;padding:0 10px 0 22px;display:flex;align-items:center;gap:10px;border-radius:28px;border:0;background:#604C87;color:#fff;font-weight:700;font-size:15.5px;box-shadow:0 12px 28px rgba(96,76,135,.42);transition:transform .25s,opacity .25s}
+.fab i{width:38px;height:38px;border-radius:19px;background:var(--or);display:flex;align-items:center;justify-content:center}
+.fab.hide{transform:translateY(120px);opacity:0;pointer-events:none}
+/* الشيت */
+.scrim{position:fixed;inset:0;background:rgba(30,26,48,.45);opacity:0;pointer-events:none;transition:opacity .3s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:640px;max-height:90vh;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;border-radius:26px 26px 0 0;z-index:50;padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(105%);visibility:hidden;transition:transform .34s cubic-bezier(.2,.8,.2,1),visibility 0s linear .34s;box-shadow:0 -10px 40px rgba(30,26,48,.22)}
+.sheet.open{transform:none;visibility:visible;transition:transform .34s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.grab{width:42px;height:5px;border-radius:3px;background:#DCD8E5;margin:4px auto 8px}
+.shh{display:flex;align-items:center;gap:10px}
+.shh h2{flex:1;margin:0;font-size:19px}
+.x{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:#F3F0F8;display:flex;align-items:center;justify-content:center;padding:0}
+.shsub{margin:4px 0 0;font-size:13.5px;color:var(--mut);line-height:1.7}
+.fld{margin-top:16px}
+.lb{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:700;margin-bottom:7px}
+.lb small{font-weight:500;color:var(--mut);font-size:12px}
+.inp{display:block;width:100%;min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:#FAF9FC;font:inherit;font-size:16px;color:var(--ink);padding:10px 12px}
+.inp:focus{border-color:var(--or);outline:0;background:#fff}
+select.inp{-webkit-appearance:none;appearance:none;padding-left:40px;background:#FAF9FC url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23604C87' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat left 14px center}
+textarea.inp{min-height:120px;resize:none;line-height:1.7}
+.cnt2{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--mut);margin-top:6px}
+.cnt2 .bad{color:#B3261E;font-weight:700}
+.cgrid{display:flex;flex-wrap:wrap;gap:8px}
+.cgrid .chip{box-shadow:none}
+.chk{display:flex;align-items:center;gap:10px;min-height:48px;margin-top:10px;font-size:14px;font-weight:600}
+.chk input{width:22px;height:22px;accent-color:#604C87;margin:0;flex:none}
+.chk small{display:block;font-weight:500;color:var(--mut);font-size:12px}
+.err{color:#B3261E;font-size:13px;font-weight:600;margin-top:10px;line-height:1.6}
+.err:empty{display:none}
+.primary{width:100%;min-height:52px;border-radius:16px;border:0;background:#604C87;color:#fff;font-weight:700;font-size:16px;margin-top:16px}
+.primary:disabled{opacity:.6}
+.ghost{width:100%;min-height:48px;border-radius:14px;border:0;background:none;color:#B3261E;font-weight:700;font-size:14px;margin-top:6px}
+.note{margin-top:12px;font-size:12.5px;color:var(--mut);line-height:1.7;background:#F7F5FA;border-radius:12px;padding:10px 12px}
+.done{text-align:center;padding:14px 4px 4px}
+.done .ic{width:76px;height:76px;margin:6px auto 12px;border-radius:24px;background:#E3F4EC;display:flex;align-items:center;justify-content:center;transform:rotate(45deg)}
+.done .ic svg{transform:rotate(-45deg)}
+.done b{display:block;font-size:19px}
+.done p{margin:6px 0 0;color:var(--mut);font-size:14px;line-height:1.8}
+.reasons{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.reasons button{min-height:50px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font-size:14.5px;font-weight:600;text-align:right;padding:0 14px;display:flex;align-items:center;gap:10px}
+.reasons button.on{border-color:#604C87;background:#F6F2FB;color:#604C87}
+.reasons button i{width:18px;height:18px;border-radius:50%;border:2px solid #C9C2DC;flex:none}
+.reasons button.on i{border:6px solid #604C87}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);width:max-content;text-align:center;background:#373D63;color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;font-weight:700;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;line-height:1.5}
+.toast.show{opacity:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+[hidden]{display:none!important}.loc.team{background:#6e5397;color:#fff;border-color:#6e5397}
+</style>
+</head>
+<body>
+<div class="wrap" id="main">
+<header class="hdr"><svg class="hpat" viewBox="0 0 860 624" preserveAspectRatio="xMinYMin slice" aria-hidden="true"><path d="M0 0 C23 19 38 46 41 76 C43 89 42 101 39 114 C39 115 38 116 38 117 C31 148 10 170 -13 190 C-17 193 -20 196 -23 199 C-27 203 -32 207 -36 211 C-39 213 -41 216 -44 218 C-45 219 -46 220 -47 221 C-49 223 -51 225 -53 226 C-67 240 -67 240 -77 240 C-83 238 -87 233 -92 229 C-92 228 -93 228 -94 227 C-95 226 -96 224 -97 223 C-99 221 -101 219 -103 217 C-108 212 -114 207 -119 201 C-123 196 -127 192 -132 187 C-144 176 -144 176 -149 170 C-150 168 -152 166 -154 165 C-166 152 -175 134 -179 117 C-180 116 -180 115 -180 114 C-182 106 -183 98 -183 89 C-183 88 -183 87 -183 87 C-183 76 -182 66 -178 56 C-178 55 -178 54 -177 53 C-176 49 -175 46 -173 43 C-173 42 -173 42 -172 40 C-160 14 -137 -7 -110 -17 C-106 -19 -101 -20 -96 -21 C-95 -21 -94 -22 -93 -22 C-60 -29 -26 -21 0 0 Z" fill="#f69642" transform="translate(444.28857421875 147.013427734375)"/><path d="M0 0 C1 -0 2 -0 2 -0 C9 1 15 7 20 11 C21 12 21 13 22 13 C31 22 40 31 49 40 C51 42 53 44 55 46 C59 50 63 54 67 58 C71 62 76 67 81 71 C85 75 89 80 93 84 C95 86 97 88 100 91 C102 93 105 96 108 99 C109 99 109 100 110 101 C114 105 118 109 122 114 C125 117 128 119 130 122 C134 126 135 129 135 135 C135 136 135 137 135 138 C134 147 126 153 120 159 C119 160 118 161 117 162 C115 164 113 166 111 168 C109 170 107 173 104 175 C102 177 100 180 97 182 C96 183 95 184 95 185 C89 190 83 196 75 196 C68 196 62 192 56 189 C53 187 50 186 47 184 C41 181 34 177 27 173 C24 172 21 170 18 169 C16 167 15 166 13 165 C5 161 -3 157 -11 153 C-20 148 -30 142 -40 137 C-46 134 -52 130 -59 127 C-63 125 -67 122 -72 120 C-74 119 -77 117 -80 116 C-81 115 -83 114 -84 113 C-84 113 -84 113 -86 112 C-91 110 -94 106 -97 100 C-98 94 -98 89 -95 84 C-90 77 -84 71 -78 66 C-75 64 -73 62 -71 60 C-68 57 -66 54 -63 52 C-60 49 -57 46 -54 43 C-50 40 -46 36 -43 33 C-39 30 -36 27 -33 24 C-30 21 -28 19 -25 16 C-22 14 -20 12 -18 10 C-14 6 -11 4 -7 1 C-4 0 -3 0 0 0 Z" fill="#68518f" transform="translate(710.625 146.625)"/><path d="M0 0 C4 2 8 4 13 7 C15 8 16 9 18 10 C19 10 20 11 21 11 C27 15 33 18 38 21 C41 22 43 23 46 24 C46 25 47 25 47 25 C57 30 66 35 75 40 C79 42 82 44 85 46 C96 52 107 58 118 64 C123 66 128 69 134 72 C135 72 136 73 137 74 C139 75 142 76 144 77 C151 81 157 85 161 92 C162 105 162 105 158 110 C153 117 146 123 140 128 C136 131 133 135 130 138 C127 140 125 143 122 145 C119 148 117 150 115 152 C111 156 108 159 104 162 C100 165 97 169 94 172 C91 175 89 177 86 180 C84 181 82 183 80 185 C74 191 69 193 61 193 C51 191 45 182 38 176 C37 175 36 174 35 172 C31 169 28 166 25 163 C23 161 20 158 17 155 C11 149 5 143 -1 137 C-8 131 -14 124 -20 118 C-26 112 -31 107 -37 101 C-40 98 -43 95 -46 92 C-49 89 -53 86 -56 83 C-57 81 -58 80 -59 79 C-66 72 -71 67 -72 57 C-71 48 -64 41 -58 35 C-57 34 -56 33 -55 32 C-53 30 -51 28 -49 26 C-46 23 -44 21 -41 18 C-39 16 -37 14 -35 12 C-34 11 -32 10 -31 8 C-21 -2 -13 -5 0 0 Z" fill="#7b5b97" transform="translate(577.31005859375 273.80029296875)"/><path d="M0 0 C1 -0 2 -0 3 -0 C15 2 24 12 32 20 C34 22 35 23 37 25 C40 28 43 31 46 34 C50 38 54 42 58 46 C61 49 64 53 67 56 C69 57 70 59 72 60 C74 62 76 64 78 66 C78 67 79 68 80 68 C86 74 90 81 91 90 C91 90 91 90 91 93 C89 105 80 113 71 121 C70 123 68 124 67 125 C64 128 61 131 58 134 C54 138 51 142 47 146 C44 148 41 151 38 154 C37 156 35 157 34 158 C32 160 30 162 28 164 C28 164 28 164 27 166 C21 171 15 175 7 175 C6 175 5 175 4 175 C-4 173 -10 168 -16 162 C-17 162 -18 161 -18 160 C-21 158 -23 156 -25 154 C-27 152 -28 151 -30 149 C-33 146 -36 142 -39 139 C-44 135 -48 131 -52 127 C-55 123 -59 120 -62 117 C-63 115 -65 114 -66 112 C-69 110 -71 108 -73 106 C-73 105 -74 105 -75 104 C-80 98 -84 92 -84 83 C-84 83 -84 82 -84 81 C-82 69 -73 61 -65 53 C-63 52 -62 50 -61 49 C-58 46 -55 43 -52 40 C-48 37 -45 33 -41 29 C-38 27 -36 24 -33 21 C-31 20 -30 18 -29 17 C-27 15 -25 13 -23 11 C-23 11 -23 11 -21 10 C-15 4 -9 0 0 0 Z" fill="#b372a9" transform="translate(238.625 333.625)"/><path d="M0 0 C1 -0 2 -0 2 -0 C11 1 17 5 23 11 C24 12 25 13 25 13 C27 16 30 18 32 20 C33 22 35 23 37 25 C40 28 43 31 46 35 C51 39 55 43 59 47 C62 51 65 54 69 57 C70 59 72 60 73 62 C75 64 78 66 80 68 C80 68 80 68 82 70 C87 76 91 82 91 90 C91 91 91 93 91 94 C89 106 80 114 72 122 C70 123 69 125 68 126 C65 129 62 132 59 135 C55 138 52 142 48 145 C45 148 43 151 40 154 C38 155 37 157 36 158 C34 160 32 162 30 164 C30 164 29 165 28 165 C23 171 16 174 8 175 C-8 174 -20 158 -31 148 C-31 147 -31 147 -33 146 C-36 142 -40 139 -43 135 C-46 132 -49 130 -52 127 C-55 123 -59 120 -62 116 C-63 115 -65 114 -66 113 C-81 97 -81 97 -83 87 C-83 86 -83 85 -83 83 C-83 82 -83 81 -83 80 C-82 72 -78 67 -72 62 C-72 61 -71 61 -70 60 C-68 58 -66 56 -64 54 C-63 52 -62 51 -60 50 C-57 47 -54 44 -51 41 C-48 37 -44 33 -40 29 C-37 27 -34 24 -31 21 C-30 19 -29 18 -27 17 C-25 15 -23 13 -21 11 C-21 10 -20 10 -20 9 C-14 4 -8 -0 0 0 Z" fill="#68518f" transform="translate(750.4375 409.5)"/><path d="M0 0 C4 2 7 6 11 9 C12 10 12 11 13 12 C16 14 19 17 21 20 C23 22 25 24 27 25 C31 29 35 33 39 37 C43 42 48 46 53 51 C57 55 61 60 66 64 C68 66 69 68 71 70 C74 72 77 75 79 78 C80 78 81 79 81 80 C87 85 91 90 91 98 C91 98 91 99 91 100 C89 109 82 115 76 121 C75 122 74 123 73 124 C72 124 71 125 71 126 C70 127 69 128 68 128 C64 132 60 132 55 132 C54 132 53 132 51 132 C50 132 49 132 47 132 C46 132 45 132 43 132 C39 133 36 133 32 133 C29 133 27 133 24 133 C17 133 9 133 2 133 C-7 133 -15 133 -24 133 C-31 133 -37 133 -44 133 C-48 133 -52 133 -56 133 C-60 133 -64 133 -67 133 C-70 133 -72 133 -74 133 C-82 133 -87 132 -93 126 C-93 126 -93 126 -95 124 C-97 123 -98 121 -100 119 C-101 119 -101 118 -102 118 C-107 113 -110 108 -111 102 C-111 101 -111 101 -111 100 C-111 99 -111 98 -111 98 C-110 89 -104 84 -99 78 C-98 78 -97 77 -96 76 C-94 73 -91 71 -88 68 C-86 66 -84 64 -82 62 C-79 58 -75 54 -71 50 C-66 46 -62 41 -57 37 C-53 33 -49 29 -45 25 C-43 23 -41 20 -38 18 C-36 15 -33 13 -30 10 C-30 10 -30 10 -28 8 C-20 -0 -12 -5 0 0 Z" fill="#8d69a1" transform="translate(383.82550621032715 464.85448265075684)"/><path d="M0 0 C1 -0 1 -0 4 -0 C16 1 25 14 33 22 C35 23 36 25 38 26 C41 29 44 32 47 36 C51 40 55 43 59 47 C62 51 65 54 68 57 C70 58 71 60 73 61 C89 78 89 78 91 88 C91 109 69 124 55 139 C53 141 50 144 48 146 C45 149 42 152 39 155 C38 156 37 157 35 158 C27 167 19 174 7 175 C-5 175 -17 165 -26 156 C-41 140 -39 117 -39 95 C-39 93 -39 91 -39 89 C-38 84 -38 80 -38 75 C-39 25 -39 25 -28 13 C-20 6 -11 0 0 0 Z" fill="#68518f" transform="translate(35.3125 281.4375)"/><path d="M0 0 C4 2 6 5 9 8 C10 8 10 8 11 10 C13 12 16 14 18 16 C19 18 21 19 22 21 C25 24 28 27 32 30 C36 34 40 39 44 43 C47 46 50 49 53 52 C55 53 56 55 58 56 C60 58 62 61 64 63 C64 63 65 64 66 65 C66 65 67 66 67 66 C68 67 68 67 69 68 C71 71 72 74 72 78 C72 79 72 80 73 81 C71 88 66 93 61 98 C60 98 60 99 59 100 C57 102 54 105 52 107 C50 108 49 110 47 112 C44 115 40 118 37 122 C32 126 28 130 24 135 C20 138 17 142 14 145 C12 146 11 148 9 150 C7 152 5 154 2 156 C2 157 1 158 0 158 C-5 163 -9 167 -16 167 C-21 167 -24 166 -28 162 C-33 155 -36 148 -40 140 C-42 138 -43 136 -44 133 C-45 132 -45 131 -46 130 C-48 125 -51 121 -53 116 C-54 114 -56 112 -57 110 C-59 105 -62 100 -65 95 C-66 93 -67 91 -68 90 C-69 87 -70 85 -71 83 C-72 82 -73 81 -73 80 C-74 79 -74 78 -75 77 C-78 71 -79 66 -78 59 C-75 51 -68 45 -62 39 C-61 38 -60 37 -59 36 C-57 33 -54 31 -52 29 C-49 26 -46 23 -44 20 C-41 18 -39 16 -37 14 C-36 13 -35 12 -34 11 C-24 1 -14 -7 0 0 Z" fill="#68518f" transform="translate(560.9351081848145 77.71966552734375)"/><path d="M0 0 C1 -0 2 -0 3 -0 C11 1 17 6 22 12 C23 13 24 14 25 14 C27 17 30 20 33 22 C34 24 36 26 38 27 C42 31 45 35 49 39 C53 43 58 47 62 52 C66 56 71 60 75 64 C76 66 78 68 80 69 C82 72 85 74 87 77 C88 78 89 78 90 79 C95 84 98 90 100 97 C100 115 85 126 74 137 C72 138 71 140 70 141 C54 157 54 157 44 159 C24 159 13 142 0 129 C-0 129 -0 129 -2 127 C-6 123 -10 119 -14 115 C-18 111 -22 107 -27 103 C-30 100 -33 96 -36 93 C-38 92 -39 90 -41 89 C-43 87 -45 85 -47 82 C-48 82 -48 81 -49 81 C-56 74 -59 68 -59 58 C-59 57 -59 56 -59 55 C-58 46 -52 40 -46 34 C-45 33 -44 32 -43 32 C-42 30 -40 28 -38 26 C-35 24 -33 21 -30 18 C-28 16 -26 15 -25 13 C-24 12 -23 11 -22 10 C-21 10 -21 9 -20 8 C-19 7 -19 7 -18 6 C-12 1 -7 0 0 0 Z" fill="#7b5b97" transform="translate(471.8125 366.6875)"/><path d="M0 0 C16 -0 33 -0 49 -0 C56 -0 64 -1 72 -1 C78 -1 85 -1 91 -1 C95 -1 98 -1 102 -1 C106 -1 110 -1 114 -1 C115 -1 116 -1 117 -1 C125 -1 125 -1 128 2 C130 4 131 6 133 8 C134 9 135 10 136 12 C137 12 138 13 138 13 C139 14 139 15 140 15 C141 16 141 16 142 17 C144 19 145 20 146 21 C149 24 151 26 153 28 C160 35 166 41 173 48 C177 52 181 55 185 59 C186 61 188 62 189 64 C191 66 193 68 196 70 C196 71 197 71 197 72 C202 77 204 80 204 87 C204 92 203 96 200 100 C195 105 190 108 184 111 C182 112 180 113 178 114 C177 115 176 116 175 116 C172 118 169 120 166 122 C165 122 164 123 163 123 C161 125 159 126 157 127 C156 127 155 128 155 128 C154 129 153 129 152 130 C148 132 145 133 140 133 C139 133 138 133 138 133 C132 133 128 129 123 125 C123 124 123 124 122 123 C120 121 118 120 116 118 C115 117 114 115 113 114 C109 111 106 107 102 104 C99 100 95 96 92 93 C86 87 79 81 73 75 C66 67 58 59 50 51 C43 45 37 38 30 31 C28 29 26 27 24 25 C20 22 17 18 14 15 C12 14 11 12 10 11 C8 9 7 8 5 6 C4 6 4 5 3 4 C0 1 0 1 0 0 Z" fill="#68518f" transform="translate(524 0)"/><path d="M0 0 C8 5 14 12 21 19 C22 20 24 22 25 23 C28 26 31 29 34 33 C38 36 42 40 46 44 C49 47 52 50 55 53 C57 55 58 56 60 58 C62 60 64 62 66 64 C66 65 67 65 68 66 C73 71 76 76 77 83 C77 89 74 93 71 98 C71 98 71 98 70 101 C68 103 67 106 65 108 C63 111 61 115 59 118 C58 121 56 123 55 126 C54 127 53 128 52 129 C51 131 50 133 49 135 C49 136 48 137 47 138 C44 143 40 145 35 147 C32 147 32 147 29 147 C28 147 28 147 27 148 C18 146 11 137 6 132 C5 131 4 130 3 129 C0 126 -2 124 -5 121 C-6 120 -8 118 -10 116 C-15 111 -21 105 -26 100 C-31 95 -36 90 -42 84 C-46 80 -51 76 -55 71 C-58 68 -60 66 -63 63 C-66 60 -69 57 -72 54 C-73 54 -73 53 -74 52 C-80 46 -84 41 -84 32 C-84 27 -83 23 -79 19 C-74 15 -68 13 -62 11 C-61 11 -60 11 -59 11 C-56 10 -53 9 -50 8 C-47 7 -45 7 -43 6 C-41 5 -39 5 -37 4 C-34 3 -31 2 -28 1 C-8 -5 -8 -5 0 0 Z" fill="#f8a058" transform="translate(181.719482421875 49.112548828125)"/><path d="M0 0 C2 2 4 4 6 6 C7 7 8 8 9 8 C10 10 12 12 13 13 C16 16 18 18 21 21 C22 22 24 24 25 25 C26 26 27 27 27 27 C34 34 37 40 37 49 C37 55 34 61 30 66 C27 69 24 72 22 76 C18 83 12 90 7 96 C6 97 6 98 5 98 C-8 114 -22 122 -42 124 C-57 125 -71 125 -85 125 C-86 124 -87 124 -87 124 C-105 124 -122 123 -139 121 C-140 112 -138 105 -132 98 C-130 95 -127 92 -124 90 C-123 89 -122 88 -121 87 C-119 84 -116 81 -113 79 C-110 76 -108 73 -105 70 C-100 66 -95 61 -91 56 C-85 51 -80 45 -74 40 C-68 34 -62 28 -57 22 C-55 21 -53 19 -51 17 C-49 15 -46 12 -44 9 C-42 8 -41 6 -39 5 C-38 4 -38 3 -37 2 C-36 2 -35 1 -34 0 C-25 -8 -10 -8 0 0 Z" fill="#68518f" transform="translate(620.2111511230469 502.67376708984375)"/><path d="M0 0 C21 -0 42 -0 63 -0 C73 -0 83 -0 92 -0 C101 -0 109 -0 118 -0 C122 -0 127 -0 131 -1 C136 -1 140 -1 144 -1 C146 -1 147 -1 149 -1 C162 -1 162 -1 166 2 C170 7 170 7 171 10 C172 10 172 11 173 12 C175 16 175 20 175 24 C175 25 175 26 176 27 C174 39 165 47 157 55 C155 56 154 58 153 59 C150 62 147 65 144 68 C141 71 137 75 133 78 C131 81 128 84 125 87 C124 88 123 89 121 90 C106 106 106 106 95 108 C94 108 93 108 92 108 C90 108 89 108 88 108 C75 105 67 94 58 85 C56 84 55 82 53 81 C50 77 47 74 44 71 C40 67 35 63 31 59 C28 55 25 52 22 49 C20 48 19 46 17 45 C15 42 13 40 11 38 C11 38 11 38 9 36 C2 29 -3 23 -3 13 C-3 11 -3 10 -3 9 C-3 6 -2 3 0 0 Z" fill="#68518f" transform="translate(190 0)"/><path d="M0 0 C7 6 13 12 20 19 C21 19 22 20 22 21 C24 23 26 25 28 27 C30 29 32 31 34 32 C36 35 39 38 42 41 C43 41 44 42 45 43 C51 50 56 56 56 66 C56 67 56 68 57 69 C55 79 47 87 40 94 C39 95 38 96 36 97 C34 99 32 102 30 104 C27 107 24 110 21 113 C18 115 16 117 14 119 C13 121 12 122 11 123 C9 124 8 126 6 127 C5 128 4 129 3 130 C-2 135 -9 138 -17 137 C-24 136 -29 133 -35 128 C-35 127 -36 127 -36 126 C-43 120 -50 113 -57 106 C-59 104 -61 102 -63 100 C-65 98 -66 97 -68 96 C-68 95 -68 95 -70 94 C-78 85 -84 77 -85 64 C-83 54 -75 47 -68 39 C-67 38 -66 37 -65 36 C-63 34 -60 32 -58 30 C-55 27 -52 24 -49 21 C-47 19 -45 17 -43 14 C-42 13 -41 12 -40 11 C-29 0 -15 -9 0 0 Z" fill="#68518f" transform="translate(140 441)"/><path d="M0 0 C1 -0 3 -0 4 -0 C14 1 22 10 29 17 C30 18 31 19 32 20 C34 22 36 24 38 26 C41 29 44 32 46 34 C48 37 50 39 52 41 C53 42 54 43 55 44 C64 52 69 58 69 70 C69 71 69 72 70 73 C68 83 60 90 53 97 C52 99 51 100 50 101 C47 103 45 105 43 108 C40 110 37 113 34 116 C32 119 30 121 27 123 C26 124 25 125 24 126 C17 133 11 139 2 140 C1 140 1 140 -2 140 C-3 140 -4 140 -5 140 C-15 139 -21 132 -28 125 C-29 124 -30 123 -31 121 C-33 119 -35 117 -38 115 C-41 112 -44 109 -47 106 C-49 103 -51 101 -53 99 C-54 98 -55 97 -57 96 C-69 83 -69 83 -70 74 C-70 57 -61 49 -49 37 C-48 36 -47 36 -46 35 C-44 33 -43 31 -41 29 C-39 27 -37 26 -35 24 C-33 21 -30 18 -27 16 C-27 15 -26 14 -25 13 C-18 6 -11 -0 0 0 Z" fill="#eb829b" transform="translate(159 211.25)"/><path d="M0 0 C1 0 3 1 4 1 C4 2 5 3 6 4 C13 17 13 17 16 23 C26 38 26 38 26 47 C24 54 20 58 16 63 C15 63 15 63 14 64 C12 66 11 68 9 69 C8 71 7 72 5 73 C3 75 0 78 -2 80 C-5 84 -8 87 -12 90 C-14 92 -16 95 -19 97 C-20 99 -21 100 -22 101 C-24 103 -26 104 -27 106 C-28 107 -29 108 -30 109 C-35 113 -40 115 -46 114 C-50 114 -54 113 -58 111 C-59 111 -60 111 -61 111 C-67 109 -74 106 -81 104 C-85 103 -89 102 -93 101 C-93 101 -93 101 -96 100 C-97 100 -99 99 -100 99 C-108 97 -112 93 -117 87 C-118 84 -118 82 -118 79 C-118 78 -118 77 -118 76 C-118 69 -114 64 -110 59 C-109 59 -109 58 -108 57 C-101 49 -93 41 -86 33 C-85 32 -84 32 -84 31 C-58 4 -38 -9 0 0 Z" fill="#68518f" transform="translate(496.074462890625 -1.031494140625)"/><path d="M0 0 C1 1 2 2 3 2 C4 3 4 3 5 4 C8 7 11 9 12 14 C12 18 12 22 12 26 C12 28 12 29 12 31 C12 35 12 40 12 44 C12 48 12 53 12 57 C12 66 12 74 11 83 C11 93 11 103 11 112 C11 132 11 152 11 172 C10 171 9 170 8 169 C7 169 6 168 6 168 C3 166 1 163 -1 161 C-6 155 -12 150 -17 144 C-21 141 -24 138 -27 134 C-30 130 -34 126 -39 122 C-43 118 -47 114 -51 109 C-56 104 -61 98 -67 93 C-76 83 -84 75 -84 61 C-84 52 -80 43 -73 36 C-72 35 -70 34 -68 32 C-63 28 -58 22 -53 17 C-38 2 -22 -12 0 0 Z" fill="#5d498a" transform="translate(849.125 66.6875)"/><path d="M0 0 C1 -0 3 -0 4 -0 C15 1 24 12 31 20 C33 22 35 24 37 26 C39 27 40 28 41 30 C42 30 43 31 43 31 C49 37 54 44 54 52 C54 68 42 78 31 89 C29 91 27 93 25 95 C24 96 22 98 21 99 C21 100 20 100 19 101 C13 107 5 113 -4 113 C-16 113 -24 105 -32 97 C-33 96 -33 95 -34 94 C-37 92 -39 90 -42 87 C-43 86 -43 85 -44 85 C-52 77 -58 70 -58 58 C-58 57 -58 56 -59 55 C-57 45 -50 39 -44 32 C-44 32 -44 32 -42 30 C-40 28 -39 27 -37 25 C-35 23 -32 20 -30 18 C-28 17 -27 15 -25 13 C-25 13 -24 12 -23 11 C-16 5 -10 -0 0 0 Z" fill="#ef8993" transform="translate(71.9375 125.3125)"/><path d="M0 0 C9 6 17 14 25 22 C26 23 27 24 28 25 C42 39 42 39 44 49 C43 58 42 65 35 73 C33 73 33 73 31 73 C30 73 29 73 28 73 C27 73 26 73 25 73 C25 73 24 73 23 73 C19 73 16 73 13 73 C11 73 9 73 6 73 C0 73 -5 73 -11 73 C-17 73 -23 73 -29 73 C-41 73 -52 73 -64 73 C-69 65 -69 65 -69 61 C-69 60 -69 59 -69 58 C-70 50 -67 44 -62 38 C-60 36 -58 34 -56 32 C-55 31 -55 30 -54 30 C-52 28 -51 26 -49 25 C-46 22 -44 20 -41 17 C-40 16 -38 14 -37 13 C-36 12 -35 11 -34 10 C-25 1 -13 -6 0 0 Z" fill="#68518f" transform="translate(224.1875 551.4375)"/><path d="M0 0 C4 3 8 7 12 11 C13 11 13 12 14 13 C15 14 16 15 17 16 C18 17 19 18 20 19 C22 20 24 22 26 24 C28 27 31 29 33 32 C36 34 38 37 40 39 C41 40 42 41 43 42 C50 49 56 55 56 66 C56 82 42 92 32 102 C31 103 30 104 29 105 C27 107 25 109 22 112 C21 114 19 116 17 117 C14 120 12 122 10 124 C9 125 9 125 7 127 C6 128 6 129 5 129 C4 130 3 131 3 132 C1 133 1 133 0 133 C0 89 0 45 0 0 Z" fill="#68518f" transform="translate(0 7)"/><path d="M0 0 C8 6 14 14 16 23 C17 35 16 45 8 54 C2 62 -6 67 -16 68 C-29 68 -37 65 -47 57 C-53 50 -57 40 -57 31 C-57 20 -53 12 -46 4 C-32 -7 -15 -10 0 0 Z" fill="#5f4b83" transform="translate(393.6875 203.6875)"/><path d="M0 0 C41 0 82 0 125 0 C129 7 129 13 127 20 C123 26 118 30 111 32 C110 32 109 32 108 33 C99 36 89 38 79 41 C68 44 68 44 63 46 C60 47 57 47 54 47 C53 47 53 47 51 47 C46 47 42 44 38 40 C38 39 37 38 36 37 C35 36 34 35 33 34 C32 33 31 32 30 31 C28 29 26 27 24 25 C22 23 19 20 17 18 C15 16 13 14 11 12 C9 10 8 9 6 8 C6 7 6 7 4 5 C3 5 3 5 2 3 C0 1 0 1 0 0 Z" fill="#68518f" transform="translate(36 0)"/><path d="M0 0 C0 20 0 40 0 60 C-5 56 -9 52 -13 48 C-14 48 -14 47 -15 46 C-19 43 -22 39 -22 33 C-22 32 -22 31 -22 30 C-22 29 -22 28 -22 27 C-21 19 -15 14 -9 8 C-9 7 -8 7 -7 6 C-1 0 -1 0 0 0 Z" fill="#5d498a" transform="translate(860 333)"/></svg><span class="hfade"></span>
+  <small>مجتمع دليل السعودية</small>
+  <h1>اسأل أهل المدينة</h1>
+  <p>اسأل عن أي شي في المدينة… وأهلها يجاوبونك</p>
+  <div class="hrow">
+    <button type="button" class="mebtn" id="meBtn" data-act="me"></button>
+    <span class="demo" id="demoPill" hidden><i></i>نسخة تجريبية</span>
+  </div>
+</header>
+<label class="srch" for="q"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F89743" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="ابحث في الأسئلة والإجابات…" autocomplete="off" enterkeyhint="search" aria-label="ابحث في الأسئلة والإجابات"><button type="button" id="qx" aria-label="مسح البحث" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></label>
+
+<section class="rules" id="rules">
+  <button type="button" data-act="rules" aria-expanded="false" aria-controls="rulesList">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F89743" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <span>قواعد المجتمع… خلّنا نساعد بعض بأدب</span>
+    <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A5F80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <ul id="rulesList">
+    <li>احترم الكل، والخلاف بالرأي ما يفسد للود قضية.</li>
+    <li>ممنوع الإعلانات وأرقام الجوال والروابط.</li>
+    <li>لا تنشر معلومات شخصية عنك أو عن غيرك.</li>
+    <li>كل الأسئلة والإجابات تنراجع قبل ما تظهر للناس.</li>
+  </ul>
+</section>
+
+<div class="tabs" id="cities" aria-label="المدينة"></div>
+<div class="tabs" id="cats" aria-label="التصنيف" style="padding-top:6px"></div>
+<div class="seg" id="sort" role="tablist" aria-label="ترتيب الأسئلة">
+  <button type="button" role="tab" data-sort="new">الأحدث</button>
+  <button type="button" role="tab" data-sort="unans">بدون إجابة <em id="unN">0</em></button>
+  <button type="button" role="tab" data-sort="top">الأكثر فائدة</button>
+</div>
+<div class="sec"><h3><i></i><span id="secT"></span></h3><span id="cnt"></span></div>
+<div id="locbar"></div>
+<div class="list" id="list" aria-live="polite"></div>
+</div>
+
+<button type="button" class="fab" id="fab" data-act="ask"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2142" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>اسأل سؤال</button>
+
+<div class="scrim" id="scrim" data-act="close"></div>
+
+<!-- شيت: اسأل سؤال -->
+<section class="sheet" id="askSheet" role="dialog" aria-modal="true" aria-labelledby="askT">
+  <div class="grab"></div>
+  <div id="askForm">
+    <div class="shh"><h2 id="askT">اسأل أهل المدينة</h2><button type="button" class="x" data-act="close" aria-label="إغلاق"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#373D63" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="shsub">اكتب سؤالك بوضوح، وأهل المدينة بيجاوبونك بعد ما ينراجع.</p>
+    <div class="fld"><label class="lb" for="aCity">المدينة</label><select class="inp" id="aCity"></select></div>
+    <div class="fld"><div class="lb" id="aCatL">التصنيف</div><div class="cgrid" id="aCats" role="radiogroup" aria-labelledby="aCatL"></div></div>
+    <div class="fld"><label class="lb" for="aBody">سؤالك</label>
+      <textarea class="inp" id="aBody" maxlength="300" placeholder="مثال: وين أحلى مكان فطور شعبي قريب من وسط البلد؟"></textarea>
+      <div class="cnt2"><span id="aHint">10 أحرف على الأقل</span><span id="aCnt">0 / 300</span></div></div>
+    <div class="fld"><label class="lb" for="aName">اسمك <small>اختياري</small></label><input class="inp" id="aName" maxlength="30" autocomplete="nickname" placeholder="زائر"></div>
+    <label class="chk"><input type="checkbox" id="aNotify"><span>أبغى أعرف إذا أحد جاوب<small>قريبًا: تنبيه داخل التطبيق</small></span></label>
+    <div class="err" id="aErr" role="alert"></div>
+    <button type="button" class="primary" id="aSend" data-act="submitQ">أرسل السؤال</button>
+  </div>
+  <div class="done" id="askDone" hidden>
+    <div class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16714A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <b>وصل سؤالك وبيظهر بعد المراجعة</b>
+    <p>بتشوفه أنت الحين في القائمة بعلامة «قيد المراجعة»، وأول ما ينقبل يظهر لأهل المدينة.</p>
+    <button type="button" class="primary" data-act="close">تمام</button>
+  </div>
+</section>
+
+<!-- شيت: أنا من أهل المدينة -->
+<section class="sheet" id="meSheet" role="dialog" aria-modal="true" aria-labelledby="meT">
+  <div class="grab"></div>
+  <div class="shh"><h2 id="meT">أنا من أهل المدينة</h2><button type="button" class="x" data-act="close" aria-label="إغلاق"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#373D63" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p class="shsub">حدد مدينتك، وإجاباتك على أسئلتها تطلع معها شارة <span class="loc">من أهل المدينة</span> عشان السائل يعرف إنك خبير بالمكان.</p>
+  <div class="fld"><div class="lb" id="mCityL">مدينتي</div><div class="cgrid" id="mCities" role="radiogroup" aria-labelledby="mCityL"></div></div>
+  <div class="fld"><label class="lb" for="mName">اسمك اللي يظهر للناس</label><input class="inp" id="mName" maxlength="30" autocomplete="nickname" placeholder="مثال: أبو فهد"></div>
+  <div class="err" id="mErr" role="alert"></div>
+  <button type="button" class="primary" data-act="saveMe">حفظ</button>
+  <button type="button" class="ghost" id="mClear" data-act="clearMe">لست من أهل أي مدينة (إزالة)</button>
+  <div class="note">الإعداد محفوظ على جهازك فقط. الشارة تظهر على إجاباتك في أسئلة مدينتك.</div>
+</section>
+
+<!-- شيت: إبلاغ -->
+<section class="sheet" id="repSheet" role="dialog" aria-modal="true" aria-labelledby="repT">
+  <div class="grab"></div>
+  <div class="shh"><h2 id="repT">إبلاغ عن محتوى</h2><button type="button" class="x" data-act="close" aria-label="إغلاق"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#373D63" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p class="shsub">وش المشكلة؟ بنراجعه ونشيله إذا خالف القواعد.</p>
+  <div class="reasons" id="reasons" role="radiogroup" aria-label="سبب الإبلاغ"></div>
+  <button type="button" class="primary" id="repSend" data-act="submitRep" disabled>أرسل البلاغ</button>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ===================== الإعداد =====================
+   لتفعيل Supabase: عبّ القيمتين تحت (من Project Settings > API)
+   وشغّل ملف supabase-ask.sql. إذا تركتها فاضية تشتغل الصفحة بالنسخة التجريبية. */
+var SUPABASE_URL = 'https://qnjixxctlwinglmhgijc.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_Ta_HT5_r1UPYj8y7MKozdg_VKLL_bwa';
+var APP_LINK = 'https://www.saudi-guide.com';
+
+var CITIES=['الرياض','جدة','مكة المكرمة','المدينة المنورة','الدمام والخبر','أبها','الطائف','العلا','الباحة','تبوك','حائل','القصيم','جازان','نجران','ينبع','أملج'];
+var CATS=[['all','الكل','#604C87'],['food','أكل وقهوة','#E0708C'],['places','أماكن ومشاوير','#4AA8DB'],['stay','سكن','#8562A6'],['transport','مواصلات','#5A6396'],['events','فعاليات','#F0883A'],['family','عائلات','#3FA37A'],['prices','أسعار وتوفير','#B5551A'],['general','عام','#7A7F9E']];
+var TAGBG={food:['#FCE7EC','#A3324F'],places:['#E3F2FB','#1F6E9E'],stay:['#EFE8F6','#5E4590'],transport:['#E7E9F3','#373D63'],events:['#FDEBDB','#9A4510'],family:['#E3F4EC','#16714A'],prices:['#FBE6D9','#8A3F12'],general:['#EEEEF3','#4A4F70']};
+var AVC=['#8562A6','#E0708C','#F0883A','#4AA8DB','#5A6396','#3FA37A','#B372A9','#C9773A'];
+var REASONS=['إعلان أو سبام','كلام غير لائق أو مسيء','فيه رقم جوال أو معلومات شخصية','معلومة غلط أو مضللة','شي ثاني'];
+
+/* ===================== أدوات ===================== */
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var LS={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set:function(k,v){var s=JSON.stringify(v);try{localStorage.setItem(k,s);}catch(e){}if(window.gb&&gb.storage&&gb.storage.setItem){try{gb.storage.setItem(k,s);}catch(e){}}}};
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2600);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+var DEV=LS.get('sg_ask_dev','');if(!DEV){DEV='d-'+uid()+uid();LS.set('sg_ask_dev',DEV);}
+function n1(c){if(/[ً-ْـٰ]/.test(c))return '';if(/[أإآٱ]/.test(c))return 'ا';if(c==='ة')return 'ه';if(c==='ى')return 'ي';if(c==='ؤ')return 'و';if(c==='ئ')return 'ي';return c.toLowerCase();}
+function nrm(s){s=String(s||'');var o='';for(var i=0;i<s.length;i++)o+=n1(s[i]);return o.replace(/\s+/g,' ').trim();}
+function words(){return nrm(st.q).split(' ').filter(function(w){return w.length>=2;});}
+function hl(t){t=String(t||'');var ws=words();if(!ws.length)return esc(t);
+  var n='',map=[];for(var i=0;i<t.length;i++){var c=n1(t[i]);if(c){n+=c;map.push(i);}}
+  var rs=[];ws.forEach(function(w){var p=0,k;while((k=n.indexOf(w,p))>-1){rs.push([map[k],map[k+w.length-1]+1]);p=k+w.length;}});
+  if(!rs.length)return esc(t);rs.sort(function(a,b){return a[0]-b[0];});
+  var out='',last=0;rs.forEach(function(r){if(r[0]<last)r[0]=last;if(r[1]<=last)return;out+=esc(t.slice(last,r[0]))+'<mark>'+esc(t.slice(r[0],r[1]))+'</mark>';last=r[1];});
+  return out+esc(t.slice(last));}
+function digits(s){return String(s).replace(/[٠-٩]/g,function(d){return d.charCodeAt(0)-1632;}).replace(/[۰-۹]/g,function(d){return d.charCodeAt(0)-1776;});}
+function hasContact(s){s=digits(s);return /\d[\d\s\-.]{7,}\d/.test(s)||/(https?:\/\/|www\.|\.com\b|\.sa\b|wa\.me|t\.me)/i.test(s)||/@[a-z0-9_]{3,}/i.test(s);}
+function plural(n,one,two,few,many){return n===1?one:(n===2?two:(n>=3&&n<=10?n+' '+few:n+' '+many));}
+function ago(iso){var s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000),m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24),w=Math.floor(d/7),mo=Math.floor(d/30);
+  if(m<1)return 'الحين';if(m<60)return 'قبل '+plural(m,'دقيقة','دقيقتين','دقائق','دقيقة');
+  if(h<24)return 'قبل '+plural(h,'ساعة','ساعتين','ساعات','ساعة');if(d<7)return 'قبل '+plural(d,'يوم','يومين','أيام','يوم');
+  if(d<30)return 'قبل '+plural(w,'أسبوع','أسبوعين','أسابيع','أسبوع');if(mo<12)return 'قبل '+plural(mo,'شهر','شهرين','أشهر','شهر');return 'قبل أكثر من سنة';}
+function initial(n){n=String(n||'').replace(/^(م\.|د\.|أ\.)\s*/,'').trim();return n?n.charAt(0):'ز';}
+function avColor(n){var h=0;n=String(n||'');for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return AVC[h%AVC.length];}
+function cat(k){for(var i=0;i<CATS.length;i++)if(CATS[i][0]===k)return CATS[i];return CATS[CATS.length-1];}
+function openLink(u){var w=null;try{w=window.open(u,'_blank');}catch(e){}if(!w){try{location.href=u;}catch(e){}}}
+
+/* ===================== بيانات تجريبية ===================== */
+function T(min){return new Date(Date.now()-min*60000).toISOString();}
+var SEED=[];var _sid=0;
+function Q(city,c,min,name,body,help,ans){var id='s'+(++_sid);SEED.push({id:id,city:city,category:c,body:body,author_name:name,created_at:T(min),helpful:help,status:'approved',
+  answers:(ans||[]).map(function(a,i){return {id:id+'a'+(i+1),question_id:id,author_name:a[0],is_local:!!a[1],author_city:a[1]?city:null,created_at:T(a[2]),body:a[3],helpful:a[4],status:'approved'};})});}
+/* الرياض */
+Q('الرياض','food',95,'سلطان','أبي مكان فطور شعبي زين في الرياض، فول وتميس ومعصوب… وش تنصحوني؟',9,[
+ ['أبو فهد',1,70,'روح الديرة الصبح بدري، فيه مطاعم شعبية قديمة حول سوق الزل، الفول والتميس هناك غير. وبعد الفطور تمشّى لقصر المصمك قريب منك.',14],
+ ['نورة',1,40,'إذا أنت شمال الرياض فيه محلات كثير في النرجس والياسمين تفتح من 6 الصبح. بس يوم الجمعة الزحمة قوية، تعال قبل 8.',6],
+ ['زائر من الكويت',0,25,'جربت المعصوب في محل صغير بحي الملز وكان ممتاز، اسأل أي أحد هناك يدلك.',2]]);
+Q('الرياض','transport',300,'ريم','وين أوقف سيارتي إذا رحت البوليفارد سيتي؟ سمعت إن المواقف زحمة مرة',12,[
+ ['عبدالرحمن',1,260,'فيه مواقف مدفوعة جنب البوابات. تعال قبل المغرب بساعة وتلقى مكان بسهولة. وقت المواسم الأفضل تاخذ تاكسي وتنزل عند البوابة مباشرة.',11],
+ ['فيصل',1,180,'انتبه وقت الطلعة بعد 12 الليل الزحمة على المخارج قوية، خلك تطلع قبل الذروة أو بعدها بشوي.',4]]);
+Q('الرياض','family',1500,'أم سارة','وين أروح بالليل مع العيال (5 و 8 سنين) في الرياض؟ أبي مكان مفتوح مو بس مولات',7,[
+ ['دانة',1,1400,'الدرعية والبجيري حلوة بالليل، مكان مفتوح للمشي والمطاعم مطلة على وادي حنيفة، والعيال يحبون الساحات هناك.',9],
+ ['م. خالد',1,1200,'جربي حديقة الملك عبدالله بالملز، فيها مساحات خضرا ونافورة وعروض بالليل، ومناسبة للأطفال.',5]]);
+Q('الرياض','transport',2900,'Omar','هل مترو الرياض يوصل للمطار؟ وكم سعر التذكرة تقريبًا؟',5,[
+ ['تركي',1,2800,'إيه، الخط الأصفر يوصلك لمطار الملك خالد. تذكرة الساعتين بحدود 4 ريال، وتقدر تشتريها من التطبيق أو المكينة بالمحطة.',8]]);
+Q('الرياض','general',35,'لمى','أحد يعرف أماكن هادية للدراسة أو الشغل باللابتوب في شمال الرياض؟ أبي واي فاي قوي',1,[]);
+/* جدة */
+Q('جدة','places',200,'محمد','أول مرة أزور جدة، البلد تستاهل؟ وأي وقت أفضل أروح؟',15,[
+ ['أبو يزن',1,170,'تستاهل وبقوة. روح العصر قبل المغرب، الجو يبرد شوي والبيوت القديمة تنوّر بالليل. لا يفوتك بيت نصيف.',17],
+ ['هيفاء',0,90,'البس جزمة مريحة لأن المشي كثير، والمواقف قريبة من باب مكة محدودة فتعال بدري.',3]]);
+Q('جدة','food',600,'سعد','أبي سمك طازج في جدة، وين أروح؟',10,[
+ ['عبدالله',1,520,'حلقة السمك (البنقلة) جنب البلد، تشتري السمك وتعطيه مطبخ قريب يطبخه لك مشوي أو صيادية. تجربة لازم تسويها.',12]]);
+Q('جدة','family',1800,'نوف','وش أفضل وقت للكورنيش؟ الحر هالأيام قوي',6,[
+ ['رنا',1,1700,'بعد العشاء أفضل وقت، الهوا يصير ألطف. الواجهة البحرية فيها ألعاب للأطفال ومواقف كثيرة.',8],
+ ['ماجد',1,1500,'الجمعة العصر زحمة مرة، خلك وسط الأسبوع إذا تقدر.',3]]);
+Q('جدة','stay',4300,'Ahmed','أبي أسكن قريب من البحر في جدة بسعر معقول، أي حي تنصحون؟',4,[
+ ['أبو يزن',1,4100,'الشاطئ والزهراء قريبة من الكورنيش، والشقق المفروشة هناك أرخص من الفنادق اللي على البحر مباشرة. احجز بدري وقت الإجازات.',6]]);
+Q('جدة','events',50,'جود','متى يبدأ موسم جدة هالسنة؟ وهل فيه فعاليات للعوايل؟',2,[]);
+/* مكة المكرمة */
+Q('مكة المكرمة','transport',150,'أبو عبدالله','وش أسهل طريقة أوصل الحرم من العزيزية بدون زحمة؟',13,[
+ ['حسن',1,120,'حافلات مكة لها محطات بالعزيزية وتنزلك قريب من الحرم، أريح من السيارة بكثير خاصة يوم الجمعة.',15],
+ ['ياسر',1,60,'إذا بتروح بسيارتك اتركها في المواقف اللي على أطراف المنطقة المركزية وكمل بالباص الترددي.',7]]);
+Q('مكة المكرمة','prices',900,'سارة','فيه فنادق قريبة من الحرم بسعر معقول خارج المواسم؟',8,[
+ ['حسن',1,850,'خارج رمضان والإجازات الأسعار تنزل كثير. دوّر في إبراهيم الخليل والمسفلة، تمشي تقريبًا 10 دقايق للحرم.',9]]);
+Q('مكة المكرمة','general',2400,'Yusuf','أفضل وقت للعمرة عشان أتجنب الزحمة؟',11,[
+ ['أم ريان',1,2300,'وسط الأسبوع بعد الفجر أو بعد الظهر الزحمة تخف كثير. وتجنب ليلة الجمعة وأول أيام الإجازات.',13],
+ ['عمر',0,2000,'رحت الثلاثاء بعد الفجر وخلصت العمرة بساعة ونص تقريبًا.',4]]);
+Q('مكة المكرمة','food',3600,'بندر','مطعم مندي أو بخاري زين قريب من الحرم؟',3,[
+ ['ياسر',1,3500,'العزيزية وشارع المنصور فيها مطاعم مندي معروفة، اسأل أي سواق تاكسي يدلك على الأشهر.',4]]);
+Q('مكة المكرمة','family',80,'أم خالد','فيه أماكن لتأجير الكراسي المتحركة داخل الحرم؟ وهل تحتاج حجز؟',2,[]);
+/* المدينة المنورة */
+Q('المدينة المنورة','places',240,'عبدالعزيز','كم المسافة مشي من الحرم لمسجد قباء؟ وهل الطريق مريح؟',18,[
+ ['أبو ماجد',1,200,'تقريبًا 3 كيلو، وفيه ممشى قباء مرصوف وواسع، تاخذ 35 إلى 45 دقيقة على راحتك. أحلى وقت بعد الفجر والجو لطيف.',21],
+ ['ريم',1,150,'خذ معك موية بالصيف، وعلى طول الممشى فيه محلات قهوة وتمور تقدر توقف عندها.',6]]);
+Q('المدينة المنورة','food',700,'Fatima','وين ألقى أفضل تمر عجوة وبسعر زين؟',10,[
+ ['أبو ماجد',1,650,'سوق التمور المركزي، جرّب قبل لا تشتري والأسعار تختلف حسب الدرجة. اللي جنب الحرم مباشرة غالبًا أغلى.',12],
+ ['سلمان',1,400,'لا تستعجل، لف على أكثر من محل واسأل عن عجوة الموسم الجديد.',3]]);
+Q('المدينة المنورة','places',2000,'نواف','وش فيه أماكن تاريخية غير المساجد أقدر أزورها؟',7,[
+ ['هند',1,1900,'جبل أحد ومقبرة الشهداء، ومحطة سكة حديد الحجاز التاريخية، ومتحف دار المدينة. كلها قريبة من بعض بالسيارة.',9]]);
+Q('المدينة المنورة','transport',3000,'Ali','قطار الحرمين من المدينة لمكة كم ياخذ وقت؟',6,[
+ ['سلمان',1,2950,'بين ساعتين وساعتين ونص حسب الرحلة. ومحطة المدينة بعيدة شوي عن الحرم، فحسّب حساب التاكسي تقريبًا 20 دقيقة.',8]]);
+Q('المدينة المنورة','family',45,'أم عبدالله','فيه حدائق حلوة للعيال في المدينة نروحها بالليل؟',1,[]);
+/* أبها */
+Q('أبها','general',130,'خالد','كيف الجو في أبها بالصيف؟ أحتاج جاكيت؟',14,[
+ ['أبو نايف',1,100,'النهار بالصيف حلو حول 25، بس الليل يبرد خاصة في السودة. خذ جاكيت خفيف أكيد، وانتبه للضباب على الطرق الجبلية.',18],
+ ['شهد',0,60,'رحنا أغسطس ولبسنا جاكيتات بالليل فعلًا، والمطر كان يجي العصر.',5]]);
+Q('أبها','places',1000,'عبير','تلفريك السودة يشتغل طول السنة؟',5,[
+ ['أبو نايف',1,960,'عادة يشتغل، بس أحيانًا يوقف إذا الجو عاصف أو الضباب قوي. تأكد قبل لا تطلع.',5]]);
+Q('أبها','places',2200,'Majed','قرية رجال ألمع تستاهل المشوار من أبها؟',9,[
+ ['علي',1,2100,'تستاهل، والطريق نزول عقبة الصماء منظره خيالي. روح الصبح وارجع قبل المغرب لأن العقبة متعبة بالليل.',11]]);
+Q('أبها','food',3800,'مها','وش أكلات أبها الشعبية اللي لازم أجربها؟',6,[
+ ['علي',1,3700,'العريكة بالسمن والعسل، والحنيذ، والمشغوثة. اطلب العريكة الصبح مع شاهي على الجمر.',9]]);
+Q('أبها','events',60,'راكان','فعاليات صيف أبها تبدأ متى عادة؟',1,[]);
+/* العلا */
+Q('العلا','general',320,'وليد','أفضل وقت لزيارة العلا؟ أخاف من الحر',16,[
+ ['أبو سعود',1,290,'من أكتوبر لين مارس الجو مثالي، الصيف حار مرة بالنهار. ولا تفوتك ليالي الشتاء والنجوم.',16],
+ ['لين',0,200,'رحنا نوفمبر والجو كان رهيب، الصبح بارد شوي فخذ جاكيت خفيف.',4]]);
+Q('العلا','places',1100,'ندى','لازم أحجز الحِجر (مدائن صالح) مقدم؟',11,[
+ ['أبو سعود',1,1050,'إيه لازم تحجز من موقع أو تطبيق Experience AlUla، الجولات بالباص بأوقات محددة وتخلص بسرعة بالمواسم.',13]]);
+Q('العلا','places',2500,'Sami','جبل الفيل وقته الأحلى متى؟',8,[
+ ['عهود',1,2400,'وقت الغروب، الصخرة تتلون والجلسات حولها حلوة. بالويكند يزحم شوي فتعال بدري.',8]]);
+Q('العلا','stay',4000,'منيرة','السكن في العلا غالي، فيه خيارات أوفر؟',5,[
+ ['عهود',1,3900,'فيه نُزل ومخيمات بسيطة حول البلدة القديمة أرخص بكثير من المنتجعات، وفيه بيوت ريفية داخل المزارع.',5]]);
+Q('العلا','transport',70,'طلال','أحتاج سيارة في العلا ولا فيه مواصلات بين الأماكن؟',2,[]);
+/* مدن أخرى */
+Q('الطائف','places',800,'هيا','أفضل وقت لزيارة مزارع الورد بالطائف؟',6,[['مشعل',1,760,'موسم الورد تقريبًا من مارس لأبريل، روح الصبح بدري وتشوف القطف والتقطير.',7]]);
+Q('الدمام والخبر','family',500,'عبدالله','كورنيش الخبر ولا الدمام أحلى للعوايل؟',2,[]);
+Q('ينبع','places',1300,'Faisal','أبي أماكن غوص حلوة في ينبع للمبتدئين',3,[['رهف',0,1250,'فيه مراكز غوص تعطي دورات للمبتدئين، والشعاب قريبة من الشاطئ. احجز قبل بيوم.',3]]);
+Q('أملج','places',900,'سلمى','جزر أملج كيف أوصلها؟',4,[['أبو حمد',1,860,'تحتاج قارب، فيه رحلات يومية من الميناء. احجز قبلها بيوم وخذ معك واقي شمس.',6]]);
+
+/* ===================== طبقة البيانات DB ===================== */
+var USE_SB=!!(SUPABASE_URL&&SUPABASE_ANON_KEY);
+var VOTES=LS.get('sg_ask_votes',{});      // {"question:id":1,"answer:id":1}
+var MINE_Q=LS.get('sg_ask_myq',[]);       // أسئلتي قيد المراجعة
+var MINE_A=LS.get('sg_ask_mya',[]);       // إجاباتي قيد المراجعة
+var REPORTED=LS.get('sg_ask_rep',{});     // {"question:id":1}
+function sb(path,opt){opt=opt||{};var h={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY};
+  if(opt.body){h['Content-Type']='application/json';h.Prefer='return=minimal';}
+  return fetch(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+path,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined})
+   .then(function(r){if(!r.ok){var e=new Error('HTTP '+r.status);e.status=r.status;throw e;}return r.status===204||r.status===201?null:r.json();});}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+var DB={
+  mode:USE_SB?'supabase':'demo',
+  listQuestions:function(city){
+    var p;
+    if(!USE_SB){p=Promise.resolve(clone(SEED.filter(function(q){return q.city===city;}))).then(function(list){
+        list.forEach(function(q){if(VOTES['question:'+q.id])q.helpful++;q.answers.forEach(function(a){if(VOTES['answer:'+a.id])a.helpful++;});});return list;});}
+    else{p=sb('questions?select=id,city,category,body,author_name,device_id,created_at,helpful&status=eq.approved&city=eq.'+encodeURIComponent(city)+'&order=created_at.desc&limit=100')
+      .then(function(qs){if(!qs.length)return [];var ids=qs.map(function(q){return q.id;});
+        return sb('answers?select=id,question_id,body,author_name,author_city,is_local,is_team,device_id,created_at,helpful&status=eq.approved&question_id=in.('+ids.join(',')+')&order=created_at.asc')
+          .then(function(as){qs.forEach(function(q){q.answers=as.filter(function(a){return a.question_id===q.id;});});return qs;});})
+      .then(function(qs){ // إزالة نسخي المحلية اللي انقبلت
+        var ch=false;MINE_Q=MINE_Q.filter(function(m){var ok=!qs.some(function(q){return q.device_id===DEV&&q.body===m.body;});if(!ok)ch=true;return ok;});
+        MINE_A=MINE_A.filter(function(m){var ok=!qs.some(function(q){return (q.answers||[]).some(function(a){return a.device_id===DEV&&a.body===m.body;});});if(!ok)ch=true;return ok;});
+        if(ch){LS.set('sg_ask_myq',MINE_Q);LS.set('sg_ask_mya',MINE_A);}return qs;});}
+    return p.then(function(list){
+      list=list.filter(function(q){return !REPORTED['question:'+q.id];});
+      list.forEach(function(q){q.answers=(q.answers||[]).filter(function(a){return !REPORTED['answer:'+a.id];});});
+      var mine=MINE_Q.filter(function(m){return m.city===city;}).map(function(m){var c=clone(m);c.mine=true;c.answers=[];return c;});
+      list=mine.concat(list);
+      MINE_A.forEach(function(a){var q=list.filter(function(x){return x.id===a.question_id;})[0];if(q){var c=clone(a);c.mine=true;q.answers.push(c);}});
+      return list;});
+  },
+  addQuestion:function(q){
+    var row={id:'local-'+uid(),city:q.city,category:q.category,body:q.body,author_name:q.author_name||(GBU&&GBU.name)||null,device_id:DEV,status:'pending',created_at:new Date().toISOString(),helpful:0,notify:!!q.notify};
+    var p=USE_SB?sb('questions',{method:'POST',body:{city:row.city,category:row.category,body:row.body,author_name:row.author_name,device_id:DEV,gb_user_id:GBU?GBU.id:null,status:'pending'}}):Promise.resolve();
+    return p.then(function(){MINE_Q.unshift(row);LS.set('sg_ask_myq',MINE_Q);return row;});
+  },
+  addAnswer:function(qid,a){
+    var row={id:'local-'+uid(),question_id:qid,body:a.body,author_name:a.author_name||(GBU&&GBU.name)||null,author_city:a.author_city||null,is_local:!!a.is_local,device_id:DEV,status:'pending',created_at:new Date().toISOString(),helpful:0};
+    var p=USE_SB?sb('answers',{method:'POST',body:{question_id:qid,body:row.body,author_name:row.author_name,author_city:row.author_city,is_local:row.is_local,device_id:DEV,gb_user_id:GBU?GBU.id:null,status:'pending'}}):Promise.resolve();
+    return p.then(function(){MINE_A.push(row);LS.set('sg_ask_mya',MINE_A);return row;});
+  },
+  vote:function(type,id){ // type: 'question' | 'answer' — صوت واحد لكل جهاز
+    var k=type+':'+id;if(VOTES[k])return Promise.resolve(false);
+    VOTES[k]=1;LS.set('sg_ask_votes',VOTES);
+    if(USE_SB)sb('votes',{method:'POST',body:{target_type:type,target_id:id,device_id:DEV}}).catch(function(){});
+    return Promise.resolve(true);
+  },
+  report:function(id,type,reason){type=type||'question';
+    REPORTED[type+':'+id]=1;LS.set('sg_ask_rep',REPORTED);
+    if(USE_SB)return sb('reports',{method:'POST',body:{target_type:type,target_id:id,reason:reason||null,device_id:DEV}}).catch(function(){});
+    return Promise.resolve();
+  }
+};
+
+/* ===================== الحالة ===================== */
+var ME=LS.get('sg_ask_me',{city:'',name:''});
+var GBU=null;function gbName(u){return ((u.firstname||'')+' '+(u.lastname||'')).trim()||u.username||u.login||'';}
+function initGbUser(){try{if(window.gb&&gb.user&&gb.user.getCurrent){gb.user.getCurrent(function(u){if(!u)return;GBU={id:String(u.id),name:gbName(u).slice(0,30)};if(GBU.name&&!ME.name){ME.name=GBU.name;LS.set('sg_ask_me',ME);}try{renderMe();render();}catch(e){}},function(){GBU=null;});}}catch(e){}}
+var st={city:'',cat:'all',sort:'new',q:'',data:[],open:{},drafts:{},names:{},loading:true,error:false,tok:0};
+(function(){var c=LS.get('sg_ask_city','');st.city=CITIES.indexOf(c)>-1?c:(ME.city||'الرياض');})();
+
+/* ===================== العرض ===================== */
+function renderMe(){var b=$('meBtn');
+  if(ME.city){b.className='mebtn set';b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A2142" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>أنا من أهل '+esc(ME.city);b.setAttribute('aria-label','أنا من أهل '+ME.city+'، اضغط للتعديل');}
+  else{b.className='mebtn';b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>أنت من أهل مدينة؟';b.removeAttribute('aria-label');}
+  $('demoPill').hidden=USE_SB;}
+function renderChips(){
+  $('cities').innerHTML=CITIES.map(function(c){var on=c===st.city;return '<button type="button" class="chip'+(on?' on':'')+'" data-city="'+esc(c)+'" aria-pressed="'+on+'">'+(c===ME.city?'<span class="home" aria-hidden="true"></span>':'')+esc(c)+'</button>';}).join('');
+  $('cats').innerHTML=CATS.map(function(k){var on=k[0]===st.cat;return '<button type="button" class="chip sm'+(on?' on':'')+'" data-cat="'+k[0]+'" aria-pressed="'+on+'">'+(k[0]==='all'?'':'<span class="dot" style="background:'+k[2]+'"></span>')+k[1]+'</button>';}).join('');
+  [].forEach.call($('sort').children,function(b){var on=b.getAttribute('data-sort')===st.sort;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);});
+}
+function approved(q){return q.answers.filter(function(a){return !a.mine;});}
+function sortAns(q){var ap=approved(q).slice().sort(function(a,b){return b.helpful-a.helpful||new Date(a.created_at)-new Date(b.created_at);});
+  var best=ap.length&&ap[0].helpful>=2?ap[0].id:null;return {list:ap.concat(q.answers.filter(function(a){return a.mine;})),best:best};}
+function score(q){return q.helpful+approved(q).reduce(function(s,a){return s+a.helpful;},0);}
+function matchInfo(q){var ws=words();if(!ws.length)return {ok:true,inAns:false};
+  var qt=nrm(q.body+' '+(q.author_name||'')+' '+cat(q.category)[1]),at=nrm(q.answers.map(function(a){return a.body+' '+(a.author_name||'');}).join(' '));
+  var ok=ws.every(function(w){return qt.indexOf(w)>-1||at.indexOf(w)>-1;});
+  return {ok:ok,inAns:ok&&!ws.every(function(w){return qt.indexOf(w)>-1;})};}
+function visible(){
+  var out=st.data.filter(function(q){if(st.cat!=='all'&&q.category!==st.cat)return false;if(st.sort==='unans'&&approved(q).length)return false;return matchInfo(q).ok;});
+  if(st.sort==='top')out.sort(function(a,b){return (b.mine?1:0)-(a.mine?1:0)||score(b)-score(a);});
+  else out.sort(function(a,b){return (b.mine?1:0)-(a.mine?1:0)||new Date(b.created_at)-new Date(a.created_at);});
+  return out;}
+var IC={
+  ans:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg>',
+  up:function(on){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="'+(on?'currentColor':'none')+'" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zm0 0l4-8a2.5 2.5 0 0 1 2.5 2.5V9h5.3a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.6 20H7"/></svg>';},
+  wa:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 8.6c.2-.5.5-.6.8-.6h.5c.2 0 .4.1.5.4l.7 1.7c.1.2 0 .4-.1.6l-.5.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.5c.2-.1.4-.2.6-.1l1.7.7c.3.1.4.3.4.5v.5c0 .3-.1.6-.6.8-.6.3-1.6.4-3.2-.4a8.6 8.6 0 0 1-3.8-3.8c-.8-1.6-.7-2.6-.4-3.2z"/></svg>',
+  flag:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 0h11l-2 4 2 4H5"/></svg>',
+  chev:function(o){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate('+(o?180:0)+'deg)"><path d="M6 9l6 6 6-6"/></svg>';},
+  star:'<svg width="13" height="13" viewBox="0 0 24 24" fill="#F89743" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>',
+  pin:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+};
+function ansHTML(q,a,best){
+  var on=!!VOTES['answer:'+a.id],nm=a.author_name||'زائر';
+  return '<article class="an'+(a.id===best?' best':'')+(a.mine?' pend':'')+'">'+
+    (a.id===best?'<span class="bestlbl">'+IC.star+'أفضل إجابة</span>':'')+
+    '<div class="anh"><span class="av s" style="background:'+avColor(nm)+'" aria-hidden="true">'+esc(initial(nm))+'</span><div class="who"><div class="nm"><b>'+esc(nm)+'</b>'+
+    (a.is_team?'<span class="loc team">✓ فريق دليل السعودية</span>':'')+
+    (a.is_local&&a.author_city===q.city?'<span class="loc" title="من أهل '+esc(q.city)+'">'+IC.pin+'من أهل المدينة</span>':'')+
+    (a.mine?'<span class="pill pnd">قيد المراجعة</span>':'')+'</div><span>'+ago(a.created_at)+'</span></div></div>'+
+    '<div class="anb">'+hl(a.body)+'</div>'+
+    (a.mine?'<div style="height:8px"></div>':'<div class="anf"><button type="button" class="act'+(on?' on':'')+'" data-act="helpA" data-id="'+esc(a.id)+'" aria-pressed="'+on+'" aria-label="مفيد، '+a.helpful+'">'+IC.up(on)+'مفيد · '+a.helpful+'</button>'+
+    '<button type="button" class="act end" data-act="rep" data-type="answer" data-id="'+esc(a.id)+'" aria-label="إبلاغ عن الإجابة">'+IC.flag+'</button></div>')+
+  '</article>';}
+function composerHTML(q){
+  if(q.mine)return '<div class="lockmsg">تقدر تستقبل إجابات بعد ما ينقبل سؤالك.</div>';
+  var d=st.drafts[q.id]||'',local=ME.city===q.city;
+  return '<div class="cmp"><label class="sr" for="cmp-'+esc(q.id)+'">اكتب إجابتك</label><textarea id="cmp-'+esc(q.id)+'" data-cmp="'+esc(q.id)+'" maxlength="500" rows="3" placeholder="'+(local?'أنت من أهل '+esc(q.city)+'، ساعد السائل بخبرتك…':'تعرف الجواب؟ شاركه هنا…')+'">'+esc(d)+'</textarea>'+
+   (ME.name?'':'<input type="text" data-cname="'+esc(q.id)+'" maxlength="30" placeholder="اسمك (اختياري)" aria-label="اسمك (اختياري)" value="'+esc(st.names[q.id]||'')+'">')+
+   '<div class="row"><div class="hint">'+(local?'<span class="loc">'+IC.pin+'من أهل المدينة</span> بتظهر مع إجابتك':(ME.city?'إجابتك تنراجع قبل ما تظهر':'من أهل '+esc(q.city)+'؟ <button type="button" data-act="me">فعّل الشارة</button>'))+'</div>'+
+   '<button type="button" class="send" data-act="sendA" data-id="'+esc(q.id)+'"'+(d.trim().length<5?' disabled':'')+'>أرسل</button></div></div>';}
+function cardHTML(q){
+  var open=!!st.open[q.id],c=cat(q.category),tb=TAGBG[q.category]||TAGBG.general,nm=q.author_name||'زائر',ap=approved(q),n=ap.length,on=!!VOTES['question:'+q.id],mi=matchInfo(q),sa=sortAns(q);
+  var h='<article class="qc'+(q.mine?' pend':'')+'" data-q="'+esc(q.id)+'">'+
+   '<div class="qh"><span class="av" style="background:'+avColor(nm)+'" aria-hidden="true">'+esc(initial(nm))+'</span><div class="who"><b>'+hl(nm)+'</b><span>'+ago(q.created_at)+'</span></div>'+
+   '<span class="tag" style="background:'+tb[0]+';color:'+tb[1]+'">'+c[1]+'</span></div>'+
+   '<button type="button" class="qb" data-act="toggle" data-id="'+esc(q.id)+'" aria-expanded="'+open+'">'+hl(q.body)+'</button>';
+  if(q.mine||(mi.inAns&&!open))h+='<div class="qpills">'+(q.mine?'<span class="pill pnd">قيد المراجعة · يظهر لك أنت فقط</span>':'')+(mi.inAns&&!open?'<span class="pill inans">فيه تطابق في الإجابات</span>':'')+'</div>';
+  if(!q.mine){h+='<div class="qf">';
+  if(n)h+='<button type="button" class="act'+(open?' open':'')+'" data-act="toggle" data-id="'+esc(q.id)+'" aria-expanded="'+open+'">'+IC.ans+(n?plural(n,'إجابة واحدة','إجابتين','إجابات','إجابة'):'لا توجد إجابات')+IC.chev(open)+'</button>';
+  else h+='<button type="button" class="act first" data-act="first" data-id="'+esc(q.id)+'">'+IC.ans+'كن أول من يجاوب</button>';
+  if(!q.mine)h+='<button type="button" class="act'+(on?' on':'')+'" data-act="helpQ" data-id="'+esc(q.id)+'" aria-pressed="'+on+'" aria-label="مفيد، '+q.helpful+'">'+IC.up(on)+'مفيد '+q.helpful+'</button>'+
+   '<button type="button" class="act end" data-act="share" data-id="'+esc(q.id)+'" aria-label="شارك في واتساب">'+IC.wa+'</button>'+
+   '<button type="button" class="act" data-act="rep" data-type="question" data-id="'+esc(q.id)+'" aria-label="إبلاغ عن السؤال">'+IC.flag+'</button>';
+  h+='</div>';}
+  if(open){h+='<div class="ans">';
+    if(!sa.list.length&&!q.mine)h+='<div class="noans"><b>ما أحد جاوب للحين</b>كن أول من يجاوب وساعد صاحب السؤال.</div>';
+    h+=sa.list.map(function(a){return ansHTML(q,a,sa.best);}).join('')+composerHTML(q)+'</div>';}
+  return h+'</article>';}
+function locbarHTML(){if(!ME.city||ME.city!==st.city||st.loading||st.error)return '';var un=st.data.filter(function(q){return !q.mine&&!approved(q).length;}).length;if(!un||st.sort==='unans')return '';
+  return '<div class="locbar"><div><b>أنت من أهل '+esc(st.city)+'</b>'+plural(un,'فيه سؤال واحد ينتظر','فيه سؤالين ينتظرون','أسئلة تنتظر','سؤال ينتظر')+' إجابتك</div><button type="button" data-act="goUnans">جاوب الحين</button></div>';}
+function emptyHTML(){var ic='<svg width="56" height="56" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="12" width="40" height="40" rx="11" transform="rotate(45 32 32)" fill="#F3F0F8"/><path d="M22 26h20M22 33h13" stroke="#604C87" stroke-width="3.2" stroke-linecap="round"/><circle cx="44" cy="42" r="8" fill="#F89743"/><path d="M44 38.5v4M44 45.3v.2" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  if(st.q.trim())return '<div class="empty">'+ic+'<b>ما لقينا شي يطابق «'+esc(st.q.trim())+'»</b>جرّب كلمة ثانية، أو اسأل أهل '+esc(st.city)+' مباشرة.<br><button type="button" data-act="ask">اسأل سؤالك</button></div>';
+  if(st.sort==='unans')return '<div class="empty">'+ic+'<b>كل الأسئلة لها إجابات</b>أهل '+esc(st.city)+' ما قصروا. عندك سؤال جديد؟<br><button type="button" data-act="ask">اسأل سؤال</button></div>';
+  if(st.cat!=='all')return '<div class="empty">'+ic+'<b>ما فيه أسئلة عن «'+cat(st.cat)[1]+'» في '+esc(st.city)+'</b>كن أول من يسأل، وأهلها بيجاوبونك.<br><button type="button" data-act="ask">اسأل أول سؤال</button></div>';
+  return '<div class="empty">'+ic+'<b>ما فيه أسئلة عن '+esc(st.city)+' للحين</b>كن أول من يسأل عن '+esc(st.city)+'، وأهلها بيجاوبونك.<br><button type="button" data-act="ask">اسأل أول سؤال</button></div>';}
+function render(){renderChips();
+  var un=st.data.filter(function(q){return !q.mine&&!approved(q).length&&(st.cat==='all'||q.category===st.cat);}).length;$('unN').textContent=un;$('unN').hidden=!un;
+  $('secT').textContent=st.q.trim()?'نتائج البحث في '+st.city:'أسئلة عن '+st.city;
+  $('locbar').innerHTML=locbarHTML();
+  if(st.loading){$('cnt').textContent='';$('list').innerHTML='<div class="sk"></div><div class="sk"></div>';return;}
+  if(st.error){$('cnt').textContent='';$('list').innerHTML='<div class="empty"><b>ما قدرنا نجيب الأسئلة</b>تأكد من الاتصال وحاول مرة ثانية.<br><button type="button" data-act="retry">حاول مرة ثانية</button></div>';return;}
+  var v=visible();$('cnt').textContent=v.length?plural(v.length,'سؤال واحد','سؤالين','أسئلة','سؤال'):'';
+  $('list').innerHTML=v.length?v.map(cardHTML).join(''):emptyHTML();}
+function rerenderCard(id){var el=document.querySelector('.qc[data-q="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]'),q=find(id);if(!el||!q)return render();
+  var f=document.activeElement&&document.activeElement.getAttribute&&document.activeElement.getAttribute('data-act');
+  var tmp=document.createElement('div');tmp.innerHTML=cardHTML(q);el.parentNode.replaceChild(tmp.firstChild,el);return f;}
+function find(id){return st.data.filter(function(q){return q.id===id;})[0];}
+function findAns(id){for(var i=0;i<st.data.length;i++){var a=st.data[i].answers.filter(function(x){return x.id===id;})[0];if(a)return [st.data[i],a];}return null;}
+function load(){var t=++st.tok;st.loading=true;st.error=false;render();
+  DB.listQuestions(st.city).then(function(list){if(t!==st.tok)return;st.data=list;st.loading=false;render();})
+   .catch(function(){if(t!==st.tok)return;st.loading=false;st.error=true;render();});}
+
+/* ===================== الشيتات ===================== */
+var opener=null,curSheet=null,repTarget=null,repReason=null,askCat='general',meCity='';
+function openSheet(id){$('toast').classList.remove('show');if(curSheet)closeSheet(true);opener=document.activeElement;curSheet=$(id);curSheet.classList.add('open');$('scrim').classList.add('on');$('fab').classList.add('hide');document.documentElement.classList.add('lock');
+  $('main').setAttribute('aria-hidden','true');curSheet.scrollTop=0;
+  setTimeout(function(){var f=curSheet&&curSheet.querySelector('[data-autofocus]')||curSheet&&curSheet.querySelector('.x');if(f)try{f.focus({preventScroll:true});}catch(e){f.focus();}},60);}
+function closeSheet(silent){if(!curSheet)return;curSheet.classList.remove('open');curSheet=null;$('scrim').classList.remove('on');$('fab').classList.remove('hide');document.documentElement.classList.remove('lock');$('main').removeAttribute('aria-hidden');
+  if(!silent&&opener&&document.body.contains(opener))try{opener.focus({preventScroll:true});}catch(e){}}
+function needLogin(){try{if(window.gb&&gb.user&&gb.user.openLogin){toast('سجّل دخولك عشان تقدر تسأل أو تجاوب');gb.user.openLogin();return;}}catch(e){}toast('سجّل دخولك من أيقونة الحساب أعلى التطبيق عشان تقدر تسأل أو تجاوب');}
+function openAsk(){if(!GBU){needLogin();return;}
+  $('askForm').hidden=false;$('askDone').hidden=true;$('aErr').textContent='';
+  $('aCity').innerHTML=CITIES.map(function(c){return '<option'+(c===st.city?' selected':'')+'>'+esc(c)+'</option>';}).join('');
+  askCat=st.cat!=='all'?st.cat:(askCat||'general');renderAskCats();
+  if(!$('aName').value&&ME.name)$('aName').value=ME.name;
+  updCnt();openSheet('askSheet');$('aBody').setAttribute('data-autofocus','');}
+function renderAskCats(){$('aCats').innerHTML=CATS.slice(1).map(function(k){var on=k[0]===askCat;return '<button type="button" class="chip sm'+(on?' on':'')+'" role="radio" aria-checked="'+on+'" data-acat="'+k[0]+'"><span class="dot" style="background:'+k[2]+'"></span>'+k[1]+'</button>';}).join('');}
+function updCnt(){var n=$('aBody').value.trim().length,c=$('aCnt');c.textContent=n+' / 300';
+  $('aHint').textContent=n<10?'باقي '+(10-n)+' '+(10-n>2&&10-n<11?'أحرف':'حرف')+' على الأقل':'ممتاز، واضح';$('aHint').className=n>0&&n<10?'bad':'';}
+function submitQ(){var body=$('aBody').value.trim().replace(/\s+/g,' '),name=$('aName').value.trim(),city=$('aCity').value,err=$('aErr');
+  if(body.length<10){err.textContent='السؤال لازم يكون 10 أحرف على الأقل.';$('aBody').focus();return;}
+  if(body.length>300){err.textContent='السؤال أطول من 300 حرف.';return;}
+  if(hasContact(body+' '+name)){err.textContent='لا تكتب أرقام جوال أو روابط أو حسابات، حسب قواعد المجتمع.';return;}
+  err.textContent='';var b=$('aSend');b.disabled=true;b.textContent='جاري الإرسال…';
+  DB.addQuestion({city:city,category:askCat,body:body,author_name:name,notify:$('aNotify').checked}).then(function(){
+    $('aBody').value='';$('aNotify').checked=false;$('askForm').hidden=true;$('askDone').hidden=false;
+    var ok=$('askDone').querySelector('.primary');setTimeout(function(){ok.focus();},50);
+    st.sort='new';st.cat='all';st.q='';$('q').value='';$('qx').hidden=true;
+    if(city!==st.city){st.city=city;LS.set('sg_ask_city',city);}load();
+  }).catch(function(){err.textContent='صار خطأ في الاتصال، حاول مرة ثانية.';}).then(function(){b.disabled=false;b.textContent='أرسل السؤال';});}
+function openMe(){meCity=ME.city||st.city;$('mName').value=ME.name||'';$('mErr').textContent='';$('mClear').hidden=!ME.city;renderMeCities();openSheet('meSheet');}
+function renderMeCities(){$('mCities').innerHTML=CITIES.map(function(c){var on=c===meCity;return '<button type="button" class="chip sm'+(on?' on':'')+'" role="radio" aria-checked="'+on+'" data-mcity="'+esc(c)+'">'+esc(c)+'</button>';}).join('');}
+function saveMe(){var n=$('mName').value.trim();if(!meCity){$('mErr').textContent='اختر مدينتك.';return;}
+  if(hasContact(n)){$('mErr').textContent='الاسم ما يكون فيه أرقام أو روابط.';return;}
+  ME={city:meCity,name:n};LS.set('sg_ask_me',ME);closeSheet();renderMe();render();toast('تم! صرت من أهل '+meCity);}
+function openRep(type,id){repTarget=[type,id];repReason=null;$('repSend').disabled=true;
+  $('repT').textContent=type==='answer'?'إبلاغ عن إجابة':'إبلاغ عن سؤال';
+  $('reasons').innerHTML=REASONS.map(function(r,i){return '<button type="button" role="radio" aria-checked="false" data-reason="'+i+'"><i aria-hidden="true"></i>'+r+'</button>';}).join('');openSheet('repSheet');}
+
+/* ===================== الأحداث ===================== */
+document.addEventListener('click',function(e){var b=e.target.closest('[data-act],[data-city],[data-cat],[data-sort],[data-acat],[data-mcity],[data-reason]');if(!b)return;
+  var a=b.getAttribute('data-act'),id=b.getAttribute('data-id');
+  if(b.hasAttribute('data-city')){var c=b.getAttribute('data-city');if(c===st.city)return;st.city=c;st.open={};LS.set('sg_ask_city',c);load();setTimeout(function(){var x=document.querySelector('#cities .on');if(x&&x.scrollIntoView)x.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});},30);return;}
+  if(b.hasAttribute('data-cat')){st.cat=b.getAttribute('data-cat');render();return;}
+  if(b.hasAttribute('data-sort')){st.sort=b.getAttribute('data-sort');render();return;}
+  if(b.hasAttribute('data-acat')){askCat=b.getAttribute('data-acat');renderAskCats();$('aCats').querySelector('.on').focus();return;}
+  if(b.hasAttribute('data-mcity')){meCity=b.getAttribute('data-mcity');renderMeCities();$('mCities').querySelector('.on').focus();return;}
+  if(b.hasAttribute('data-reason')){repReason=REASONS[+b.getAttribute('data-reason')];[].forEach.call($('reasons').children,function(x){var on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-checked',on);});$('repSend').disabled=false;return;}
+  switch(a){
+   case 'toggle':st.open[id]=!st.open[id];rerenderCard(id);var nb=document.querySelector('.qc[data-q="'+id+'"] .qb');if(nb)nb.focus({preventScroll:true});break;
+   case 'first':st.open[id]=true;rerenderCard(id);var t=document.getElementById('cmp-'+id);if(t){t.focus();t.scrollIntoView({block:'center',behavior:'smooth'});}break;
+   case 'helpQ':DB.vote('question',id).then(function(ok){if(!ok){toast('سبق وقلت إنه مفيد');return;}var q=find(id);q.helpful++;rerenderCard(id);toast('شكرًا! صوتك يساعد الناس يلقون الأسئلة المفيدة');});break;
+   case 'helpA':DB.vote('answer',id).then(function(ok){if(!ok){toast('سبق وقلت إنها مفيدة');return;}var r=findAns(id);if(!r)return;r[1].helpful++;rerenderCard(r[0].id);toast('شكرًا! أفضل إجابة تطلع فوق');});break;
+   case 'share':var q=find(id);if(!q)return;openLink('https://wa.me/?text='+encodeURIComponent('سؤال عن '+q.city+' في «دليل السعودية»:\n«'+q.body+'»\n\nتعرف الجواب؟ جاوب أو اسأل أهل المدينة من التطبيق:\n'+APP_LINK));break;
+   case 'rep':openRep(b.getAttribute('data-type'),id);break;
+   case 'submitRep':if(!repTarget||!repReason)return;var tg=repTarget;DB.report(tg[1],tg[0],repReason).then(function(){closeSheet(true);
+      if(tg[0]==='question')st.data=st.data.filter(function(q){return q.id!==tg[1];});else st.data.forEach(function(q){q.answers=q.answers.filter(function(x){return x.id!==tg[1];});});
+      render();toast('وصل بلاغك، شكرًا لك. بنراجعه في أقرب وقت');});break;
+   case 'sendA':sendAnswer(id);break;
+   case 'ask':openAsk();break;
+   case 'submitQ':submitQ();break;
+   case 'me':openMe();break;
+   case 'saveMe':saveMe();break;
+   case 'clearMe':ME={city:'',name:ME.name||''};LS.set('sg_ask_me',ME);closeSheet();renderMe();render();toast('انشالت الشارة');break;
+   case 'close':closeSheet();break;
+   case 'rules':var r=$('rules'),o=!r.classList.contains('open');r.classList.toggle('open',o);b.setAttribute('aria-expanded',o);LS.set('sg_ask_rules',o?1:0);break;
+   case 'goUnans':st.sort='unans';render();$('sort').scrollIntoView({behavior:'smooth',block:'start'});break;
+   case 'retry':load();break;
+  }
+});
+function sendAnswer(id){if(!GBU){needLogin();return;}var q=find(id);if(!q)return;var ta=document.getElementById('cmp-'+id);var body=(ta?ta.value:'').trim().replace(/[ \t]+/g,' ');
+  var name=ME.name||(st.names[id]||'').trim();
+  if(body.length<5){toast('اكتب إجابة أوضح شوي');return;}
+  if(hasContact(body+' '+name)){toast('لا تكتب أرقام جوال أو روابط، حسب قواعد المجتمع');return;}
+  var local=ME.city===q.city,btn=document.querySelector('.qc[data-q="'+id+'"] .send');if(btn){btn.disabled=true;btn.textContent='…';}
+  DB.addAnswer(id,{body:body,author_name:name,author_city:ME.city||null,is_local:local}).then(function(row){
+    st.drafts[id]='';var c=clone(row);c.mine=true;q.answers.push(c);rerenderCard(id);toast('وصلت إجابتك وبتظهر بعد المراجعة');
+  }).catch(function(){if(btn){btn.disabled=false;btn.textContent='أرسل';}toast('صار خطأ في الاتصال، حاول مرة ثانية');});}
+document.addEventListener('input',function(e){var t=e.target;
+  if(t.hasAttribute('data-cmp')){var id=t.getAttribute('data-cmp');st.drafts[id]=t.value;var s=t.closest('.cmp').querySelector('.send');if(s)s.disabled=t.value.trim().length<5;return;}
+  if(t.hasAttribute('data-cname')){st.names[t.getAttribute('data-cname')]=t.value;return;}
+  if(t.id==='aBody'){updCnt();if($('aErr').textContent)$('aErr').textContent='';}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&curSheet){closeSheet();return;}
+  if(e.key==='Tab'&&curSheet){var f=[].filter.call(curSheet.querySelectorAll('button,select,input,textarea,[tabindex]'),function(x){return !x.disabled&&x.offsetParent!==null;});if(!f.length)return;
+    if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1].focus();}else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0].focus();}}});
+var qt;$('q').addEventListener('input',function(){st.q=this.value;$('qx').hidden=!this.value;clearTimeout(qt);qt=setTimeout(render,140);});
+$('q').addEventListener('keydown',function(e){if(e.key==='Enter')this.blur();});
+$('qx').addEventListener('click',function(){$('q').value='';st.q='';this.hidden=true;render();$('q').focus();});
+
+/* ===================== تشغيل ===================== */
+(function(){var r=LS.get('sg_ask_rules',0);if(r){$('rules').classList.add('open');$('rules').querySelector('button').setAttribute('aria-expanded','true');}})();
+renderMe();load();
+setTimeout(function(){var x=document.querySelector('#cities .on');if(x&&x.scrollIntoView)x.scrollIntoView({inline:'center',block:'nearest'});window.scrollTo(0,0);},50);
+
+initGbUser();try{if(window.gb&&gb.user){gb.user.onlogin=function(){initGbUser();};gb.user.onlogout=function(){GBU=null;};}}catch(e){}if(!window.gb){var _gbT=0,_gbI=setInterval(function(){if(window.gb||++_gbT>20){clearInterval(_gbI);initGbUser();}},250);}
+</script>
+</body>
+</html>
