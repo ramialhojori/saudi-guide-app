@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>رحلتي - دليل السعودية</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F0EFEF;--card:#fff;--ink:#373D63;--mut:#5A5F80;--line:rgba(55,61,99,.12);--p:#604C87;--or:#F89743;--acc:#B5551A;--shadow:0 8px 24px rgba(55,61,99,.10)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #F89743;outline-offset:2px}
+.wrap{position:relative;max-width:640px;margin:0 auto;padding-bottom:110px;overflow:hidden}
+/* هيدر */
+.hdr{position:relative;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px 64px;border-radius:0 0 30px 30px;background:#604C87;color:#fff}
+.hpat{position:absolute;left:-50px;top:4%;height:74%;width:auto;aspect-ratio:860/624;z-index:0;pointer-events:none}
+.hfade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to left,#604C87 40%,rgba(96,76,135,0) 62%)}
+.hdr>:not(.hpat):not(.hfade){position:relative;z-index:2}
+.hdr small{display:block;font-size:13px;color:#F8C08A;font-weight:700}
+.hdr h1{margin:4px 0 4px;font-size:30px;line-height:1.3;max-width:62%}
+.hdr p{margin:0;font-size:14px;color:#DCD3EA;max-width:62%}
+/* بطاقة الإحصاءات */
+.stats{position:relative;z-index:5;margin:-40px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-radius:22px;box-shadow:0 14px 34px rgba(55,61,99,.16);padding:14px 6px}
+.stats div{text-align:center;border-left:1px solid var(--line)}.stats div:last-child{border-left:0}
+.stats b{display:block;font-size:22px;color:var(--p)}.stats span{font-size:12.5px;color:var(--mut);font-weight:600}
+/* أزرار رئيسية */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;border:0;font-size:15px;font-weight:700}
+.btn.o{background:#F89743;color:#2A2142}.btn.w{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.btn.g{background:#25D366;color:#fff}
+/* إضافة */
+.add{margin:16px 16px 0;background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px}
+.search{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border-radius:14px;background:#F6F4F9;border:1.5px solid transparent}
+.search:focus-within{border-color:#F89743}
+.search input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);min-width:0}
+.res{display:flex;flex-direction:column}
+.ri{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.ri:last-child{border-bottom:0}
+.th{flex:none;width:52px;height:52px;border-radius:12px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.th .mk{width:76%;height:auto}.th .mk .mh{fill:#6E5397}
+.ri .tx{flex:1;min-width:0}.ri b{display:block;font-size:14.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ri span{font-size:12px;color:var(--mut)}
+.plus{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:#EFE9F6;color:var(--p);font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.plus.on{background:#604C87;color:#fff}
+/* مدن */
+.sec{display:flex;align-items:center;justify-content:space-between;padding:24px 16px 10px}
+.sec h3{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}.sec h3 i{width:10px;height:10px;border-radius:3px;transform:rotate(45deg);background:#F89743;display:inline-block}
+.city{margin:0 16px 14px;background:#fff;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px}
+.ch b{font-size:18px}.ch span{font-size:12.5px;color:var(--mut);font-weight:600}
+.ctools{display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap}
+.chip{height:38px;padding:0 13px;border-radius:19px;border:1px solid var(--line);background:#F6F4F9;color:var(--ink);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.chip.p{background:#604C87;color:#fff;border-color:#604C87}
+.stop{position:relative;display:flex;align-items:center;gap:10px;padding:10px 16px}
+.stop .n{flex:none;width:28px;height:28px;border-radius:14px;background:#F89743;color:#2A2142;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:1}
+.stop:not(:last-child) .n::after{content:"";position:absolute;right:29px;top:38px;bottom:-10px;width:2px;background:repeating-linear-gradient(#C6C0DA 0 4px,transparent 4px 8px)}
+.stop .tx{flex:1;min-width:0}.stop b{display:block;font-size:14.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop span{font-size:12px;color:var(--mut)}
+.mv{display:flex;flex-direction:column;gap:2px}
+.ib{width:36px;height:30px;border-radius:10px;border:0;background:#F3F0F8;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.ib.x{background:#FBE3EA;color:#B2405E;height:36px;width:36px;border-radius:18px}
+.sugg{border-top:1px dashed var(--line);padding:10px 16px 14px}
+.sugg small{display:block;font-size:12.5px;font-weight:700;color:var(--acc);margin-bottom:8px}
+.srow{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}.srow::-webkit-scrollbar{display:none}
+.sg{flex:none;width:132px;border-radius:14px;overflow:hidden;background:#F6F4F9;position:relative}
+.sg .im{height:78px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center}
+.sg .im .mk{width:60%;height:auto}.sg .im .mk .mh{fill:#6E5397}
+.sg b{display:block;font-size:12.5px;line-height:1.35;padding:6px 8px 8px;height:44px;overflow:hidden}
+.sg .plus{position:absolute;top:6px;left:6px;width:32px;height:32px;font-size:18px;background:#fff}
+/* فارغ */
+.empty{margin:18px 16px 0;padding:26px 20px;border-radius:24px;background:#fff;box-shadow:var(--shadow);text-align:center}
+.empty .mk{width:120px;height:auto}.empty .mk .mh{fill:#fff}
+.empty b{display:block;font-size:19px;margin-top:10px}.empty p{margin:6px 0 14px;color:var(--mut);font-size:14px;line-height:1.7}
+.cities{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%);background:#373D63;color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;font-weight:700;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}.toast.show{opacity:1}
+/* ===== تبويبات: قائمتي / رحلاتي ===== */
+.tabs{display:flex;gap:4px;margin-top:16px;padding:4px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18)}
+.tabs button{flex:1;height:42px;border:0;border-radius:12px;background:transparent;color:#fff;font-size:15px;font-weight:700}
+.tabs button.on{background:#fff;color:#604C87;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+#sub2,#trips,#tdv,.fab{display:none}
+body.tt #sub{display:none}body.tt #sub2{display:block}body.tt .hdr{padding-bottom:26px}
+body.tt .stats,body.tt .acts,body.tt .add,body.tt #list{display:none}
+body.tt #trips{display:block}body.tt:not(.td) .fab{display:flex}
+body.td .wrap>*:not(#tdv){display:none}body.td #tdv{display:block}body.td .wrap{padding-bottom:30px}
+/* بطاقات الرحلات */
+.tcard{position:relative;margin:0 16px 14px;background:#fff;border-radius:24px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer}
+.tcov{height:150px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center}
+.tcov .mk{width:110px;height:auto}.tcov .mk .mh{fill:#6E5397}
+.tcard.done .tcov{filter:grayscale(.6)}
+.tbadge{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.94);color:#604C87;font-size:12px;font-weight:700;padding:5px 11px;border-radius:12px}
+.tinf{display:flex;align-items:center;gap:10px;padding:12px 16px 14px}
+.tinf .tx{flex:1;min-width:0}.tinf b{display:block;font-size:17px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tinf .tx>span{display:block;font-size:13px;color:var(--mut);font-weight:600;margin-top:1px}
+.kdot{flex:none;width:40px;height:40px;border-radius:20px;border:0;background:#F3F0F8;color:var(--ink);font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.fab{position:fixed;z-index:30;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:16px;height:54px;padding:0 18px 0 22px;border-radius:27px;border:0;background:#F89743;color:#2A2142;font-size:15.5px;font-weight:700;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(248,151,67,.45)}
+.fab i{font-style:normal;font-size:26px;line-height:1;margin-top:-2px}
+/* الشيت السفلي */
+.shb{position:fixed;inset:0;z-index:50;background:rgba(30,26,48,.45);opacity:0;pointer-events:none;transition:opacity .2s}.shb.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;z-index:55;left:0;right:0;bottom:0;margin:0 auto;max-width:640px;max-height:88vh;overflow-y:auto;background:#fff;border-radius:26px 26px 0 0;padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(105%);transition:transform .25s ease;visibility:hidden}.sheet.open{transform:none;visibility:visible}
+.grab{width:44px;height:5px;border-radius:3px;background:#DDD8E6;margin:4px auto 12px}
+.sheet h4{margin:0 0 14px;font-size:18px}
+.fld{display:block;margin-bottom:12px;min-width:0}.fld>span{display:block;font-size:13px;font-weight:700;color:var(--mut);margin-bottom:6px}
+.fld input,.fld select{display:block;width:100%;min-width:0;height:50px;border-radius:14px;border:1.5px solid var(--line);background:#F6F4F9;font:inherit;font-size:16px;color:var(--ink);padding:0 12px;outline:0;text-align:right}
+.fld select{-webkit-appearance:none;appearance:none;background:#F6F4F9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23604C87' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat left 14px center}
+.fld input:focus,.fld select:focus{border-color:#F89743}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn.p{background:#604C87;color:#fff}.btn.full{width:100%}
+.mi{display:flex;align-items:center;gap:12px;width:100%;height:54px;border:0;border-bottom:1px solid var(--line);background:transparent;font-size:16px;font-weight:700;color:var(--ink);padding:0 4px;text-align:right}
+.mi:last-child{border-bottom:0}.mi.r{color:#B2405E}
+/* تفاصيل الرحلة */
+.hero{position:relative;min-height:330px;background:#604C87 center/cover;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 46px}
+.hmk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.3}.hmk .mk{width:190px;height:auto}.hmk .mk .mh{fill:#604C87}
+.hgrad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,36,.5) 0%,rgba(20,16,36,0) 32%,rgba(20,16,36,.2) 55%,rgba(20,16,36,.85) 100%)}
+.htop,.hinfo{position:relative;z-index:2}
+.htop{display:flex;justify-content:space-between}
+.hb{width:44px;height:44px;border-radius:22px;border:0;background:rgba(255,255,255,.94);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.hinfo small{display:block;font-size:13px;font-weight:700;color:#F8C08A}
+.hinfo h2{margin:2px 0 4px;font-size:34px;line-height:1.25}
+.hinfo p{margin:0 0 14px;font-size:14.5px;color:#EDE8F5;font-weight:600}
+.hinv{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:22px;border:0;background:#fff;color:var(--ink);font-size:15px;font-weight:700}
+.tsh{position:relative;z-index:3;margin-top:-26px;background:#fff;border-radius:26px 26px 0 0;min-height:70vh}
+.ttabs{display:flex;border-bottom:1px solid var(--line);padding:6px 8px 0}
+.ttabs button{flex:1;height:50px;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14.5px;font-weight:700;color:var(--mut);padding:0 4px}
+.ttabs button.on{color:var(--p);border-bottom-color:#F89743}
+.tpad{padding:14px 16px 20px}
+.h5{display:flex;align-items:center;justify-content:space-between;margin:20px 0 4px;font-size:16px;font-weight:700}.h5 span{font-size:12.5px;color:var(--mut);font-weight:600}
+.hint{margin-top:8px;padding:16px;border-radius:16px;background:#F6F4F9;color:var(--mut);font-size:14px;line-height:1.8;text-align:center}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:12px;border:0;background:#EFE9F6;color:#604C87;font:inherit;font-size:11.5px;font-weight:700;font-style:normal;vertical-align:middle;margin-inline-end:4px;white-space:nowrap}
+.tag.o{background:#FDEBDC;color:#B5551A}
+.ri .tx>span,.stop .tx>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ib.r{height:36px;width:36px;border-radius:18px;flex:none}
+.day{border:1px solid var(--line);border-radius:20px;margin-top:12px;overflow:hidden}
+.dh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:13px 16px;border:0;background:#FBFAFD;color:var(--ink);text-align:right}
+.dh b{display:block;font-size:15.5px}.dh .tx>span{font-size:12.5px;color:var(--mut);font-weight:600}
+.dh svg{flex:none;transition:transform .2s}.day.cl .dh svg{transform:rotate(90deg)}
+.dbody{padding:2px 0 12px}.day.cl .dbody{display:none}
+.day .stop{padding:10px 12px}.day .stop .n::after{right:25px;top:calc(50% + 17px);bottom:calc(17px - 50%)}.day .stop.lst .n::after{display:none}
+body.tt:not(.td) .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}body.shopen .toast{bottom:auto!important;top:calc(env(safe-area-inset-top,0px) + 16px)}
+.dempty{margin:8px 16px 4px;color:var(--mut);font-size:13.5px;line-height:1.7}
+.dacts{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px 0}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0}.chips::-webkit-scrollbar{display:none}.chips .chip{flex:none}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.fc{position:relative;border-radius:16px;overflow:hidden;background:#F6F4F9;min-width:0}
+.fc .im{height:112px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center}
+.fc .im .mk{width:60%;height:auto}.fc .im .mk .mh{fill:#6E5397}
+.fc b{display:block;font-size:13px;line-height:1.4;padding:8px 10px 0;height:44px;overflow:hidden}
+.fc span{display:block;font-size:11.5px;color:var(--mut);padding:2px 10px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc .plus{position:absolute;top:8px;left:8px;width:36px;height:36px;font-size:20px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15)}.fc .plus.on{background:#604C87;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hdr">__HPAT__<span class="hfade"></span>
+  <small>مخطط الرحلات</small>
+  <h1>رحلتي</h1>
+  <p id="sub">اجمع أماكنك، رتّبها، وافتح المسار بضغطة</p>
+  <p id="sub2">خطط رحلاتك يومًا بيوم</p>
+  <div class="tabs" role="tablist"><button type="button" role="tab" class="on" aria-selected="true" data-ktop="list">قائمتي</button><button type="button" role="tab" aria-selected="false" data-ktop="trips">رحلاتي</button></div>
+</header>
+<div class="stats"><div><b id="stC">0</b><span>مدن</span></div><div><b id="stP">0</b><span>أماكن</span></div><div><b id="stK">0</b><span>كم تقريبًا</span></div></div>
+<div class="acts" id="acts"><button class="btn g" type="button" id="share"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.2-.7-2.7-1.1-4.4-3.8-4.5-4-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.6-.1 1.2z"/></svg>شارك رحلتك</button><button class="btn w" type="button" id="nearAll"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#604C87" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>الأقرب لي الحين</button></div>
+<div class="add"><label class="search" for="q"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F89743" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="أضف مكان لرحلتك… ابحث بالاسم أو المدينة" autocomplete="off" aria-label="أضف مكان لرحلتك"></label><div class="res" id="res"></div></div>
+<div id="list"></div>
+<div id="trips"></div>
+<div id="tdv"></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<button class="fab" type="button" data-knew><i>+</i>أنشئ رحلة</button>
+<div class="shb" id="kshb"></div>
+<div class="sheet" id="ksh" role="dialog" aria-modal="true"></div>
+<script>
+var SNAP = __SNAP__;
+var MARKS = '__MARK__';
+var SITE='https://www.saudi-guide.com', IMGB='https://cmsphoto.ww-cdn.com/';
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function norm(s){return String(s||'').toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/^ال|\sال/g,' ').replace(/[-|_,.،]/g,' ').replace(/\s+/g,' ').trim();}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2000);}
+function km(a,b,c,d){var R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
+function title(t){var p=String(t).split(/\s[-|–]\s|\s?\|\s?/);var ar=p.filter(function(x){return /[\u0600-\u06FF]/.test(x);});return ar.length?ar.join(' - '):t;}
+function thumb(it){return it.th?'<span class="th" style="background-image:url(\''+it.th+'\')"></span>':'<span class="th">'+MARKS+'</span>';}
+
+/* فهرس الأماكن */
+var SECS=SNAP.s, BYID={}, ITEMS=[];
+SNAP.p.forEach(function(r){var m=/\/i\/(\d+)\//.exec(r[2]);if(!m)return;var sec=SECS[r[1]];if(!sec||sec[0]==='visit-saudi')return;
+  var it={id:+m[1],t:title(r[0]),raw:r[0],s:r[1],sn:sec[1],u:r[2],th:r[3]?(/^https?:/.test(r[3])?r[3]:IMGB+r[3]):'',cat:(r[4]||'').split('|').filter(function(c){return c&&c!=='الكل';})[0]||'',lat:+r[5]||0,lng:+r[6]||0};
+  it.key=norm(r[0]+' '+sec[1]+' '+(r[4]||''));if(!BYID[it.id]){BYID[it.id]=it;ITEMS.push(it);}});
+
+/* التخزين (مشترك مع الصفحة الرئيسية) */
+var TRIP=[];
+function save(){var s=JSON.stringify(TRIP);try{localStorage.setItem('sg_fav',s);}catch(e){}if(window.gb&&gb.storage&&gb.storage.setItem){try{gb.storage.setItem('sg_fav',s);}catch(e){}}}
+function load(cb){try{TRIP=JSON.parse(localStorage.getItem('sg_fav'))||[];}catch(e){TRIP=[];}
+  if(window.gb&&gb.storage&&gb.storage.getItem){try{gb.storage.getItem('sg_fav',function(v){try{var x=JSON.parse(v);if(x&&x.length)TRIP=x;}catch(e){}cb();});return;}catch(e){}}cb();}
+function has(id){return TRIP.indexOf(id)>-1;}
+function addId(id){if(!has(id)){TRIP.push(id);save();var it=BYID[id];toast('انضاف '+(it?it.t:'المكان')+' لرحلتك ✓');}render();}
+function delId(id){var i=TRIP.indexOf(id);if(i>-1){TRIP.splice(i,1);save();toast('انشال من رحلتك');}render();}
+
+/* تجميع حسب المدينة */
+function groups(){var g={},order=[];TRIP.forEach(function(id){var it=BYID[id];if(!it)return;if(!g[it.s]){g[it.s]=[];order.push(it.s);}g[it.s].push(it);});return order.map(function(s){return {s:s,name:SECS[s][1],slug:SECS[s][0],items:g[s]};});}
+function routeKm(items){var d=0;for(var i=1;i<items.length;i++){var a=items[i-1],b=items[i];if(a.lat&&b.lat)d+=km(a.lat,a.lng,b.lat,b.lng);}return d;}
+
+/* ترتيب بالأقرب (أقرب جار) */
+function optimize(sIdx,start){var g=groups().filter(function(x){return x.s===sIdx;})[0];if(!g)return;var rest=g.items.slice(),out=[],cur=start;
+  if(!cur){cur=rest.shift();out.push(cur);}
+  while(rest.length){var bi=0,bd=1e9;rest.forEach(function(r,i){var d=(cur.lat&&r.lat)?km(cur.lat,cur.lng,r.lat,r.lng):5e8;if(d<bd){bd=d;bi=i;}});cur=rest.splice(bi,1)[0];out.push(cur);}
+  var ids=out.map(function(x){return x.id;});var others=TRIP.filter(function(id){return ids.indexOf(id)<0;});var first=TRIP.indexOf(g.items[0].id);
+  TRIP=others.slice(0,first).concat(ids).concat(others.slice(first));save();render();toast('رتّبناها بأقصر طريق 🧭');}
+function move(id,dir){var it=BYID[id];var same=TRIP.filter(function(x){return BYID[x]&&BYID[x].s===it.s;});var i=same.indexOf(id),j=i+dir;if(j<0||j>=same.length)return;
+  var a=TRIP.indexOf(same[i]),b=TRIP.indexOf(same[j]);var t=TRIP[a];TRIP[a]=TRIP[b];TRIP[b]=t;save();render();}
+
+/* المسار في الخرائط */
+function openUrl(u){if(window.gb&&gb.location&&typeof gb.location.open==='function'){try{gb.location.open(u);return;}catch(e){}}window.location.href=u;}
+function mapsRoute(sIdx){var g=groups().filter(function(x){return x.s===sIdx;})[0];if(!g)return;var pts=g.items.filter(function(x){return x.lat;}).slice(0,10);
+  if(!pts.length){toast('ما فيه إحداثيات لهالأماكن');return;}
+  var ll=function(p){return p.lat+','+p.lng;};var dest=pts[pts.length-1];var wp=pts.slice(0,-1).map(ll).join('|');
+  openUrl('https://www.google.com/maps/dir/?api=1&destination='+ll(dest)+(wp?'&waypoints='+encodeURIComponent(wp):'')+'&travelmode=driving');}
+
+/* المشاركة */
+function shareText(){var gs=groups();if(!gs.length)return '';var t='🧭 رحلتي مع دليل السعودية\n';
+  gs.forEach(function(g){t+='\n📍 '+g.name+'\n';g.items.forEach(function(it,i){t+=(i+1)+'. '+it.t+'\n'+SITE+it.u+'\n';});});
+  return t+'\nحمّل التطبيق: '+SITE;}
+$('share').addEventListener('click',function(){var t=shareText();if(!t){toast('أضف أماكن أول عشان تشاركها');return;}
+  if(navigator.share&&!window.gb){navigator.share({title:'رحلتي',text:t}).catch(function(){});return;}
+  openUrl('https://wa.me/?text='+encodeURIComponent(t));});
+
+/* الأقرب لي الحين */
+var ME=null;
+function gotLoc(a,b){ME={lat:parseFloat(a),lng:parseFloat(b)};var best=null,bd=1e9;TRIP.forEach(function(id){var it=BYID[id];if(it&&it.lat){var d=km(ME.lat,ME.lng,it.lat,it.lng);if(d<bd){bd=d;best=it;}}});
+  if(!best){toast('أضف أماكن لرحلتك أول');return;}toast('أقرب مكان: '+best.t+' ('+(bd<1?'أقل من كم':Math.round(bd)+' كم')+')');optimize(best.s,{lat:ME.lat,lng:ME.lng});}
+window.gbDidSuccessGetLocation=gotLoc;
+window.gbDidFailGetLocation=function(){var m='فعّل خدمة الموقع للتطبيق من إعدادات جوالك.';if(window.gb&&gb.alert)gb.alert('الموقع غير مفعّل',m);else toast('فعّل خدمة الموقع');};
+$('nearAll').addEventListener('click',function(){if(!TRIP.length){toast('أضف أماكن لرحلتك أول');return;}toast('نحدد موقعك…');
+  if(window.gb&&typeof gb.getLocation==='function')gb.getLocation();
+  else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){gotLoc(p.coords.latitude,p.coords.longitude);},window.gbDidFailGetLocation,{timeout:10000});});
+
+/* البحث والإضافة */
+var tm;$('q').addEventListener('input',function(){var v=norm(this.value);clearTimeout(tm);tm=setTimeout(function(){renderRes(v);},120);});
+function renderRes(v){if(!v){$('res').innerHTML='';return;}var w=v.split(' ');
+  var r=ITEMS.filter(function(it){return w.every(function(x){return it.key.indexOf(x)>-1;});}).slice(0,8);
+  $('res').innerHTML=r.length?r.map(function(it){return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+esc(it.sn)+(it.cat?' · '+esc(it.cat):'')+'</span></span><button class="plus'+(has(it.id)?' on':'')+'" type="button" data-add="'+it.id+'" aria-label="أضف لرحلتي">'+(has(it.id)?'✓':'+')+'</button></div>';}).join(''):'<div style="padding:12px;color:#5A5F80;font-size:14px">ما لقينا نتيجة</div>';}
+
+/* العرض */
+function render(){var gs=groups(),total=0;gs.forEach(function(g){total+=routeKm(g.items);});
+  $('stC').textContent=gs.length;$('stP').textContent=TRIP.filter(function(id){return BYID[id];}).length;$('stK').textContent=Math.round(total);
+  $('sub').textContent=gs.length?('رحلتك فيها '+gs.map(function(g){return g.name;}).join(' و')):'اجمع أماكنك، رتّبها، وافتح المسار بضغطة';
+  renderRes(norm($('q').value));
+  if(!gs.length){var top=[0,5,4,7,6,3].map(function(i){return SECS[i];}).filter(Boolean);
+    $('list').innerHTML='<div class="empty"><span class="th" style="width:150px;height:110px;margin:0 auto;background:#604C87;border-radius:24px">'+MARKS+'</span><b>رحلتك فاضية</b><p>ابحث فوق وأضف أي مكان من أكثر من 1,100 مكان، أو ابدأ باقتراحات مدينة:</p><div class="cities">'+top.map(function(s){return '<button class="chip" type="button" data-city="'+SECS.indexOf(s)+'">'+esc(s[1])+'</button>';}).join('')+'</div></div><div id="cityS"></div>';return;}
+  $('list').innerHTML='<div class="sec"><h3><i></i>محطاتك</h3></div>'+gs.map(function(g){var d=routeKm(g.items);
+    var sug=ITEMS.filter(function(it){return it.s===g.s&&!has(it.id)&&it.th;}).slice(0,8);
+    return '<section class="city"><div class="ch"><b>'+esc(g.name)+'</b><span>'+g.items.length+' '+(g.items.length>2&&g.items.length<11?'أماكن':'مكان')+(d?' · '+Math.round(d)+' كم':'')+'</span></div>'+
+     '<div class="ctools"><button class="chip p" type="button" data-route="'+g.s+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>افتح المسار</button>'+(g.items.length>2?'<button class="chip" type="button" data-opt="'+g.s+'">🧭 رتّب بأقصر طريق</button>':'')+'<a class="chip" href="'+SITE+'/'+g.slug+'/">كل أماكن '+esc(g.name)+'</a></div>'+
+     g.items.map(function(it,i){var prev=g.items[i-1];var dd=(prev&&prev.lat&&it.lat)?km(prev.lat,prev.lng,it.lat,it.lng):null;
+       return '<div class="stop"><span class="n">'+(i+1)+'</span><a class="th" href="'+SITE+it.u+'"'+(it.th?' style="background-image:url(\''+it.th+'\')">':'>'+MARKS)+'</a><a class="tx" href="'+SITE+it.u+'"><b>'+esc(it.t)+'</b><span>'+(it.cat?esc(it.cat):'')+(dd!==null?(it.cat?' · ':'')+(dd<1?'أقل من كم':Math.round(dd)+' كم')+' من اللي قبله':'')+'</span></a>'+
+         '<span class="mv"><button class="ib" type="button" data-up="'+it.id+'" aria-label="لفوق">▲</button><button class="ib" type="button" data-dn="'+it.id+'" aria-label="لتحت">▼</button></span><button class="ib x" type="button" data-del="'+it.id+'" aria-label="احذف">✕</button></div>';}).join('')+
+     (sug.length?'<div class="sugg"><small>✨ مقترح لك في '+esc(g.name)+'</small><div class="srow">'+sug.map(function(it){return '<div class="sg"><a href="'+SITE+it.u+'"><div class="im" style="background-image:url(\''+it.th+'\')"></div><b>'+esc(it.t)+'</b></a><button class="plus" type="button" data-add="'+it.id+'" aria-label="أضف">+</button></div>';}).join('')+'</div></div>':'')+'</section>';}).join('');
+}
+function cityStart(si){var sug=ITEMS.filter(function(it){return it.s===si&&it.th;}).slice(0,10);var c=$('cityS');if(!c)return;
+  c.innerHTML='<div class="sec"><h3><i></i>أشهر أماكن '+esc(SECS[si][1])+'</h3></div><div class="add" style="margin-top:0">'+sug.map(function(it){return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+esc(it.cat||it.sn)+'</span></span><button class="plus" type="button" data-add="'+it.id+'" aria-label="أضف لرحلتي">+</button></div>';}).join('')+'</div>';}
+
+document.addEventListener('click',function(e){var b;
+  if(b=e.target.closest('[data-add]')){var id=+b.getAttribute('data-add');has(id)?delId(id):addId(id);return;}
+  if(b=e.target.closest('[data-del]')){delId(+b.getAttribute('data-del'));return;}
+  if(b=e.target.closest('[data-up]')){move(+b.getAttribute('data-up'),-1);return;}
+  if(b=e.target.closest('[data-dn]')){move(+b.getAttribute('data-dn'),1);return;}
+  if(b=e.target.closest('[data-opt]')){optimize(+b.getAttribute('data-opt'),ME);return;}
+  if(b=e.target.closest('[data-route]')){mapsRoute(+b.getAttribute('data-route'));return;}
+  if(b=e.target.closest('[data-city]')){cityStart(+b.getAttribute('data-city'));return;}
+});
+/* ===== رحلاتي (Trips) ===== */
+var TRIPS=[],CUR=null,DTAB='saved',FCAT='',TQ='',CLOSED={},SHEET=null,SCY=0,H1T=null,tm2;
+var SLOT={m:'صباح',n:'ظهر',e:'مساء'},SLOTN={m:'n',n:'e',e:'m'};
+function fixTrips(a){return (a&&a.filter?a:[]).filter(function(t){return t&&t.id&&t.start&&t.end;}).map(function(t){if(!t.saved||!t.saved.filter)t.saved=[];if(!t.days||typeof t.days!=='object')t.days={};return t;});}
+function saveTrips(){var s=JSON.stringify(TRIPS);try{localStorage.setItem('sg_trips',s);}catch(e){}if(window.gb&&gb.storage&&gb.storage.setItem){try{gb.storage.setItem('sg_trips',s);}catch(e){}}}
+function loadTrips(cb){try{TRIPS=fixTrips(JSON.parse(localStorage.getItem('sg_trips')));}catch(e){TRIPS=[];}
+  if(window.gb&&gb.storage&&gb.storage.getItem){try{gb.storage.getItem('sg_trips',function(v){try{var x=JSON.parse(v);if(x&&x.length)TRIPS=fixTrips(x);}catch(e){}cb();});return;}catch(e){}}cb();}
+
+/* التواريخ (ميلادي بالعربي) */
+var MON=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],WDN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],DFC={};
+function dfmt(o){var k=JSON.stringify(o);if(!(k in DFC)){try{DFC[k]=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',o);}catch(e){DFC[k]=null;}}return DFC[k];}
+function fx(o,d,fb){var f=dfmt(o);try{if(f)return f.format(d).replace(/[‎‏؜]/g,'');}catch(e){}return fb;}
+function pad(n){return (n<10?'0':'')+n;}
+function pdt(s){var a=String(s).split('-');return new Date(+a[0],(+a[1]||1)-1,+a[2]||1);}
+function dstr(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function today(){return dstr(new Date());}
+function addD(s,n){var d=pdt(s);d.setDate(d.getDate()+n);return dstr(d);}
+function dDM(s){var d=pdt(s);return fx({day:'numeric',month:'long'},d,d.getDate()+' '+MON[d.getMonth()]);}
+function dMon(s){var d=pdt(s);return fx({month:'long'},d,MON[d.getMonth()]);}
+function dWD(s){var d=pdt(s);return fx({weekday:'long'},d,WDN[d.getDay()]);}
+function dRange(t){var e=pdt(t.end);return dDM(t.start)+' ← '+dDM(t.end)+(e.getFullYear()!==new Date().getFullYear()?' '+e.getFullYear():'');}
+function tDays(t){var o=[],s=t.start;for(var i=0;i<60&&s<=t.end;i++){o.push(s);s=addD(s,1);}return o;}
+function nPl(n,one,two,few,many){return n===1?one:n===2?two:(n>2&&n<11?n+' '+few:n+' '+many);}
+function placesTxt(n){return n?nPl(n,'مكان واحد محفوظ','مكانان محفوظان','أماكن محفوظة','مكانًا محفوظًا'):'لا توجد أماكن محفوظة';}
+function daysTxt(n){return nPl(n,'يوم واحد','يومان','أيام','يومًا');}
+
+/* مساعدات الرحلة */
+function cIdx(slug){for(var i=0;i<SECS.length;i++)if(SECS[i][0]===slug)return i;return -1;}
+function cName(t){var i=cIdx(t.city);return i>-1?SECS[i][1]:(t.cityName||'');}
+function cityList(){var seen={},o=[];ITEMS.forEach(function(it){if(!seen[it.s]){seen[it.s]=1;o.push(it.s);}});return o.sort(function(a,b){return a-b;});}
+function tById(id){for(var i=0;i<TRIPS.length;i++)if(TRIPS[i].id===id)return TRIPS[i];return null;}
+function tName(t){return t.name||cName(t);}
+function isDone(t){return t.end<today();}
+function cover(t){var a=t.saved.map(function(id){return BYID[id];}).filter(function(it){return it&&it.th;})[0];if(a)return a.th;
+  var ci=cIdx(t.city),b=ITEMS.filter(function(it){return it.s===ci&&it.th;})[0];return b?b.th:'';}
+function dayOf(t,id,not){for(var k in t.days){if(k!==not&&t.days[k].some(function(x){return x.id===id;}))return k;}return '';}
+function isSaved(t,id){return t.saved.indexOf(id)>-1;}
+function bySameCity(t,arr){var ci=cIdx(t.city);return arr.filter(function(it){return it.s===ci;}).concat(arr.filter(function(it){return it.s!==ci;}));}
+function dirUrl(it){return it.lat?'https://www.google.com/maps/dir/?api=1&destination='+it.lat+','+it.lng+'&travelmode=driving':'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(it.t+' '+it.sn);}
+function routeOpen(items){var pts=items.filter(function(x){return x.lat;}).slice(0,10);if(!pts.length){toast('ما فيه إحداثيات لهالأماكن');return;}
+  var ll=function(p){return p.lat+','+p.lng;};var dest=pts[pts.length-1];var wp=pts.slice(0,-1).map(ll).join('|');
+  openUrl('https://www.google.com/maps/dir/?api=1&destination='+ll(dest)+(wp?'&waypoints='+encodeURIComponent(wp):'')+'&travelmode=driving');}
+var IC={
+ back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+ gear:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+ wa:'<svg width="19" height="19" viewBox="0 0 24 24" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.2-.7-2.7-1.1-4.4-3.8-4.5-4-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.6-.1 1.2z"/></svg>',
+ nav:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#604C87" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
+ chev:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#604C87" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+ search:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F89743" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'};
+
+/* قائمة الرحلات */
+function tripCard(t){var c=cover(t),now=today(),badge='';
+  if(t.start<=now&&t.end>=now)badge='جارية الآن';else if(t.start>now){var n=Math.round((pdt(t.start)-pdt(now))/864e5);badge='بعد '+(n===1?'يوم':n===2?'يومين':n<11?n+' أيام':n+' يومًا');}
+  return '<div class="tcard'+(isDone(t)?' done':'')+'" data-kopen="'+t.id+'"><div class="tcov"'+(c?' style="background-image:url(\''+esc(c)+'\')">':'>'+MARKS)+'</div>'+(badge?'<span class="tbadge">'+badge+'</span>':'')+
+    '<div class="tinf"><span class="tx"><b>'+esc(tName(t))+'</b><span>'+dRange(t)+'</span><span>'+placesTxt(t.saved.length)+(t.name?' · '+esc(cName(t)):'')+'</span></span><button class="kdot" type="button" data-kmenu="'+t.id+'" aria-label="خيارات الرحلة">⋮</button></div></div>';}
+function renderTrips(){var el=$('trips');if(!el)return;
+  if(!TRIPS.length){el.innerHTML='<div class="empty"><span class="th" style="width:150px;height:110px;margin:0 auto;background:#604C87;border-radius:24px">'+MARKS+'</span><b>ستظهر رحلاتك هنا</b><p>أنشئ رحلة، اختر المدينة والتواريخ، ورتّب أماكنك يومًا بيوم.</p><button class="btn o" type="button" data-knew style="margin:0 auto;padding:0 24px">+ أنشئ رحلة</button></div>';return;}
+  var up=TRIPS.filter(function(t){return !isDone(t);}).sort(function(a,b){return a.start<b.start?-1:a.start>b.start?1:0;});
+  var dn=TRIPS.filter(isDone).sort(function(a,b){return a.end<b.end?1:-1;});
+  el.innerHTML='<div class="sec"><h3><i></i>رحلاتي القادمة</h3></div>'+(up.length?up.map(tripCard).join(''):'<div class="hint" style="margin:0 16px">لا توجد رحلات قادمة. اضغط «أنشئ رحلة» وابدأ التخطيط.</div>')+
+    (dn.length?'<div class="sec"><h3><i></i>الرحلات المكتملة</h3></div>'+dn.map(tripCard).join(''):'');}
+function setTab(k){var tt=k==='trips',b=document.body;b.classList.toggle('tt',tt);if(!tt){b.classList.remove('td');CUR=null;}
+  var bs=document.querySelectorAll('[data-ktop]');for(var i=0;i<bs.length;i++){var on=bs[i].getAttribute('data-ktop')===k;bs[i].classList.toggle('on',on);bs[i].setAttribute('aria-selected',on?'true':'false');}
+  var h=document.querySelector('.hdr h1');if(H1T===null)H1T=h.textContent;h.textContent=tt?'رحلاتي':H1T;if(tt)renderTrips();}
+
+/* تفاصيل الرحلة */
+function openTrip(id,tab){var t=tById(id);if(!t)return;if(!document.body.classList.contains('td'))SCY=window.pageYOffset||0;
+  CUR=id;DTAB=tab||(t.saved.length?'plan':'saved');FCAT='';TQ='';document.body.classList.add('td');renderDetail();window.scrollTo(0,0);}
+function closeTrip(){CUR=null;document.body.classList.remove('td');renderTrips();window.scrollTo(0,SCY);}
+function placeRow(t,it,btn){return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+esc(it.sn)+(it.cat?' · '+esc(it.cat):'')+'</span></span>'+btn+'</div>';}
+function svBtn(t,it){var on=isSaved(t,it.id);return '<button class="plus'+(on?' on':'')+'" type="button" data-ksv="'+it.id+'" aria-label="احفظ في الرحلة">'+(on?'✓':'+')+'</button>';}
+function tres(t){var v=norm(TQ);if(!v)return '';var w=v.split(' ');
+  var r=bySameCity(t,ITEMS.filter(function(it){return w.every(function(x){return it.key.indexOf(x)>-1;});})).slice(0,8);
+  return r.length?r.map(function(it){return placeRow(t,it,svBtn(t,it));}).join(''):'<div style="padding:12px;color:#5A5F80;font-size:14px">ما لقينا نتيجة</div>';}
+function favLeft(t){return bySameCity(t,TRIP.map(function(id){return BYID[id];}).filter(function(it){return it&&!isSaved(t,it.id);}));}
+function savedHtml(t){var s='<label class="search" for="tq">'+IC.search+'<input id="tq" type="search" placeholder="ابحث عن مكان وأضفه للرحلة…" autocomplete="off" aria-label="ابحث عن مكان" value="'+esc(TQ)+'"></label><div class="res" id="tres">'+tres(t)+'</div>';
+  var sv=t.saved.map(function(id){return BYID[id];}).filter(Boolean);
+  s+='<div class="h5">المحفوظات <span>'+placesTxt(sv.length)+'</span></div>';
+  if(!sv.length)s+='<div class="hint">لا توجد محفوظات بعد. ابحث بالأعلى، أو أضف من قائمتك، أو تصفّح <button class="tag o" type="button" data-kt="for">من أجلك</button></div>';
+  else s+='<div class="res">'+sv.map(function(it){var d=dayOf(t,it.id);
+    return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+(d?'<i class="tag">'+esc(dWD(d))+' '+esc(dDM(d))+'</i>':'<i class="tag o">غير مجدول</i>')+esc(it.cat||it.sn)+'</span></span><button class="ib r" type="button" data-kdir="'+it.id+'" aria-label="الاتجاهات">'+IC.nav+'</button><button class="ib x" type="button" data-krm="'+it.id+'" aria-label="احذف من الرحلة">✕</button></div>';}).join('')+'</div>';
+  var fav=favLeft(t);if(fav.length)s+='<div class="h5">من قائمتي <span>'+fav.length+'</span></div><div class="res">'+fav.slice(0,20).map(function(it){return placeRow(t,it,svBtn(t,it));}).join('')+'</div>';
+  return s;}
+function planHtml(t,days){var s='<div class="chips">'+days.map(function(d){return '<button class="chip" type="button" data-kday="'+d+'">'+esc(dMon(d))+' '+pdt(d).getDate()+'</button>';}).join('')+'</div>';
+  days.forEach(function(d,di){var arr=(t.days[d]||[]).filter(function(x){return BYID[x.id];}),cl=CLOSED[t.id+d];
+    s+='<section class="day'+(cl?' cl':'')+'" id="kd-'+d+'"><button class="dh" type="button" data-ktog="'+d+'" aria-expanded="'+(cl?'false':'true')+'"><span class="tx"><b>'+esc(dWD(d))+'، '+esc(dDM(d))+'</b><span>اليوم '+(di+1)+' · '+(arr.length?nPl(arr.length,'مكان واحد','مكانان','أماكن','مكانًا'):'لا يوجد برنامج')+'</span></span>'+IC.chev+'</button><div class="dbody">';
+    if(!arr.length)s+='<p class="dempty">أنشئ برنامج رحلتك عن طريق إضافة عناصر من محفوظاتك.</p>';
+    else s+=arr.map(function(x,i){var it=BYID[x.id],k=d+'|'+i;
+      return '<div class="stop'+(i===arr.length-1?' lst':'')+'"><span class="n">'+(i+1)+'</span>'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span><button class="tag" type="button" data-kslot="'+k+'" aria-label="غيّر الوقت">'+(SLOT[x.slot]||SLOT.m)+' ⇄</button><button class="tag o" type="button" data-kdir="'+it.id+'">الاتجاهات</button></span></span>'+
+        '<span class="mv"><button class="ib" type="button" data-kmv="'+k+'|-1" aria-label="لفوق">▲</button><button class="ib" type="button" data-kmv="'+k+'|1" aria-label="لتحت">▼</button></span><button class="ib x" type="button" data-kdrm="'+k+'" aria-label="شيل من اليوم">✕</button></div>';}).join('');
+    s+='<div class="dacts"><button class="chip p" type="button" data-kpick="'+d+'">+ أضف عناصر</button>'+(arr.length>0?'<button class="chip" type="button" data-kdroute="'+d+'">'+IC.nav+'مسار اليوم</button>':'')+'</div></div></section>';});
+  return s;}
+function forHtml(t){var ci=cIdx(t.city),all=ITEMS.filter(function(it){return it.s===ci;});
+  if(!all.length)return '<div class="hint">ما عندنا اقتراحات لهالمدينة حاليًا.</div>';
+  var ph=all.filter(function(it){return it.th;}).concat(all.filter(function(it){return !it.th;})),cc={},cats=[];
+  all.forEach(function(it){if(it.cat){if(!cc[it.cat]){cc[it.cat]=0;cats.push(it.cat);}cc[it.cat]++;}});cats.sort(function(a,b){return cc[b]-cc[a];});
+  var list=FCAT?ph.filter(function(it){return it.cat===FCAT;}):ph;
+  return '<div class="h5" style="margin-top:2px">أفضل الأماكن في '+esc(cName(t))+'<span>'+list.length+'</span></div><div class="chips" style="margin-top:8px"><button class="chip'+(FCAT?'':' p')+'" type="button" data-kcat="">الكل</button>'+cats.slice(0,10).map(function(c){return '<button class="chip'+(FCAT===c?' p':'')+'" type="button" data-kcat="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'</div>'+
+    '<div class="fgrid">'+list.slice(0,30).map(function(it){var on=isSaved(t,it.id);return '<div class="fc"><a href="'+SITE+it.u+'"><div class="im"'+(it.th?' style="background-image:url(\''+it.th+'\')">':'>'+MARKS)+'</div><b>'+esc(it.t)+'</b><span>'+esc(it.cat||it.sn)+'</span></a><button class="plus'+(on?' on':'')+'" type="button" data-ksv="'+it.id+'" aria-label="احفظ في الرحلة">'+(on?'✓':'+')+'</button></div>';}).join('')+'</div>';}
+function renderDetail(){var t=tById(CUR),el=$('tdv');if(!t){closeTrip();return;}var c=cover(t),days=tDays(t);
+  el.innerHTML='<div class="hero"'+(c?' style="background-image:url(\''+esc(c)+'\')"':'')+'>'+(c?'':'<span class="hmk">'+MARKS+'</span>')+'<span class="hgrad"></span>'+
+   '<div class="htop"><button class="hb" type="button" data-kback aria-label="رجوع">'+IC.back+'</button><button class="hb" type="button" data-kedit="'+t.id+'" aria-label="إعدادات الرحلة">'+IC.gear+'</button></div>'+
+   '<div class="hinfo"><small>'+(t.name?esc(t.name):'رحلتك إلى')+'</small><h2>'+esc(cName(t))+'</h2><p>'+dRange(t)+' · '+daysTxt(days.length)+'</p><button class="hinv" type="button" data-kinv="'+t.id+'">'+IC.wa+'دعوة</button></div></div>'+
+   '<div class="tsh"><div class="ttabs" role="tablist">'+[['saved','المحفوظات'],['plan','برنامج الرحلة'],['for','من أجلك']].map(function(x){return '<button type="button" role="tab" class="'+(DTAB===x[0]?'on':'')+'" aria-selected="'+(DTAB===x[0])+'" data-kt="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
+   '<div class="tpad">'+(DTAB==='plan'?planHtml(t,days):DTAB==='for'?forHtml(t):savedHtml(t))+'</div></div>';}
+
+/* الشيت: إنشاء/تعديل، قائمة ⋮، اختيار عناصر */
+function drawSheet(){var h='',t=SHEET&&tById(SHEET.id);if(!SHEET)return;
+  if(SHEET.k==='form')h=formHtml(t);
+  else if(SHEET.k==='menu'&&t)h='<div class="grab"></div><h4>'+esc(tName(t))+'</h4><button class="mi" type="button" data-kedit="'+t.id+'">✎ تعديل</button><button class="mi" type="button" data-kinv="'+t.id+'">↗ مشاركة</button><button class="mi r" type="button" data-kdel="'+t.id+'">✕ '+(SHEET.cf?'اضغط مرة ثانية لتأكيد الحذف':'حذف')+'</button>';
+  else if(SHEET.k==='pick'&&t)h=pickHtml(t,SHEET.d);
+  $('ksh').innerHTML=h;$('ksh').classList.add('open');$('kshb').classList.add('open');document.body.classList.add('shopen');}
+function closeSheet(){SHEET=null;$('ksh').classList.remove('open');$('kshb').classList.remove('open');document.body.classList.remove('shopen');}
+function formHtml(t){var cl=cityList(),g=groups(),def=t?cIdx(t.city):(g[0]?g[0].s:cl[0]),st=t?t.start:today(),en=t?t.end:addD(today(),2);
+  return '<div class="grab"></div><h4>'+(t?'تعديل الرحلة':'أنشئ رحلة')+'</h4><label class="fld"><span>المدينة</span><select id="fc">'+cl.map(function(i){return '<option value="'+esc(SECS[i][0])+'"'+(i===def?' selected':'')+'>'+esc(SECS[i][1])+'</option>';}).join('')+'</select></label>'+
+   '<div class="frow"><label class="fld"><span>تاريخ البداية</span><input id="fs" type="date" value="'+st+'"></label><label class="fld"><span>تاريخ النهاية</span><input id="fe" type="date" value="'+en+'" min="'+st+'"></label></div>'+
+   '<label class="fld"><span>اسم الرحلة (اختياري)</span><input id="fn" type="text" maxlength="40" placeholder="مثال: إجازة نهاية الأسبوع" value="'+esc(t?t.name||'':'')+'"></label>'+
+   '<button class="btn o full" type="button" data-ksave="'+(t?t.id:'')+'" style="margin-top:4px">'+(t?'احفظ التعديلات':'أنشئ الرحلة')+'</button>';}
+function saveForm(id){var c=$('fc').value,s=$('fs').value,e=$('fe').value,n=$('fn').value.trim().slice(0,40),t=id?tById(id):null;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!/^\d{4}-\d{2}-\d{2}$/.test(e)){toast('اختر تاريخ البداية والنهاية');return;}
+  if(e<s){toast('تاريخ النهاية لازم يكون بعد البداية');return;}
+  if(tDays({start:s,end:e}).length>30){toast('أقصى مدة للرحلة 30 يومًا');return;}
+  var ci=cIdx(c),added=0;
+  if(t){t.city=c;t.cityName=ci>-1?SECS[ci][1]:'';t.start=s;t.end=e;t.name=n;for(var k in t.days){if(k<s||k>e)delete t.days[k];}}
+  else{t={id:'t'+Date.now().toString(36),name:n,city:c,cityName:ci>-1?SECS[ci][1]:'',start:s,end:e,saved:[],days:{},created:Date.now()};
+    TRIP.forEach(function(x){var it=BYID[x];if(it&&it.s===ci){t.saved.push(x);added++;}});TRIPS.push(t);}
+  saveTrips();closeSheet();
+  if(id){toast('انحفظت التعديلات ✓');CUR?renderDetail():renderTrips();}
+  else{toast(added?'أنشأنا رحلتك وأضفنا '+added+' من قائمتك ✓':'أنشأنا رحلتك ✓');openTrip(t.id,added?'plan':'saved');}}
+function pickHtml(t,d){var arr=t.days[d]||[],sv=t.saved.map(function(id){return BYID[id];}).filter(Boolean),fav=favLeft(t);
+  var row=function(it){var on=arr.some(function(x){return x.id===it.id;}),od=dayOf(t,it.id,d);
+    return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+(od?'<i class="tag o">في '+esc(dDM(od))+'</i>':'')+esc(it.cat||it.sn)+'</span></span><button class="plus'+(on?' on':'')+'" type="button" data-kpt="'+it.id+'" aria-label="أضف لهذا اليوم">'+(on?'✓':'+')+'</button></div>';};
+  var s='<div class="grab"></div><h4>أضف إلى '+esc(dWD(d))+'، '+esc(dDM(d))+'</h4>';
+  s+=sv.length?'<div class="h5" style="margin-top:0">من محفوظات الرحلة</div><div class="res">'+sv.map(row).join('')+'</div>':'<div class="hint">ما عندك محفوظات في هذه الرحلة بعد.</div>';
+  if(fav.length)s+='<div class="h5">من قائمتي</div><div class="res">'+fav.slice(0,15).map(row).join('')+'</div>';
+  if(!sv.length&&!fav.length)s+='<button class="btn w full" type="button" data-kt="for" style="margin-top:12px">تصفّح اقتراحات من أجلك</button>';
+  return s+'<button class="btn p full" type="button" data-kclose style="margin-top:14px">تم</button>';}
+
+/* المشاركة (دعوة) */
+function tripText(t){var s='🧭 رحلتي إلى '+cName(t)+(t.name?' — '+t.name:'')+'\n📅 '+dRange(t)+'\n';
+  tDays(t).forEach(function(d,i){var arr=(t.days[d]||[]).filter(function(x){return BYID[x.id];});if(!arr.length)return;
+    s+='\n🗓 اليوم '+(i+1)+': '+dWD(d)+'، '+dDM(d)+'\n';arr.forEach(function(x,j){var it=BYID[x.id];s+=(j+1)+'. '+it.t+' ('+(SLOT[x.slot]||SLOT.m)+')\n'+SITE+it.u+'\n';});});
+  var un=t.saved.filter(function(id){return BYID[id]&&!dayOf(t,id);});if(un.length){s+='\n⭐ أماكن محفوظة:\n';un.forEach(function(id){s+='• '+BYID[id].t+'\n';});}
+  return s+'\nخطط رحلتك معي في دليل السعودية:\n'+SITE+'/trip';}
+
+/* تعديلات البيانات */
+function togSave(t,id){var i=t.saved.indexOf(id),it=BYID[id];
+  if(i>-1){t.saved.splice(i,1);for(var k in t.days)t.days[k]=t.days[k].filter(function(x){return x.id!==id;});toast('انشال من الرحلة');}
+  else{t.saved.push(id);toast('انحفظ '+(it?it.t:'المكان')+' في الرحلة ✓');}saveTrips();}
+function defSlot(n){return n<1?'m':n<2?'n':'e';}
+
+document.addEventListener('click',function(e){var b,t,id,p;
+  if(b=e.target.closest('[data-ktop]')){setTab(b.getAttribute('data-ktop'));return;}
+  if(e.target.closest('[data-knew]')){SHEET={k:'form'};drawSheet();return;}
+  if(b=e.target.closest('[data-kmenu]')){SHEET={k:'menu',id:b.getAttribute('data-kmenu')};drawSheet();return;}
+  if(b=e.target.closest('[data-kopen]')){openTrip(b.getAttribute('data-kopen'));return;}
+  if(e.target.closest('[data-kback]')){closeTrip();return;}
+  if(b=e.target.closest('[data-kedit]')){SHEET={k:'form',id:b.getAttribute('data-kedit')};drawSheet();return;}
+  if(b=e.target.closest('[data-kinv]')){t=tById(b.getAttribute('data-kinv'));if(t){closeSheet();openUrl('https://wa.me/?text='+encodeURIComponent(tripText(t)));}return;}
+  if(b=e.target.closest('[data-kdel]')){id=b.getAttribute('data-kdel');if(SHEET&&SHEET.cf){TRIPS=TRIPS.filter(function(x){return x.id!==id;});saveTrips();closeSheet();if(CUR===id)closeTrip();else renderTrips();toast('انحذفت الرحلة');}else if(SHEET){SHEET.cf=1;drawSheet();}return;}
+  if(b=e.target.closest('[data-ksave]')){saveForm(b.getAttribute('data-ksave'));return;}
+  if(e.target.closest('[data-kclose]')||e.target.id==='kshb'){closeSheet();return;}
+  t=tById(CUR);if(!t)return;
+  if(b=e.target.closest('[data-kt]')){DTAB=b.getAttribute('data-kt');if(SHEET)closeSheet();renderDetail();return;}
+  if(b=e.target.closest('[data-kdir]')){var it=BYID[+b.getAttribute('data-kdir')];if(it)openUrl(dirUrl(it));return;}
+  if(b=e.target.closest('[data-krm]')){togSave(t,+b.getAttribute('data-krm'));renderDetail();return;}
+  if(b=e.target.closest('[data-ksv]')){togSave(t,+b.getAttribute('data-ksv'));renderDetail();return;}
+  if(b=e.target.closest('[data-kcat]')){FCAT=b.getAttribute('data-kcat');renderDetail();return;}
+  if(b=e.target.closest('[data-kday]')){id=b.getAttribute('data-kday');delete CLOSED[t.id+id];renderDetail();var s=$('kd-'+id);if(s)s.scrollIntoView({behavior:'smooth',block:'start'});return;}
+  if(b=e.target.closest('[data-ktog]')){id=t.id+b.getAttribute('data-ktog');CLOSED[id]?delete CLOSED[id]:CLOSED[id]=1;renderDetail();return;}
+  if(b=e.target.closest('[data-kslot]')){p=b.getAttribute('data-kslot').split('|');var x=(t.days[p[0]]||[])[+p[1]];if(x){x.slot=SLOTN[x.slot]||'n';saveTrips();renderDetail();}return;}
+  if(b=e.target.closest('[data-kmv]')){p=b.getAttribute('data-kmv').split('|');var a=t.days[p[0]]||[],i=+p[1],j=i+(+p[2]);if(j<0||j>=a.length)return;var tmp=a[i];a[i]=a[j];a[j]=tmp;saveTrips();renderDetail();return;}
+  if(b=e.target.closest('[data-kdrm]')){p=b.getAttribute('data-kdrm').split('|');(t.days[p[0]]||[]).splice(+p[1],1);if(t.days[p[0]]&&!t.days[p[0]].length)delete t.days[p[0]];saveTrips();renderDetail();return;}
+  if(b=e.target.closest('[data-kpick]')){SHEET={k:'pick',id:t.id,d:b.getAttribute('data-kpick')};drawSheet();return;}
+  if(b=e.target.closest('[data-kdroute]')){routeOpen((t.days[b.getAttribute('data-kdroute')]||[]).map(function(x){return BYID[x.id];}).filter(Boolean));return;}
+  if((b=e.target.closest('[data-kpt]'))&&SHEET&&SHEET.k==='pick'){id=+b.getAttribute('data-kpt');var d=SHEET.d,arr=t.days[d]||(t.days[d]=[]),k=-1;
+    arr.forEach(function(x,n){if(x.id===id)k=n;});if(k>-1){arr.splice(k,1);if(!arr.length)delete t.days[d];}else{if(!isSaved(t,id))t.saved.push(id);arr.push({id:id,slot:defSlot(arr.length)});}
+    saveTrips();drawSheet();renderDetail();return;}
+});
+document.addEventListener('input',function(e){if(e.target.id==='tq'){TQ=e.target.value;clearTimeout(tm2);tm2=setTimeout(function(){var t=tById(CUR);if(t&&$('tres'))$('tres').innerHTML=tres(t);},120);}});
+document.addEventListener('change',function(e){if(e.target.id==='fs'){var fe=$('fe');fe.min=e.target.value;if(!fe.value||fe.value<e.target.value)fe.value=addD(e.target.value,2);}});
+load(render);
+loadTrips(function(){if(CUR&&tById(CUR))renderDetail();else renderTrips();});
+</script>
+</body>
+</html>

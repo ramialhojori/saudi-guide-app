@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>رحلتي - دليل السعودية</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F0EFEF;--card:#fff;--ink:#373D63;--mut:#5A5F80;--line:rgba(55,61,99,.12);--p:#604C87;--or:#F89743;--acc:#B5551A;--shadow:0 8px 24px rgba(55,61,99,.10)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #F89743;outline-offset:2px}
+.wrap{position:relative;max-width:640px;margin:0 auto;padding-bottom:110px;overflow:hidden}
+/* هيدر */
+.hdr{position:relative;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px 64px;border-radius:0 0 30px 30px;background:#604C87;color:#fff}
+.hpat{position:absolute;left:-50px;top:4%;height:74%;width:auto;aspect-ratio:860/624;z-index:0;pointer-events:none}
+.hfade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to left,#604C87 40%,rgba(96,76,135,0) 62%)}
+.hdr>:not(.hpat):not(.hfade){position:relative;z-index:2}
+.hdr small{display:block;font-size:13px;color:#F8C08A;font-weight:700}
+.hdr h1{margin:4px 0 4px;font-size:30px;line-height:1.3;max-width:62%}
+.hdr p{margin:0;font-size:14px;color:#DCD3EA;max-width:62%}
+/* بطاقة الإحصاءات */
+.stats{position:relative;z-index:5;margin:-40px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-radius:22px;box-shadow:0 14px 34px rgba(55,61,99,.16);padding:14px 6px}
+.stats div{text-align:center;border-left:1px solid var(--line)}.stats div:last-child{border-left:0}
+.stats b{display:block;font-size:22px;color:var(--p)}.stats span{font-size:12.5px;color:var(--mut);font-weight:600}
+/* أزرار رئيسية */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;border:0;font-size:15px;font-weight:700}
+.btn.o{background:#F89743;color:#2A2142}.btn.w{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.btn.g{background:#25D366;color:#fff}
+/* إضافة */
+.add{margin:16px 16px 0;background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px}
+.search{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border-radius:14px;background:#F6F4F9;border:1.5px solid transparent}
+.search:focus-within{border-color:#F89743}
+.search input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);min-width:0}
+.res{display:flex;flex-direction:column}
+.ri{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.ri:last-child{border-bottom:0}
+.th{flex:none;width:52px;height:52px;border-radius:12px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.th .mk{width:76%;height:auto}.th .mk .mh{fill:#6E5397}
+.ri .tx{flex:1;min-width:0}.ri b{display:block;font-size:14.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ri span{font-size:12px;color:var(--mut)}
+.plus{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:#EFE9F6;color:var(--p);font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.plus.on{background:#604C87;color:#fff}
+/* مدن */
+.sec{display:flex;align-items:center;justify-content:space-between;padding:24px 16px 10px}
+.sec h3{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}.sec h3 i{width:10px;height:10px;border-radius:3px;transform:rotate(45deg);background:#F89743;display:inline-block}
+.city{margin:0 16px 14px;background:#fff;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px}
+.ch b{font-size:18px}.ch span{font-size:12.5px;color:var(--mut);font-weight:600}
+.ctools{display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap}
+.chip{height:38px;padding:0 13px;border-radius:19px;border:1px solid var(--line);background:#F6F4F9;color:var(--ink);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.chip.p{background:#604C87;color:#fff;border-color:#604C87}
+.stop{position:relative;display:flex;align-items:center;gap:10px;padding:10px 16px}
+.stop .n{flex:none;width:28px;height:28px;border-radius:14px;background:#F89743;color:#2A2142;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:1}
+.stop:not(:last-child) .n::after{content:"";position:absolute;right:29px;top:38px;bottom:-10px;width:2px;background:repeating-linear-gradient(#C6C0DA 0 4px,transparent 4px 8px)}
+.stop .tx{flex:1;min-width:0}.stop b{display:block;font-size:14.5px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop span{font-size:12px;color:var(--mut)}
+.mv{display:flex;flex-direction:column;gap:2px}
+.ib{width:36px;height:30px;border-radius:10px;border:0;background:#F3F0F8;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.ib.x{background:#FBE3EA;color:#B2405E;height:36px;width:36px;border-radius:18px}
+.sugg{border-top:1px dashed var(--line);padding:10px 16px 14px}
+.sugg small{display:block;font-size:12.5px;font-weight:700;color:var(--acc);margin-bottom:8px}
+.srow{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}.srow::-webkit-scrollbar{display:none}
+.sg{flex:none;width:132px;border-radius:14px;overflow:hidden;background:#F6F4F9;position:relative}
+.sg .im{height:78px;background:#6E5397 center/cover;display:flex;align-items:center;justify-content:center}
+.sg .im .mk{width:60%;height:auto}.sg .im .mk .mh{fill:#6E5397}
+.sg b{display:block;font-size:12.5px;line-height:1.35;padding:6px 8px 8px;height:44px;overflow:hidden}
+.sg .plus{position:absolute;top:6px;left:6px;width:32px;height:32px;font-size:18px;background:#fff}
+/* فارغ */
+.empty{margin:18px 16px 0;padding:26px 20px;border-radius:24px;background:#fff;box-shadow:var(--shadow);text-align:center}
+.empty .mk{width:120px;height:auto}.empty .mk .mh{fill:#fff}
+.empty b{display:block;font-size:19px;margin-top:10px}.empty p{margin:6px 0 14px;color:var(--mut);font-size:14px;line-height:1.7}
+.cities{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%);background:#373D63;color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;font-weight:700;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hdr">__HPAT__<span class="hfade"></span>
+  <small>مخطط الرحلات</small>
+  <h1>رحلتي</h1>
+  <p id="sub">اجمع أماكنك، رتّبها، وافتح المسار بضغطة</p>
+</header>
+<div class="stats"><div><b id="stC">0</b><span>مدن</span></div><div><b id="stP">0</b><span>أماكن</span></div><div><b id="stK">0</b><span>كم تقريبًا</span></div></div>
+<div class="acts" id="acts"><button class="btn g" type="button" id="share"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.2-.7-2.7-1.1-4.4-3.8-4.5-4-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.6-.1 1.2z"/></svg>شارك رحلتك</button><button class="btn w" type="button" id="nearAll"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#604C87" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>الأقرب لي الحين</button></div>
+<div class="add"><label class="search" for="q"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F89743" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="أضف مكان لرحلتك… ابحث بالاسم أو المدينة" autocomplete="off" aria-label="أضف مكان لرحلتك"></label><div class="res" id="res"></div></div>
+<div id="list"></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+var SNAP = __SNAP__;
+var MARKS = '__MARK__';
+var SITE='https://www.saudi-guide.com', IMGB='https://cmsphoto.ww-cdn.com/';
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function norm(s){return String(s||'').toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/^ال|\sال/g,' ').replace(/[-|_,.،]/g,' ').replace(/\s+/g,' ').trim();}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2000);}
+function km(a,b,c,d){var R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
+function title(t){var p=String(t).split(/\s[-|–]\s|\s?\|\s?/);var ar=p.filter(function(x){return /[\u0600-\u06FF]/.test(x);});return ar.length?ar.join(' - '):t;}
+function thumb(it){return it.th?'<span class="th" style="background-image:url(\''+it.th+'\')"></span>':'<span class="th">'+MARKS+'</span>';}
+
+/* فهرس الأماكن */
+var SECS=SNAP.s, BYID={}, ITEMS=[];
+SNAP.p.forEach(function(r){var m=/\/i\/(\d+)\//.exec(r[2]);if(!m)return;var sec=SECS[r[1]];if(!sec||sec[0]==='visit-saudi')return;
+  var it={id:+m[1],t:title(r[0]),raw:r[0],s:r[1],sn:sec[1],u:r[2],th:r[3]?(/^https?:/.test(r[3])?r[3]:IMGB+r[3]):'',cat:(r[4]||'').split('|').filter(function(c){return c&&c!=='الكل';})[0]||'',lat:+r[5]||0,lng:+r[6]||0};
+  it.key=norm(r[0]+' '+sec[1]+' '+(r[4]||''));if(!BYID[it.id]){BYID[it.id]=it;ITEMS.push(it);}});
+
+/* التخزين (مشترك مع الصفحة الرئيسية) */
+var TRIP=[];
+function save(){var s=JSON.stringify(TRIP);try{localStorage.setItem('sg_fav',s);}catch(e){}if(window.gb&&gb.storage&&gb.storage.setItem){try{gb.storage.setItem('sg_fav',s);}catch(e){}}}
+function load(cb){try{TRIP=JSON.parse(localStorage.getItem('sg_fav'))||[];}catch(e){TRIP=[];}
+  if(window.gb&&gb.storage&&gb.storage.getItem){try{gb.storage.getItem('sg_fav',function(v){try{var x=JSON.parse(v);if(x&&x.length)TRIP=x;}catch(e){}cb();});return;}catch(e){}}cb();}
+function has(id){return TRIP.indexOf(id)>-1;}
+function addId(id){if(!has(id)){TRIP.push(id);save();var it=BYID[id];toast('انضاف '+(it?it.t:'المكان')+' لرحلتك ✓');}render();}
+function delId(id){var i=TRIP.indexOf(id);if(i>-1){TRIP.splice(i,1);save();toast('انشال من رحلتك');}render();}
+
+/* تجميع حسب المدينة */
+function groups(){var g={},order=[];TRIP.forEach(function(id){var it=BYID[id];if(!it)return;if(!g[it.s]){g[it.s]=[];order.push(it.s);}g[it.s].push(it);});return order.map(function(s){return {s:s,name:SECS[s][1],slug:SECS[s][0],items:g[s]};});}
+function routeKm(items){var d=0;for(var i=1;i<items.length;i++){var a=items[i-1],b=items[i];if(a.lat&&b.lat)d+=km(a.lat,a.lng,b.lat,b.lng);}return d;}
+
+/* ترتيب بالأقرب (أقرب جار) */
+function optimize(sIdx,start){var g=groups().filter(function(x){return x.s===sIdx;})[0];if(!g)return;var rest=g.items.slice(),out=[],cur=start;
+  if(!cur){cur=rest.shift();out.push(cur);}
+  while(rest.length){var bi=0,bd=1e9;rest.forEach(function(r,i){var d=(cur.lat&&r.lat)?km(cur.lat,cur.lng,r.lat,r.lng):5e8;if(d<bd){bd=d;bi=i;}});cur=rest.splice(bi,1)[0];out.push(cur);}
+  var ids=out.map(function(x){return x.id;});var others=TRIP.filter(function(id){return ids.indexOf(id)<0;});var first=TRIP.indexOf(g.items[0].id);
+  TRIP=others.slice(0,first).concat(ids).concat(others.slice(first));save();render();toast('رتّبناها بأقصر طريق 🧭');}
+function move(id,dir){var it=BYID[id];var same=TRIP.filter(function(x){return BYID[x]&&BYID[x].s===it.s;});var i=same.indexOf(id),j=i+dir;if(j<0||j>=same.length)return;
+  var a=TRIP.indexOf(same[i]),b=TRIP.indexOf(same[j]);var t=TRIP[a];TRIP[a]=TRIP[b];TRIP[b]=t;save();render();}
+
+/* المسار في الخرائط */
+function openUrl(u){if(window.gb&&gb.location&&typeof gb.location.open==='function'){try{gb.location.open(u);return;}catch(e){}}window.location.href=u;}
+function mapsRoute(sIdx){var g=groups().filter(function(x){return x.s===sIdx;})[0];if(!g)return;var pts=g.items.filter(function(x){return x.lat;}).slice(0,10);
+  if(!pts.length){toast('ما فيه إحداثيات لهالأماكن');return;}
+  var ll=function(p){return p.lat+','+p.lng;};var dest=pts[pts.length-1];var wp=pts.slice(0,-1).map(ll).join('|');
+  openUrl('https://www.google.com/maps/dir/?api=1&destination='+ll(dest)+(wp?'&waypoints='+encodeURIComponent(wp):'')+'&travelmode=driving');}
+
+/* المشاركة */
+function shareText(){var gs=groups();if(!gs.length)return '';var t='🧭 رحلتي مع دليل السعودية\n';
+  gs.forEach(function(g){t+='\n📍 '+g.name+'\n';g.items.forEach(function(it,i){t+=(i+1)+'. '+it.t+'\n'+SITE+it.u+'\n';});});
+  return t+'\nحمّل التطبيق: '+SITE;}
+$('share').addEventListener('click',function(){var t=shareText();if(!t){toast('أضف أماكن أول عشان تشاركها');return;}
+  if(navigator.share&&!window.gb){navigator.share({title:'رحلتي',text:t}).catch(function(){});return;}
+  openUrl('https://wa.me/?text='+encodeURIComponent(t));});
+
+/* الأقرب لي الحين */
+var ME=null;
+function gotLoc(a,b){ME={lat:parseFloat(a),lng:parseFloat(b)};var best=null,bd=1e9;TRIP.forEach(function(id){var it=BYID[id];if(it&&it.lat){var d=km(ME.lat,ME.lng,it.lat,it.lng);if(d<bd){bd=d;best=it;}}});
+  if(!best){toast('أضف أماكن لرحلتك أول');return;}toast('أقرب مكان: '+best.t+' ('+(bd<1?'أقل من كم':Math.round(bd)+' كم')+')');optimize(best.s,{lat:ME.lat,lng:ME.lng});}
+window.gbDidSuccessGetLocation=gotLoc;
+window.gbDidFailGetLocation=function(){var m='فعّل خدمة الموقع للتطبيق من إعدادات جوالك.';if(window.gb&&gb.alert)gb.alert('الموقع غير مفعّل',m);else toast('فعّل خدمة الموقع');};
+$('nearAll').addEventListener('click',function(){if(!TRIP.length){toast('أضف أماكن لرحلتك أول');return;}toast('نحدد موقعك…');
+  if(window.gb&&typeof gb.getLocation==='function')gb.getLocation();
+  else if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){gotLoc(p.coords.latitude,p.coords.longitude);},window.gbDidFailGetLocation,{timeout:10000});});
+
+/* البحث والإضافة */
+var tm;$('q').addEventListener('input',function(){var v=norm(this.value);clearTimeout(tm);tm=setTimeout(function(){renderRes(v);},120);});
+function renderRes(v){if(!v){$('res').innerHTML='';return;}var w=v.split(' ');
+  var r=ITEMS.filter(function(it){return w.every(function(x){return it.key.indexOf(x)>-1;});}).slice(0,8);
+  $('res').innerHTML=r.length?r.map(function(it){return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+esc(it.sn)+(it.cat?' · '+esc(it.cat):'')+'</span></span><button class="plus'+(has(it.id)?' on':'')+'" type="button" data-add="'+it.id+'" aria-label="أضف لرحلتي">'+(has(it.id)?'✓':'+')+'</button></div>';}).join(''):'<div style="padding:12px;color:#5A5F80;font-size:14px">ما لقينا نتيجة</div>';}
+
+/* العرض */
+function render(){var gs=groups(),total=0;gs.forEach(function(g){total+=routeKm(g.items);});
+  $('stC').textContent=gs.length;$('stP').textContent=TRIP.filter(function(id){return BYID[id];}).length;$('stK').textContent=Math.round(total);
+  $('sub').textContent=gs.length?('رحلتك فيها '+gs.map(function(g){return g.name;}).join(' و')):'اجمع أماكنك، رتّبها، وافتح المسار بضغطة';
+  renderRes(norm($('q').value));
+  if(!gs.length){var top=[0,5,4,7,6,3].map(function(i){return SECS[i];}).filter(Boolean);
+    $('list').innerHTML='<div class="empty"><span class="th" style="width:150px;height:110px;margin:0 auto;background:#604C87;border-radius:24px">'+MARKS+'</span><b>رحلتك فاضية</b><p>ابحث فوق وأضف أي مكان من أكثر من 1,100 مكان، أو ابدأ باقتراحات مدينة:</p><div class="cities">'+top.map(function(s){return '<button class="chip" type="button" data-city="'+SECS.indexOf(s)+'">'+esc(s[1])+'</button>';}).join('')+'</div></div><div id="cityS"></div>';return;}
+  $('list').innerHTML='<div class="sec"><h3><i></i>محطاتك</h3></div>'+gs.map(function(g){var d=routeKm(g.items);
+    var sug=ITEMS.filter(function(it){return it.s===g.s&&!has(it.id)&&it.th;}).slice(0,8);
+    return '<section class="city"><div class="ch"><b>'+esc(g.name)+'</b><span>'+g.items.length+' '+(g.items.length>2&&g.items.length<11?'أماكن':'مكان')+(d?' · '+Math.round(d)+' كم':'')+'</span></div>'+
+     '<div class="ctools"><button class="chip p" type="button" data-route="'+g.s+'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>افتح المسار</button>'+(g.items.length>2?'<button class="chip" type="button" data-opt="'+g.s+'">🧭 رتّب بأقصر طريق</button>':'')+'<a class="chip" href="'+SITE+'/'+g.slug+'/">كل أماكن '+esc(g.name)+'</a></div>'+
+     g.items.map(function(it,i){var prev=g.items[i-1];var dd=(prev&&prev.lat&&it.lat)?km(prev.lat,prev.lng,it.lat,it.lng):null;
+       return '<div class="stop"><span class="n">'+(i+1)+'</span><a class="th" href="'+SITE+it.u+'"'+(it.th?' style="background-image:url(\''+it.th+'\')">':'>'+MARKS)+'</a><a class="tx" href="'+SITE+it.u+'"><b>'+esc(it.t)+'</b><span>'+(it.cat?esc(it.cat):'')+(dd!==null?(it.cat?' · ':'')+(dd<1?'أقل من كم':Math.round(dd)+' كم')+' من اللي قبله':'')+'</span></a>'+
+         '<span class="mv"><button class="ib" type="button" data-up="'+it.id+'" aria-label="لفوق">▲</button><button class="ib" type="button" data-dn="'+it.id+'" aria-label="لتحت">▼</button></span><button class="ib x" type="button" data-del="'+it.id+'" aria-label="احذف">✕</button></div>';}).join('')+
+     (sug.length?'<div class="sugg"><small>✨ مقترح لك في '+esc(g.name)+'</small><div class="srow">'+sug.map(function(it){return '<div class="sg"><a href="'+SITE+it.u+'"><div class="im" style="background-image:url(\''+it.th+'\')"></div><b>'+esc(it.t)+'</b></a><button class="plus" type="button" data-add="'+it.id+'" aria-label="أضف">+</button></div>';}).join('')+'</div></div>':'')+'</section>';}).join('');
+}
+function cityStart(si){var sug=ITEMS.filter(function(it){return it.s===si&&it.th;}).slice(0,10);var c=$('cityS');if(!c)return;
+  c.innerHTML='<div class="sec"><h3><i></i>أشهر أماكن '+esc(SECS[si][1])+'</h3></div><div class="add" style="margin-top:0">'+sug.map(function(it){return '<div class="ri">'+thumb(it)+'<span class="tx"><b>'+esc(it.t)+'</b><span>'+esc(it.cat||it.sn)+'</span></span><button class="plus" type="button" data-add="'+it.id+'" aria-label="أضف لرحلتي">+</button></div>';}).join('')+'</div>';}
+
+document.addEventListener('click',function(e){var b;
+  if(b=e.target.closest('[data-add]')){var id=+b.getAttribute('data-add');has(id)?delId(id):addId(id);return;}
+  if(b=e.target.closest('[data-del]')){delId(+b.getAttribute('data-del'));return;}
+  if(b=e.target.closest('[data-up]')){move(+b.getAttribute('data-up'),-1);return;}
+  if(b=e.target.closest('[data-dn]')){move(+b.getAttribute('data-dn'),1);return;}
+  if(b=e.target.closest('[data-opt]')){optimize(+b.getAttribute('data-opt'),ME);return;}
+  if(b=e.target.closest('[data-route]')){mapsRoute(+b.getAttribute('data-route'));return;}
+  if(b=e.target.closest('[data-city]')){cityStart(+b.getAttribute('data-city'));return;}
+});
+load(render);
+</script>
+</body>
+</html>
