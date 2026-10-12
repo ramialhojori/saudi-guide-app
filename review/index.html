@@ -61,6 +61,11 @@ textarea{resize:vertical;min-height:70px}
 .empty{text-align:center;color:var(--muted);padding:36px 10px}
 .toast{position:fixed;inset-inline:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:auto;max-width:420px;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:12px;text-align:center;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:none}
+.cbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.cbar select{flex:1 1 160px;width:auto}
+.cform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.cform .full{grid-column:1/-1}.cform label{font-size:.78rem;color:var(--muted);display:grid;gap:4px}
+.badge{display:inline-block;border-radius:99px;padding:0 8px;font-size:.75rem;font-weight:700}.b-off{background:var(--ok-bg);color:var(--ok)}.b-usr{background:var(--surface2);color:var(--muted)}
+.code{font-family:ui-monospace,Menlo,monospace;background:var(--surface2);border-radius:8px;padding:2px 8px;direction:ltr;display:inline-block}
+.src{font-size:.8rem;color:var(--brand);overflow-wrap:anywhere;direction:ltr;display:inline-block}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -92,6 +97,7 @@ textarea{resize:vertical;min-height:70px}
     <button data-t="approved">المنشور</button>
     <button data-t="rejected">المرفوض</button>
     <button data-t="reports">البلاغات<span class="n" id="n-reports">0</span></button>
+    <button data-t="coupons">الكوبونات<span class="n" id="n-coupons">0</span></button>
     <button data-t="banned">المحظورين</button>
   </div>
   <div class="filters" id="filters">
@@ -131,7 +137,7 @@ $('go').onclick=function(){var e=$('em').value.trim(),p=$('pw').value;if(!e||!p)
 $('pw').addEventListener('keydown',function(e){if(e.key==='Enter')$('go').click()});
 $('out').onclick=function(){S=null;save();show()};
 $('refresh').onclick=function(){stats();render();toast('تم التحديث')};
-function setTab(t){tab=t;[].forEach.call($('tabs').children,function(b){b.classList.toggle('on',b.dataset.t===t);b.setAttribute('aria-selected',b.dataset.t===t)});$('filters').hidden=(t==='banned'||t==='reports');render()}
+function setTab(t){tab=t;[].forEach.call($('tabs').children,function(b){b.classList.toggle('on',b.dataset.t===t);b.setAttribute('aria-selected',b.dataset.t===t)});$('filters').hidden=(t==='banned'||t==='reports'||t==='coupons');render()}
 $('tabs').onclick=function(e){var b=e.target.closest('button');if(b)setTab(b.dataset.t)};
 document.querySelector('.stats').onclick=function(e){var b=e.target.closest('[data-go]');if(b)setTab(b.dataset.go)};
 ['f-type','f-city'].forEach(function(id){$(id).onchange=render});
@@ -139,12 +145,13 @@ var qT;$('f-q').oninput=function(){clearTimeout(qT);qT=setTimeout(paint,150)};
 
 function today(){var d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
 function stats(){var t=encodeURIComponent(today());
+  Promise.all([cnt('coupons?status=eq.pending&select=id'),cnt('coupon_reports?handled=eq.false&select=id')]).then(function(a){$('n-coupons').textContent=a[0]+a[1]}).catch(function(){});
   Promise.all([cnt('questions?status=eq.pending&select=id'),cnt('answers?status=eq.pending&select=id')]).then(function(a){var n=a[0]+a[1];$('s-wait').textContent=n;$('n-pending').textContent=n;$('sub').textContent=n?('عندك '+n+' بانتظار قرارك'):'كل شي تحت السيطرة'}).catch(function(){});
   Promise.all([cnt('questions?status=eq.approved&created_at=gte.'+t+'&select=id'),cnt('answers?status=eq.approved&created_at=gte.'+t+'&select=id')]).then(function(a){$('s-ok').textContent=a[0]+a[1]}).catch(function(){});
   Promise.all([cnt('questions?status=eq.rejected&created_at=gte.'+t+'&select=id'),cnt('answers?status=eq.rejected&created_at=gte.'+t+'&select=id')]).then(function(a){$('s-bad').textContent=a[0]+a[1]}).catch(function(){});
   cnt('reports?handled=eq.false&select=id').then(function(n){$('s-rep').textContent=n;$('n-reports').textContent=n}).catch(function(){});}
 
-function render(){var L=$('list');L.innerHTML='<div class="empty">جاري التحميل…</div>';
+function render(){var L=$('list');if(tab==='coupons')return renderCoupons();L.innerHTML='<div class="empty">جاري التحميل…</div>';
   if(tab==='banned')return api('banned_users?order=created_at.desc').then(function(r){L.innerHTML=r.length?r.map(banCard).join(''):'<div class="empty">ما فيه أحد محظور</div>'}).catch(fail);
   if(tab==='reports')return loadReports().catch(fail);
   var st=tab,type=$('f-type').value,city=$('f-city').value,cf=city?'&city=eq.'+encodeURIComponent(city):'';
@@ -158,7 +165,7 @@ function fail(x){$('list').innerHTML='<div class="empty err">'+esc(x.message)+'<
 var knownCities={};function cities(list){var sel=$('f-city'),cur=sel.value,add=false;list.forEach(function(c){if(c&&!knownCities[c]){knownCities[c]=1;add=true}});if(!add)return;sel.innerHTML='<option value="">كل المدن</option>'+Object.keys(knownCities).sort().map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>'}).join('')}
 function paint(){var term=$('f-q').value.trim(),L=$('list');var rows=term?cache.filter(function(r){return (r.body+' '+(r.author_name||'')+' '+(r.questions?r.questions.body:'')).indexOf(term)>=0}):cache;
   L.innerHTML=rows.length?rows.map(card).join(''):'<div class="empty">'+(tab==='pending'?'ما فيه شي ينتظرك. المراجع الآلي ماسك الشغل 👌':'ما فيه نتائج')+'</div>'}
-function aiBox(n){if(!n)return '';var m=n.match(/^(approve|reject|review):\s*(.*)$/);var d=m?m[1]:'review',t=m?m[2]:n;var lbl={approve:'المراجع قبله',reject:'المراجع رفضه',review:'المراجع محتار'}[d];return '<div class="ai '+d+'"><b>'+lbl+'</b><span>'+esc(t)+'</span></div>'}
+function aiBox(n){if(!n)return '';var m=n.match(/^(approve|reject|review|hidden):\s*(.*)$/);var d=m?m[1]:'review',t=m?m[2]:n;var lbl={approve:'المراجع قبله',reject:'المراجع رفضه',review:'المراجع محتار',hidden:'انخفى'}[d];return '<div class="ai '+(d==='hidden'?'reject':d)+'"><b>'+lbl+'</b><span>'+esc(t)+'</span></div>'}
 function card(r){var isQ=r._k==='questions',city=isQ?r.city:(r.questions&&r.questions.city),acts='';
   if(tab==='pending')acts='<button class="ok grow" data-s="approved">نشر ✓</button><button class="no grow" data-s="rejected">رفض</button>';
   else if(tab==='approved')acts='<button class="no" data-s="rejected">إخفاء</button>';
@@ -193,6 +200,63 @@ $('list').onclick=function(e){var b=e.target.closest('button');if(!b)return;var 
   else return;
   if(rep)p=p.then(function(){return api('reports?id=eq.'+rep,{method:'PATCH',body:{handled:true},prefer:'return=minimal'})});
   busy(c,true);p.then(function(){toast(b.dataset.s==='approved'?'انتشر':b.dataset.s==='rejected'?'انخفى':b.dataset.ban?'انحظر الكاتب':b.dataset.unban?'انرفع الحظر':'تم');gone(c)}).catch(function(x){busy(c,false);toast(x.message)})};
+
+/* ---------- الكوبونات ---------- */
+var CCAT={food:'مطاعم',cafe:'مقاهي',hotel:'فنادق',fun:'ترفيه',shop:'تسوق',other:'أخرى'};
+var CUNIT={pct:'٪',sar:'ر.س',gift:'هدية',bogo:'1+1',other:''};
+var cst='pending';
+function cval(c){return c.unit==='gift'?'هدية':c.unit==='bogo'?'1+1':(c.value!=null?c.value+' '+(CUNIT[c.unit]||''):'')}
+function cformHTML(){return '<form class="card cform" id="cform"><b class="full">إضافة كوبون رسمي ✓ (ينشر مباشرة)</b>'+
+ '<label>اسم المتجر<input name="store_name" required maxlength="60"></label>'+
+ '<label>المدينة<input name="city" required maxlength="40" placeholder="الرياض"></label>'+
+ '<label>التصنيف<select name="category">'+Object.keys(CCAT).map(function(k){return '<option value="'+k+'">'+CCAT[k]+'</option>'}).join('')+'</select></label>'+
+ '<label>نوع الخصم<select name="unit"><option value="pct">نسبة ٪</option><option value="sar">مبلغ ر.س</option><option value="gift">هدية</option><option value="bogo">1+1</option><option value="other">أخرى</option></select></label>'+
+ '<label>القيمة<input name="value" type="number" min="1" step="any" inputmode="decimal"></label>'+
+ '<label>الكود<input name="code" maxlength="40" dir="ltr" placeholder="اتركه فاضي لو بدون كود"></label>'+
+ '<label class="full">وصف العرض<input name="title" required minlength="5" maxlength="140"></label>'+
+ '<label>رابط المصدر (اختياري)<input name="source_url" type="url" dir="ltr" placeholder="https://"></label>'+
+ '<label>ينتهي في<input name="expires_at" type="date"></label>'+
+ '<label class="full" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="featured" style="width:auto"> عرض مميز (يظهر في أعلى الصفحة)</label>'+
+ '<div class="acts full"><button class="pri" type="submit">نشر الكوبون</button><button type="button" id="cform-x">إلغاء</button></div></form>'}
+function renderCoupons(){var L=$('list');
+  L.innerHTML='<div class="cbar"><select id="c-st" aria-label="حالة الكوبونات">'+[['pending','بانتظارك'],['approved','المنشور'],['hidden','المخفي'],['rejected','المرفوض'],['reports','بلاغات الكوبونات']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cst?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select><button class="pri" id="c-add" type="button">+ كوبون رسمي</button></div><div id="c-form"></div><div id="c-list"><div class="empty">جاري التحميل…</div></div>';
+  $('c-st').onchange=function(){cst=this.value;loadCoupons()};
+  $('c-add').onclick=function(){var f=$('c-form');if(f.innerHTML){f.innerHTML='';return}f.innerHTML=cformHTML();$('cform-x').onclick=function(){f.innerHTML=''};$('cform').onsubmit=addCoupon};
+  loadCoupons()}
+function addCoupon(e){e.preventDefault();var f=e.target,d={};[].forEach.call(f.elements,function(x){if(!x.name)return;if(x.type==='checkbox')d[x.name]=x.checked;else if(x.value.trim()!=='')d[x.name]=x.value.trim()});
+  if(d.value)d.value=+d.value;d.kind='official';d.status='approved';if(d.code)d.code=d.code.toUpperCase();
+  var b=f.querySelector('[type=submit]');b.disabled=true;
+  api('coupons',{method:'POST',body:d,prefer:'return=minimal'}).then(function(){$('c-form').innerHTML='';toast('انتشر الكوبون');cst='approved';renderCoupons();stats()}).catch(function(x){b.disabled=false;toast(x.message)})}
+function loadCoupons(){var L=$('c-list');L.innerHTML='<div class="empty">جاري التحميل…</div>';
+  if(cst==='reports')return api('coupon_reports?handled=eq.false&order=created_at.desc&limit=100&select=*,coupons(*)').then(function(rs){L.innerHTML=rs.length?rs.map(crepCard).join(''):'<div class="empty">ما فيه بلاغات على الكوبونات</div>'}).catch(fail2);
+  api('coupons?status=eq.'+cst+'&order=created_at.'+(cst==='pending'?'asc':'desc')+'&limit=150').then(function(rs){L.innerHTML=rs.length?rs.map(ccard).join(''):'<div class="empty">'+(cst==='pending'?'ما فيه كوبونات تنتظرك':'ما فيه شي هنا')+'</div>'}).catch(fail2)}
+function fail2(x){$('c-list').innerHTML='<div class="empty err">'+esc(x.message)+'</div>'}
+function cbody(c){return '<div class="meta"><span class="badge '+(c.kind==='official'?'b-off">رسمي ✓':'b-usr">شاركه مستخدم')+'</span><span class="chip">'+esc(c.city)+'</span><span class="chip">'+esc(CCAT[c.category]||c.category)+'</span>'+(c.featured?'<span class="chip">⭐ مميز</span>':'')+'<span>'+esc(c.author_name||'')+'</span>'+(c.gb_user_id?'<span>#'+esc(String(c.gb_user_id).slice(-6))+'</span>':'')+'<span>'+ago(c.created_at)+'</span></div>'+
+  '<p class="body"><b>'+esc(c.store_name)+'</b> — '+esc(cval(c))+'<br>'+esc(c.title)+'</p>'+
+  '<div class="meta">'+(c.code?'<span class="code">'+esc(c.code)+'</span>':'<span>بدون كود</span>')+(c.expires_at?'<span>ينتهي '+esc(c.expires_at)+'</span>':'')+'<span>👍 '+c.worked+' · 👎 '+c.failed+' · نسخ '+c.copies+'</span></div>'+
+  (c.source_url?'<div style="margin-bottom:8px"><a class="src" href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.source_url)+'</a></div>':'')+aiBox(c.moderation_note)}
+function ccard(c){var a='';
+  if(c.status!=='approved')a+='<button class="ok grow" data-cs="approved">نشر ✓</button>';
+  if(c.status==='pending')a+='<button class="no grow" data-cs="rejected">رفض</button>';
+  if(c.status==='approved')a+='<button class="no" data-cs="hidden">إخفاء</button>';
+  if(c.kind==='user')a+='<button data-cofficial="1">توثيق كرسمي</button>';
+  a+='<button data-cfeat="'+(c.featured?0:1)+'">'+(c.featured?'إلغاء التمييز':'تمييز ⭐')+'</button>';
+  if(c.gb_user_id)a+='<button class="ghost" data-cban="'+esc(c.gb_user_id)+'">حظر الكاتب</button>';
+  a+='<button class="ghost" data-cdel="1">حذف</button>';
+  return '<article class="item" data-cid="'+c.id+'">'+cbody(c)+'<div class="acts">'+a+'</div></article>'}
+function crepCard(r){var c=r.coupons;var lbl={owner:'طلب إزالة من صاحب المتجر',votes:'انخفى بتصويت المستخدمين',other:'بلاغ'}[r.kind]||r.kind;
+  return '<article class="item" data-crep="'+r.id+'"'+(c?' data-cid="'+c.id+'"':'')+'><div class="meta"><span class="chip">'+lbl+'</span><span>'+ago(r.created_at)+'</span>'+(r.contact?'<span dir="ltr">'+esc(r.contact)+'</span>':'')+'</div>'+(r.reason?'<div class="q">'+esc(r.reason)+'</div>':'')+(c?cbody(c):'<p class="body">الكوبون محذوف</p>')+
+  '<div class="acts">'+(c&&c.status!=='approved'?'<button class="ok" data-cs="approved">إرجاع ونشر</button>':'')+(c&&c.status==='approved'?'<button class="no" data-cs="hidden">إخفاء</button>':'')+'<button data-cdone="1">تم، أغلق البلاغ</button></div></article>'}
+document.addEventListener('click',function(e){var b=e.target.closest('#c-list button');if(!b)return;var it=b.closest('.item'),id=it.dataset.cid,rep=it.dataset.crep,p;
+  if(b.dataset.cdel){if(!b.dataset.sure){b.dataset.sure=1;b.textContent='متأكد؟ اضغط مرة ثانية';b.className='no';return}p=api('coupons?id=eq.'+id,{method:'DELETE'})}
+  else if(b.dataset.cban){if(!b.dataset.sure){b.dataset.sure=1;b.textContent='تأكيد الحظر';b.className='no';return}
+    p=api('banned_users',{method:'POST',body:{gb_user_id:b.dataset.cban,reason:'حُظر من الكوبونات'},prefer:'return=minimal,resolution=ignore-duplicates'}).then(function(){return api('coupons?id=eq.'+id,{method:'PATCH',body:{status:'rejected'},prefer:'return=minimal'})})}
+  else if(b.dataset.cs){p=api('coupons?id=eq.'+id,{method:'PATCH',body:{status:b.dataset.cs},prefer:'return=minimal'})}
+  else if(b.dataset.cofficial){p=api('coupons?id=eq.'+id,{method:'PATCH',body:{kind:'official'},prefer:'return=minimal'})}
+  else if(b.dataset.cfeat){p=api('coupons?id=eq.'+id,{method:'PATCH',body:{featured:b.dataset.cfeat==='1'},prefer:'return=minimal'})}
+  else if(b.dataset.cdone){p=Promise.resolve()}else return;
+  if(rep)p=p.then(function(){return api('coupon_reports?id=eq.'+rep,{method:'PATCH',body:{handled:true},prefer:'return=minimal'})});
+  busy(it,true);p.then(function(){toast('تم');stats();if(b.dataset.cofficial||b.dataset.cfeat){loadCoupons()}else gone(it)}).catch(function(x){busy(it,false);toast(x.message)})});
 
 load();show();
 setInterval(function(){if(S&&!document.hidden){stats();if(tab==='pending'&&!$('f-q').value&&!document.querySelector('.reply'))render()}},60000);
