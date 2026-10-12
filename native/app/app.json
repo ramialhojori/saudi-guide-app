@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "دليل السعودية",
+    "slug": "saudi-guide",
+    "scheme": "saudiguide",
+    "version": "4.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F0EFEF",
+    "ios": {
+      "bundleIdentifier": "TODO.confirm.from.app.store",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك."
+      }
+    },
+    "android": {
+      "package": "TODO.confirm.from.google.play",
+      "adaptiveIcon": {
+        "backgroundColor": "#604C87",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      ["expo-localization", { "supportsRTL": true, "forcesRTL": true }],
+      "expo-image",
+      ["expo-splash-screen", { "image": "./assets/brand/logo-white.png", "imageWidth": 220, "backgroundColor": "#604C87" }]
+    ],
+    "experiments": { "typedRoutes": true },
+    "extra": { "supportsRTL": true, "forcesRTL": true }
+  }
+}

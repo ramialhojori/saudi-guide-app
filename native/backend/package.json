@@ -1,0 +1,15 @@
+{
+  "name": "saudi-guide-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "schema": "python3 scripts/build_schema.py",
+    "seed:local": "wrangler d1 execute saudi-guide --local --file=seed/seed.sql",
+    "seed:remote": "wrangler d1 execute saudi-guide --remote --file=seed/seed.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

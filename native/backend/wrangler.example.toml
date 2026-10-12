@@ -1,0 +1,27 @@
+# إعداد سيرفر دليل السعودية — بدون أي أسرار.
+# انسخه باسم wrangler.toml وعبّي database_id بعد ما تنشئ القاعدة:  npx wrangler d1 create saudi-guide
+
+name = "saudi-guide-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "saudi-guide"
+database_id = "<من: npx wrangler d1 create saudi-guide>"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "saudi-guide-media"   # صور المستخدمين والتقييمات (المرحلة 2)
+
+[triggers]
+crons = ["7 * * * *"]   # المزامنة من قودبابر كل ساعة (الدقيقة 7)
+
+[vars]
+GB_API_BASE = ""        # رابط واجهة قودبابر الرسمية — يتأكد من التوثيق (المرحلة 1)
+PUSH_ENABLED = "0"      # "1" بعد ما نجرب الإشعارات على جوال رامي
+
+# الأسرار تنضاف بالأمر: npx wrangler secret put <NAME>  — ولا تُكتب هنا أبداً:
+#   GB_API_TOKEN       مفتاح واجهة قودبابر (من صفحة Public API / MCP server)
+#   ADMIN_KEY          مفتاح مسارات الإدارة /admin/*
+#   EXPO_ACCESS_TOKEN  (اختياري) لإرسال الإشعارات من حساب Expo
