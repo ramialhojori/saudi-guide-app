@@ -203,42 +203,61 @@ $('list').onclick=function(e){var b=e.target.closest('button');if(!b)return;var 
 
 /* ---------- الكوبونات ---------- */
 var CCAT={food:'مطاعم',cafe:'مقاهي',hotel:'فنادق',fun:'ترفيه',shop:'تسوق',other:'أخرى'};
-var CUNIT={pct:'٪',sar:'ر.س',gift:'هدية',bogo:'1+1',other:''};
+var CUNIT={pct:'٪',sar:'ر.س',gift:'هدية',bogo:'1+1',free_delivery:'توصيل مجاني',fixed_price:'ر.س (سعر خاص)',cashback:'٪ كاش باك',other:''};
+var UNITS=[['pct','خصم بالنسبة ٪'],['sar','خصم بالريال'],['gift','هدية مجانية'],['bogo','1+1'],['free_delivery','توصيل مجاني'],['fixed_price','سعر خاص'],['cashback','كاش باك ٪'],['other','عرض آخر']];
+var CHANNELS=[['any','في أي مكان'],['store','داخل المتجر'],['online','الموقع الإلكتروني'],['app','تطبيق المتجر'],['delivery','تطبيق توصيل']];
+var CITIES=['الرياض','جدة','مكة المكرمة','المدينة المنورة','الدمام','الخبر','الظهران','الأحساء','الجبيل','القطيف','حفر الباطن','الخفجي','الطائف','أبها','خميس مشيط','النماص','بيشة','الباحة','جازان','صبيا','فرسان','نجران','شرورة','تبوك','العلا','نيوم','أملج','الوجه','ضباء','ينبع','رابغ','حائل','بريدة','عنيزة','الرس','سكاكا','دومة الجندل','عرعر','طريف','القريات','الخرج','الدرعية','المجمعة','الزلفي','وادي الدواسر','القنفذة','الليث','الدوادمي','عفيف','محايل عسير'];
+var CEDIT=null;
 var cst='pending';
-function cval(c){return c.unit==='gift'?'هدية':c.unit==='bogo'?'1+1':(c.value!=null?c.value+' '+(CUNIT[c.unit]||''):'')}
-function cformHTML(){return '<form class="card cform" id="cform"><b class="full">إضافة كوبون رسمي ✓ (ينشر مباشرة)</b>'+
- '<label>اسم المتجر<input name="store_name" required maxlength="60"></label>'+
- '<label>المدينة<input name="city" required maxlength="40" placeholder="الرياض"></label>'+
- '<label>التصنيف<select name="category">'+Object.keys(CCAT).map(function(k){return '<option value="'+k+'">'+CCAT[k]+'</option>'}).join('')+'</select></label>'+
- '<label>نوع الخصم<select name="unit"><option value="pct">نسبة ٪</option><option value="sar">مبلغ ر.س</option><option value="gift">هدية</option><option value="bogo">1+1</option><option value="other">أخرى</option></select></label>'+
- '<label>القيمة<input name="value" type="number" min="1" step="any" inputmode="decimal"></label>'+
- '<label>الكود<input name="code" maxlength="40" dir="ltr" placeholder="اتركه فاضي لو بدون كود"></label>'+
- '<label class="full">وصف العرض<input name="title" required minlength="5" maxlength="140"></label>'+
- '<label>رابط المصدر (اختياري)<input name="source_url" type="url" dir="ltr" placeholder="https://"></label>'+
- '<label>ينتهي في<input name="expires_at" type="date"></label>'+
- '<label class="full" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="featured" style="width:auto"> عرض مميز (يظهر في أعلى الصفحة)</label>'+
- '<div class="acts full"><button class="pri" type="submit">نشر الكوبون</button><button type="button" id="cform-x">إلغاء</button></div></form>'}
+function cval(c){return c.unit==='gift'?'هدية':c.unit==='bogo'?'1+1':c.unit==='free_delivery'?'توصيل مجاني':(c.value!=null?c.value+' '+(CUNIT[c.unit]||''):'')}
+function opt(list,v){return list.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===v?' selected':'')+'>'+o[1]+'</option>'}).join('')}
+function fv(c,k){return c&&c[k]!=null?esc(c[k]):''}
+function cformHTML(c){var ed=!!c;c=c||{};return '<form class="card cform" id="cform"><b class="full">'+(ed?'تعديل الكوبون':'إضافة كوبون رسمي ✓ (ينشر مباشرة)')+'</b>'+
+ '<label>اسم المتجر<input name="store_name" required maxlength="60" value="'+fv(c,'store_name')+'"></label>'+
+ '<label>المدينة<input name="city" required maxlength="40" list="citylist" value="'+fv(c,'city')+'" placeholder="الرياض"><datalist id="citylist">'+CITIES.map(function(x){return '<option value="'+x+'">'}).join('')+'</datalist></label>'+
+ '<label>التصنيف<select name="category">'+opt(Object.keys(CCAT).map(function(k){return [k,CCAT[k]]}),c.category)+'</select></label>'+
+ '<label>نوع العرض<select name="unit">'+opt(UNITS,c.unit||'pct')+'</select></label>'+
+ '<label>القيمة<input name="value" type="number" min="1" step="any" inputmode="decimal" value="'+fv(c,'value')+'"></label>'+
+ '<label>الكود<input name="code" maxlength="40" dir="ltr" value="'+fv(c,'code')+'" placeholder="اتركه فاضي لو بدون كود"></label>'+
+ '<label class="full">وصف العرض<input name="title" required minlength="5" maxlength="140" value="'+fv(c,'title')+'"></label>'+
+ '<label>حد أدنى للطلب (ر.س)<input name="min_order" type="number" min="0" step="any" value="'+fv(c,'min_order')+'"></label>'+
+ '<label>أقصى خصم (ر.س)<input name="max_discount" type="number" min="1" step="any" value="'+fv(c,'max_discount')+'"></label>'+
+ '<label>وين ينستخدم<select name="channel">'+opt(CHANNELS,c.channel||'any')+'</select></label>'+
+ '<label>تطبيق التوصيل<input name="delivery_app" maxlength="40" value="'+fv(c,'delivery_app')+'" placeholder="لو عبر تطبيق توصيل"></label>'+
+ '<label>يبدأ من<input name="starts_at" type="date" value="'+fv(c,'starts_at')+'"></label>'+
+ '<label>ينتهي في<input name="expires_at" type="date" value="'+fv(c,'expires_at')+'"></label>'+
+ '<label class="full">الشروط<input name="terms" maxlength="300" value="'+fv(c,'terms')+'"></label>'+
+ '<label>رابط استخدام العرض<input name="use_url" type="url" dir="ltr" value="'+fv(c,'use_url')+'" placeholder="https://"></label>'+
+ '<label>رابط المصدر<input name="source_url" type="url" dir="ltr" value="'+fv(c,'source_url')+'" placeholder="https://"></label>'+
+ '<label class="full" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="new_only" style="width:auto"'+(c.new_only?' checked':'')+'> للعملاء الجدد فقط</label>'+
+ '<label class="full" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="featured" style="width:auto"'+(c.featured?' checked':'')+'> عرض مميز (يظهر في أعلى الصفحة)</label>'+
+ '<div class="acts full"><button class="pri" type="submit">'+(ed?'حفظ التعديل':'نشر الكوبون')+'</button><button type="button" id="cform-x">إلغاء</button></div></form>'}
 function renderCoupons(){var L=$('list');
   L.innerHTML='<div class="cbar"><select id="c-st" aria-label="حالة الكوبونات">'+[['pending','بانتظارك'],['approved','المنشور'],['hidden','المخفي'],['rejected','المرفوض'],['reports','بلاغات الكوبونات']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cst?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select><button class="pri" id="c-add" type="button">+ كوبون رسمي</button></div><div id="c-form"></div><div id="c-list"><div class="empty">جاري التحميل…</div></div>';
   $('c-st').onchange=function(){cst=this.value;loadCoupons()};
-  $('c-add').onclick=function(){var f=$('c-form');if(f.innerHTML){f.innerHTML='';return}f.innerHTML=cformHTML();$('cform-x').onclick=function(){f.innerHTML=''};$('cform').onsubmit=addCoupon};
+  $('c-add').onclick=function(){var f=$('c-form');if(f.innerHTML&&!CEDIT){f.innerHTML='';return}openCForm(null)};
   loadCoupons()}
-function addCoupon(e){e.preventDefault();var f=e.target,d={};[].forEach.call(f.elements,function(x){if(!x.name)return;if(x.type==='checkbox')d[x.name]=x.checked;else if(x.value.trim()!=='')d[x.name]=x.value.trim()});
-  if(d.value)d.value=+d.value;d.kind='official';d.status='approved';if(d.code)d.code=d.code.toUpperCase();
-  var b=f.querySelector('[type=submit]');b.disabled=true;
-  api('coupons',{method:'POST',body:d,prefer:'return=minimal'}).then(function(){$('c-form').innerHTML='';toast('انتشر الكوبون');cst='approved';renderCoupons();stats()}).catch(function(x){b.disabled=false;toast(x.message)})}
+function openCForm(c){CEDIT=c;var f=$('c-form');f.innerHTML=cformHTML(c);$('cform-x').onclick=function(){f.innerHTML='';CEDIT=null};$('cform').onsubmit=addCoupon;f.scrollIntoView({behavior:'smooth',block:'start'})}
+function addCoupon(e){e.preventDefault();var f=e.target,d={};[].forEach.call(f.elements,function(x){if(!x.name)return;if(x.type==='checkbox')d[x.name]=x.checked;else{var v=x.value.trim();d[x.name]=v===''?null:v}});
+  ['value','min_order','max_discount'].forEach(function(k){if(d[k]!=null)d[k]=+d[k]});if(d.code)d.code=d.code.toUpperCase();
+  if(!d.store_name||!d.city||!d.title){toast('اسم المتجر والمدينة والوصف مطلوبة');return}
+  var b=f.querySelector('[type=submit]');b.disabled=true;var ed=CEDIT;
+  var p=ed?api('coupons?id=eq.'+ed.id,{method:'PATCH',body:d,prefer:'return=minimal'}):(d.kind='official',d.status='approved',api('coupons',{method:'POST',body:d,prefer:'return=minimal'}));
+  p.then(function(){$('c-form').innerHTML='';CEDIT=null;toast(ed?'انحفظ التعديل':'انتشر الكوبون');if(!ed)cst='approved';renderCoupons();stats()}).catch(function(x){b.disabled=false;toast(x.message)})}
+var CROWS={};
 function loadCoupons(){var L=$('c-list');L.innerHTML='<div class="empty">جاري التحميل…</div>';
   if(cst==='reports')return api('coupon_reports?handled=eq.false&order=created_at.desc&limit=100&select=*,coupons(*)').then(function(rs){L.innerHTML=rs.length?rs.map(crepCard).join(''):'<div class="empty">ما فيه بلاغات على الكوبونات</div>'}).catch(fail2);
-  api('coupons?status=eq.'+cst+'&order=created_at.'+(cst==='pending'?'asc':'desc')+'&limit=150').then(function(rs){L.innerHTML=rs.length?rs.map(ccard).join(''):'<div class="empty">'+(cst==='pending'?'ما فيه كوبونات تنتظرك':'ما فيه شي هنا')+'</div>'}).catch(fail2)}
+  api('coupons?status=eq.'+cst+'&order=created_at.'+(cst==='pending'?'asc':'desc')+'&limit=150').then(function(rs){rs.forEach(function(c){CROWS[c.id]=c});L.innerHTML=rs.length?rs.map(ccard).join(''):'<div class="empty">'+(cst==='pending'?'ما فيه كوبونات تنتظرك':'ما فيه شي هنا')+'</div>'}).catch(fail2)}
 function fail2(x){$('c-list').innerHTML='<div class="empty err">'+esc(x.message)+'</div>'}
 function cbody(c){return '<div class="meta"><span class="badge '+(c.kind==='official'?'b-off">رسمي ✓':'b-usr">شاركه مستخدم')+'</span><span class="chip">'+esc(c.city)+'</span><span class="chip">'+esc(CCAT[c.category]||c.category)+'</span>'+(c.featured?'<span class="chip">⭐ مميز</span>':'')+'<span>'+esc(c.author_name||'')+'</span>'+(c.gb_user_id?'<span>#'+esc(String(c.gb_user_id).slice(-6))+'</span>':'')+'<span>'+ago(c.created_at)+'</span></div>'+
   '<p class="body"><b>'+esc(c.store_name)+'</b> — '+esc(cval(c))+'<br>'+esc(c.title)+'</p>'+
-  '<div class="meta">'+(c.code?'<span class="code">'+esc(c.code)+'</span>':'<span>بدون كود</span>')+(c.expires_at?'<span>ينتهي '+esc(c.expires_at)+'</span>':'')+'<span>👍 '+c.worked+' · 👎 '+c.failed+' · نسخ '+c.copies+'</span></div>'+
-  (c.source_url?'<div style="margin-bottom:8px"><a class="src" href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.source_url)+'</a></div>':'')+aiBox(c.moderation_note)}
+  '<div class="meta">'+(c.code?'<span class="code">'+esc(c.code)+'</span>':'<span>بدون كود</span>')+(c.starts_at?'<span>يبدأ '+esc(c.starts_at)+'</span>':'')+(c.expires_at?'<span>ينتهي '+esc(c.expires_at)+'</span>':'')+(c.channel&&c.channel!=='any'?'<span>'+esc((CHANNELS.filter(function(k){return k[0]===c.channel})[0]||['',''])[1])+(c.delivery_app?' ('+esc(c.delivery_app)+')':'')+'</span>':'')+(c.min_order?'<span>فوق '+c.min_order+' ر.س</span>':'')+(c.max_discount?'<span>أقصى '+c.max_discount+' ر.س</span>':'')+(c.new_only?'<span>للعملاء الجدد</span>':'')+'<span>👍 '+c.worked+' · 👎 '+c.failed+' · نسخ '+c.copies+'</span></div>'+
+  (c.terms?'<div class="q">الشروط: '+esc(c.terms)+'</div>':'')+(c.source_url?'<div style="margin-bottom:8px"><a class="src" href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.source_url)+'</a></div>':'')+aiBox(c.moderation_note)}
 function ccard(c){var a='';
   if(c.status!=='approved')a+='<button class="ok grow" data-cs="approved">نشر ✓</button>';
   if(c.status==='pending')a+='<button class="no grow" data-cs="rejected">رفض</button>';
   if(c.status==='approved')a+='<button class="no" data-cs="hidden">إخفاء</button>';
+  a+='<button data-cedit="1">تعديل</button>';
   if(c.kind==='user')a+='<button data-cofficial="1">توثيق كرسمي</button>';
   a+='<button data-cfeat="'+(c.featured?0:1)+'">'+(c.featured?'إلغاء التمييز':'تمييز ⭐')+'</button>';
   if(c.gb_user_id)a+='<button class="ghost" data-cban="'+esc(c.gb_user_id)+'">حظر الكاتب</button>';
@@ -248,6 +267,7 @@ function crepCard(r){var c=r.coupons;var lbl={owner:'طلب إزالة من صا
   return '<article class="item" data-crep="'+r.id+'"'+(c?' data-cid="'+c.id+'"':'')+'><div class="meta"><span class="chip">'+lbl+'</span><span>'+ago(r.created_at)+'</span>'+(r.contact?'<span dir="ltr">'+esc(r.contact)+'</span>':'')+'</div>'+(r.reason?'<div class="q">'+esc(r.reason)+'</div>':'')+(c?cbody(c):'<p class="body">الكوبون محذوف</p>')+
   '<div class="acts">'+(c&&c.status!=='approved'?'<button class="ok" data-cs="approved">إرجاع ونشر</button>':'')+(c&&c.status==='approved'?'<button class="no" data-cs="hidden">إخفاء</button>':'')+'<button data-cdone="1">تم، أغلق البلاغ</button></div></article>'}
 document.addEventListener('click',function(e){var b=e.target.closest('#c-list button');if(!b)return;var it=b.closest('.item'),id=it.dataset.cid,rep=it.dataset.crep,p;
+  if(b.dataset.cedit){openCForm(CROWS[id]);return}
   if(b.dataset.cdel){if(!b.dataset.sure){b.dataset.sure=1;b.textContent='متأكد؟ اضغط مرة ثانية';b.className='no';return}p=api('coupons?id=eq.'+id,{method:'DELETE'})}
   else if(b.dataset.cban){if(!b.dataset.sure){b.dataset.sure=1;b.textContent='تأكيد الحظر';b.className='no';return}
     p=api('banned_users',{method:'POST',body:{gb_user_id:b.dataset.cban,reason:'حُظر من الكوبونات'},prefer:'return=minimal,resolution=ignore-duplicates'}).then(function(){return api('coupons?id=eq.'+id,{method:'PATCH',body:{status:'rejected'},prefer:'return=minimal'})})}
