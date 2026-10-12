@@ -76,7 +76,8 @@ Deno.serve(async (req) => {
       const text = [
         `المتجر: ${rec.store_name}`, `المدينة: ${rec.city}`, `التصنيف: ${rec.category}`,
         `العرض: ${rec.title}`, `القيمة: ${rec.value ?? "-"} (${rec.unit})`, `الكود: ${rec.code ?? "بدون كود"}`,
-        `رابط المصدر: ${rec.source_url ?? "لا يوجد"}`, `ينتهي: ${rec.expires_at ?? "غير محدد"}`,
+        `رابط المصدر: ${rec.source_url ?? "لا يوجد"}`, `رابط الاستخدام: ${rec.use_url ?? "-"}`, `ينتهي: ${rec.expires_at ?? "غير محدد"}`,
+        `طريقة الاستخدام: ${rec.channel ?? "any"}${rec.delivery_app ? " (" + rec.delivery_app + ")" : ""}`, `حد أدنى للطلب: ${rec.min_order ?? "-"}`, `أقصى خصم: ${rec.max_discount ?? "-"}`, `للعملاء الجدد فقط: ${rec.new_only ? "نعم" : "لا"}`, `الشروط: ${rec.terms ?? "-"}`,
       ].join("\n");
       const res = await classify("coupons", text, "");
       // درجات الثقة: المستخدم الجديد (أقل من كوبونين مقبولين) تروح كوبوناته للمدير حتى لو قبلها المراجع
