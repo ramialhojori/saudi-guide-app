@@ -57,7 +57,16 @@ a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;c
 .facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .fact{font-size:12px;font-weight:600;background:#F3F0F8;color:var(--mut);border-radius:8px;padding:3px 8px}
 .fact.warn{background:#FFF1E0;color:var(--acc)}
-.src{display:inline-block;font-size:12px;color:var(--p);text-decoration:underline;margin-bottom:10px}
+.src{display:inline-block;font-size:12.5px;font-weight:600;color:var(--p);text-decoration:underline}
+.links{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}.links:empty{display:none}
+.terms{margin:0 0 10px;font-size:13px;color:var(--mut)}.terms summary{cursor:pointer;font-weight:600;color:var(--ink)}.terms p{margin:6px 0 0;line-height:1.6}
+.ib{width:42px!important}
+.mine{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-weight:600;font-size:14px;margin-inline-start:6px}
+.disc{margin:28px 16px 0;padding:14px;border-radius:16px;background:#EFEBF5;color:var(--mut);font-size:12.5px;line-height:1.7}
+.disc b{color:var(--ink)}
+.myl{display:grid;gap:10px}.myi{border:1px solid var(--line);border-radius:14px;padding:12px}.myi b{display:block}.myi small{color:var(--mut)}
+.st{display:inline-block;font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px;margin-top:6px}.st-pending{background:#FFF1E0;color:var(--acc)}.st-approved{background:#E3F2EA;color:var(--grn)}.st-rejected,.st-hidden{background:#FBE7EC;color:var(--red)}
+.fg .chk{display:flex;align-items:center;gap:8px;font-weight:600}.fg .chk input{width:auto}
 .acts{display:flex;gap:8px;align-items:center}
 .reveal{flex:1;height:46px;border-radius:14px;border:0;background:var(--or);color:#2E1A07;font-weight:700;font-size:15px}
 .codebox{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;height:46px;border-radius:14px;border:2px dashed var(--or);padding:0 6px 0 12px;background:#FFF8F0}
@@ -101,7 +110,7 @@ a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;c
   <small>عروض من المتاجر ومن مجتمع الدليل</small>
   <h1>العروض والكوبونات</h1>
   <p>خصومات لمطاعم ومقاهي وفنادق وأماكن ترفيه في مدن المملكة</p>
-  <button class="addbtn" type="button" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>شارك كوبون</button>
+  <button class="addbtn" type="button" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>شارك كوبون</button><button class="mine" type="button" id="mineBtn">كوبوناتي المرسلة</button>
 </header>
 <div class="sbox"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="ابحث عن متجر، عرض، أو مدينة…" aria-label="بحث في العروض"></label></div>
 <div class="chips" id="cats" role="tablist" aria-label="التصنيف"></div>
@@ -112,6 +121,7 @@ a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;c
 <button class="wallet" type="button" id="walletBtn"><span class="wi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span><span><b id="wTitle">0 كوبون محفوظ</b><span id="wSub">احفظ الكوبونات اللي تهمك وتلقاها هنا</span></span></button>
 <div class="sh"><h3 id="listTitle"><i style="background:#EB839B"></i>كل العروض</h3><span id="count"></span></div>
 <div class="list" id="list"><div class="empty">جاري تحميل العروض…</div></div>
+<p class="disc"><b>تنبيه:</b> العروض والكوبونات تُنشر كما وردت من المتاجر أو شاركها المستخدمون، والعروض قد تتغير أو تتوقف في أي وقت من المتجر نفسه. «دليل السعودية» غير مسؤول عن تطبيق العرض أو شروطه، فتأكد منها مع المتجر قبل الطلب. لو لقيت كوبون غلط، صوّت «ما اشتغل» أو تواصل معنا.</p>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -120,8 +130,10 @@ var SUPABASE_URL='https://qnjixxctlwinglmhgijc.supabase.co';
 var SUPABASE_ANON_KEY='sb_publishable_Ta_HT5_r1UPYj8y7MKozdg_VKLL_bwa';
 var CATS=[['all','الكل'],['food','مطاعم'],['cafe','مقاهي'],['hotel','فنادق'],['fun','ترفيه'],['shop','تسوق'],['other','أخرى']];
 var COLORS={food:['#E0708C','#C94C6C'],cafe:['#F0883A','#D96F1C'],hotel:['#8562A6','#5E4590'],fun:['#4AA8DB','#1F7FB2'],shop:['#5A6396','#373D63'],other:['#6E7BA8','#4D5A88']};
-var CITY_LIST=['الرياض','جدة','مكة المكرمة','المدينة المنورة','الدمام','الخبر','الطائف','أبها','العلا','تبوك','حائل','القصيم','جازان','نجران','الباحة','الجوف','ينبع','الأحساء'];
-var IC={bm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',bmf:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'};
+var CITY_LIST=['الرياض','جدة','مكة المكرمة','المدينة المنورة','الدمام','الخبر','الظهران','الأحساء','الجبيل','القطيف','حفر الباطن','الخفجي','الطائف','أبها','خميس مشيط','النماص','بيشة','الباحة','جازان','صبيا','فرسان','نجران','شرورة','تبوك','العلا','نيوم','أملج','الوجه','ضباء','ينبع','رابغ','حائل','بريدة','عنيزة','الرس','سكاكا','دومة الجندل','عرعر','طريف','القريات','الخرج','الدرعية','المجمعة','الزلفي','وادي الدواسر','القنفذة','الليث','الدوادمي','عفيف','محايل عسير','أخرى'];
+var UNITS=[['pct','خصم بالنسبة ٪'],['sar','خصم بالريال'],['gift','هدية مجانية'],['bogo','اشترِ واحد واحصل على الثاني (1+1)'],['free_delivery','توصيل مجاني'],['fixed_price','سعر خاص'],['cashback','استرداد نقدي (كاش باك)'],['other','عرض آخر']];
+var CHANNELS=[['any','في أي مكان'],['store','داخل المتجر أو الفرع'],['online','من الموقع الإلكتروني'],['app','من تطبيق المتجر'],['delivery','عبر تطبيق توصيل']];
+var IC={share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',bm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',bmf:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'};
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2600);}
@@ -144,11 +156,13 @@ if(!window.gb){var _gT=0,_gI=setInterval(function(){if(window.gb||++_gT>20){clea
 var ALL=[],st={cat:'all',city:'',q:'',wallet:false};
 function nrm(x){return String(x||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();}
 function daysLeft(d){if(!d)return null;var now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Riyadh'}));now.setHours(0,0,0,0);var e=new Date(d+'T00:00:00');return Math.round((e-now)/86400000);}
-function val(c){if(c.unit==='gift')return 'هدية';if(c.unit==='bogo')return '1+1';if(c.value==null)return 'عرض';return (+c.value)+(c.unit==='pct'?'<small>٪</small>':c.unit==='sar'?'<small> ر.س</small>':'');}
-function lbl(c){return c.unit==='gift'?'مجاناً':c.unit==='bogo'?'عرض':'خصم';}
+function num(x){return String(+x);}
+function val(c){if(c.unit==='gift')return 'هدية';if(c.unit==='bogo')return '1+1';if(c.unit==='free_delivery')return 'توصيل';if(c.value==null)return 'عرض';if(c.unit==='pct'||c.unit==='cashback')return num(c.value)+'<small>٪</small>';if(c.unit==='sar'||c.unit==='fixed_price')return num(c.value)+'<small> ر.س</small>';return num(c.value);}
+function lbl(c){return {gift:'مجاناً',bogo:'عرض',free_delivery:'مجاني',fixed_price:'سعر خاص',cashback:'كاش باك',other:'عرض'}[c.unit]||'خصم';}
+function chName(c){var x=CHANNELS.filter(function(k){return k[0]===c.channel;})[0];if(!x||c.channel==='any')return '';return c.channel==='delivery'&&c.delivery_app?'عبر '+c.delivery_app:x[1];}
 function grad(c){var k=COLORS[c.category]||COLORS.other;return 'linear-gradient(160deg,'+k[0]+','+k[1]+')';}
 function catName(k){var x=CATS.filter(function(c){return c[0]===k;})[0];return x?x[1]:'';}
-function load(){sb('coupons?select=id,store_name,category,city,value,unit,title,code,source_url,expires_at,kind,featured,worked,failed,copies,author_name,created_at&order=featured.desc,kind.asc,created_at.desc&limit=300')
+function load(){sb('coupons?select=id,store_name,category,city,value,unit,title,code,source_url,expires_at,kind,featured,worked,failed,copies,author_name,created_at,channel,min_order,max_discount,new_only,terms,use_url,starts_at,delivery_app&order=featured.desc,kind.asc,created_at.desc&limit=300')
   .then(function(r){ALL=r||[];renderAll();}).catch(function(){$('list').innerHTML='<div class="empty"><b>ما قدرنا نحمّل العروض</b>تأكد من الاتصال بالإنترنت وارجع للصفحة.</div>';});}
 function filtered(){var q=nrm(st.q);return ALL.filter(function(c){if(st.wallet&&SAVED.indexOf(c.id)<0)return false;if(st.cat!=='all'&&c.category!==st.cat)return false;if(st.city&&c.city!==st.city)return false;if(q.length>1&&nrm(c.store_name+' '+c.title+' '+c.city).indexOf(q)<0)return false;return true;});}
 function renderChips(){$('cats').innerHTML=CATS.map(function(c){return '<button type="button" class="chip'+(st.cat===c[0]?' on':'')+'" data-cat="'+c[0]+'" role="tab" aria-selected="'+(st.cat===c[0])+'">'+c[1]+'</button>';}).join('');
@@ -159,6 +173,10 @@ function renderFeat(){var f=ALL.filter(function(c){return c.featured;});$('featW
 function renderWallet(){var n=ALL.filter(function(c){return SAVED.indexOf(c.id)>=0;}).length;$('wTitle').textContent=n+' كوبون محفوظ';$('wSub').textContent=st.wallet?'اضغط عشان ترجع لكل العروض':(n?'اضغط عشان تشوف كوبوناتك المحفوظة':'احفظ الكوبونات اللي تهمك وتلقاها هنا');}
 function card(c){var d=daysLeft(c.expires_at),saved=SAVED.indexOf(c.id)>=0,v=VOTED[c.id];
   var facts='';if(d!=null)facts+='<span class="fact'+(d<=3?' warn':'')+'">'+(d===0?'ينتهي اليوم':d===1?'باقي يوم':d===2?'باقي يومين':'باقي '+d+(d<=10?' أيام':' يوم'))+'</span>';
+  var ch=chName(c);if(ch)facts+='<span class="fact">'+esc(ch)+'</span>';
+  if(c.min_order)facts+='<span class="fact">للطلب فوق '+num(c.min_order)+' ر.س</span>';
+  if(c.max_discount)facts+='<span class="fact">أقصى خصم '+num(c.max_discount)+' ر.س</span>';
+  if(c.new_only)facts+='<span class="fact warn">للعملاء الجدد فقط</span>';
   if(c.copies>0)facts+='<span class="fact">استخدمه '+c.copies+'</span>';
   if(c.worked>0)facts+='<span class="fact">اشتغل مع '+c.worked+'</span>';
   var act=SHOWN[c.id]||!c.code?(c.code?'<div class="codebox"><code>'+esc(c.code)+'</code><button type="button" data-copy="'+c.id+'">نسخ</button></div>':'<div class="codebox"><span style="font-size:14px;font-weight:600">بدون كود، اذكر العرض عند الطلب</span></div>'):'<button type="button" class="reveal" data-reveal="'+c.id+'">اكشف الكود</button>';
@@ -167,8 +185,9 @@ function card(c){var d=daysLeft(c.expires_at),saved=SAVED.indexOf(c.id)>=0,v=VOT
    '<div class="trow"><h4>'+esc(c.store_name)+'</h4><span class="bdg '+(c.kind==='official'?'b-off">رسمي ✓':'b-usr">شاركه مستخدم')+'</span></div>'+
    '<div class="sub">'+esc(catName(c.category))+' · '+esc(c.city)+(c.kind==='user'&&c.author_name?' · بواسطة '+esc(c.author_name):'')+'</div>'+
    '<p class="desc">'+esc(c.title)+'</p>'+(facts?'<div class="facts">'+facts+'</div>':'')+
-   (c.kind==='user'&&c.source_url?'<a class="src" href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">مصدر الكوبون</a>':'')+
-   '<div class="acts">'+act+'<button type="button" class="ib'+(saved?' on':'')+'" data-save="'+c.id+'" aria-label="'+(saved?'إزالة من المحفظة':'حفظ في المحفظة')+'">'+(saved?IC.bmf:IC.bm)+'</button></div>'+vote+'</div></article>';}
+   (c.terms?'<details class="terms"><summary>الشروط</summary><p>'+esc(c.terms)+'</p></details>':'')+
+   '<div class="links">'+(c.use_url?'<a class="src" href="'+esc(c.use_url)+'" target="_blank" rel="noopener noreferrer">استخدم العرض</a>':'')+(c.kind==='user'&&c.source_url?'<a class="src" href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">مصدر الكوبون</a>':'')+'</div>'+
+   '<div class="acts">'+act+'<button type="button" class="ib" data-share="'+c.id+'" aria-label="شارك الكوبون">'+IC.share+'</button><button type="button" class="ib'+(saved?' on':'')+'" data-save="'+c.id+'" aria-label="'+(saved?'إزالة من المحفظة':'حفظ في المحفظة')+'">'+(saved?IC.bmf:IC.bm)+'</button></div>'+vote+'</div></article>';}
 function renderList(){var r=filtered();$('count').textContent=r.length?r.length+' عرض':'';
   $('listTitle').innerHTML='<i style="background:#EB839B"></i>'+(st.wallet?'كوبوناتي المحفوظة':'كل العروض');
   if(!r.length){$('list').innerHTML=ALL.length?'<div class="empty"><b>ما لقينا عروض بهذا الاختيار</b>جرّب تصنيف أو مدينة ثانية.</div>':'<div class="empty"><b>ما فيه عروض منشورة حالياً</b>عندك كوبون لمطعم أو متجر؟ شاركه مع الناس.<br><button type="button" class="addbtn" data-add="1" style="background:var(--p);color:#fff">شارك كوبون</button></div>';return;}
@@ -179,6 +198,7 @@ function renderAll(){renderChips();renderFeat();renderWallet();renderList();}
 var qT;$('q').addEventListener('input',function(){clearTimeout(qT);var v=this.value;qT=setTimeout(function(){st.q=v;renderList();},150);});
 $('walletBtn').addEventListener('click',function(){st.wallet=!st.wallet;renderWallet();renderList();});
 $('addBtn').addEventListener('click',openAdd);
+$('mineBtn').addEventListener('click',openMine);
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var id;
   if(b.dataset.cat){st.cat=b.dataset.cat;renderChips();renderList();return;}
   if(b.hasAttribute('data-city')){st.city=b.dataset.city;renderChips();renderList();return;}
@@ -189,6 +209,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if((id=b.dataset.save)){var i=SAVED.indexOf(id);if(i>=0)SAVED.splice(i,1);else SAVED.push(id);LS.set('sg_cpn2',SAVED);toast(i>=0?'انشال من المحفظة':'انحفظ في محفظتك');rerender(id);renderWallet();if(st.wallet)renderList();return;}
   if(b.dataset.vote!=null&&b.dataset.id){vote(b.dataset.id,b.dataset.vote==='1');return;}
   if((id=b.dataset.own)){openOwner(id);return;}
+  if((id=b.dataset.share)){share(find(id));return;}
 });
 function find(id){return ALL.filter(function(c){return c.id===id;})[0];}
 function rerender(id){var el=$('c-'+id),c=find(id);if(el&&c){var t=document.createElement('div');t.innerHTML=card(c);el.replaceWith(t.firstChild);}}
@@ -200,7 +221,16 @@ function fallbackCopy(t){var a=document.createElement('textarea');a.value=t;a.st
 function vote(id,ok){if(VOTED[id])return;VOTED[id]=ok?1:-1;LS.set('sg_cpn_votes',VOTED);rerender(id);
   sb('coupon_votes',{method:'POST',body:{coupon_id:id,device_id:DEV,gb_user_id:GBU?GBU.id:null,worked:ok},prefer:'return=minimal'}).then(function(){toast(ok?'حلو! بنقول للناس إنه شغال':'شكراً، لو تكرر البلاغ بنخفيه تلقائياً');}).catch(function(e){if(e.status===409)toast('سجّلنا تجربتك من قبل');});}
 
-/* الشيت */
+function share(c){if(!c)return;var t='عرض من '+c.store_name+' ('+c.city+'): '+c.title+(c.code?'\nالكود: '+c.code:'')+'\nلقيته في تطبيق دليل السعودية https://www.saudi-guide.com';
+  try{if(navigator.share){navigator.share({text:t}).catch(function(){});return;}}catch(e){}
+  var u='https://wa.me/?text='+encodeURIComponent(t);try{if(window.gb&&gb.location&&gb.location.open){gb.location.open(u);return;}}catch(e){}window.open(u,'_blank');}
+var STN={pending:'بانتظار المراجعة',approved:'منشور',rejected:'مرفوض',hidden:'مخفي'};
+function openMine(){if(!GBU){needLogin('سجّل دخولك عشان تشوف كوبوناتك المرسلة');return;}
+  openSheet('<h3>كوبوناتي المرسلة</h3><p class="hint">الكوبونات اللي أرسلتها من هذا الجهاز وحالتها.</p><div class="myl" id="myl"><div class="empty">جاري التحميل…</div></div><button class="xbtn" type="button" data-close>إغلاق</button>');
+  sb('rpc/my_coupons',{method:'POST',body:{uid:GBU.id,dev:DEV}}).then(function(r){var L=$('myl');if(!L)return;
+    L.innerHTML=(r&&r.length)?r.map(function(c){return '<div class="myi"><b>'+esc(c.store_name)+'</b><small>'+esc(c.title)+'</small><br><span class="st st-'+esc(c.status)+'">'+(STN[c.status]||c.status)+'</span>'+(c.reason?'<p class="hint" style="margin:6px 0 0">السبب: '+esc(c.reason)+'</p>':'')+'</div>';}).join(''):'<div class="empty"><b>ما أرسلت كوبونات للحين</b>اضغط «شارك كوبون» وأرسل أول واحد.</div>';})
+  .catch(function(){var L=$('myl');if(L)L.innerHTML='<div class="empty">ما قدرنا نحمّل كوبوناتك، جرّب بعد شوي.</div>';});}
+/* الشيت (النوافذ) */
 function openSheet(html){closeSheet();var ov=document.createElement('div');ov.className='ov';ov.id='ov';ov.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';
   ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-close]'))closeSheet();});document.body.appendChild(ov);document.documentElement.classList.add('lock');var f=ov.querySelector('input,select,textarea');if(f)setTimeout(function(){f.focus();},50);}
 function closeSheet(){var o=$('ov');if(o)o.remove();document.documentElement.classList.remove('lock');}
@@ -210,17 +240,32 @@ function openAdd(){if(!GBU){needLogin('سجّل دخولك عشان تقدر ت�
   '<div class="rules"><b>قبل ما ترسل</b>• حط رابط المصدر: حساب المتجر الرسمي أو موقعه أو صفحة العرض.<br>• كودات الدعوة الشخصية (ادعُ صديقك) تنرفض تلقائياً.<br>• لا تكتب أرقام جوال أو روابط ترويج لك.</div>'+
   '<form id="addF" class="fg" novalidate>'+
   '<label class="full">اسم المتجر أو المطعم<input name="store_name" required maxlength="60" autocomplete="off"></label>'+
-  '<label>المدينة<select name="city" required>'+CITY_LIST.map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></label>'+
+  '<label>المدينة<select name="city" id="fCity" required>'+CITY_LIST.map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></label>'+
+  '<label id="fCityOtherL" hidden>اسم المدينة<input name="city_other" maxlength="40"></label>'+
   '<label>التصنيف<select name="category">'+CATS.slice(1).map(function(c){return '<option value="'+c[0]+'">'+c[1]+'</option>';}).join('')+'</select></label>'+
-  '<label>نوع العرض<select name="unit"><option value="pct">خصم بالنسبة ٪</option><option value="sar">خصم بالريال</option><option value="gift">هدية مجانية</option><option value="bogo">1+1</option><option value="other">عرض آخر</option></select></label>'+
-  '<label>القيمة<input name="value" type="number" inputmode="decimal" min="1" step="any" placeholder="مثال: 20"></label>'+
+  '<label class="full">نوع العرض<select name="unit" id="fUnit">'+UNITS.map(function(u){return '<option value="'+u[0]+'">'+u[1]+'</option>';}).join('')+'</select></label>'+
+  '<label id="fValL">القيمة<input name="value" type="number" inputmode="decimal" min="1" step="any" placeholder="مثال: 20"></label>'+
+  '<label id="fMaxL">أقصى خصم بالريال (اختياري)<input name="max_discount" type="number" inputmode="decimal" min="1" step="any"></label>'+
+  '<label>حد أدنى للطلب بالريال (اختياري)<input name="min_order" type="number" inputmode="decimal" min="0" step="any"></label>'+
+  '<label>وين ينستخدم؟<select name="channel" id="fCh">'+CHANNELS.map(function(u){return '<option value="'+u[0]+'">'+u[1]+'</option>';}).join('')+'</select></label>'+
+  '<label class="full" id="fAppL" hidden>اسم تطبيق التوصيل<input name="delivery_app" maxlength="40" placeholder="مثال: هنقرستيشن، جاهز، مرسول، كيتا"></label>'+
   '<label class="full">وش العرض؟<input name="title" required minlength="5" maxlength="140" placeholder="مثال: خصم على الطلبات فوق 100 ريال"></label>'+
   '<label>الكود<input name="code" class="ltr" maxlength="40" autocapitalize="characters" placeholder="اتركه فاضي لو بدون كود"></label>'+
+  '<label>يبدأ من (اختياري)<input name="starts_at" type="date"></label>'+
   '<label>ينتهي في (اختياري)<input name="expires_at" type="date"></label>'+
+  '<label class="full chk"><input type="checkbox" name="new_only"> العرض للعملاء الجدد فقط</label>'+
+  '<label class="full">الشروط (اختياري)<textarea name="terms" maxlength="300" placeholder="مثال: لا يشمل المشروبات، مرة وحدة لكل عميل"></textarea></label>'+
+  '<label class="full">رابط استخدام العرض (اختياري)<input name="use_url" class="ltr" type="url" inputmode="url" placeholder="رابط المتجر أو صفحة الطلب"></label>'+
   '<label class="full">رابط المصدر<input name="source_url" class="ltr" type="url" required inputmode="url" placeholder="https://instagram.com/..."></label>'+
   '</form><button class="sbtn" type="button" id="addSend">أرسل للمراجعة</button><button class="xbtn" type="button" data-close>إلغاء</button>');
-  $('addSend').addEventListener('click',sendAdd);}
-function sendAdd(){var f=$('addF'),d={};[].forEach.call(f.elements,function(x){if(x.name&&x.value.trim()!=='')d[x.name]=x.value.trim();});
+  $('addSend').addEventListener('click',sendAdd);
+  var sync=function(){var u=$('fUnit').value;$('fValL').hidden=['gift','bogo','free_delivery'].indexOf(u)>=0;$('fMaxL').hidden=!(u==='pct'||u==='cashback');$('fAppL').hidden=$('fCh').value!=='delivery';$('fCityOtherL').hidden=$('fCity').value!=='أخرى';};
+  ['fUnit','fCh','fCity'].forEach(function(i){$(i).addEventListener('change',sync);});sync();}
+function sendAdd(){var f=$('addF'),d={};[].forEach.call(f.elements,function(x){if(!x.name||x.closest('[hidden]'))return;if(x.type==='checkbox'){d[x.name]=x.checked;return;}if(x.value.trim()!=='')d[x.name]=x.value.trim();});
+  if(d.city==='أخرى'){if(!d.city_other||d.city_other.length<2){toast('اكتب اسم المدينة');return;}d.city=d.city_other;}delete d.city_other;
+  ['min_order','max_discount'].forEach(function(k){if(d[k]!=null)d[k]=+d[k];});
+  if(d.use_url&&!/^https?:\/\/\S+\.\S+/i.test(d.use_url)){toast('رابط الاستخدام لازم يبدأ بـ https://');return;}
+  if(d.starts_at&&d.expires_at&&d.starts_at>d.expires_at){toast('تاريخ البداية بعد تاريخ الانتهاء');return;}
   if(!d.store_name||d.store_name.length<2){toast('اكتب اسم المتجر');return;}
   if(!d.title||d.title.length<5){toast('اكتب وصف العرض بشكل أوضح');return;}
   if(!d.source_url||!/^https?:\/\/\S+\.\S+/i.test(d.source_url)){toast('رابط المصدر لازم يبدأ بـ https://');return;}
