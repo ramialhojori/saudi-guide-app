@@ -158,7 +158,7 @@ function renderFeat(){var f=ALL.filter(function(c){return c.featured;});$('featW
   $('feat').innerHTML=f.map(function(c){return '<button type="button" class="fc" data-jump="'+c.id+'" style="background:'+grad(c)+'"><span class="tag">⭐ مميز</span><b>'+val(c)+'</b><h4>'+esc(c.store_name)+'</h4><p>'+esc(c.title)+' · '+esc(c.city)+'</p></button>';}).join('');}
 function renderWallet(){var n=ALL.filter(function(c){return SAVED.indexOf(c.id)>=0;}).length;$('wTitle').textContent=n+' كوبون محفوظ';$('wSub').textContent=st.wallet?'اضغط عشان ترجع لكل العروض':(n?'اضغط عشان تشوف كوبوناتك المحفوظة':'احفظ الكوبونات اللي تهمك وتلقاها هنا');}
 function card(c){var d=daysLeft(c.expires_at),saved=SAVED.indexOf(c.id)>=0,v=VOTED[c.id];
-  var facts='';if(d!=null)facts+='<span class="fact'+(d<=3?' warn':'')+'">'+(d===0?'ينتهي اليوم':'باقي '+d+(d<=10?' أيام':' يوم'))+'</span>';
+  var facts='';if(d!=null)facts+='<span class="fact'+(d<=3?' warn':'')+'">'+(d===0?'ينتهي اليوم':d===1?'باقي يوم':d===2?'باقي يومين':'باقي '+d+(d<=10?' أيام':' يوم'))+'</span>';
   if(c.copies>0)facts+='<span class="fact">استخدمه '+c.copies+'</span>';
   if(c.worked>0)facts+='<span class="fact">اشتغل مع '+c.worked+'</span>';
   var act=SHOWN[c.id]||!c.code?(c.code?'<div class="codebox"><code>'+esc(c.code)+'</code><button type="button" data-copy="'+c.id+'">نسخ</button></div>':'<div class="codebox"><span style="font-size:14px;font-weight:600">بدون كود، اذكر العرض عند الطلب</span></div>'):'<button type="button" class="reveal" data-reveal="'+c.id+'">اكشف الكود</button>';
