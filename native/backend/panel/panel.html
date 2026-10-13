@@ -80,6 +80,15 @@ textarea.in{min-height:130px;resize:vertical;line-height:1.8}
 .imgs .im .mk{position:absolute;bottom:4px;right:4px;background:rgba(255,255,255,.85);border:0;border-radius:999px;font-size:11px;padding:0 8px;cursor:pointer}
 .up{font:inherit;line-height:1.5;width:110px;height:84px;border-radius:12px;border:2px dashed var(--line);display:grid;place-items:center;cursor:pointer;color:var(--muted);font-size:13px;background:#fff}
 .bar{position:sticky;bottom:-120px;margin:22px -24px -120px;padding:14px 24px 24px;background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:8px;flex-wrap:wrap}
+.im[draggable=true]{cursor:grab}.im.dragging{opacity:.4}.im.over{outline:3px solid var(--orange)}
+.warn{background:var(--softOrange);color:var(--orangeInk,#995306);border-radius:14px;padding:10px 14px;font-size:13px;margin-top:10px}
+.warn a{color:inherit;font-weight:700}
+.prev{background:#fff;border-radius:22px;overflow:hidden;max-width:340px;box-shadow:0 8px 30px rgba(43,39,69,.12);margin-top:10px}
+.prev .cv{height:170px;background:var(--chip) center/cover;position:relative}
+.prev .cv b{position:absolute;bottom:10px;right:10px;background:#fff;border-radius:999px;padding:2px 10px;font-size:12px}
+.prev .bd{padding:14px}.prev h3{margin:0;font-size:19px}.prev p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.8}
+.mini{border:0;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:13px}
+.season{background:#fff;border-radius:20px;padding:16px;cursor:pointer;border-right:6px solid var(--purple)}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:14px;font-weight:600;z-index:50;display:none}
 .empty{color:var(--muted);text-align:center;padding:40px}
 .login{max-width:380px;margin:12vh auto;background:#fff;border-radius:26px;padding:28px;text-align:center}
@@ -152,7 +161,7 @@ function loginView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['community', 'المجتمع'], ['users', 'المستخدمين']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['users', 'المستخدمين']];
 async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
@@ -162,7 +171,7 @@ async function render() {
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; sessionStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, community: communityView, users: usersView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, users: usersView })[VIEW]();
 }
 
 /* ——— الرئيسية ——— */
@@ -209,9 +218,10 @@ async function loadPlaces() {
   $('#res').innerHTML = `<div class="muted" style="font-size:13px">${d.total} مكان</div>` + (d.places.map((p) => `<div class="item" data-id="${p.id}">
     ${p.thumb ? `<img src="${h(p.thumb)}" loading="lazy">` : '<div class="ph">بدون صورة</div>'}
     <div class="grow"><div class="t">${h(p.title)}</div><div class="m">${cityName(p.city)} · ${p.kinds.map((k) => KIND[k] || k).join('، ') || 'بدون تصنيف'}${!p.lat ? ' · <span style="color:var(--pinkDeep)">بدون موقع</span>' : ''}</div></div>
-    <span class="badge ${ST[p.status][1]}">${ST[p.status][0]}</span></div>`).join('') || '<div class="empty">ما فيه نتائج</div>')
+    ${p.status === 'draft' ? `<button class="mini" style="background:var(--softGreen);color:var(--green)" data-pub="${p.id}">انشر</button>` : ''}<span class="badge ${ST[p.status][1]}">${ST[p.status][0]}</span></div>`).join('') || '<div class="empty">ما فيه نتائج</div>')
     + (pages > 1 ? `<div class="row" style="justify-content:center;margin-top:10px">${PF.page > 1 ? '<button class="btn ghost" id="prev">السابق</button>' : ''}<span class="muted">${PF.page} من ${pages}</span>${PF.page < pages ? '<button class="btn ghost" id="next">التالي</button>' : ''}</div>` : '');
   document.querySelectorAll('#res .item').forEach((el) => (el.onclick = async () => editPlace((await api('/admin/places/' + el.dataset.id)).place)));
+  document.querySelectorAll('#res [data-pub]').forEach((b) => (b.onclick = async (e) => { e.stopPropagation(); await api(`/admin/places/${b.dataset.pub}/status`, { method: 'POST', body: { status: 'live' } }); toast('انتشر'); loadPlaces(); }));
   $('#prev') && ($('#prev').onclick = () => { PF.page--; loadPlaces(); });
   $('#next') && ($('#next').onclick = () => { PF.page++; loadPlaces(); });
 }
@@ -223,27 +233,35 @@ function drawer(html) {
   d.innerHTML = `<div class="sheet">${html}</div>`; d.classList.add('on'); return d;
 }
 const closeDrawer = () => $('#drawer')?.classList.remove('on');
-function imagesWidget(el, list) {
+function imagesWidget(el, list, onChange) {
   const draw = () => {
-    el.innerHTML = `<div class="imgs">${list.map((u, i) => `<div class="im"><img src="${h(u)}">${i === 0 ? '<span class="cover">الغلاف</span>' : `<button class="mk" data-i="${i}">اجعلها الغلاف</button>`}<button class="x" data-i="${i}" title="شيل">×</button></div>`).join('')}
+    el.innerHTML = `<div class="imgs">${list.map((u, i) => `<div class="im" draggable="true" data-i="${i}" title="اسحبها لترتيب الصور"><img src="${h(u)}" draggable="false">${i === 0 ? '<span class="cover">الغلاف</span>' : `<button class="mk" data-i="${i}">اجعلها الغلاف</button>`}<button class="x" data-i="${i}" title="شيل">×</button></div>`).join('')}
       <button type="button" class="up" id="upBtn">+ صورة<br><small>أو اسحبها هنا</small></button><input type="file" accept="image/*" multiple style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
       <input class="in" style="margin-top:8px" placeholder="أو الصق رابط صورة واضغط Enter">`;
     el.querySelectorAll('.x').forEach((b) => (b.onclick = () => { list.splice(+b.dataset.i, 1); draw(); }));
-    el.querySelectorAll('.mk').forEach((b) => (b.onclick = () => { const [u] = list.splice(+b.dataset.i, 1); list.unshift(u); draw(); }));
+    let from = -1;
+    el.querySelectorAll('.im').forEach((im) => {
+      im.ondragstart = (e) => { from = +im.dataset.i; im.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'img'); };
+      im.ondragend = () => im.classList.remove('dragging');
+      im.ondragover = (e) => { if (from < 0) return; e.preventDefault(); e.stopPropagation(); im.classList.add('over'); };
+      im.ondragleave = () => im.classList.remove('over');
+      im.ondrop = (e) => { if (from < 0) return; e.preventDefault(); e.stopPropagation(); const to = +im.dataset.i; const [u] = list.splice(from, 1); list.splice(to, 0, u); from = -1; draw(); onChange && onChange(); };
+    });
+    el.querySelectorAll('.mk').forEach((b) => (b.onclick = () => { const [u] = list.splice(+b.dataset.i, 1); list.unshift(u); draw(); onChange && onChange(); }));
     const fi = el.querySelector('input[type=file]');
     el.querySelector('#upBtn').onclick = () => fi.click();
     const upload = async (files) => {
       for (const f of files) {
         if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { toast('الصورة لازم JPG أو PNG أو WEBP (صور الآيفون HEIC حوّلها أول)'); continue; }
         toast('يرفع الصورة...');
-        try { const r = await api('/admin/upload', { method: 'POST', body: f, headers: { 'Content-Type': f.type } }); list.push(r.url); draw(); toast('انرفعت'); } catch (er) { toast(errMsg(er)); }
+        try { const r = await api('/admin/upload', { method: 'POST', body: f, headers: { 'Content-Type': f.type } }); list.push(r.url); draw(); onChange && onChange(); toast('انرفعت'); } catch (er) { toast(errMsg(er)); }
       }
     };
     fi.onchange = (e) => upload([...e.target.files]);
     const zone = el.querySelector('.imgs');
     zone.ondragover = (e) => { e.preventDefault(); zone.style.outline = '2px dashed var(--orange)'; };
     zone.ondragleave = () => (zone.style.outline = '');
-    zone.ondrop = (e) => { e.preventDefault(); zone.style.outline = ''; upload([...e.dataTransfer.files]); };
+    zone.ondrop = (e) => { e.preventDefault(); zone.style.outline = ''; if (e.dataTransfer.files.length) upload([...e.dataTransfer.files]); };
     el.querySelector('input.in').onkeydown = (e) => { if (e.key === 'Enter' && /^https?:\/\//.test(e.target.value)) { e.preventDefault(); list.push(e.target.value.trim()); draw(); } };
   };
   draw();
@@ -263,14 +281,17 @@ function parseGeo(s) {
   return m ? [+m[1], +m[2]] : null;
 }
 /** الموقع: بحث بالاسم (OpenStreetMap) + خريطة بدبوس تسحبه + لصق رابط قوقل ماب */
-function geoWidget(box, lat, lng, cityFn, addrEl) {
+function geoWidget(box, lat, lng, cityFn, addrEl, onSet) {
   box.innerHTML = `<div class="geo"><input class="in" id="gq" placeholder="اكتب اسم المكان... أو الصق رابط قوقل ماب" autocomplete="off"><div class="sug" id="sug"></div>
     <input type="hidden" id="geo" value="${lat ? lat + ', ' + lng : ''}"><div class="map" id="gmap"></div><small id="geoMsg" class="muted"></small></div>`;
   const q = $('#gq', box), sug = $('#sug', box), out = $('#geo', box), msg = $('#geoMsg', box);
   const center = () => { const c = META.cities.find((x) => x.id === cityFn()); return c ? [c.lat, c.lng] : [24.2, 44.5]; };
-  if (!window.L) { $('#gmap', box).remove(); window.L = { map: () => ({ setView() { return this; }, on() {}, invalidateSize() {}, addLayer() {} }), tileLayer: () => ({ addTo() {} }), marker: () => ({ addTo() { return this; }, on() {}, setLatLng() {} }) }; }
+  if (!window.L) { $('#gmap', box).remove(); window.L = { map: () => ({ setView() { return this; }, on() {}, invalidateSize() {}, addLayer() {}, removeLayer() {} }), tileLayer: () => ({ addTo() { return this; }, on() {} }), marker: () => ({ addTo() { return this; }, on() {}, setLatLng() {} }) }; }
   const map = L.map($('#gmap', box), { zoomControl: true, attributionControl: true }).setView(lat ? [lat, lng] : center(), lat ? 16 : (cityFn() ? 11 : 5));
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  // خريطة OpenStreetMap، ولو رفضت نحوّل تلقائياً لخرائط Esri
+  let fails = 0, alt = false;
+  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  osm.on && osm.on('tileerror', () => { if (++fails > 2 && !alt) { alt = true; map.removeLayer(osm); L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' }).addTo(map); } });
   let pin = null;
   const set = (la, ln, zoom) => {
     la = +(+la).toFixed(6); ln = +(+ln).toFixed(6);
@@ -278,6 +299,7 @@ function geoWidget(box, lat, lng, cityFn, addrEl) {
     if (!pin) { pin = L.marker([la, ln], { draggable: true }).addTo(map); pin.on('dragend', () => { const p = pin.getLatLng(); set(p.lat, p.lng); }); } else pin.setLatLng([la, ln]);
     if (zoom) map.setView([la, ln], zoom);
     msg.innerHTML = `✓ ${la}, ${ln} · <a target="_blank" href="https://maps.google.com/?q=${la},${ln}">تأكد في قوقل ماب</a> · تقدر تسحب الدبوس لو مو مضبوط`;
+    onSet && onSet(la, ln);
   };
   if (lat) set(lat, lng); else msg.textContent = 'اكتب الاسم واختر من القائمة، أو اضغط على الخريطة مكان المكان';
   setTimeout(() => map.invalidateSize(), 250);
@@ -316,7 +338,9 @@ function editPlace(p) {
   p = p || { city: PF.city || '', title: '', title_en: '', cats: [], kinds: [], summary: '', body: '', images: [], lat: null, lng: null, address: '', phone: '', website: '', email: '', status: 'draft' };
   const images = [...p.images], cats = [...p.cats], kinds = [...p.kinds];
   const d = drawer(`<div class="row"><div class="grow"><h2>${isNew ? 'مكان جديد' : h(p.title)}</h2><div class="m muted">${isNew ? 'بينحفظ مسودة' : `رقم ${p.id} · <span class="badge ${ST[p.status][1]}">${ST[p.status][0]}</span>${p.fromPanel ? ' <span class="badge b-panel">معدّل من اللوحة</span>' : ''}`}</div></div><button class="btn ghost" id="x">إغلاق</button></div>
+    <div id="prevBox" style="display:none"></div>
     <div class="two"><div class="f"><label>الاسم بالعربي *</label><input class="in" id="title" value="${h(p.title)}"></div><div class="f"><label>الاسم بالإنجليزي</label><input class="in" id="title_en" value="${h(p.title_en)}" dir="ltr"></div></div>
+    <div id="dup"></div>
     <div class="f"><label>المدينة *</label><select class="in" id="city"><option value="">اختر</option>${META.cities.map((c) => `<option value="${c.id}" ${p.city === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
     <div class="f"><label>النوع في التطبيق</label><div id="kinds"></div><small>يحدد لون وأيقونة المكان في الخريطة والفلاتر</small></div>
     <div class="f"><label>التصنيفات</label><div id="cats"></div></div>
@@ -328,15 +352,35 @@ function editPlace(p) {
     <div class="two"><div class="f"><label>الجوال</label><input class="in" id="phone" value="${h(p.phone)}" dir="ltr"></div><div class="f"><label>الموقع الإلكتروني</label><input class="in" id="website" value="${h(p.website)}" dir="ltr"></div></div>
     <div class="bar"><button class="btn" id="save">حفظ</button>
       ${p.status !== 'live' ? '<button class="btn g" id="pub">حفظ وانشر</button>' : '<button class="btn ghost" id="unpub">رجّعه مسودة</button>'}
-      ${!isNew && p.status !== 'hidden' ? '<button class="btn ghost" id="hide" style="color:var(--pinkDeep)">إخفاء</button>' : ''}</div>`);
-  imagesWidget($('#imgs', d), images);
+      ${!isNew && p.status !== 'hidden' ? '<button class="btn ghost" id="hide" style="color:var(--pinkDeep)">إخفاء</button>' : ''}<button class="btn ghost" id="pv">معاينة في التطبيق</button></div>`);
+  /* معاينة: شكل بطاقة المكان في التطبيق */
+  const drawPrev = () => {
+    const box = $('#prevBox', d); if (box.style.display === 'none') return;
+    const c = collect();
+    box.innerHTML = `<div class="hint">هذا شكل المكان تقريباً في التطبيق</div><div class="prev"><div class="cv" style="background-image:url('${h(images[0] || '')}')">${c.kinds[0] ? `<b>${KIND[c.kinds[0]]}</b>` : ''}</div>
+      <div class="bd"><h3>${h(c.title || 'اسم المكان')}</h3><div class="muted" style="font-size:13px">${cityName(c.city)}${c.lat ? ' · على الخريطة ✓' : ' · <span style="color:var(--pinkDeep)">بدون موقع</span>'}</div>
+      <p>${h(c.summary || 'الوصف القصير يطلع هنا')}</p><p>${h(plainBody(c.body).slice(0, 220))}${plainBody(c.body).length > 220 ? '…' : ''}</p>
+      ${images.length > 1 ? `<p>${images.length} صور</p>` : ''}</div></div>`;
+  };
+  $('#pv', d).onclick = () => { const box = $('#prevBox', d); box.style.display = box.style.display === 'none' ? 'block' : 'none'; drawPrev(); if (box.style.display === 'block') d.querySelector('.sheet').scrollTo({ top: 0, behavior: 'smooth' }); };
+  d.querySelector('.sheet').addEventListener('input', () => drawPrev());
+  /* تنبيه التكرار */
+  let dupT;
+  const checkDup = () => { clearTimeout(dupT); dupT = setTimeout(async () => {
+    const c = collect(); if (!c.title && !c.lat) return;
+    const r = await api('/admin/places/similar?' + new URLSearchParams({ title: c.title, city: c.city, lat: c.lat || '', lng: c.lng || '', id: p.id || '' })).catch(() => ({ similar: [] }));
+    $('#dup', d).innerHTML = r.similar.length ? `<div class="warn">انتبه، يمكن المكان موجود: ${r.similar.map((x) => `<a href="#" data-sim="${x.id}">${h(x.title)}</a> (${cityName(x.city)} · ${x.why} · ${ST[x.status][0]})`).join('، ')}</div>` : '';
+    $('#dup', d).querySelectorAll('[data-sim]').forEach((a) => (a.onclick = async (e) => { e.preventDefault(); if (confirm('تفتح المكان الموجود؟ التعديلات اللي هنا ما تنحفظ.')) editPlace((await api('/admin/places/' + a.dataset.sim)).place); }));
+  }, 500); };
+  $('#title', d).addEventListener('change', checkDup); $('#city', d).addEventListener('change', checkDup);
+  imagesWidget($('#imgs', d), images, drawPrev);
   chipsWidget($('#cats', d), META.placeCats, cats, true);
   const kEl = $('#kinds', d);
-  const drawK = () => { kEl.innerHTML = `<div class="chips">${META.kinds.map((k) => `<span class="chip ${kinds.includes(k) ? 'on' : ''}" data-k="${k}">${KIND[k]}</span>`).join('')}</div>`; kEl.querySelectorAll('.chip').forEach((c) => (c.onclick = () => { const i = kinds.indexOf(c.dataset.k); i >= 0 ? kinds.splice(i, 1) : kinds.push(c.dataset.k); drawK(); })); };
+  const drawK = () => { kEl.innerHTML = `<div class="chips">${META.kinds.map((k) => `<span class="chip ${kinds.includes(k) ? 'on' : ''}" data-k="${k}">${KIND[k]}</span>`).join('')}</div>`; kEl.querySelectorAll('.chip').forEach((c) => (c.onclick = () => { const i = kinds.indexOf(c.dataset.k); i >= 0 ? kinds.splice(i, 1) : kinds.push(c.dataset.k); drawK(); drawPrev(); })); };
   drawK();
-  geoWidget($('#geoBox', d), p.lat, p.lng, () => $('#city', d).value, $('#address', d));
+  geoWidget($('#geoBox', d), p.lat, p.lng, () => $('#city', d).value, $('#address', d), () => { if (isNew) checkDup(); drawPrev(); });
   $('#x', d).onclick = closeDrawer;
-  const collect = () => { const g = parseGeo($('#geo', d).value); return { title: $('#title', d).value, title_en: $('#title_en', d).value, city: $('#city', d).value, cats, kinds, images, summary: $('#summary', d).value, body: $('#body', d).value, lat: g?.[0] ?? null, lng: g?.[1] ?? null, address: $('#address', d).value, phone: $('#phone', d).value, website: $('#website', d).value }; };
+  function collect() { const g = parseGeo($('#geo', d)?.value || ''); return { title: $('#title', d).value, title_en: $('#title_en', d).value, city: $('#city', d).value, cats, kinds, images, summary: $('#summary', d).value, body: $('#body', d).value, lat: g?.[0] ?? null, lng: g?.[1] ?? null, address: $('#address', d).value, phone: $('#phone', d).value, website: $('#website', d).value }; }
   const save = async (status) => {
     try {
       const r = await api(isNew ? '/admin/places' : '/admin/places/' + p.id, { method: isNew ? 'POST' : 'PUT', body: collect() });
@@ -416,6 +460,89 @@ function editEvent(e) {
   $('#unpub', d) && ($('#unpub', d).onclick = () => save('draft'));
   $('#dup', d) && ($('#dup', d).onclick = () => save(null, true));
   $('#hide', d) && ($('#hide', d).onclick = async () => { if (!confirm('تخفي الفعالية من التطبيق؟')) return; await api(`/admin/events/${e.id}/status`, { method: 'POST', body: { status: 'hidden' } }); toast('انخفت'); closeDrawer(); VIEW === 'events' ? loadEvents() : render(); });
+}
+
+/* ——— المواسم ——— */
+const SEASON_COLOR = { 'موسم الرياض': 'var(--purple)', 'موسم جدة': 'var(--skyDeep)', 'موسم الدرعية': 'var(--orangeDeep)', 'لحظات العلا': 'var(--pinkDeep)' };
+async function seasonsView() {
+  const m = $('#main');
+  m.innerHTML = `<div class="row"><div class="grow"><h1>المواسم</h1><p class="sub">الموسم يتكوّن من الفعاليات اللي تحمل اسمه. أضف فعالية واختر الموسم، وتطلع تلقائياً في صفحته في التطبيق.</p></div><button class="btn o" id="add">+ فعالية لموسم</button></div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  $('#add').onclick = () => editEvent(null);
+  const d = await api('/admin/seasons');
+  const now = new Date().toISOString();
+  $('#res').innerHTML = d.seasons.map((x) => {
+    const st = x.end < now ? 'انتهى' : x.start > now ? 'يبدأ ' + fmt(x.start) : 'شغّال الحين';
+    return `<div class="season" data-n="${h(x.name)}" style="border-right-color:${SEASON_COLOR[x.name] || 'var(--lilac)'}"><div class="row"><b class="grow" style="font-size:18px">${h(x.name)}</b><span class="badge ${x.end < now ? 'b-hidden' : 'b-live'}">${st}</span></div>
+      <div class="m muted" style="margin-top:6px">${x.live} فعالية منشورة${x.drafts ? ` · ${x.drafts} مسودة` : ''} · من ${fmt(x.start)} إلى ${fmt(x.end)}</div></div>`;
+  }).join('') || '<div class="empty">ما فيه مواسم. أضف فعالية واختر لها موسم.</div>';
+  m.querySelectorAll('[data-n]').forEach((el) => (el.onclick = () => { EF.q = el.dataset.n; EF.when = 'all'; VIEW = 'events'; render(); }));
+}
+
+/* ——— مختارات الأسبوع ——— */
+const SEAS = { a: 'طول السنة', w: 'الشتاء', s: 'الصيف' };
+async function weeklyView() {
+  const m = $('#main');
+  m.innerHTML = '<p class="muted">لحظة...</p>';
+  const d = await api('/admin/weekly');
+  const pool = d.pool;
+  const draw = () => {
+    m.innerHTML = `<div class="row"><div class="grow"><h1>مختارات الأسبوع</h1><p class="sub">قائمة الأماكن اللي يختار منها التطبيق كل أسبوع 5 أماكن من مدن مختلفة. المميّزة ★ تطلع أول. «الشتاء» تطلع من نوفمبر لمارس، و«الصيف» من مايو لسبتمبر.</p></div><button class="btn g" id="saveW">حفظ القائمة</button></div>
+      <div class="card" style="margin-bottom:14px"><b>أضف مكان</b><input class="in" id="wq" placeholder="ابحث باسم المكان" style="margin-top:8px"><div id="wres" class="list" style="margin-top:8px"></div></div>
+      <div class="muted" style="font-size:13px;margin-bottom:8px">${pool.length} مكان في القائمة</div>
+      <div class="list">${pool.map((x, i) => `<div class="item" style="cursor:default">${x.thumb ? `<img src="${h(x.thumb)}" loading="lazy">` : '<div class="ph">بدون صورة</div>'}
+        <div class="grow"><div class="t">${x.x ? '★ ' : ''}${h(x.title)}</div><div class="m">${cityName(x.city)}${x.status !== 'live' ? ' · <span style="color:var(--pinkDeep)">مو منشور</span>' : ''}</div></div>
+        <select class="in" style="width:auto" data-s="${i}">${Object.entries(SEAS).map(([k, v]) => `<option value="${k}" ${x.s === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <button class="mini" style="background:var(--softOrange);color:var(--orangeDeep)" data-x="${i}">${x.x ? 'شيل التمييز' : '★ ميّزه'}</button>
+        <button class="mini" style="background:var(--chip);color:var(--pinkDeep)" data-r="${i}">شيل</button></div>`).join('')}</div>`;
+    m.querySelectorAll('[data-s]').forEach((el) => (el.onchange = () => { pool[+el.dataset.s].s = el.value; }));
+    m.querySelectorAll('[data-x]').forEach((el) => (el.onclick = () => { const x = pool[+el.dataset.x]; x.x ? delete x.x : (x.x = 1); draw(); }));
+    m.querySelectorAll('[data-r]').forEach((el) => (el.onclick = () => { pool.splice(+el.dataset.r, 1); draw(); }));
+    $('#saveW').onclick = async () => { await api('/admin/weekly', { method: 'POST', body: { pool: pool.map(({ id, s, x }) => (x ? { id, s, x: 1 } : { id, s })) } }); toast('انحفظت القائمة'); };
+    let t; $('#wq').oninput = (e) => { clearTimeout(t); t = setTimeout(async () => {
+      const v = e.target.value.trim(); if (v.length < 2) { $('#wres').innerHTML = ''; return; }
+      const r = await api('/admin/places?status=live&q=' + encodeURIComponent(v));
+      $('#wres').innerHTML = r.places.slice(0, 6).map((p) => `<div class="item" data-add="${p.id}" data-t="${h(p.title)}" data-c="${p.city}" data-th="${h(p.thumb)}"><div class="grow"><div class="t">${h(p.title)}</div><div class="m">${cityName(p.city)}</div></div>${pool.some((x) => x.id === p.id) ? '<span class="badge b-live">موجود</span>' : '<span class="mini" style="background:var(--purple);color:#fff">+ أضف</span>'}</div>`).join('') || '<div class="muted">ما لقيت</div>';
+      $('#wres').querySelectorAll('[data-add]').forEach((el) => (el.onclick = () => { const id = +el.dataset.add; if (pool.some((x) => x.id === id)) return; pool.unshift({ id, s: 'a', title: el.dataset.t, city: el.dataset.c, thumb: el.dataset.th, status: 'live' }); draw(); toast('انضاف — اضغط «حفظ القائمة»'); }));
+    }, 350); };
+  };
+  draw();
+}
+
+/* ——— الأخبار والمقالات ——— */
+async function articlesView() {
+  const m = $('#main');
+  m.innerHTML = `<div class="row"><div class="grow"><h1>الأخبار والمقالات</h1><p class="sub">آخر 3 أخبار تطلع في الصفحة الرئيسية للتطبيق. الجديد ينحفظ مسودة.</p></div><button class="btn o" id="add">+ خبر جديد</button></div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  $('#add').onclick = () => editArticle(null);
+  const d = await api('/admin/articles');
+  $('#res').innerHTML = d.articles.map((a) => `<div class="item" data-id="${a.id}">${a.thumb ? `<img src="${h(a.thumb)}" loading="lazy">` : '<div class="ph">بدون صورة</div>'}
+    <div class="grow"><div class="t">${h(a.title)}</div><div class="m">${fmt(a.date)}${a.author ? ' · ' + h(a.author) : ''}</div></div><span class="badge ${ST[a.status][1]}">${ST[a.status][0]}</span></div>`).join('') || '<div class="empty">ما فيه أخبار</div>';
+  m.querySelectorAll('[data-id]').forEach((el) => (el.onclick = async () => editArticle((await api('/admin/articles/' + el.dataset.id)).article)));
+}
+function editArticle(a) {
+  const isNew = !a;
+  a = a || { title: '', author: 'فريق دليل السعودية', date: new Date().toISOString(), summary: '', body: '', images: [], cats: [], status: 'draft' };
+  const images = [...a.images];
+  const d = drawer(`<div class="row"><div class="grow"><h2>${isNew ? 'خبر جديد' : h(a.title)}</h2><div class="m muted">${isNew ? 'بينحفظ مسودة' : `<span class="badge ${ST[a.status][1]}">${ST[a.status][0]}</span>`}</div></div><button class="btn ghost" id="x">إغلاق</button></div>
+    <div class="f"><label>العنوان *</label><input class="in" id="title" value="${h(a.title)}"></div>
+    <div class="two"><div class="f"><label>الكاتب</label><input class="in" id="author" value="${h(a.author)}"></div><div class="f"><label>التاريخ</label><input class="in" type="datetime-local" id="date" value="${toLocal(a.date)}"></div></div>
+    <div class="f"><label>الصور</label><div id="imgs"></div></div>
+    <div class="f"><label>ملخص</label><input class="in" id="summary" value="${h(a.summary)}" maxlength="400"></div>
+    <div class="f"><label>النص</label><textarea class="in" id="body" style="min-height:260px">${h(plainBody(a.body))}</textarea><small>سطر فاضي بين الفقرات</small></div>
+    <div class="bar"><button class="btn" id="save">حفظ</button>${a.status !== 'live' ? '<button class="btn g" id="pub">حفظ وانشر</button>' : '<button class="btn ghost" id="unpub">رجّعه مسودة</button>'}${!isNew && a.status !== 'hidden' ? '<button class="btn ghost" id="hide" style="color:var(--pinkDeep)">إخفاء</button>' : ''}</div>`);
+  imagesWidget($('#imgs', d), images);
+  $('#x', d).onclick = closeDrawer;
+  const save = async (status) => {
+    try {
+      const body = { title: $('#title', d).value, author: $('#author', d).value, date: fromLocal($('#date', d).value), summary: $('#summary', d).value, body: $('#body', d).value, images };
+      const r = await api(isNew ? '/admin/articles' : '/admin/articles/' + a.id, { method: isNew ? 'POST' : 'PUT', body });
+      if (status) await api(`/admin/articles/${r.article.id}/status`, { method: 'POST', body: { status } });
+      toast(status === 'live' ? 'انحفظ وانتشر' : 'انحفظ'); closeDrawer(); VIEW === 'articles' ? articlesView() : render();
+    } catch (e) { toast(errMsg(e)); }
+  };
+  $('#save', d).onclick = () => save();
+  $('#pub', d) && ($('#pub', d).onclick = () => save('live'));
+  $('#unpub', d) && ($('#unpub', d).onclick = () => save('draft'));
+  $('#hide', d) && ($('#hide', d).onclick = async () => { if (!confirm('تخفي الخبر؟')) return; await api(`/admin/articles/${a.id}/status`, { method: 'POST', body: { status: 'hidden' } }); toast('انخفى'); closeDrawer(); articlesView(); });
 }
 
 /* ——— المجتمع ——— */

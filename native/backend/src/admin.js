@@ -4,7 +4,7 @@
    - ما نحذف شي: «حذف» = إخفاء
    - أي تعديل من اللوحة يعلّم الصف sig='panel' عشان مزامنة قودبابر ما ترجع تغيّره */
 
-import { CITIES, KIND_OF, searchKey, nearestCity } from './normalize.js';
+import { CITIES, KIND_OF, searchKey, nearestCity, km } from './normalize.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const STATUS = { live: 0, hidden: 1, draft: 2 };
@@ -42,6 +42,8 @@ const placeOut = (r) => ({
   address: r.address || '', phone: r.phone || '', website: r.website || '', email: r.email || '', url: r.url || '',
   status: STATUS_NAME[r.deleted] || 'hidden', fromPanel: r.sig === 'panel', updated: r.updated,
 });
+
+const articleOut = (r) => ({ id: r.id, title: r.title, author: r.author || '', date: r.date || '', summary: r.summary || '', body: r.body || '', images: parse(r.images), thumb: r.thumb || '', cats: parse(r.cats), section: r.section || '', url: r.url || '', status: STATUS_NAME[r.deleted] || 'hidden', updated: r.updated });
 
 /* ——— الفعاليات ——— */
 function eventFields(b) {
@@ -109,6 +111,31 @@ export async function adminRoute(p, request, env, J, q) {
     return J({ url: `${new URL(request.url).origin}/media/${key}` });
   }
 
+  /* ——— إضافة جماعية (للمساعد): كلها تنحفظ مسودات، ويرجع تنبيه لو فيه تكرار ——— */
+  if ((m = p.match(/^\/admin\/(places|events)\/bulk$/)) && M === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const items = (Array.isArray(b.items) ? b.items : []).slice(0, 50);
+    const out = [];
+    for (const it of items) {
+      try {
+        if (m[1] === 'places') {
+          const f = placeFields(it);
+          if (!f.title || !CITIES.some((c) => c[0] === f.city)) { out.push({ title: f.title, error: 'title_or_city' }); continue; }
+          const dupe = await env.DB.prepare('SELECT id,title FROM places WHERE deleted<>1 AND city=? AND (search=? OR (lat IS NOT NULL AND ABS(lat-?)<0.0012 AND ABS(lng-?)<0.0012)) LIMIT 1').bind(f.city, f.search, f.lat || 0, f.lng || 0).first();
+          if (dupe && !it.force) { out.push({ title: f.title, skipped: 'duplicate', existing: dupe }); continue; }
+          out.push({ title: f.title, id: await save(env, 'places', 0, f) });
+        } else {
+          const f = eventFields(it);
+          if (!f.title || !f.start) { out.push({ title: f.title, error: 'title_or_start' }); continue; }
+          const dupe = await env.DB.prepare('SELECT id,title FROM events WHERE deleted<>1 AND title=? AND substr(start,1,10)=substr(?,1,10) LIMIT 1').bind(f.title, f.start).first();
+          if (dupe && !it.force) { out.push({ title: f.title, skipped: 'duplicate', existing: dupe }); continue; }
+          out.push({ title: f.title, id: await save(env, 'events', 0, f) });
+        }
+      } catch (e) { out.push({ title: it?.title, error: String(e.message || e) }); }
+    }
+    return J({ results: out, added: out.filter((x) => x.id).length });
+  }
+
   /* ——— الأماكن ——— */
   if (p === '/admin/places' && M === 'GET') {
     const where = ['1=1'], args = [];
@@ -162,6 +189,77 @@ export async function adminRoute(p, request, env, J, q) {
     if (!f.start) return J({ error: 'start_required' }, 400);
     const id = await save(env, 'events', m ? +m[1] : 0, f);
     return J({ event: eventOut(await env.DB.prepare('SELECT * FROM events WHERE id=?').bind(id).first()) });
+  }
+
+  /* ——— تنبيه التكرار: نفس المدينة واسم قريب، أو أقل من 150 متر ——— */
+  if (p === '/admin/places/similar') {
+    const title = searchKey(q.get('title') || ''), city = q.get('city') || '', lat = +q.get('lat') || 0, lng = +q.get('lng') || 0, self = +q.get('id') || 0;
+    const words = title.split(' ').filter((w) => w.length > 2).slice(0, 3);
+    const out = new Map();
+    if (words.length) {
+      const { results } = await env.DB.prepare(`SELECT * FROM places WHERE deleted<>1 AND id<>? ${city ? 'AND city=?' : ''} AND ${words.map(() => 'search LIKE ?').join(' AND ')} LIMIT 8`)
+        .bind(self, ...(city ? [city] : []), ...words.map((w) => `%${w}%`)).all();
+      results.forEach((r) => out.set(r.id, { ...placeOut(r), why: 'اسم مشابه' }));
+    }
+    if (lat && lng) {
+      const d = 0.002;
+      const { results } = await env.DB.prepare('SELECT * FROM places WHERE deleted<>1 AND id<>? AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ? LIMIT 8').bind(self, lat - d, lat + d, lng - d, lng + d).all();
+      results.forEach((r) => { const m2 = Math.round(km(lat, lng, r.lat, r.lng) * 1000); if (m2 <= 150) out.set(r.id, { ...placeOut(r), why: out.has(r.id) ? `اسم مشابه وعلى بعد ${m2} م` : `على بعد ${m2} م` }); });
+    }
+    return J({ similar: [...out.values()].slice(0, 6).map((x) => ({ id: x.id, title: x.title, city: x.city, thumb: x.thumb, status: x.status, why: x.why })) });
+  }
+
+  /* ——— مختارات الأسبوع ——— */
+  if (p === '/admin/weekly' && M === 'GET') {
+    const row = await env.DB.prepare("SELECT v FROM kv WHERE k='weekly_pool'").first();
+    const pool = parse(row?.v, []);
+    const ids = pool.map((x) => x.id);
+    const rows = ids.length ? (await env.DB.prepare(`SELECT id,title,city,thumb,deleted FROM places WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all()).results : [];
+    const by = Object.fromEntries(rows.map((r) => [r.id, r]));
+    return J({ pool: pool.map((x) => ({ ...x, title: by[x.id]?.title || '(مكان محذوف)', city: by[x.id]?.city || '', thumb: by[x.id]?.thumb || '', status: STATUS_NAME[by[x.id]?.deleted ?? 1] })) });
+  }
+
+  /* ——— المقالات والأخبار ——— */
+  if (p === '/admin/articles' && M === 'GET') {
+    const args = [];
+    let sql = 'SELECT * FROM articles WHERE 1=1';
+    if (q.get('status') in STATUS) { sql += ' AND deleted=?'; args.push(STATUS[q.get('status')]); }
+    if (q.get('q')) { sql += ' AND title LIKE ?'; args.push(`%${q.get('q')}%`); }
+    const { results } = await env.DB.prepare(sql + ' ORDER BY date DESC LIMIT 100').bind(...args).all();
+    return J({ articles: results.map(articleOut) });
+  }
+  if ((m = p.match(/^\/admin\/articles\/(\d+)$/)) && M === 'GET') {
+    const r = await env.DB.prepare('SELECT * FROM articles WHERE id=?').bind(+m[1]).first();
+    return r ? J({ article: articleOut(r) }) : J({ error: 'not_found' }, 404);
+  }
+  if ((p === '/admin/articles' && M === 'POST') || ((m = p.match(/^\/admin\/articles\/(\d+)$/)) && M === 'PUT')) {
+    const b = await request.json().catch(() => ({}));
+    const images = arr(b.images, 20);
+    const f = { title: str(b.title, 200), author: str(b.author, 80), date: b.date ? new Date(b.date).toISOString() : new Date().toISOString(), summary: str(b.summary, 400), body: toHtml(str(b.body, 40000)), images: JSON.stringify(images), thumb: images[0] || '', cats: JSON.stringify(arr(b.cats)), section: str(b.section, 80) };
+    if (!f.title) return J({ error: 'title_required' }, 400);
+    const id = await save(env, 'articles', m ? +m[1] : 0, f);
+    return J({ article: articleOut(await env.DB.prepare('SELECT * FROM articles WHERE id=?').bind(id).first()) });
+  }
+  if ((m = p.match(/^\/admin\/articles\/(\d+)\/status$/)) && M === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    if (!(b.status in STATUS)) return J({ error: 'bad_status' }, 400);
+    await env.DB.prepare("UPDATE articles SET deleted=?, sig='panel', updated=? WHERE id=?").bind(STATUS[b.status], now(), +m[1]).run();
+    return J({ ok: true });
+  }
+
+  /* ——— المواسم: تتكوّن من تصنيفات الفعاليات (موسم… / لحظات…) ——— */
+  if (p === '/admin/seasons') {
+    const { results } = await env.DB.prepare("SELECT id,title,start,\"end\",cats,deleted,city FROM events WHERE deleted<>1 AND (cats LIKE '%موسم%' OR cats LIKE '%لحظات%')").all();
+    const map = new Map();
+    for (const r of results) for (const c of parse(r.cats)) {
+      if (!/^(موسم|لحظات)/.test(c)) continue;
+      const x = map.get(c) || { name: c, total: 0, live: 0, drafts: 0, start: '', end: '' };
+      x.total++; if (r.deleted === 0) x.live++; if (r.deleted === 2) x.drafts++;
+      if (r.start && (!x.start || r.start < x.start)) x.start = r.start;
+      const e = r.end || r.start; if (e && e > x.end) x.end = e;
+      map.set(c, x);
+    }
+    return J({ seasons: [...map.values()].sort((a, b) => b.end.localeCompare(a.end)) });
   }
 
   /* ——— المستخدمين ——— */
