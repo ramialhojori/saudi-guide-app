@@ -106,7 +106,7 @@ async function route(request, env, ctx) {
 
   /* ——— لوحة التحكم (الصفحة نفسها عامة، وكل بياناتها تحتاج مفتاح الإدارة) ——— */
   if (p === '/panel') {
-    return new Response(PANEL_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer' } });
+    return new Response(PANEL_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' } });
   }
 
   /* ——— الإدارة (بمفتاح) ——— */

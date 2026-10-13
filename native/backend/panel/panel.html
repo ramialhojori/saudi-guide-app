@@ -78,7 +78,7 @@ textarea.in{min-height:130px;resize:vertical;line-height:1.8}
 .imgs .im .x{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer}
 .imgs .im .cover{position:absolute;bottom:4px;right:4px;background:var(--orange);color:#fff;font-size:11px;border-radius:999px;padding:0 8px;font-weight:700}
 .imgs .im .mk{position:absolute;bottom:4px;right:4px;background:rgba(255,255,255,.85);border:0;border-radius:999px;font-size:11px;padding:0 8px;cursor:pointer}
-.up{width:110px;height:84px;border-radius:12px;border:2px dashed var(--line);display:grid;place-items:center;cursor:pointer;color:var(--muted);font-size:13px;background:#fff}
+.up{font:inherit;line-height:1.5;width:110px;height:84px;border-radius:12px;border:2px dashed var(--line);display:grid;place-items:center;cursor:pointer;color:var(--muted);font-size:13px;background:#fff}
 .bar{position:sticky;bottom:-120px;margin:22px -24px -120px;padding:14px 24px 24px;background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:8px;flex-wrap:wrap}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:14px;font-weight:600;z-index:50;display:none}
 .empty{color:var(--muted);text-align:center;padding:40px}
@@ -137,7 +137,7 @@ function loginView() {
   const go = async (k) => {
     const raw = String(k || $('#k').value);
     // المفتاح حروف وأرقام إنجليزية بس — نطلعه حتى لو انلصق معه كلام ثاني
-    KEY = (raw.match(/[A-Za-z0-9_-]{24,}/) || [''])[0];
+    KEY = (raw.match(/[A-Za-z0-9_-]{8,}/) || [''])[0];
     if (!raw.trim()) { $('#msg').textContent = 'ما فيه شي منسوخ. شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده لا تنسخ أي شي ثاني'; return; }
     if (!KEY) { $('#msg').textContent = 'اللي منسوخ مو المفتاح (غالباً نسخت شي بعد الأمر). شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده اضغط الزر البرتقالي على طول'; return; }
     try { await api('/admin/summary'); sessionStorage.setItem('sg_admin', KEY); render(); }
@@ -147,7 +147,7 @@ function loginView() {
     try { const t = await navigator.clipboard.readText(); go(t); }
     catch { $('#msg').textContent = 'المتصفح ما سمح باللصق. اضغط داخل الخانة تحت واضغط Cmd+V'; $('#k').focus(); }
   };
-  $('#go').onclick = () => go(); $('#k').onkeydown = (e) => e.key === 'Enter' && go();
+  $('#go').onclick = () => go(); $('#k').onkeydown = (e) => { if (e.key === 'Enter') go(); };
   setTimeout(() => $('#k').focus(), 100);
 }
 
@@ -219,23 +219,31 @@ async function loadPlaces() {
 /* ——— أدوات النماذج ——— */
 function drawer(html) {
   let d = $('#drawer');
-  if (!d) { d = document.createElement('div'); d.id = 'drawer'; d.className = 'drawer'; document.body.appendChild(d); d.onclick = (e) => e.target === d && closeDrawer(); }
+  if (!d) { d = document.createElement('div'); d.id = 'drawer'; d.className = 'drawer'; document.body.appendChild(d); d.onclick = (e) => { if (e.target === d) closeDrawer(); }; }
   d.innerHTML = `<div class="sheet">${html}</div>`; d.classList.add('on'); return d;
 }
 const closeDrawer = () => $('#drawer')?.classList.remove('on');
 function imagesWidget(el, list) {
   const draw = () => {
     el.innerHTML = `<div class="imgs">${list.map((u, i) => `<div class="im"><img src="${h(u)}">${i === 0 ? '<span class="cover">الغلاف</span>' : `<button class="mk" data-i="${i}">اجعلها الغلاف</button>`}<button class="x" data-i="${i}" title="شيل">×</button></div>`).join('')}
-      <label class="up">+ صورة<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label></div>
+      <button type="button" class="up" id="upBtn">+ صورة<br><small>أو اسحبها هنا</small></button><input type="file" accept="image/*" multiple style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
       <input class="in" style="margin-top:8px" placeholder="أو الصق رابط صورة واضغط Enter">`;
     el.querySelectorAll('.x').forEach((b) => (b.onclick = () => { list.splice(+b.dataset.i, 1); draw(); }));
     el.querySelectorAll('.mk').forEach((b) => (b.onclick = () => { const [u] = list.splice(+b.dataset.i, 1); list.unshift(u); draw(); }));
-    el.querySelector('input[type=file]').onchange = async (e) => {
-      for (const f of e.target.files) {
+    const fi = el.querySelector('input[type=file]');
+    el.querySelector('#upBtn').onclick = () => fi.click();
+    const upload = async (files) => {
+      for (const f of files) {
+        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { toast('الصورة لازم JPG أو PNG أو WEBP (صور الآيفون HEIC حوّلها أول)'); continue; }
         toast('يرفع الصورة...');
         try { const r = await api('/admin/upload', { method: 'POST', body: f, headers: { 'Content-Type': f.type } }); list.push(r.url); draw(); toast('انرفعت'); } catch (er) { toast(errMsg(er)); }
       }
     };
+    fi.onchange = (e) => upload([...e.target.files]);
+    const zone = el.querySelector('.imgs');
+    zone.ondragover = (e) => { e.preventDefault(); zone.style.outline = '2px dashed var(--orange)'; };
+    zone.ondragleave = () => (zone.style.outline = '');
+    zone.ondrop = (e) => { e.preventDefault(); zone.style.outline = ''; upload([...e.dataTransfer.files]); };
     el.querySelector('input.in').onkeydown = (e) => { if (e.key === 'Enter' && /^https?:\/\//.test(e.target.value)) { e.preventDefault(); list.push(e.target.value.trim()); draw(); } };
   };
   draw();
@@ -262,7 +270,7 @@ function geoWidget(box, lat, lng, cityFn, addrEl) {
   const center = () => { const c = META.cities.find((x) => x.id === cityFn()); return c ? [c.lat, c.lng] : [24.2, 44.5]; };
   if (!window.L) { $('#gmap', box).remove(); window.L = { map: () => ({ setView() { return this; }, on() {}, invalidateSize() {}, addLayer() {} }), tileLayer: () => ({ addTo() {} }), marker: () => ({ addTo() { return this; }, on() {}, setLatLng() {} }) }; }
   const map = L.map($('#gmap', box), { zoomControl: true, attributionControl: true }).setView(lat ? [lat, lng] : center(), lat ? 16 : (cityFn() ? 11 : 5));
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO' }).addTo(map);
   let pin = null;
   const set = (la, ln, zoom) => {
     la = +(+la).toFixed(6); ln = +(+ln).toFixed(6);
