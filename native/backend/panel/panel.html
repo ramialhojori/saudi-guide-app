@@ -270,7 +270,7 @@ function geoWidget(box, lat, lng, cityFn, addrEl) {
   const center = () => { const c = META.cities.find((x) => x.id === cityFn()); return c ? [c.lat, c.lng] : [24.2, 44.5]; };
   if (!window.L) { $('#gmap', box).remove(); window.L = { map: () => ({ setView() { return this; }, on() {}, invalidateSize() {}, addLayer() {} }), tileLayer: () => ({ addTo() {} }), marker: () => ({ addTo() { return this; }, on() {}, setLatLng() {} }) }; }
   const map = L.map($('#gmap', box), { zoomControl: true, attributionControl: true }).setView(lat ? [lat, lng] : center(), lat ? 16 : (cityFn() ? 11 : 5));
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO' }).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
   let pin = null;
   const set = (la, ln, zoom) => {
     la = +(+la).toFixed(6); ln = +(+ln).toFixed(6);
