@@ -9,13 +9,15 @@ import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
 import { communityRoute, communityAdmin, myStats } from './community.js';
+import { adminRoute } from './admin.js';
+import { PANEL_HTML } from './panel.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -102,6 +104,11 @@ async function route(request, env, ctx) {
 
   if (p === '/' || p === '/v1') return J({ name: 'saudi-guide-api', version: VERSION });
 
+  /* ——— لوحة التحكم (الصفحة نفسها عامة، وكل بياناتها تحتاج مفتاح الإدارة) ——— */
+  if (p === '/panel') {
+    return new Response(PANEL_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer' } });
+  }
+
   /* ——— الإدارة (بمفتاح) ——— */
   if (p.startsWith('/admin/')) {
     if (!env.ADMIN_KEY || request.headers.get('X-Admin-Key') !== env.ADMIN_KEY) return J({ error: 'unauthorized' }, 401);
@@ -112,6 +119,8 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
+    const ar = await adminRoute(p, request, env, J, q);
+    if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
       if (r) return r;

@@ -39,7 +39,10 @@ async function upsert(env, table, cols, rows, known) {
   const added = [], changed = [];
   const stmts = [];
   for (const r of rows) {
-    const prev = known.get(r.id);
+    const k = known.get(r.id);
+    // اللوحة هي المرجع: أي شي انعدّل أو انخفى أو انحفظ مسودة من لوحتنا ما تلمسه مزامنة قودبابر
+    if (k && (k.deleted !== 0 || k.sig === 'panel')) continue;
+    const prev = k ? k.sig : undefined;
     const sig = JSON.stringify(cols.map((c) => r[c]));
     if (prev === undefined) added.push(r);
     else if (prev !== sig) changed.push(r);
@@ -55,12 +58,13 @@ async function upsert(env, table, cols, rows, known) {
 }
 
 async function knownSigs(env, table) {
-  const { results } = await env.DB.prepare(`SELECT id, sig FROM ${table} WHERE deleted=0`).all();
-  return new Map(results.map((r) => [r.id, r.sig || '']));
+  const { results } = await env.DB.prepare(`SELECT id, sig, deleted FROM ${table}`).all();
+  return new Map(results.map((r) => [r.id, { sig: r.sig || '', deleted: r.deleted }]));
 }
 
 async function markDeleted(env, table, seenIds, known) {
-  const gone = [...known.keys()].filter((id) => !seenIds.has(id));
+  // نخفي بس اللي جاء من قودبابر وانحذف هناك — مو اللي أضفناه أو عدّلناه من اللوحة
+  const gone = [...known.entries()].filter(([id, k]) => !seenIds.has(id) && k.deleted === 0 && k.sig !== 'panel' && id < 900000000).map(([id]) => id);
   const stmts = gone.map((id) => env.DB.prepare(`UPDATE ${table} SET deleted=1, updated=? WHERE id=?`).bind(now(), id));
   for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
   return gone.length;

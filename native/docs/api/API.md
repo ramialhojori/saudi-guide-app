@@ -54,3 +54,20 @@
 | GET | `/media/<key>` | يعرض صور R2 |
 
 الإدارة (`X-Admin-Key`): `GET /admin/community/reported`، `POST /admin/community/moderate {target, id, hidden}`، `POST /admin/community/role {userId, role: user|guide|admin}`.
+
+## لوحة التحكم (v0.4.0)
+
+الصفحة: `GET /panel` (تطلب مفتاح الإدارة داخل الصفحة). المصدر: `backend/panel/panel.html` → `python3 scripts/build_panel.py` يولّد `src/panel.js`.
+
+حالة المحتوى في عمود `deleted`: 0 منشور، 1 مخفي، 2 مسودة. أي جديد يبدأ مسودة. أي تعديل من اللوحة يعلّم `sig='panel'` ومزامنة قودبابر تتجاهله.
+
+| الطريقة | المسار |
+|---|---|
+| GET | `/admin/meta`، `/admin/summary` |
+| GET/POST | `/admin/places?city=&status=&q=&missing=photo|geo&page=` |
+| GET/PUT | `/admin/places/:id` |
+| GET/POST | `/admin/events?when=upcoming|past|all&status=&city=&q=` |
+| GET/PUT | `/admin/events/:id` |
+| POST | `/admin/(places|events)/:id/status` `{status: live|draft|hidden}` |
+| POST | `/admin/upload` (صورة → R2) |
+| GET | `/admin/users?q=` |
