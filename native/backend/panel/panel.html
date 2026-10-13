@@ -118,7 +118,7 @@ const KIND = { islamic: 'معالم إسلامية', heritage: 'تراث وثق�
 const ST = { live: ['منشور', 'b-live'], draft: ['مسودة', 'b-draft'], hidden: ['مخفي', 'b-hidden'] };
 const EV_TYPES = ['حفلات غنائية', 'مسرح', 'رياضية', 'مهرجانات', 'معارض ومؤتمرات', 'تراث وثقافة', 'ترفيه', 'تجارب ومغامرات', 'عائلية', 'طعام'];
 const SEASONS = ['موسم الرياض', 'موسم جدة', 'موسم الدرعية', 'لحظات العلا'];
-let KEY = sessionStorage.getItem('sg_admin') || '';
+let KEY = localStorage.getItem('sg_admin') || '';
 let META = null, VIEW = 'home', SUMMARY = null;
 const $ = (s, el = document) => el.querySelector(s);
 const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,7 +128,7 @@ function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display
 async function api(path, opt = {}) {
   const r = await fetch(API + path, { method: opt.method || 'GET', headers: { 'X-Admin-Key': KEY, ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(opt.headers || {}) }, body: opt.body instanceof Blob ? opt.body : opt.body ? JSON.stringify(opt.body) : undefined });
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401) { const wasIn = !!sessionStorage.getItem('sg_admin'); KEY = ''; sessionStorage.removeItem('sg_admin'); if (wasIn) render(); throw new Error('unauthorized'); }
+  if (r.status === 401) { const wasIn = !!localStorage.getItem('sg_admin'); KEY = ''; localStorage.removeItem('sg_admin'); if (wasIn) render(); throw new Error('unauthorized'); }
   if (!r.ok) throw new Error(d.error || 'http_' + r.status);
   return d;
 }
@@ -149,7 +149,7 @@ function loginView() {
     KEY = (raw.match(/[A-Za-z0-9_-]{8,}/) || [''])[0];
     if (!raw.trim()) { $('#msg').textContent = 'ما فيه شي منسوخ. شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده لا تنسخ أي شي ثاني'; return; }
     if (!KEY) { $('#msg').textContent = 'اللي منسوخ مو المفتاح (غالباً نسخت شي بعد الأمر). شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده اضغط الزر البرتقالي على طول'; return; }
-    try { await api('/admin/summary'); sessionStorage.setItem('sg_admin', KEY); render(); }
+    try { await api('/admin/summary'); localStorage.setItem('sg_admin', KEY); render(); }
     catch (e) { KEY = ''; $('#msg').textContent = e.message === 'unauthorized' ? 'المفتاح غلط. شغّل أمر «افتح-اللوحة» مرة ثانية' : 'السيرفر ما رد: ' + e.message; }
   };
   $('#paste').onclick = async () => {
@@ -170,7 +170,7 @@ async function render() {
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${id === 'community' && rep ? `<b>${rep}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
-  $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; sessionStorage.removeItem('sg_admin'); render(); };
+  $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
   ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, users: usersView })[VIEW]();
 }
 
