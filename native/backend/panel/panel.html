@@ -111,7 +111,7 @@ function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display
 async function api(path, opt = {}) {
   const r = await fetch(API + path, { method: opt.method || 'GET', headers: { 'X-Admin-Key': KEY, ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(opt.headers || {}) }, body: opt.body instanceof Blob ? opt.body : opt.body ? JSON.stringify(opt.body) : undefined });
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401) { KEY = ''; sessionStorage.removeItem('sg_admin'); render(); throw new Error('unauthorized'); }
+  if (r.status === 401) { const wasIn = !!sessionStorage.getItem('sg_admin'); KEY = ''; sessionStorage.removeItem('sg_admin'); if (wasIn) render(); throw new Error('unauthorized'); }
   if (!r.ok) throw new Error(d.error || 'http_' + r.status);
   return d;
 }
@@ -121,21 +121,30 @@ const errMsg = (e) => ERR[e.message] || 'صار خطأ: ' + e.message;
 /* ——— الدخول ——— */
 function loginView() {
   $('#root').innerHTML = `<div class="login"><i>د</i><h1 style="font-size:22px">لوحة دليل السعودية</h1>
-    <p class="sub">الصق مفتاح الإدارة (ADMIN_KEY) من ملف مفاتيح-سرية.txt. ينحفظ في هذا المتصفح لين تقفل التبويب.</p>
-    <input class="in" id="k" type="password" placeholder="مفتاح الإدارة" autocomplete="off">
-    <button class="btn" style="width:100%;margin-top:12px" id="go">دخول</button><p class="muted" id="msg"></p></div>`;
-  const go = async () => {
-    KEY = $('#k').value.trim(); if (!KEY) return;
-    try { await api('/admin/summary'); sessionStorage.setItem('sg_admin', KEY); render(); } catch { $('#msg').textContent = 'المفتاح غلط'; }
+    <p class="sub">اضغط الزر البرتقالي عشان يلصق مفتاح الإدارة اللي نسخه لك أمر «افتح-اللوحة».</p>
+    <button class="btn o" style="width:100%;padding:14px;font-size:17px" id="paste">الصق المفتاح وادخل</button>
+    <p class="muted" style="margin:16px 0 8px;font-size:13px">أو الصقه يدوياً هنا (Cmd+V):</p>
+    <input class="in" id="k" type="password" placeholder="مفتاح الإدارة" autocomplete="off" autofocus>
+    <button class="btn" style="width:100%;margin-top:10px" id="go">دخول</button><p id="msg" style="color:var(--pinkDeep);font-weight:700"></p></div>`;
+  const go = async (k) => {
+    KEY = String(k || $('#k').value).replace(/\s+/g, '');
+    if (!KEY) { $('#msg').textContent = 'الخانة فاضية: المفتاح ما انلصق'; return; }
+    try { await api('/admin/summary'); sessionStorage.setItem('sg_admin', KEY); render(); }
+    catch (e) { KEY = ''; $('#msg').textContent = e.message === 'unauthorized' ? 'المفتاح غلط. شغّل أمر «افتح-اللوحة» مرة ثانية' : 'السيرفر ما رد: ' + e.message; }
   };
-  $('#go').onclick = go; $('#k').onkeydown = (e) => e.key === 'Enter' && go();
+  $('#paste').onclick = async () => {
+    try { const t = await navigator.clipboard.readText(); go(t); }
+    catch { $('#msg').textContent = 'المتصفح ما سمح باللصق. اضغط داخل الخانة تحت واضغط Cmd+V'; $('#k').focus(); }
+  };
+  $('#go').onclick = () => go(); $('#k').onkeydown = (e) => e.key === 'Enter' && go();
+  setTimeout(() => $('#k').focus(), 100);
 }
 
 /* ——— الهيكل ——— */
 const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['community', 'المجتمع'], ['users', 'المستخدمين']];
 async function render() {
   if (!KEY) return loginView();
-  if (!META) { try { META = await api('/admin/meta'); } catch { return; } }
+  if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${id === 'community' && rep ? `<b>${rep}</b>` : ''}</button>`).join('')}
