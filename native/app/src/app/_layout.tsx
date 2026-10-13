@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { I18nManager, Platform } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { prefs } from '@/lib/prefs';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -32,6 +33,11 @@ export default function RootLayout() {
   });
   useEffect(() => {
     if (loaded || error) SplashScreen.hideAsync().catch(() => {});
+  }, [loaded, error]);
+  // أول تشغيل: شاشة الترحيب
+  useEffect(() => {
+    if (!loaded && !error) return;
+    prefs.onboarded().then((done) => { if (!done) setTimeout(() => router.replace('/welcome'), 50); });
   }, [loaded, error]);
   if (!loaded && !error) return null;
 

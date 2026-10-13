@@ -73,7 +73,7 @@ export default function Community() {
 
 function PostCard({ p }: { p: Post }) {
   return (
-    <View style={st.post}>
+    <Pressable style={st.post} onPress={() => router.push(`/question/${p.id}`)}>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, paddingBottom: 8 }}>
         <Avatar t={p.av} c={p.c} size={40} />
         <View style={{ flex: 1 }}>
@@ -99,7 +99,7 @@ function PostCard({ p }: { p: Post }) {
         {p.answers ? <AppText variant="small" muted>{p.answers} إجابات</AppText> : null}
         <AppText variant="small" muted>حفظ</AppText>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

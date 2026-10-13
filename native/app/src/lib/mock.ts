@@ -60,3 +60,20 @@ export const champions = [
 ];
 
 export const challenge = { tag: 'تحدي الأسبوع', title: 'صوّر غروب كورنيش جدة', prize: 'الجائزة: وسم «عدسة الدليل» + كوبون', left: 'باقي 4 أيام · مشاركة 213', photo: 'water' as PhotoKey };
+
+export type Coupon = { id: number; biz: string; area: string; off: string; desc: string; left: string; bg: string; photo: PhotoKey; min?: string };
+export const cityCoupons: Coupon[] = [
+  { id: 1, biz: 'مطعم بيت الحجاز', area: 'قباء', off: 'خصم 20%', desc: 'على وجبات الفطور', left: 'باقي 26 · حتى 15 نوفمبر', bg: brand.orange, photo: 'sea', min: 'الحد الأدنى 50 ر.س' },
+  { id: 2, biz: 'حلويات المدينة', area: 'المركزية', off: 'هدية مجانية', desc: 'كنافة صغيرة مع أي طلب فوق 60 ر.س', left: 'باقي 80 · حتى 30 أكتوبر', bg: brand.lilac, photo: 'jold' },
+  { id: 3, biz: 'جولة المدينة التاريخية', area: 'الحرم', off: 'خصم 25 ر.س', desc: 'على تذكرة الجولة بالحافلة', left: 'باقي 40 · حتى 20 نوفمبر', bg: brand.sky, photo: 'heritage' },
+];
+export const featuredCoupon = { biz: 'مقهى صباحيات · العوالي', off: '1+1 مجاناً', desc: 'على القهوة المختصة قبل 12 الظهر', photo: 'gate' as PhotoKey };
+
+export const notes: { icon: IconName; bg: string; fg: string; t: string; s: string; when: string; unread?: boolean; day: 'today' | 'week' }[] = [
+  { icon: 'bag', bg: brand.softOrange, fg: brand.orangeDeep, t: 'رحلتك للعلا بعد بكرة', s: 'الجو 24° وصافي. نزّل الخرائط للاستخدام بدون نت قبل ما تطلع.', when: 'قبل 20 دقيقة', unread: true, day: 'today' },
+  { icon: 'chat', bg: brand.softPurple, fg: brand.purple, t: 'سارة جاوبت على سؤالك', s: '«احجز تذكرتك أونلاين قبل، وتعشّى في مطل البجيري…»', when: 'قبل ساعة', unread: true, day: 'today' },
+  { icon: 'star', bg: brand.softPink, fg: brand.pinkDeep, t: 'مبروك! حصلت وسم «ذوّاق جدة»', s: '+200 نقطة. شارك وسمك مع أصحابك.', when: 'قبل 3 ساعات', unread: true, day: 'today' },
+  { icon: 'ticket', bg: brand.softPink, fg: brand.pinkDeep, t: 'كوبون «بيت الحجاز» ينتهي بعد يومين', s: 'خصم 20% على الفطور، باقي 26 كوبون.', when: 'الأحد', day: 'week' },
+  { icon: 'pin', bg: brand.softGreen, fg: brand.green, t: '7 أماكن جديدة في المدينة المنورة', s: 'مقاهي مختصة ومطاعم جديدة في قباء والعوالي.', when: 'السبت', day: 'week' },
+  { icon: 'cal', bg: brand.softSky, fg: brand.skyDeep, t: 'موسم الرياض يفتتح الأربعاء', s: 'حفظت الفعالية، نذكّرك قبلها بيوم.', when: 'الجمعة', day: 'week' },
+];
