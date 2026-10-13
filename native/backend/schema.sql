@@ -92,3 +92,30 @@ CREATE TABLE IF NOT EXISTS sync_log (
 );
 
 CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL);
+
+-- الحسابات (المرحلة 2): الدخول بآبل أو قوقل. ما نحفظ كلمات مرور.
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  apple_sub TEXT UNIQUE,
+  google_sub TEXT UNIQUE,
+  email TEXT,
+  name TEXT,
+  handle TEXT UNIQUE,
+  city TEXT,
+  bio TEXT,
+  avatar TEXT,
+  role TEXT NOT NULL DEFAULT 'user',   -- user | guide | admin
+  points INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL,
+  seen INTEGER NOT NULL,
+  deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- رحلتي: الأماكن المحفوظة لكل مستخدم بالترتيب
+CREATE TABLE IF NOT EXISTS user_trip (
+  user_id TEXT NOT NULL,
+  place_id INTEGER NOT NULL,
+  pos INTEGER NOT NULL DEFAULT 0,
+  added INTEGER NOT NULL,
+  PRIMARY KEY (user_id, place_id)
+);

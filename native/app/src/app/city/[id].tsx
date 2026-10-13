@@ -12,7 +12,7 @@ import { BackButton, Chip, ImageRow } from '@/components/ui';
 import { cityKinds, getCities, getCityPlaces } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
 import type { Place } from '@/lib/types';
-import { brand, font, kindStyle, photos } from '@/theme/tokens';
+import { brand, font, kindStyle, photos, START } from '@/theme/tokens';
 
 const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TAGLINE: Record<string, string> = {
@@ -129,7 +129,7 @@ const st = StyleSheet.create({
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 20 },
   glassPill: { backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   search: { marginHorizontal: 16, marginTop: 16, height: 54, backgroundColor: '#fff', borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, fontFamily: font.regular, fontSize: 15, color: brand.ink, textAlign: 'right' },
+  input: { flex: 1, fontFamily: font.regular, fontSize: 15, color: brand.ink, textAlign: START },
   kchip: { height: 38, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12 },
   grid: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },

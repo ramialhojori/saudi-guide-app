@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Avatar, Badge, Pill } from '@/components/ui';
-import { activity, badges, coupons, me, passport } from '@/lib/mock';
+import { useAuth } from '@/lib/auth';
+import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
 import { brand, font, photos } from '@/theme/tokens';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
@@ -15,6 +16,9 @@ const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDee
 /** ملفي — بيانات تجريبية لين يجهز تسجيل الدخول (المرحلة 2) */
 export default function Profile() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  // الاسم والمدينة من الحساب، والباقي (نقاط وأوسمة) تجريبي لين نبنيها
+  const me = user ? { ...demo, name: user.name || 'مستخدم الدليل', initial: (user.name || 'د').trim()[0], handle: user.handle || user.id.slice(0, 6), since: user.since, city: user.city || demo.city, bio: user.bio || 'اكتب نبذة عنك من الإعدادات.' } : demo;
   const pct = me.points / me.nextLevelPts;
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
@@ -30,7 +34,16 @@ export default function Profile() {
         </View>
       </View>
 
-      <View style={st.card}>
+      {!user ? (
+        <Pressable style={st.guest} onPress={() => router.push('/login')}>
+          <View style={{ flex: 1 }}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">سجّل دخولك عشان يصير هذا ملفك</AppText>
+            <AppText variant="small" color="#FFF1E4">رحلاتك تنحفظ، وتجمع نقاط وأوسمة. اللي تحت مثال.</AppText>
+          </View>
+          <View style={st.guestBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.orangeDeep}>دخول</AppText></View>
+        </Pressable>
+      ) : null}
+      <View style={[st.card, !user && { marginTop: 12 }]}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
           <View>
             <View style={st.avRing}><Avatar t={me.initial} c={brand.lilac} size={76} /></View>
@@ -134,6 +147,8 @@ const st = StyleSheet.create({
   cover: { height: 190, backgroundColor: brand.ink },
   coverTop: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  guest: { marginHorizontal: 16, marginTop: -60, backgroundColor: brand.orange, borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  guestBtn: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
   card: { marginHorizontal: 16, marginTop: -60, backgroundColor: '#fff', borderRadius: 28, padding: 18 },
   avRing: { borderWidth: 3, borderColor: brand.orange, borderRadius: 50, padding: 3 },
   lvl: { position: 'absolute', bottom: -6, alignSelf: 'center', backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },

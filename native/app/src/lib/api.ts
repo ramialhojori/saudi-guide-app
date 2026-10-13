@@ -8,14 +8,14 @@ export class ApiError extends Error {
 }
 
 /** طلب واحد للسيرفر — كل الشاشات تمر من content.ts اللي يستخدم هذي الدالة */
-export async function api<T>(path: string, { method = 'GET', body, timeoutMs = 12000 }: { method?: 'GET' | 'POST'; body?: unknown; timeoutMs?: number } = {}): Promise<T> {
+export async function api<T>(path: string, { method = 'GET', body, timeoutMs = 12000, token }: { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; body?: unknown; timeoutMs?: number; token?: string | null } = {}): Promise<T> {
   if (!env.apiUrl) throw new ApiError('no_api', 0);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(env.apiUrl + path, {
       method,
-      headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
+      headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });

@@ -7,13 +7,14 @@
 import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
+import { authRoute } from './auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -116,6 +117,12 @@ async function route(request, env, ctx) {
       return J({ counts: n, sync: last.results });
     }
     return J({ error: 'not_found' }, 404);
+  }
+
+  /* ——— الحسابات ——— */
+  if (p.startsWith('/v1/auth/') || p.startsWith('/v1/me')) {
+    const r = await authRoute(p, request, env, J);
+    if (r) return r;
   }
 
   if (request.method === 'POST' && p === '/v1/devices') {

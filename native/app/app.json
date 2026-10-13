@@ -14,7 +14,8 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك."
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "carizmaapps.saudiguide",
@@ -27,11 +28,31 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      ["expo-localization", { "supportsRTL": true, "forcesRTL": true }],
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true
+        }
+      ],
       "expo-image",
-      ["expo-splash-screen", { "image": "./assets/brand/logo-white.png", "imageWidth": 220, "backgroundColor": "#604C87" }]
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/logo-white.png",
+          "imageWidth": 220,
+          "backgroundColor": "#604C87"
+        }
+      ],
+      "expo-apple-authentication",
+      "expo-secure-store"
     ],
-    "experiments": { "typedRoutes": true },
-    "extra": { "supportsRTL": true, "forcesRTL": true }
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "supportsRTL": true,
+      "forcesRTL": true
+    }
   }
 }

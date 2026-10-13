@@ -96,3 +96,11 @@ export const photos = {
   fest: require('../../assets/photos/festival.jpg'),
 } as const;
 export type PhotoKey = keyof typeof photos;
+
+/**
+ * محاذاة النص لليمين في كل المنصات.
+ * على الجوال مع RTL، ريأكت نيتف يقلب left/right: «left» تصير بداية السطر = اليمين.
+ * على الويب ما فيه قلب، فنستخدم right مباشرة.
+ */
+import { I18nManager, Platform } from 'react-native';
+export const START: 'left' | 'right' = Platform.OS !== 'web' && I18nManager.isRTL ? 'left' : 'right';

@@ -17,7 +17,8 @@ AsyncStorage.getItem(KEY)
   })
   .finally(() => { loaded = true; emit(); });
 
-const save = () => { AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {}); emit(); };
+const listeners = new Set<(ids: number[]) => void>();
+const save = () => { AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {}); emit(); listeners.forEach((f) => f(ids)); };
 
 export const trip = {
   has: (id: number) => ids.includes(id),
@@ -31,6 +32,10 @@ export const trip = {
     ids = next; save();
   },
   clear() { ids = []; save(); },
+  /** تبدّل القائمة كاملة (بعد الدمج مع الحساب) بدون ما ترجع ترسلها للسيرفر */
+  replace(next: number[]) { ids = next; AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {}); emit(); },
+  all: () => ids,
+  onChange(f: (ids: number[]) => void) { listeners.add(f); return () => { listeners.delete(f); }; },
 };
 
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
