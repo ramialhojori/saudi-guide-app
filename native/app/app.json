@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#F0EFEF",
     "ios": {
-      "bundleIdentifier": "TODO.confirm.from.app.store",
+      "bundleIdentifier": "com.saudiguide",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -17,7 +17,7 @@
       }
     },
     "android": {
-      "package": "TODO.confirm.from.google.play",
+      "package": "carizmaapps.saudiguide",
       "adaptiveIcon": {
         "backgroundColor": "#604C87",
         "foregroundImage": "./assets/adaptive-icon.png"

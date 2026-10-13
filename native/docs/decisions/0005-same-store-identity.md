@@ -16,3 +16,22 @@
 - مفتاح توقيع أندرويد (keystore) من قودبابر. لو تعذّر، البديل تطبيق جديد في قوقل بلاي.
 
 </div>
+
+## تحديث 13 أكتوبر 2026 · معتمد
+
+البيانات من لوحة قودبابر (Publish > Certificates):
+
+| | القيمة |
+| --- | --- |
+| iOS Bundle ID | com.saudiguide |
+| Apple Team ID | V8N7C973S7 |
+| Universal Links | مفعّلة |
+| شهادة التوزيع / Provisioning | حتى 20 مايو 2027 |
+| شهادة الإشعارات (SSL) | حتى 19 يونيو 2027 |
+| Android package | carizmaapps.saudiguide |
+| Google Play App Signing | مفعّل |
+| مشروع Firebase | saudi-guide |
+
+- **iOS:** حساب Apple Developer باسم رامي، فـEAS يقدر يولّد شهادات جديدة على نفس الحساب ويرفع تحديث لنفس التطبيق مباشرة.
+- **Android:** بما إن Google Play App Signing مفعّل، قوقل تحتفظ بمفتاح التوقيع النهائي. نحتاج **مفتاح الرفع (upload key)** من قودبابر. لو تعذّر، صاحب الحساب يطلب «إعادة تعيين مفتاح الرفع» من Play Console (App integrity) ونرفع بمفتاح جديد من EAS، بدون ما نخسر التطبيق أو المستخدمين.
+- **Universal Links:** نفس الدومين saudi-guide.com، فروابط الموقع تقدر تفتح التطبيق الجديد.
