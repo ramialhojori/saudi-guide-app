@@ -244,3 +244,45 @@ export async function communityAdmin(p, request, env, J) {
   }
   return null;
 }
+
+/* ——— ملفي: النقاط والمستوى والأوسمة وآخر نشاط ——— */
+export const LEVELS = [
+  [0, 'زائر جديد'], [20, 'مستكشف'], [60, 'رحّال'], [150, 'دليل نشيط'], [300, 'ابن الديرة'],
+  [500, 'خبير المدينة'], [800, 'مرجع الديرة'], [1200, 'سفير الدليل'], [1800, 'حكيم الدليل'], [2500, 'أسطورة الدليل'],
+];
+const BADGES = [
+  ['first', 'أول سؤال', 'chat', 'questions', 1],
+  ['tips', 'ناصح الديرة', 'star', 'tips', 10],
+  ['answers', 'مرجع الديرة', 'chat', 'answers', 100],
+  ['best', 'الجواب الذهبي', 'crown', 'best', 10],
+  ['lens', 'عدسة الدليل', 'cam', 'photos', 40],
+  ['loved', 'محبوب المجتمع', 'heart', 'thanks', 100],
+  ['trip', 'رحّالة', 'route', 'trip', 20],
+  ['helper', 'فزعة', 'people', 'answers', 10],
+];
+
+export async function myStats(env, u) {
+  const c = await env.DB.prepare(`SELECT
+      (SELECT COUNT(*) FROM posts WHERE user_id=?1 AND status='visible' AND kind='question') questions,
+      (SELECT COUNT(*) FROM posts WHERE user_id=?1 AND status='visible' AND kind='tip') tips,
+      (SELECT COUNT(*) FROM posts WHERE user_id=?1 AND status='visible' AND photo IS NOT NULL) photos,
+      (SELECT COUNT(*) FROM answers WHERE user_id=?1 AND status='visible') answers,
+      (SELECT COUNT(*) FROM posts p JOIN answers a ON a.id=p.best_answer WHERE a.user_id=?1 AND p.status='visible') best,
+      (SELECT COALESCE(SUM(thanks),0) FROM posts WHERE user_id=?1 AND status='visible') + (SELECT COALESCE(SUM(thanks),0) FROM answers WHERE user_id=?1 AND status='visible') thanks,
+      (SELECT COUNT(*) FROM user_trip WHERE user_id=?1) trip`).bind(u.id).first();
+  const pts = u.points || 0;
+  let lv = 0;
+  LEVELS.forEach(([at], i) => { if (pts >= at) lv = i; });
+  const next = LEVELS[lv + 1];
+  const acts = await env.DB.prepare(`SELECT * FROM (
+      SELECT 'post' t, p.id post_id, p.kind, p.text, p.thanks, p.created FROM posts p WHERE p.user_id=?1 AND p.status='visible'
+      UNION ALL
+      SELECT 'answer' t, a.post_id, (SELECT text FROM posts WHERE id=a.post_id) kind, a.text, a.thanks, a.created FROM answers a WHERE a.user_id=?1 AND a.status='visible'
+    ) ORDER BY created DESC LIMIT 8`).bind(u.id).all();
+  return {
+    points: pts, level: lv + 1, levelName: LEVELS[lv][1], nextAt: next ? next[0] : null, nextName: next ? next[1] : null, levelAt: LEVELS[lv][0],
+    counts: c,
+    badges: BADGES.map(([id, name, icon, key, goal]) => ({ id, name, icon, goal, have: Math.min(c[key] || 0, goal), earned: (c[key] || 0) >= goal })),
+    activity: acts.results.map((r) => ({ type: r.t, postId: r.post_id, text: r.t === 'answer' ? r.kind : r.text, kind: r.t === 'post' ? r.kind : 'answer', thanks: r.thanks, created: r.created })),
+  };
+}

@@ -77,3 +77,11 @@ export function errText(e: unknown) {
 }
 
 export const nAnswers = (n: number) => (n === 1 ? 'إجابة وحدة' : n === 2 ? 'إجابتين' : n <= 10 ? `${n} إجابات` : `${n} إجابة`);
+
+export type Stats = {
+  points: number; level: number; levelName: string; levelAt: number; nextAt: number | null; nextName: string | null;
+  counts: { questions: number; tips: number; photos: number; answers: number; best: number; thanks: number; trip: number };
+  badges: { id: string; name: string; icon: string; goal: number; have: number; earned: boolean }[];
+  activity: { type: 'post' | 'answer'; postId: number; text: string; kind: string; thanks: number; created: number }[];
+};
+export const myStats = () => api<Stats>('/v1/me/stats', { token: tok() });

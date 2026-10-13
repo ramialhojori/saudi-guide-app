@@ -1,14 +1,17 @@
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import { Avatar, Badge, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
+import { ago, myStats, tint, type Stats } from '@/lib/community';
+import { cityName } from '@/lib/content';
 import { brand, font, photos } from '@/theme/tokens';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
@@ -17,9 +20,23 @@ const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDee
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  // الاسم والمدينة من الحساب، والباقي (نقاط وأوسمة) تجريبي لين نبنيها
-  const me = user ? { ...demo, name: user.name || 'مستخدم الدليل', initial: (user.name || 'د').trim()[0], handle: user.handle || user.id.slice(0, 6), since: user.since, city: user.city || demo.city, bio: user.bio || 'اكتب نبذة عنك من الإعدادات.' } : demo;
-  const pct = me.points / me.nextLevelPts;
+  const [stats, setStats] = useState<Stats | null>(null);
+  useFocusEffect(useCallback(() => { if (user) myStats().then(setStats).catch(() => {}); else setStats(null); }, [user?.id]));
+  // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
+  const me = user ? {
+    ...demo, name: user.name || 'مستخدم الدليل', initial: (user.name || 'د').trim()[0], handle: user.handle, since: user.since,
+    city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || 'اكتب نبذة عنك من الإعدادات.',
+    points: stats?.points ?? user.points, level: stats?.level ?? 1, nextLevelPts: stats?.nextAt ?? Math.max(user.points, 1), nextLevel: stats?.nextName ?? '',
+    levelName: stats?.levelName ?? '', levelAt: stats?.levelAt ?? 0,
+    stats: [
+      { v: String(stats?.counts.answers ?? 0), l: 'إجابة' }, { v: String(stats?.counts.questions ?? 0), l: 'سؤال' },
+      { v: String(stats?.counts.photos ?? 0), l: 'صورة' }, { v: String(stats?.counts.thanks ?? 0), l: 'شكر' },
+    ],
+  } : { ...demo, levelName: 'سفير الدليل', levelAt: 0 };
+  const pct = Math.min(1, Math.max(0, (me.points - me.levelAt) / Math.max(1, me.nextLevelPts - me.levelAt)));
+  const badgeList = user && stats
+    ? stats.badges.map((b, i) => ({ icon: b.icon as IconName, t: b.name, s: b.earned ? 'حصّلته' : `${b.have} من ${b.goal}`, locked: !b.earned, bg: b.earned ? STAMP[i % STAMP.length] : brand.chip, fg: b.earned ? '#fff' : brand.faint }))
+    : badges;
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
       <View style={st.cover}>
@@ -46,23 +63,22 @@ export default function Profile() {
       <View style={[st.card, !user && { marginTop: 12 }]}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
           <View>
-            <View style={st.avRing}><Avatar t={me.initial} c={brand.lilac} size={76} /></View>
+            <View style={st.avRing}><Avatar t={me.initial} c={user ? tint(user.id) : brand.lilac} size={76} /></View>
             <View style={st.lvl}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>مستوى {me.level}</AppText></View>
           </View>
           <View style={{ flex: 1 }}>
             <AppText variant="title">{me.name}</AppText>
-            <AppText variant="small" muted>@{me.handle} · عضو منذ {me.since}</AppText>
-            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4 }}>
-              <Icon name="pin" color={brand.pinkDeep} size={14} />
-              <AppText variant="small" style={{ fontFamily: font.semibold }}>من {me.city}</AppText>
-              <Pill label="ابن الديرة" bg={brand.purple} fg="#fff" />
+            <AppText variant="small" muted>{me.handle ? `@${me.handle} · ` : ''}عضو منذ {me.since}</AppText>
+            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+              {me.city ? <><Icon name="pin" color={brand.pinkDeep} size={14} /><AppText variant="small" style={{ fontFamily: font.semibold }}>من {me.city}</AppText></> : null}
+              {me.levelName ? <Pill label={me.levelName} bg={brand.purple} fg="#fff" /> : null}
             </View>
           </View>
         </View>
         <AppText variant="small" style={{ marginTop: 12, lineHeight: 22 }}>{me.bio}</AppText>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 }}>
           <AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{me.points.toLocaleString('en')} نقطة</AppText>
-          <AppText variant="tiny" muted>باقي {me.nextLevelPts - me.points} للمستوى {me.level + 1} «{me.nextLevel}»</AppText>
+          <AppText variant="tiny" muted>{me.nextLevel ? `باقي ${me.nextLevelPts - me.points} للمستوى ${me.level + 1} «${me.nextLevel}»` : 'وصلت أعلى مستوى'}</AppText>
         </View>
         <View style={st.bar}><View style={[st.barFill, { width: `${pct * 100}%` }]} /></View>
         <View style={{ flexDirection: 'row', marginTop: 16 }}>
@@ -80,7 +96,7 @@ export default function Profile() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">جواز السعودية</AppText>
-            <AppText variant="small" color="#CFC6DE">كل مدينة تزورها تنختم في جوازك</AppText>
+            <AppText variant="small" color="#CFC6DE">{user ? 'قريباً: كل مدينة تزورها تنختم هنا (هذا مثال)' : 'كل مدينة تزورها تنختم في جوازك'}</AppText>
           </View>
           <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{passport.visited.length} من {passport.total} وجهة</AppText>
         </View>
@@ -94,11 +110,10 @@ export default function Profile() {
 
       {/* الأوسمة */}
       <View style={st.secRow}>
-        <AppText variant="section">أوسمتي <AppText variant="small" muted> 12 من 40</AppText></AppText>
-        <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>الكل</AppText>
+        <AppText variant="section">أوسمتي <AppText variant="small" muted> {badgeList.filter((b) => !b.locked).length} من {badgeList.length}</AppText></AppText>
       </View>
       <View style={st.badges}>
-        {badges.map((b) => (
+        {badgeList.map((b) => (
           <View key={b.t} style={{ width: '25%', alignItems: 'center', gap: 4, opacity: b.locked ? 0.7 : 1, marginBottom: 14 }}>
             <Badge icon={b.icon} bg={b.bg} fg={b.fg} size={58} r={20} />
             <AppText variant="tiny" center style={{ fontFamily: font.bold }}>{b.t}</AppText>
@@ -131,7 +146,23 @@ export default function Profile() {
       {/* آخر نشاطي */}
       <View style={st.secRow}><AppText variant="section">آخر نشاطي</AppText></View>
       <View style={{ gap: 10, paddingHorizontal: 16 }}>
-        {activity.map((a) => (
+        {user && stats ? (
+          stats.activity.length ? stats.activity.map((a) => (
+            <Pressable key={a.type + a.postId + a.created} style={st.act} onPress={() => router.push(`/question/${a.postId}`)}>
+              <Badge icon={a.type === 'answer' ? 'chat' : a.kind === 'tip' ? 'star' : a.kind === 'photo' ? 'cam' : 'chat'} bg={brand.softPurple} fg={brand.purple} size={36} r={12} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="small" numberOfLines={2}>{a.type === 'answer' ? 'جاوبت على «' : a.kind === 'question' ? 'سألت «' : 'شاركت «'}{a.text.slice(0, 70)}»</AppText>
+                <AppText variant="tiny" muted>{ago(a.created)}</AppText>
+              </View>
+              {a.thanks ? <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>+{a.thanks} شكر</AppText> : null}
+            </Pressable>
+          )) : (
+            <Pressable style={st.act} onPress={() => router.push('/community')}>
+              <Badge icon="chat" bg={brand.softOrange} fg={brand.orangeDeep} size={36} r={12} />
+              <AppText variant="small" style={{ flex: 1 }}>ما عندك نشاط للحين. جاوب على سؤال في المجتمع واجمع أول نقاطك.</AppText>
+            </Pressable>
+          )
+        ) : activity.map((a) => (
           <View key={a.t} style={st.act}>
             <Badge icon={a.icon} bg={brand.softPurple} fg={brand.purple} size={36} r={12} />
             <AppText variant="small" style={{ flex: 1 }}>{a.t}</AppText>

@@ -7,8 +7,8 @@
 import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
-import { authRoute } from './auth.js';
-import { communityRoute, communityAdmin } from './community.js';
+import { authRoute, sessionUser } from './auth.js';
+import { communityRoute, communityAdmin, myStats } from './community.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -125,6 +125,10 @@ async function route(request, env, ctx) {
   }
 
   /* ——— الحسابات ——— */
+  if (p === '/v1/me/stats' && request.method === 'GET') {
+    const u = await sessionUser(env, request);
+    return u ? J(await myStats(env, u)) : J({ error: 'unauthorized' }, 401);
+  }
   if (p.startsWith('/v1/auth/') || p.startsWith('/v1/me')) {
     const r = await authRoute(p, request, env, J);
     if (r) return r;
