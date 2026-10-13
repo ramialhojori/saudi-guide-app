@@ -94,3 +94,6 @@ export async function deleteAccount() {
 
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
 export const useAuth = () => useSyncExternalStore(subscribe, () => state);
+
+/** للمكتبات اللي تحتاج الرمز خارج الشاشات */
+export const session = () => state;

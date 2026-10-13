@@ -8,13 +8,14 @@ import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute } from './auth.js';
+import { communityRoute, communityAdmin } from './community.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -111,6 +112,10 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
+    if (p.startsWith('/admin/community/')) {
+      const r = await communityAdmin(p, request, env, J);
+      if (r) return r;
+    }
     if (p === '/admin/status') {
       const last = await env.DB.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 10').all();
       const n = await env.DB.prepare('SELECT (SELECT COUNT(*) FROM places WHERE deleted=0) p, (SELECT COUNT(*) FROM events WHERE deleted=0) e, (SELECT COUNT(*) FROM articles WHERE deleted=0) a, (SELECT COUNT(*) FROM devices) d').first();
@@ -123,6 +128,19 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/auth/') || p.startsWith('/v1/me')) {
     const r = await authRoute(p, request, env, J);
     if (r) return r;
+  }
+
+  /* ——— المجتمع ——— */
+  if (p === '/v1/community' || p.startsWith('/v1/community/')) {
+    const r = await communityRoute(p, request, env, J, q);
+    if (r) return r;
+  }
+
+  /* ——— صور المستخدمين من R2 ——— */
+  if (p.startsWith('/media/') && request.method === 'GET' && env.MEDIA) {
+    const obj = await env.MEDIA.get(decodeURIComponent(p.slice(7)));
+    if (!obj) return J({ error: 'not_found' }, 404);
+    return new Response(obj.body, { headers: { ...CORS, 'Content-Type': obj.httpMetadata?.contentType || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
   }
 
   if (request.method === 'POST' && p === '/v1/devices') {

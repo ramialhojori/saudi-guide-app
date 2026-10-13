@@ -33,3 +33,24 @@
 | `GET /admin/status` | العدادات + آخر 10 مزامنات |
 
 </div>
+
+## المجتمع (v0.3.0)
+
+كل طلبات الكتابة تحتاج `Authorization: Bearer <رمز الجلسة>`. الحذف = إخفاء (`status='hidden'`)، ما نحذف صفوف.
+
+| الطريقة | المسار | الوصف |
+|---|---|---|
+| GET | `/v1/community?city=&kind=&before=&mine=1` | آخر 20 مشاركة (يستثني المحظورين لو فيه جلسة) |
+| GET | `/v1/community/top?city=` | أكثر 3 جاوبوا آخر 30 يوم |
+| POST | `/v1/community` | `{kind: question|tip|photo, city, text, photo?, placeId?}` (+2 نقاط، 15 باليوم) |
+| GET | `/v1/community/:id` | المشاركة مع إجاباتها |
+| DELETE | `/v1/community/:id` و `/v1/community/answers/:id` | صاحبها يخفيها |
+| POST | `/v1/community/:id/answers` | `{text}` (+5 نقاط) |
+| POST | `/v1/community/:id/thanks` و `/v1/community/answers/:id/thanks` | شكر/إلغاء (+1 لصاحبها) |
+| POST | `/v1/community/:id/best` | `{answerId|null}` صاحب السؤال فقط (+15) |
+| POST | `/v1/community/report` | `{target: p|a, id, reason}` — 3 بلاغات = إخفاء تلقائي |
+| POST/DELETE | `/v1/community/block` | `{userId}` حظر/فك حظر |
+| POST | `/v1/community/upload` | جسم الطلب صورة (jpeg/png/webp حتى 6MB) → `{url}` في R2 |
+| GET | `/media/<key>` | يعرض صور R2 |
+
+الإدارة (`X-Admin-Key`): `GET /admin/community/reported`، `POST /admin/community/moderate {target, id, hidden}`، `POST /admin/community/role {userId, role: user|guide|admin}`.

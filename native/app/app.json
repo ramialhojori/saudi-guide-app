@@ -45,7 +45,15 @@
         }
       ],
       "expo-apple-authentication",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يحتاج دليل السعودية الوصول لصورك عشان تشارك صور الأماكن في المجتمع.",
+          "cameraPermission": "يحتاج دليل السعودية الكاميرا عشان تصوّر المكان وتشاركه في المجتمع.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

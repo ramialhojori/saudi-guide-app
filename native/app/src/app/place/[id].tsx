@@ -57,7 +57,7 @@ export default function PlaceScreen() {
             <AppText style={{ fontFamily: font.semibold, marginTop: 12 }} color={ks.fg} center>ما عندنا صورة لهالمكان للحين</AppText>
             <View style={st.noPhotoBtns}>
               <Pressable style={st.noPhotoBtn} onPress={() => openMaps(p.title, p.lat, p.lng)}><Icon name="map" color={brand.skyDeep} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>الصور في Google Maps</AppText></Pressable>
-              <Pressable style={[st.noPhotoBtn, { backgroundColor: brand.orangeDeep }]} onPress={() => router.push('/add-photo')}><Icon name="cam" color="#fff" size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">عندك صورة؟ أضفها</AppText></Pressable>
+              <Pressable style={[st.noPhotoBtn, { backgroundColor: brand.orangeDeep }]} onPress={() => router.push({ pathname: '/ask', params: { kind: 'photo', placeId: String(p.id), place: p.title, city: p.city } })}><Icon name="cam" color="#fff" size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">عندك صورة؟ أضفها</AppText></Pressable>
             </View>
           </View>
         )}
@@ -143,7 +143,7 @@ export default function PlaceScreen() {
             </View>
           </View>
         </View>
-        <Pressable style={st.ask} onPress={() => router.push('/ask')}>
+        <Pressable style={st.ask} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city } })}>
           <AppText muted style={{ flex: 1 }}>عندك سؤال عن المكان؟</AppText>
           <AppText style={{ fontFamily: font.bold }} color={brand.purple}>اسأل</AppText>
         </Pressable>

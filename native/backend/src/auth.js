@@ -108,6 +108,8 @@ export async function authRoute(p, request, env, J) {
       env.DB.prepare("UPDATE users SET deleted=1, email=NULL, name=NULL, bio=NULL, avatar=NULL, handle=NULL WHERE id=?").bind(u.id),
       env.DB.prepare('DELETE FROM user_trip WHERE user_id=?').bind(u.id),
       env.DB.prepare('UPDATE devices SET user_id=NULL WHERE user_id=?').bind(u.id),
+      env.DB.prepare("UPDATE posts SET status='hidden', hidden_by='account' WHERE user_id=? AND status='visible'").bind(u.id),
+      env.DB.prepare("UPDATE answers SET status='hidden', hidden_by='account' WHERE user_id=? AND status='visible'").bind(u.id),
     ]);
     return J({ ok: true });
   }

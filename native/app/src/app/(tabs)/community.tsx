@@ -1,22 +1,51 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Avatar, Chip, Pill } from '@/components/ui';
-import { challenge, champions, me, posts, type Post } from '@/lib/mock';
+import { useAuth } from '@/lib/auth';
+import { ago, feed, initial, nAnswers, thank, tint, topHelpers, type CPost } from '@/lib/community';
+import { cityName } from '@/lib/content';
+import { challenge, posts as samples, type Post } from '@/lib/mock';
 import { brand, font, photos } from '@/theme/tokens';
 
-const CITIES = ['كل المدن', 'المدينة', 'الرياض', 'جدة', 'العلا', 'أبها'];
+const CITIES: [string | null, string][] = [[null, 'كل المدن'], ['medina', 'المدينة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة'], ['alula', 'العلا'], ['abha', 'أبها'], ['eastern-region', 'الشرقية']];
 
 /** المجتمع — محتوى تجريبي لين يجهز سيرفر المجتمع (المرحلة 2) */
 export default function Community() {
   const insets = useSafeAreaInsets();
-  const [city, setCity] = useState(0);
+  const { user } = useAuth();
+  const [city, setCity] = useState<string | null>(null);
+  const [list, setList] = useState<CPost[] | null>(null);
+  const [top, setTop] = useState<{ id: string; name: string; answers: number; badge: string }[]>([]);
+  const [err, setErr] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [more, setMore] = useState(true);
+
+  const load = useCallback(async (c: string | null) => {
+    setBusy(true); setErr(false);
+    try {
+      const [p, t] = await Promise.all([feed({ city: c }), topHelpers(c).catch(() => [])]);
+      setList(p); setTop(t); setMore(p.length >= 20);
+    } catch { setErr(true); setList((l) => l ?? []); } finally { setBusy(false); }
+  }, []);
+  useFocusEffect(useCallback(() => { load(city); }, [city, load]));
+
+  const loadMore = async () => {
+    if (!list?.length || !more || busy) return;
+    setBusy(true);
+    try { const p = await feed({ city, before: list[list.length - 1].id }); setList([...list, ...p]); setMore(p.length >= 20); } catch {} finally { setBusy(false); }
+  };
+  const ask = () => router.push(user ? '/ask' : '/login');
+  const cityLabel = CITIES.find((c) => c[0] === city)?.[1] ?? '';
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}
+      refreshControl={<RefreshControl refreshing={busy && !!list} onRefresh={() => load(city)} tintColor={brand.purple} />}
+      onScroll={({ nativeEvent: e }) => { if (e.layoutMeasurement.height + e.contentOffset.y > e.contentSize.height - 400) loadMore(); }} scrollEventThrottle={400}>
       <View style={[st.head, { paddingTop: insets.top + 14 }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View>
@@ -25,18 +54,18 @@ export default function Community() {
           </View>
           <Pressable style={st.glass} onPress={() => router.push('/inbox')} accessibilityLabel="الإشعارات"><Icon name="bell" color="#fff" /></Pressable>
         </View>
-        <Pressable style={st.ask} onPress={() => router.push('/ask')}>
-          <Avatar t={me.initial} c={brand.lilac} size={36} />
+        <Pressable style={st.ask} onPress={ask}>
+          <Avatar t={initial(user?.name || '؟')} c={brand.lilac} size={36} />
           <AppText muted style={{ flex: 1 }}>وش تبي تعرف عن السعودية؟</AppText>
           <View style={st.camBtn}><Icon name="cam" color={brand.pinkDeep} size={18} /></View>
         </Pressable>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
-        {CITIES.map((c, i) => <Chip key={c} label={c} on={i === city} color={brand.ink} onPress={() => setCity(i)} />)}
+        {CITIES.map(([id, n]) => <Chip key={n} label={n} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
       </ScrollView>
 
-      {/* تحدي الأسبوع */}
+      {/* تحدي الأسبوع — تجريبي */}
       <Pressable style={st.challenge}>
         <View style={{ flex: 1, padding: 16, gap: 4 }}>
           <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{challenge.tag}</AppText></View>
@@ -47,33 +76,104 @@ export default function Community() {
         <Image source={photos[challenge.photo]} style={{ width: 130 }} contentFit="cover" />
       </Pressable>
 
-      <View style={{ gap: 14, paddingHorizontal: 16, paddingTop: 16 }}>
-        {posts.map((p) => <PostCard key={p.id} p={p} />)}
-      </View>
+      {list === null ? <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} /> : null}
+      {err ? <AppText center muted style={{ marginTop: 20 }}>ما قدرنا نجيب المشاركات. اسحب لتحت وجرّب مرة ثانية.</AppText> : null}
 
-      {/* أبطال المدينة */}
-      <View style={st.champs}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">أبطال المدينة هالشهر</AppText>
-          <AppText variant="small" color="#F9A158">أكتوبر</AppText>
+      {list && list.length ? (
+        <View style={{ gap: 14, paddingHorizontal: 16, paddingTop: 16 }}>
+          {list.map((p) => <LivePost key={p.id} p={p} onChange={(x) => setList((l) => l!.map((y) => (y.id === x.id ? x : y)))} />)}
+          {busy && more ? <ActivityIndicator color={brand.purple} /> : null}
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginTop: 16 }}>
-          {champions.map((c) => (
-            <View key={c.n} style={{ alignItems: 'center', gap: 6 }}>
-              <View style={c.rank === 1 ? st.ring1 : null}><Avatar t={c.av} c={c.c} size={c.rank === 1 ? 64 : 50} /></View>
-              <AppText style={{ fontFamily: font.bold }} color="#fff">{c.n}</AppText>
-              <AppText variant="tiny" color={c.rank === 1 ? '#F9A158' : '#CFC6DE'}>{c.rank} · {c.s}</AppText>
-            </View>
-          ))}
+      ) : null}
+
+      {list && !list.length && !err ? (
+        <>
+          <Pressable style={st.empty} onPress={ask}>
+            <View style={st.emptyIcon}><Icon name="chat" color={brand.purple} size={28} /></View>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{city ? `ما أحد سأل عن ${cityLabel} للحين` : 'المجتمع ينتظر أول سؤال'}</AppText>
+            <AppText variant="small" muted center>كن أول واحد يسأل أو يشارك نصيحة، وأهل الديرة يردّون عليك.</AppText>
+            <View style={st.emptyBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>{user ? 'اكتب سؤالك' : 'سجّل واسأل'}</AppText></View>
+          </Pressable>
+          <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 4, fontFamily: font.bold }}>أمثلة لشكل المجتمع لما يمتلي</AppText>
+          <View style={{ gap: 14, paddingHorizontal: 16, paddingTop: 8, opacity: 0.75 }}>
+            {samples.slice(0, 2).map((p) => <PostCard key={p.id} p={p} />)}
+          </View>
+        </>
+      ) : null}
+
+      {/* أبطال المدينة: أكثر ناس جاوبوا هالشهر */}
+      {top.length ? (
+        <View style={st.champs}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">أبطال {city ? cityLabel : 'المجتمع'} هالشهر</AppText>
+            <AppText variant="small" color="#F9A158">آخر 30 يوم</AppText>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginTop: 16 }}>
+            {[top[1], top[0], top[2]].filter(Boolean).map((c) => {
+              const first = c === top[0];
+              return (
+                <View key={c.id} style={{ alignItems: 'center', gap: 6 }}>
+                  <View style={first ? st.ring1 : null}><Avatar t={initial(c.name)} c={tint(c.id)} size={first ? 64 : 50} /></View>
+                  <AppText style={{ fontFamily: font.bold }} color="#fff">{c.name}</AppText>
+                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{c.answers} إجابة</AppText>
+                </View>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      ) : null}
     </ScrollView>
+  );
+}
+
+/** مشاركة حقيقية من السيرفر */
+export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => void }) {
+  const { user } = useAuth();
+  const toggle = async () => {
+    if (!user) return router.push('/login');
+    if (p.mine) return;
+    onChange({ ...p, thanked: !p.thanked, thanks: p.thanks + (p.thanked ? -1 : 1) });
+    try { const r = await thank('p', p.id); onChange({ ...p, thanked: r.thanked, thanks: r.thanks }); } catch { onChange(p); }
+  };
+  const where = [p.author.city ? 'من ' + cityName(p.author.city) : '', ago(p.created)].filter(Boolean).join(' · ');
+  return (
+    <Pressable style={st.post} onPress={() => router.push(`/question/${p.id}`)}>
+      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, paddingBottom: 8 }}>
+        <Avatar t={initial(p.author.name)} c={tint(p.author.id)} size={40} />
+        <View style={{ flex: 1 }}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 14.5 }}>{p.author.name} <AppText variant="small" muted>· {where}</AppText></AppText>
+          <AppText variant="tiny" color={p.kind === 'question' ? brand.skyDeep : brand.orangeDeep}>
+            {p.kind === 'question' ? 'سؤال' : p.kind === 'tip' ? 'نصيحة' : 'صورة'}{p.city ? ' عن ' + cityName(p.city) : ''}
+          </AppText>
+        </View>
+        {p.author.badge ? <Pill label={p.author.badge} bg={brand.softPink} fg={brand.pinkDeep} /> : null}
+      </View>
+      {p.photo ? <Image source={{ uri: p.photo }} style={{ height: 240, backgroundColor: brand.chip }} contentFit="cover" /> : null}
+      <AppText style={{ fontFamily: p.kind === 'question' ? font.bold : font.regular, fontSize: p.kind === 'question' ? 16.5 : 14.5, lineHeight: 28, paddingHorizontal: 14, paddingTop: 10 }} numberOfLines={6}>{p.text}</AppText>
+      {p.bestAnswer ? (
+        <View style={st.best}>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }}>{p.bestAnswer.name}</AppText>
+            {p.bestAnswer.badge ? <Pill label={p.bestAnswer.badge} bg={brand.purple} fg="#fff" /> : null}
+            <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>· أفضل إجابة</AppText>
+          </View>
+          <AppText variant="small" style={{ lineHeight: 22, marginTop: 4 }} numberOfLines={3}>{p.bestAnswer.text}</AppText>
+        </View>
+      ) : null}
+      <View style={st.actions}>
+        <Pressable onPress={toggle} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Icon name={p.thanked ? 'heartFill' : 'heart'} color={brand.pinkDeep} size={18} />
+          <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>شكراً{p.thanks ? ' · ' + p.thanks : ''}</AppText>
+        </Pressable>
+        <AppText variant="small" muted>{p.answers ? nAnswers(p.answers) : p.kind === 'question' ? 'كن أول من يجاوب' : 'علّق'}</AppText>
+      </View>
+    </Pressable>
   );
 }
 
 function PostCard({ p }: { p: Post }) {
   return (
-    <Pressable style={st.post} onPress={() => router.push(`/question/${p.id}`)}>
+    <View style={st.post}>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, paddingBottom: 8 }}>
         <Avatar t={p.av} c={p.c} size={40} />
         <View style={{ flex: 1 }}>
@@ -99,7 +199,7 @@ function PostCard({ p }: { p: Post }) {
         {p.answers ? <AppText variant="small" muted>{p.answers} إجابات</AppText> : null}
         <AppText variant="small" muted>حفظ</AppText>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -114,6 +214,9 @@ const st = StyleSheet.create({
   best: { margin: 14, marginTop: 10, backgroundColor: brand.bg, borderRadius: 16, padding: 12, borderRightWidth: 3, borderRightColor: brand.purple },
   actions: { flexDirection: 'row', gap: 18, paddingHorizontal: 14, paddingBottom: 14, paddingTop: 4 },
   champs: { margin: 16, marginTop: 18, backgroundColor: brand.ink, borderRadius: 26, padding: 18 },
+  empty: { margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 24, padding: 22, alignItems: 'center', gap: 8 },
+  emptyIcon: { width: 60, height: 60, borderRadius: 20, backgroundColor: brand.softPurple, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  emptyBtn: { marginTop: 8, backgroundColor: brand.purple, borderRadius: 16, paddingHorizontal: 22, height: 46, justifyContent: 'center' },
   ring1: { borderWidth: 3, borderColor: brand.orange, borderRadius: 40, padding: 2 },
 });
 
