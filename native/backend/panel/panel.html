@@ -127,8 +127,11 @@ function loginView() {
     <input class="in" id="k" type="password" placeholder="مفتاح الإدارة" autocomplete="off" autofocus>
     <button class="btn" style="width:100%;margin-top:10px" id="go">دخول</button><p id="msg" style="color:var(--pinkDeep);font-weight:700"></p></div>`;
   const go = async (k) => {
-    KEY = String(k || $('#k').value).replace(/\s+/g, '');
-    if (!KEY) { $('#msg').textContent = 'الخانة فاضية: المفتاح ما انلصق'; return; }
+    const raw = String(k || $('#k').value);
+    // المفتاح حروف وأرقام إنجليزية بس — نطلعه حتى لو انلصق معه كلام ثاني
+    KEY = (raw.match(/[A-Za-z0-9_-]{24,}/) || [''])[0];
+    if (!raw.trim()) { $('#msg').textContent = 'ما فيه شي منسوخ. شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده لا تنسخ أي شي ثاني'; return; }
+    if (!KEY) { $('#msg').textContent = 'اللي منسوخ مو المفتاح (غالباً نسخت شي بعد الأمر). شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده اضغط الزر البرتقالي على طول'; return; }
     try { await api('/admin/summary'); sessionStorage.setItem('sg_admin', KEY); render(); }
     catch (e) { KEY = ''; $('#msg').textContent = e.message === 'unauthorized' ? 'المفتاح غلط. شغّل أمر «افتح-اللوحة» مرة ثانية' : 'السيرفر ما رد: ' + e.message; }
   };
