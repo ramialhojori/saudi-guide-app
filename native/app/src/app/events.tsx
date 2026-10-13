@@ -11,6 +11,7 @@ import { Pill } from '@/components/ui';
 import { cityName, getEvents } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
+import { countEvents, seasonsFrom, seasonStatus, slug } from '@/lib/seasons';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
 
@@ -43,17 +44,20 @@ export default function EventsScreen() {
   const [when, setWhen] = useState(0);
   const [type, setType] = useState<string | null>(null);
   const [season, setSeason] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [pickCity, setPickCity] = useState(false);
   const now = Date.now();
   const today = ksaKey(now), tomorrow = ksaKey(now + DAY);
   const wd = new Date(now + 3 * 3600e3).getUTCDay(), toFri = (5 - wd + 7) % 7;
   const weekend = [ksaKey(now + (toFri - 1) * DAY), ksaKey(now + toFri * DAY), ksaKey(now + (toFri + 1) * DAY)];
 
   const events = data ?? [];
-  const seasons = useMemo(() => [...new Set(events.flatMap((e) => (e.cats || []).filter((c) => SEASON.test(c))))], [events]);
   const types = TYPES.filter((t) => events.some((e) => typeOf(e)?.id === t.id));
   const on = (e: EventItem, k: string) => ksaKey(new Date(e.start).getTime()) <= k && ksaKey(new Date(e.end || e.start).getTime()) >= k;
 
-  const filtered = events.filter((e) => (!type || typeOf(e)?.id === type) && (!season || (e.cats || []).includes(season)));
+  const seasonList = useMemo(() => seasonsFrom(events, now), [events]);
+  const cities = useMemo(() => [...new Set(events.map((e) => e.city).filter(Boolean))] as string[], [events]);
+  const filtered = events.filter((e) => (!type || typeOf(e)?.id === type) && (!season || (e.cats || []).includes(season)) && (!city || e.city === city));
   const dated = filtered.filter((e) => !isLong(e));
   const ongoing = filtered.filter(isLong);
   const counts = [dated.length, dated.filter((e) => on(e, today)).length, dated.filter((e) => on(e, tomorrow)).length, dated.filter((e) => weekend.some((k) => on(e, k))).length];
@@ -93,20 +97,44 @@ export default function EventsScreen() {
         {types.map((t) => <TypeChip key={t.id} t={t.t} icon={t.icon} fg={t.fg} bg={t.bg} on={type === t.id} onPress={() => setType(type === t.id ? null : t.id)} />)}
       </ScrollView>
 
-      {/* المواسم */}
-      {seasons.length ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
-          {seasons.map((s, i) => {
-            const c = [brand.purple, brand.sky, brand.orange, brand.pink][i % 4];
-            const sel = season === s;
-            return (
-              <Pressable key={s} onPress={() => setSeason(sel ? null : s)} style={[st.season, { borderColor: c, backgroundColor: sel ? c : 'transparent' }]}>
-                <AppText variant="small" style={{ fontFamily: font.bold }} color={sel ? '#fff' : c}>{s}</AppText>
+      {/* المواسم: بطاقة لكل موسم شغّال أو قريب — تفتح صفحة الموسم */}
+      {seasonList.length ? (
+        <>
+          <View style={st.secRow}><AppText variant="section">المواسم</AppText><AppText variant="tiny" muted>اضغط الموسم وشوف كل فعالياته</AppText></View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+            {seasonList.map((x) => (
+              <Pressable key={x.name} onPress={() => router.push(`/season/${slug(x.name)}`)} style={[st.seasonCard, { backgroundColor: x.color }]}>
+                <Image source={photos[x.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <LinearGradient colors={['rgba(0,0,0,0)', x.color + 'F0']} locations={[0.15, 0.9]} style={StyleSheet.absoluteFill} />
+                <View style={st.seasonLive}><View style={[st.liveDot, { backgroundColor: x.live ? '#7CFC9A' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(x, now)}</AppText></View>
+                <View style={{ position: 'absolute', right: 14, left: 14, bottom: 12 }}>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 30 }} color="#fff">{x.name}</AppText>
+                  <AppText variant="tiny" color="#F2ECF8">{countEvents(x.events.length)} · {x.line}</AppText>
+                </View>
               </Pressable>
-            );
-          })}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        </>
       ) : null}
+
+      {/* المدينة */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        <Pressable onPress={() => setPickCity((v) => !v)} style={st.cityBtn}>
+          <Icon name="pin" color={brand.pinkDeep} size={18} />
+          <AppText style={{ fontFamily: font.bold, flex: 1 }}>{city ? cityName(city) : 'كل المدن'} ▾</AppText>
+          <AppText variant="tiny" muted>{cities.length} مدن فيها فعاليات</AppText>
+        </Pressable>
+        {pickCity ? (
+          <View style={st.cityList}>
+            {[null, ...cities].map((c) => (
+              <Pressable key={c ?? 'all'} onPress={() => { setCity(c); setPickCity(false); }} style={st.cityRow}>
+                <AppText style={{ flex: 1, fontFamily: c === city ? font.bold : font.regular }} color={c === city ? brand.purple : brand.ink}>{c ? cityName(c) : 'كل المدن'}</AppText>
+                <AppText variant="tiny" muted>{events.filter((e) => !c || e.city === c).length}</AppText>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
 
       {loading && !data ? <Loading /> : null}
       {!loading && !shown.length && !ongoing.length ? <Empty title="ما فيه فعاليات هنا" sub="جرّب يوم ثاني أو نوع ثاني" /> : null}
@@ -206,7 +234,13 @@ const st = StyleSheet.create({
   when: { flex: 1, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 16, paddingVertical: 8 },
   whenOn: { backgroundColor: '#fff' },
   type: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 42, borderRadius: 14, paddingHorizontal: 14 },
-  season: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
+  seasonCard: { width: 270, height: 170, borderRadius: 24, overflow: 'hidden' },
+  seasonLive: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  liveDot: { width: 8, height: 8, borderRadius: 4 },
+  cityBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 16, height: 48, paddingHorizontal: 14 },
+  cityList: { marginTop: 6, backgroundColor: '#fff', borderRadius: 16, padding: 6 },
+  cityRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },
   top: { marginHorizontal: 16, marginTop: 16, height: 280, borderRadius: 28, overflow: 'hidden', backgroundColor: brand.ink },
   dateBox: { position: 'absolute', top: 14, left: 14, width: 56, backgroundColor: '#fff', borderRadius: 16, paddingVertical: 6 },
   dayHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
