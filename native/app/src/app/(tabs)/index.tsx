@@ -1,196 +1,195 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
 import { Icon, type IconName } from '@/components/Icon';
-import { SectionTitle } from '@/components/SectionTitle';
-import { Loading } from '@/components/State';
-import { getHome, cityName, weekLabel } from '@/lib/content';
-import { eventWhen, riyadhDate } from '@/lib/text';
+import { Avatar, Section } from '@/components/ui';
+import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
+import { me, weather } from '@/lib/mock';
 import { useAsync } from '@/lib/useAsync';
-import type { City, Place } from '@/lib/types';
-import { brand, colors, font, radius, space } from '@/theme/tokens';
-import { strings } from '@/i18n/ar';
+import type { EventItem, Place } from '@/lib/types';
+import { brand, font, kindStyle, photos } from '@/theme/tokens';
 
 const W = Dimensions.get('window').width;
-const SLIDE_W = W - space.lg * 2;
+const CARD_W = Math.min(300, W - 90);
+const MADINAH = { lat: 24.4672, lng: 39.6112 };
 
-function greeting() {
-  const h = (new Date().getUTCHours() + 3) % 24;
-  return h < 12 ? strings.home.greetMorning : strings.home.greetEvening;
-}
-
-const QUICK: { label: string; icon: IconName; bg: string; fg: string; go: () => void }[] = [
-  { label: strings.home.near, icon: 'nav', bg: '#FDE7D3', fg: brand.orange, go: () => router.push('/search?near=1') },
-  { label: strings.tabs.trip, icon: 'heart', bg: '#FBE3EA', fg: brand.pink, go: () => router.push('/trip') },
-  { label: strings.tabs.events, icon: 'calendar', bg: '#ECE6F3', fg: brand.purpleDeep, go: () => router.push('/events') },
-  { label: 'الأخبار', icon: 'news', bg: '#E2F1FA', fg: '#2E86B8', go: () => router.push('/more') },
+const KINDS: { id: string; label: string; icon: IconName }[] = [
+  { id: 'sights', label: 'معالم', icon: 'sights' },
+  { id: 'heritage', label: 'تراث', icon: 'heritage' },
+  { id: 'nature', label: 'طبيعة', icon: 'nature' },
+  { id: 'food', label: 'مطاعم', icon: 'food' },
+  { id: 'cafe', label: 'مقاهي', icon: 'cafe' },
 ];
 
-export default function HomeScreen() {
+const greeting = () => ((new Date().getUTCHours() + 3) % 24 < 12 ? 'صباح الخير' : 'مساء الخير');
+
+export default function Home() {
   const insets = useSafeAreaInsets();
-  const { data, loading } = useAsync(getHome, []);
-  const [slide, setSlide] = useState(0);
+  const { data } = useAsync(getHome, []);
+  const near = useNearby();
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 120 }}>
-      {/* الترويسة: التحية + البحث */}
-      <View style={[styles.hero, { paddingTop: insets.top + space.md }]}>
-        <View style={styles.logoWrap}><Image source={require('../../../assets/brand/logo-white.png')} style={styles.logo} contentFit="contain" /></View>
-        <AppText variant="heading" color={brand.peach}>{greeting()}</AppText>
-        <AppText variant="hero" color="#fff">{strings.home.where}</AppText>
-        <Pressable style={styles.search} onPress={() => router.push('/search')} accessibilityRole="search">
-          <Icon name="search" color={brand.purpleDeep} />
-          <AppText muted style={styles.flex}>{strings.home.search}</AppText>
-          <View style={styles.badge}><AppText variant="small" color={brand.purpleDeep} style={{ fontFamily: font.semibold }}>+1500 مكان</AppText></View>
-        </Pressable>
-      </View>
-
-      <View style={styles.body}>
-        {/* اختصارات */}
-        <View style={styles.quick}>
-          {QUICK.map((q) => (
-            <Pressable key={q.label} onPress={q.go} style={styles.qItem} accessibilityRole="button">
-              <View style={[styles.qIcon, { backgroundColor: q.bg }]}><Icon name={q.icon} color={q.fg} size={24} /></View>
-              <AppText variant="small" center>{q.label}</AppText>
-            </Pressable>
-          ))}
+    <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }} showsVerticalScrollIndicator={false}>
+      {/* الترويسة بالصورة */}
+      <View style={st.hero}>
+        <Image source={photos.rock} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <LinearGradient colors={['rgba(43,31,69,0.2)', 'rgba(43,31,69,0.35)', 'rgba(43,31,69,0.92)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+        <View style={[st.top, { top: insets.top + 10 }]}>
+          <Image source={require('../../../assets/brand/logo-white.png')} style={{ width: 150, height: 44 }} contentFit="contain" />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable accessibilityLabel="الإشعارات" onPress={() => router.push('/inbox')} style={st.glass}><Icon name="bell" color="#fff" size={22} /></Pressable>
+            <Pressable accessibilityLabel="ملفي" onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={me.initial} c={brand.lilac} size={44} /></Pressable>
+          </View>
         </View>
-
-        {loading && !data ? <Loading /> : null}
-
-        {/* المدن: 8 + باقي الوجهات */}
-        {data ? (
-          <>
-            <SectionTitle title={strings.home.cities} color={brand.pink} action={strings.common.seeAll} onAction={() => router.push('/guide')} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cities}>
-              {data.cities.slice(0, 8).map((c) => <CityCircle key={c.id} city={c} />)}
-              <Pressable onPress={() => router.push('/guide')} style={styles.city}>
-                <View style={[styles.ring, styles.moreRing]}><AppText variant="title" color={brand.purpleDeep}>+{data.cities.length - 8}</AppText></View>
-                <AppText variant="small" center>{strings.home.more}</AppText>
-              </Pressable>
-            </ScrollView>
-
-            {/* مختارات الأسبوع */}
-            {data.picks.length ? (
-              <View>
-                <FlatList
-                  data={data.picks}
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  keyExtractor={(p) => String(p.id)}
-                  onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / SLIDE_W))}
-                  renderItem={({ item }) => <PickSlide place={item} />}
-                  style={styles.slides}
-                />
-                <View style={styles.dots}>
-                  {data.picks.map((p, i) => <View key={p.id} style={[styles.dot, i === slide && styles.dotOn]} />)}
-                </View>
-              </View>
-            ) : null}
-
-            {/* فعاليات */}
-            {data.events.length ? (
-              <>
-                <SectionTitle title={strings.home.events} color={brand.purple} action={strings.common.seeAll} onAction={() => router.push('/events')} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
-                  {data.events.map((e) => (
-                    <Pressable key={e.id} style={styles.ev} onPress={() => router.push(`/event/${e.id}`)}>
-                      <Image source={e.thumb} style={styles.evImg} contentFit="cover" />
-                      <View style={styles.evTx}>
-                        <AppText variant="small" color={brand.orange}>{eventWhen(e.start, e.end)}{e.city ? ' · ' + cityName(e.city) : ''}</AppText>
-                        <AppText variant="heading" numberOfLines={2}>{e.title}</AppText>
-                      </View>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </>
-            ) : null}
-
-            {/* أخبار */}
-            {data.articles.length ? (
-              <>
-                <SectionTitle title={strings.home.news} color={brand.sky} />
-                {data.articles.slice(0, 5).map((a) => (
-                  <Pressable key={a.id} style={styles.news} onPress={() => router.push(`/article/${a.id}`)}>
-                    <Image source={a.thumb} style={styles.newsImg} contentFit="cover" />
-                    <View style={styles.flex}>
-                      <AppText variant="heading" numberOfLines={2}>{a.title}</AppText>
-                      <AppText variant="small" muted>{riyadhDate(a.date, false)} · {a.author || a.section}</AppText>
-                    </View>
-                  </Pressable>
-                ))}
-              </>
-            ) : null}
-          </>
-        ) : null}
+        <View style={st.heroTx}>
+          <View style={st.weather}><AppText variant="small" color="#fff">{weather.city} · {weather.temp}° · {weather.text}</AppText></View>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()} يا {me.first}</AppText>
+          <AppText variant="hero" color="#fff" style={{ fontSize: 34, lineHeight: 46 }}>وين تبي تروح{'\n'}هالويكند؟</AppText>
+          <Pressable onPress={() => router.push('/search')} style={st.search} accessibilityRole="search">
+            <Icon name="search" color={brand.purple} size={22} strokeWidth={2.2} />
+            <AppText muted style={{ flex: 1 }}>مكان، مدينة، مطعم، فعالية...</AppText>
+            <View style={st.count}><AppText style={{ fontFamily: font.bold, fontSize: 12.5 }} color={brand.purple}>1500+</AppText></View>
+          </Pressable>
+        </View>
       </View>
+
+      {/* أنواع الأماكن */}
+      <View style={st.kinds}>
+        {KINDS.map((k) => {
+          const ks = kindStyle[k.id];
+          return (
+            <Pressable key={k.id} onPress={() => router.push({ pathname: '/search', params: { kind: k.id } })} style={{ alignItems: 'center', gap: 8 }}>
+              <View style={[st.kind, { backgroundColor: ks.bg }]}><Icon name={k.icon} color={ks.fg} size={26} /></View>
+              <AppText variant="small" center>{k.label}</AppText>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* مختارات الأسبوع */}
+      <View style={st.secHead}>
+        <View>
+          <AppText variant="title">مختارات الأسبوع</AppText>
+          <AppText variant="small" muted>{weekLabel()} · تتجدد كل أحد</AppText>
+        </View>
+        <Pressable onPress={() => router.push('/guide')}><AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color={brand.purple}>الكل</AppText></Pressable>
+      </View>
+      <FlatList
+        data={data?.picks ?? []}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(p) => String(p.id)}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
+        snapToInterval={CARD_W + 14}
+        decelerationRate="fast"
+        renderItem={({ item, index }) => <PickCard place={item} star={index === 0} />}
+        ListEmptyComponent={<View style={[st.pick, { backgroundColor: '#EEE9F2' }]} />}
+      />
+
+      {/* قريب منك */}
+      <Section title="قريب منك الحين" action="على الخريطة" onAction={() => router.push('/map')} />
+      <View style={{ paddingHorizontal: 16, gap: 10 }}>
+        {near.slice(0, 3).map((p) => <NearRow key={p.id} p={p} />)}
+      </View>
+
+      {/* فعالية قادمة */}
+      {data?.events?.[0] ? <EventBanner e={data.events[0]} /> : null}
     </ScrollView>
   );
 }
 
-function CityCircle({ city }: { city: City }) {
+function useNearby() {
+  const [list, setList] = useState<Place[]>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      let at = MADINAH;
+      try {
+        const perm = await Location.getForegroundPermissionsAsync();
+        if (perm.granted) {
+          const pos = await Location.getLastKnownPositionAsync();
+          if (pos) at = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        }
+      } catch {}
+      const r = await nearby(at.lat, at.lng, 25).catch(() => []);
+      if (alive) setList(r.filter((p) => p.thumb));
+    })();
+    return () => { alive = false; };
+  }, []);
+  return list;
+}
+
+function PickCard({ place, star }: { place: Place; star?: boolean }) {
   return (
-    <Pressable onPress={() => router.push(`/city/${city.id}`)} style={styles.city} accessibilityRole="link">
-      <View style={[styles.ring, { borderColor: city.color }]}>
-        {city.cover ? <Image source={city.cover} style={styles.cityImg} contentFit="cover" /> : <View style={[styles.cityImg, { backgroundColor: city.color }]} />}
+    <Pressable onPress={() => router.push(`/place/${place.id}`)} style={st.pick}>
+      <Image source={place.image || place.thumb || photos.heritage} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+      <LinearGradient colors={['transparent', 'rgba(32,22,54,0.92)']} locations={[0.45, 1]} style={StyleSheet.absoluteFill} />
+      <View style={st.pickTop}>
+        {star ? <View style={st.starTag}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">معلم الأسبوع</AppText></View> : <View />}
+        <HeartButton id={place.id} size={46} light />
       </View>
-      <AppText variant="small" center numberOfLines={1}>{city.name}</AppText>
+      <View style={st.pickTx}>
+        <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{cityName(place.city)} · {place.cat}</AppText>
+        <AppText style={{ fontFamily: font.bold, fontSize: 26, lineHeight: 36 }} color="#fff" numberOfLines={1}>{place.title}</AppText>
+        {place.summary ? <AppText variant="small" color="#E2DAEE" numberOfLines={1}>{place.summary}</AppText> : null}
+      </View>
     </Pressable>
   );
 }
 
-function PickSlide({ place }: { place: Place }) {
+function NearRow({ p }: { p: Place }) {
   return (
-    <Pressable onPress={() => router.push(`/place/${place.id}`)} style={styles.slide}>
-      <Image source={place.image || place.thumb} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
-      <View style={styles.shade} />
-      <View style={styles.slideTop}>
-        <View style={styles.label}><AppText variant="small" color="#fff" style={{ fontFamily: font.semibold }}>{strings.home.picks} · {weekLabel()}</AppText></View>
-        <HeartButton id={place.id} light />
+    <Pressable onPress={() => router.push(`/place/${p.id}`)} style={st.near}>
+      <Image source={p.thumb} style={st.nearImg} contentFit="cover" />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <AppText style={{ fontFamily: font.bold, fontSize: 17 }} numberOfLines={1}>{p.title}</AppText>
+        <AppText variant="small" muted numberOfLines={1}>{p.cat}</AppText>
       </View>
-      <View style={styles.cap}>
-        <AppText variant="small" color={brand.peach}>{cityName(place.city)} · {place.cat}</AppText>
-        <AppText variant="title" color="#fff" numberOfLines={2}>{place.title}</AppText>
-        <AppText variant="small" color="#EDE8F3" numberOfLines={2}>{place.summary}</AppText>
+      {p.km != null ? <View style={st.km}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{p.km} كم</AppText></View> : null}
+    </Pressable>
+  );
+}
+
+function EventBanner({ e }: { e: EventItem }) {
+  const days = Math.max(0, Math.ceil((new Date(e.start).getTime() - Date.now()) / 86400e3));
+  return (
+    <Pressable onPress={() => router.push(`/event/${e.id}`)} style={st.ev}>
+      <Image source={e.image || e.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <LinearGradient colors={['rgba(43,39,69,0.95)', 'rgba(43,39,69,0.2)']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
+      <View style={{ padding: 18, gap: 4, width: '70%' }}>
+        <View style={st.evTag}><AppText style={{ fontFamily: font.bold, fontSize: 12 }} color={brand.pinkDeep}>{days > 0 ? `بعد ${days} أيام` : 'الحين'}</AppText></View>
+        <AppText style={{ fontFamily: font.bold, fontSize: 20, lineHeight: 30 }} color="#fff" numberOfLines={2}>{e.title}</AppText>
+        <AppText variant="small" color="#E2DAEE" numberOfLines={1}>{e.address || (e.city ? cityName(e.city) : '')}</AppText>
       </View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  flex: { flex: 1 },
-  hero: { backgroundColor: colors.header, paddingHorizontal: space.lg, paddingBottom: space.xl, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, gap: 2 },
-  logoWrap: { alignItems: 'center', marginBottom: space.md },
-  logo: { height: 32, width: 140 },
-  search: { marginTop: space.md, backgroundColor: '#fff', borderRadius: radius.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, height: 54 },
-  badge: { backgroundColor: '#F1ECF6', borderRadius: radius.md, paddingHorizontal: space.sm, paddingVertical: 4 },
-  body: { padding: space.lg, gap: space.md },
-  quick: { flexDirection: 'row', justifyContent: 'space-between' },
-  qItem: { alignItems: 'center', gap: 6, width: (W - space.lg * 2) / 4 },
-  qIcon: { width: 60, height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  cities: { gap: space.md, paddingVertical: space.sm },
-  city: { width: 76, alignItems: 'center', gap: 6 },
-  ring: { width: 72, height: 72, borderRadius: 36, borderWidth: 3, padding: 3, alignItems: 'center', justifyContent: 'center' },
-  moreRing: { borderColor: brand.lilac, backgroundColor: '#F1ECF6' },
-  cityImg: { width: '100%', height: '100%', borderRadius: 36 },
-  slides: { marginTop: space.sm },
-  slide: { width: SLIDE_W, height: 330, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: brand.purpleDeep },
-  shade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(30,20,50,0.35)' },
-  slideTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: space.md },
-  label: { backgroundColor: brand.orange, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 5 },
-  cap: { position: 'absolute', right: 0, left: 0, bottom: 0, padding: space.lg, gap: 2 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: space.sm },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: brand.lilacSoft },
-  dotOn: { width: 20, backgroundColor: brand.purpleDeep },
-  ev: { width: 230, backgroundColor: '#fff', borderRadius: radius.lg, overflow: 'hidden' },
-  evImg: { width: '100%', height: 120, backgroundColor: '#E8E3EE' },
-  evTx: { padding: space.md, gap: 2 },
-  news: { flexDirection: 'row', gap: space.md, alignItems: 'center', backgroundColor: '#fff', borderRadius: radius.lg, padding: space.sm },
-  newsImg: { width: 86, height: 70, borderRadius: radius.md, backgroundColor: '#E8E3EE' },
+const st = StyleSheet.create({
+  hero: { height: 470, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, overflow: 'hidden', backgroundColor: brand.ink },
+  top: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  glass: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  avRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  heroTx: { position: 'absolute', right: 20, left: 20, bottom: 28, gap: 4 },
+  weather: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 6 },
+  search: { marginTop: 14, height: 60, borderRadius: 22, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  count: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  kinds: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 24 },
+  kind: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  secHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12 },
+  pick: { width: CARD_W, height: 320, borderRadius: 30, overflow: 'hidden', backgroundColor: brand.ink },
+  pickTop: { flexDirection: 'row', justifyContent: 'space-between', padding: 14 },
+  starTag: { backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
+  pickTx: { position: 'absolute', right: 18, left: 18, bottom: 18 },
+  near: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 24, padding: 10 },
+  nearImg: { width: 72, height: 72, borderRadius: 18 },
+  km: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  ev: { marginHorizontal: 16, marginTop: 18, height: 150, borderRadius: 26, overflow: 'hidden', backgroundColor: brand.ink, justifyContent: 'center' },
+  evTag: { alignSelf: 'flex-start', backgroundColor: brand.softPink, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
 });

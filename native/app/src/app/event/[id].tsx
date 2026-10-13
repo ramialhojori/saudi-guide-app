@@ -1,48 +1,115 @@
+import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
-import { Icon } from '@/components/Icon';
 import { RichText } from '@/components/RichText';
-import { Screen } from '@/components/Screen';
 import { Empty, Loading } from '@/components/State';
+import { Avatar, BackButton, Badge, Button, Pill, RoundButton } from '@/components/ui';
 import { cityName, getEvent } from '@/lib/content';
-import { eventWhen } from '@/lib/text';
-import { useAsync } from '@/lib/useAsync';
-import { brand, radius, space } from '@/theme/tokens';
-import { strings } from '@/i18n/ar';
 import { openDirections } from '@/lib/maps';
+import { riyadhDate } from '@/lib/text';
+import { useAsync } from '@/lib/useAsync';
+import { brand, font, photos } from '@/theme/tokens';
 
+const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+/** صفحة الفعالية — مثل التصميم: عدّاد تنازلي، الموعد، المكان، التذاكر، رايحين */
 export default function EventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);
-  if (loading && !e) return <Screen showBack><Loading /></Screen>;
-  if (!e) return <Screen showBack><Empty /></Screen>;
+  const [going, setGoing] = useState(false);
+  const left = useCountdown(e?.start);
+
+  if (!e) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title="ما لقينا الفعالية" />}</View>;
+  const d = new Date(new Date(e.start).getTime() + 3 * 3600e3);
+  const ticket = e.tickets || e.link;
+
   return (
-    <Screen showBack title={strings.events.title} pad={false}>
-      <Image source={e.images?.[0] || e.thumb} style={styles.img} contentFit="cover" />
-      <View style={styles.body}>
-        <AppText variant="small" color={brand.orange}>{eventWhen(e.start, e.end)}{e.city ? ' · ' + cityName(e.city) : ''}</AppText>
-        <AppText variant="title">{e.title}</AppText>
-        {e.tickets ? (
-          <Pressable style={styles.cta} onPress={() => WebBrowser.openBrowserAsync(e.tickets)}>
-            <Icon name="ticket" color="#fff" /><AppText color="#fff">{strings.events.tickets}</AppText>
+    <View style={{ flex: 1, backgroundColor: brand.bg }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        <View style={{ height: 420, backgroundColor: brand.ink }}>
+          <Image source={e.image || e.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <LinearGradient colors={['rgba(32,22,54,0.2)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
+          <View style={[st.top, { top: insets.top + 10 }]}>
+            <BackButton light />
+            <RoundButton icon="share" label="مشاركة" onPress={() => Share.share({ message: `${e.title}\n${e.url || ''}` }).catch(() => {})} />
+          </View>
+          {left ? (
+            <View style={st.count}>
+              {[[left.d, 'يوم'], [left.h, 'ساعة'], [left.m, 'دقيقة']].map(([v, l]) => (
+                <View key={l} style={st.cbox}><AppText style={{ fontFamily: font.bold, fontSize: 24, lineHeight: 30 }} color="#fff" center>{String(v).padStart(2, '0')}</AppText><AppText variant="tiny" color="#E2DAEE" center>{l}</AppText></View>
+              ))}
+              <AppText variant="small" color="#fff" style={{ fontFamily: font.semibold }}>على البداية</AppText>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={st.sheet}>
+          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+            {(e.cats?.length ? e.cats : ['فعالية']).slice(0, 3).map((c, i) => <Pill key={c} label={c} bg={[brand.softPink, brand.softPurple, brand.softGreen][i]} fg={[brand.pinkDeep, brand.purple, brand.green][i]} />)}
+          </View>
+          <AppText variant="hero" style={{ marginTop: 8, fontSize: 26, lineHeight: 38 }}>{e.title}</AppText>
+
+          <View style={st.info}>
+            <Badge icon="cal" bg={brand.softPink} fg={brand.pinkDeep} size={44} r={14} />
+            <View style={{ flex: 1 }}>
+              <AppText style={{ fontFamily: font.bold }}>{WD[d.getUTCDay()]} {riyadhDate(e.start)}</AppText>
+              <AppText variant="small" muted>{e.end ? `حتى ${riyadhDate(e.end, false)} · ` : ''}بتوقيت مكة</AppText>
+            </View>
+          </View>
+          <Pressable style={st.info} onPress={() => openDirections(e.lat, e.lng, e.title)}>
+            <Badge icon="pin" bg={brand.softSky} fg={brand.skyDeep} size={44} r={14} />
+            <View style={{ flex: 1 }}>
+              <AppText style={{ fontFamily: font.bold }} numberOfLines={1}>{e.address || (e.city ? cityName(e.city) : 'الموقع')}</AppText>
+              <AppText variant="small" muted>{e.city ? cityName(e.city) : ''}</AppText>
+            </View>
+            {e.lat && e.lng ? <View style={st.dir}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>الاتجاهات</AppText></View> : null}
           </Pressable>
-        ) : null}
-        <View style={styles.card}>{e.body ? <RichText html={e.body} /> : <AppText>{e.summary}</AppText>}</View>
-        {e.address ? (
-          <Pressable style={styles.card} onPress={() => openDirections(e.lat, e.lng, e.title)}>
-            <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}><Icon name="pin" color={brand.orange} /><AppText style={{ flex: 1 }}>{e.address}</AppText></View>
-          </Pressable>
-        ) : null}
+
+          {e.body ? <View style={{ marginTop: 16 }}><RichText html={e.body} /></View> : e.summary ? <AppText style={{ marginTop: 16 }}>{e.summary}</AppText> : null}
+
+          <View style={st.going}>
+            <View style={{ flexDirection: 'row' }}>
+              {[['ر', brand.lilac], ['ف', brand.orange], ['س', brand.sky]].map(([t, c], i) => <View key={t} style={{ marginRight: i ? -10 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
+            </View>
+            <AppText variant="small" style={{ flex: 1 }}>2,400 رايحين، منهم <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>3 من أصحابك</AppText></AppText>
+            <Pressable onPress={() => setGoing((v) => !v)} style={[st.goBtn, going && { backgroundColor: brand.green }]}>
+              <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{going ? '✓ رايح' : 'أنا رايح'}</AppText>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <Button label={ticket ? 'احجز تذكرتك' : 'التفاصيل في الموقع'} style={{ flex: 1 }}
+          onPress={() => { const u = (e.tickets?.startsWith('http') ? e.tickets : '') || e.link || e.url; if (u) WebBrowser.openBrowserAsync(u).catch(() => {}); }} />
       </View>
-    </Screen>
+    </View>
   );
 }
-const styles = StyleSheet.create({
-  img: { width: '100%', height: 260, backgroundColor: '#E8E3EE' },
-  body: { padding: space.lg, gap: space.md, paddingBottom: 120 },
-  cta: { flexDirection: 'row', gap: space.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: brand.pink, borderRadius: radius.pill, paddingVertical: space.md },
-  card: { backgroundColor: '#fff', borderRadius: radius.lg, padding: space.lg },
+
+function useCountdown(start?: string) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
+  if (!start) return null;
+  const ms = new Date(start).getTime() - now;
+  if (ms <= 0) return null;
+  return { d: Math.floor(ms / 864e5), h: Math.floor((ms % 864e5) / 36e5), m: Math.floor((ms % 36e5) / 6e4) };
+}
+
+const st = StyleSheet.create({
+  top: { position: 'absolute', right: 16, left: 16, flexDirection: 'row', justifyContent: 'space-between' },
+  count: { position: 'absolute', bottom: 50, right: 20, left: 20, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cbox: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, minWidth: 62 },
+  sheet: { marginTop: -30, backgroundColor: brand.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 22 },
+  info: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 20, padding: 12, marginTop: 12 },
+  dir: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  going: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 20, padding: 12, marginTop: 16 },
+  goBtn: { backgroundColor: brand.pink, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, backgroundColor: 'rgba(244,241,238,0.96)' },
 });

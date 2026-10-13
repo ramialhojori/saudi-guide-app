@@ -13,7 +13,7 @@ export type PlaceFull = Place & {
 };
 export type EventItem = {
   id: number; title: string; summary: string; thumb: string; image?: string; start: string; end: string;
-  address: string; tickets: string; cats: string[]; city: string | null; lat?: number | null; lng?: number | null; body?: string; images?: string[]; url?: string;
+  address: string; tickets: string; link?: string; cats: string[]; city: string | null; lat?: number | null; lng?: number | null; body?: string; images?: string[]; url?: string;
 };
 export type Article = {
   id: number; title: string; author: string; date: string; summary: string; thumb: string; section: string;

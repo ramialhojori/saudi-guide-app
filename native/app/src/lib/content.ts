@@ -154,3 +154,8 @@ export const getArticle = (id: number) =>
     if (!a) throw new Error('not_found');
     return { article: a };
   }).then((r) => r.article);
+
+/** تصفح نوع واحد في كل المدن (من الرئيسية) — من النسخة المدمجة لين يجهز مسار السيرفر */
+export function kindPlaces(kind: string, city?: string): Place[] {
+  return withImageFirst(PLACES.filter((p) => p.kinds.includes(kind) && (!city || p.city === city))).slice(0, 80);
+}
