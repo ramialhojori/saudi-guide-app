@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,9 @@ import { RichText } from '@/components/RichText';
 import { Empty, Loading } from '@/components/State';
 import { Avatar, BackButton, Badge, Button, Pill, RoundButton } from '@/components/ui';
 import { cityName, getEvent } from '@/lib/content';
+import { api } from '@/lib/api';
+import { session, useAuth } from '@/lib/auth';
+import { initial, tint } from '@/lib/community';
 import { openDirections } from '@/lib/maps';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
@@ -24,6 +27,19 @@ export default function EventScreen() {
   const insets = useSafeAreaInsets();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);
   const [going, setGoing] = useState(false);
+  const { user } = useAuth();
+  const [goers, setGoers] = useState<{ count: number; who: { id: string; name: string }[] }>({ count: 0, who: [] });
+  const loadGoing = useCallback(() => {
+    api<{ count: number; going: boolean; who: { id: string; name: string }[] }>(`/v1/events/${id}/going`, { token: session().token })
+      .then((r) => { setGoing(r.going); setGoers(r); }).catch(() => {});
+  }, [id, user?.id]);
+  useFocusEffect(loadGoing);
+  const toggleGoing = async () => {
+    if (!user) return router.push('/login');
+    setGoing((v) => !v); setGoers((g) => ({ ...g, count: g.count + (going ? -1 : 1) }));
+    await api(`/v1/events/${id}/going`, { method: 'POST', token: session().token }).catch(() => {});
+    loadGoing();
+  };
   const left = useCountdown(e?.start);
 
   if (!e) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title="ما لقينا الفعالية" />}</View>;
@@ -77,10 +93,10 @@ export default function EventScreen() {
 
           <View style={st.going}>
             <View style={{ flexDirection: 'row' }}>
-              {[['ر', brand.lilac], ['ف', brand.orange], ['س', brand.sky]].map(([t, c], i) => <View key={t} style={{ marginRight: i ? -10 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
+              {goers.who.map((w, i) => <View key={w.id} style={{ marginRight: i ? -10 : 0 }}><Avatar t={initial(w.name)} c={tint(w.id)} size={32} /></View>)}
             </View>
-            <AppText variant="small" style={{ flex: 1 }}>2,400 رايحين، منهم <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>3 من أصحابك</AppText></AppText>
-            <Pressable onPress={() => setGoing((v) => !v)} style={[st.goBtn, going && { backgroundColor: brand.green }]}>
+            <AppText variant="small" style={{ flex: 1 }}>{goers.count ? <><AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>{goers.count.toLocaleString('en')}</AppText> {goers.count === 1 ? 'شخص رايح' : 'رايحين من الدليل'}</> : 'كن أول واحد رايح'}</AppText>
+            <Pressable onPress={toggleGoing} style={[st.goBtn, going && { backgroundColor: brand.green }]}>
               <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{going ? '✓ رايح' : 'أنا رايح'}</AppText>
             </Pressable>
           </View>

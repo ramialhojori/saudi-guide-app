@@ -71,3 +71,18 @@
 | POST | `/admin/(places|events)/:id/status` `{status: live|draft|hidden}` |
 | POST | `/admin/upload` (صورة → R2) |
 | GET | `/admin/users?q=` |
+
+## إضافات v0.5.0
+
+| الطريقة | المسار | الوصف |
+|---|---|---|
+| GET/POST | `/v1/me/notifications` | الإشعارات داخل التطبيق (POST = قراءة الكل) |
+| POST | `/v1/me/visits` | `{placeId, lat, lng}` ختم الزيارة (أقل من 500 م) — +10 نقاط، +25 لمدينة جديدة |
+| GET | `/v1/me/passport` | المدن المختومة وآخر الزيارات |
+| GET/PUT | `/v1/me/cities` | المدن اللي يتابعها المستخدم |
+| GET | `/v1/community/place/:id` | ملخص المكان: كم زاره، وأفضل نصيحة، وعدد المشاركات |
+| GET | `/v1/community?place=ID` | مشاركات مكان معيّن |
+| GET/POST | `/v1/events/:id/going` | «أنا رايح» |
+| GET | `/v1/events/:id.ics` | ملف تقويم مع تنبيه |
+
+الإدارة: `/admin/places/similar`، `/admin/(places|events)/bulk` (مسودات، للمساعد)، `/admin/weekly`، `/admin/articles`، `/admin/seasons`، `/admin/notify`، `/admin/community/posts`.

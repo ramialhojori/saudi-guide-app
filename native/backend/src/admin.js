@@ -262,6 +262,24 @@ export async function adminRoute(p, request, env, J, q) {
     return J({ seasons: [...map.values()].sort((a, b) => b.end.localeCompare(a.end)) });
   }
 
+  /* ——— رسالة من الدليل: تنزل في إشعارات التطبيق للكل أو لمتابعين مدينة ——— */
+  if (p === '/admin/notify' && M === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const text = str(b.text, 140), city = str(b.city, 40);
+    if (text.length < 4) return J({ error: 'text_required' }, 400);
+    const r = await env.DB.prepare(`INSERT INTO notifications (user_id,type,post_id,text,created) SELECT id,'system',?,?,? FROM users WHERE deleted=0 ${city ? 'AND id IN (SELECT user_id FROM user_cities WHERE city=?)' : ''}`)
+      .bind(+b.postId || null, text, now(), ...(city ? [city] : [])).run();
+    return J({ ok: true, sent: r.meta.changes });
+  }
+  /* ——— كل مشاركات المجتمع (للمراجعة) ——— */
+  if (p === '/admin/community/posts' && M === 'GET') {
+    const args = [];
+    let sql = "SELECT p.id,p.kind,p.city,p.text,p.photo,p.answers,p.thanks,p.reports,p.status,p.hidden_by,p.created,u.name FROM posts p JOIN users u ON u.id=p.user_id WHERE 1=1";
+    if (q.get('q')) { sql += ' AND p.text LIKE ?'; args.push(`%${q.get('q')}%`); }
+    const { results } = await env.DB.prepare(sql + ' ORDER BY p.id DESC LIMIT 100').bind(...args).all();
+    return J({ posts: results });
+  }
+
   /* ——— المستخدمين ——— */
   if (p === '/admin/users' && M === 'GET') {
     const args = [];

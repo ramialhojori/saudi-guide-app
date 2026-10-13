@@ -132,7 +132,7 @@ async function api(path, opt = {}) {
   if (!r.ok) throw new Error(d.error || 'http_' + r.status);
   return d;
 }
-const ERR = { title_required: 'اكتب الاسم', start_required: 'حدد تاريخ البداية', bad_city: 'اختر المدينة', bad_type: 'الصورة لازم JPG أو PNG أو WEBP', bad_size: 'الصورة أكبر من 10MB' };
+const ERR = { text_required: 'اكتب الرسالة', title_required: 'اكتب الاسم', start_required: 'حدد تاريخ البداية', bad_city: 'اختر المدينة', bad_type: 'الصورة لازم JPG أو PNG أو WEBP', bad_size: 'الصورة أكبر من 10MB' };
 const errMsg = (e) => ERR[e.message] || 'صار خطأ: ' + e.message;
 
 /* ——— الدخول ——— */
@@ -546,14 +546,36 @@ function editArticle(a) {
 }
 
 /* ——— المجتمع ——— */
+let CTAB = 'reported';
 async function communityView() {
   const m = $('#main');
-  m.innerHTML = `<h1>المجتمع</h1><p class="sub">المشاركات اللي انبلّغ عنها. اللي وصلها 3 بلاغات انخفت تلقائياً، وأنت تقرر: تظهرها أو تخليها مخفية.</p><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
-  const d = await api('/admin/community/reported');
-  const rows = [...d.posts.map((x) => ({ ...x, t: 'p' })), ...d.answers.map((x) => ({ ...x, t: 'a' }))];
+  m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع البلاغات وكل المشاركات، وأرسل رسالة للمستخدمين تنزل في إشعارات التطبيق.</p></div><button class="btn o" id="msgBtn">رسالة للمستخدمين</button></div>
+    <div class="tabs">${[['reported', 'البلاغات'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => { CTAB = b.dataset.c; communityView(); }));
+  $('#msgBtn').onclick = () => {
+    const d = drawer(`<div class="row"><h2 class="grow">رسالة للمستخدمين</h2><button class="btn ghost" id="x">إغلاق</button></div>
+      <div class="f"><label>الرسالة (140 حرف)</label><textarea class="in" id="t" maxlength="140" style="min-height:90px" placeholder="مثلاً: موسم الرياض بدأ! شوف الفعاليات في الدليل"></textarea></div>
+      <div class="f"><label>لمين؟</label><select class="in" id="c"><option value="">كل المستخدمين</option>${META.cities.map((c) => `<option value="${c.id}">متابعين ${c.name}</option>`).join('')}</select></div>
+      <div class="hint" style="margin-top:12px">تنزل في صفحة الإشعارات داخل التطبيق. إشعارات الجوال (اللي تطلع على الشاشة) تتفعّل في النسخة الجاية.</div>
+      <div class="bar"><button class="btn o" id="send">أرسل</button></div>`);
+    $('#x', d).onclick = closeDrawer;
+    $('#send', d).onclick = async () => {
+      const text = $('#t', d).value.trim(); if (text.length < 4) return toast('اكتب الرسالة');
+      if (!confirm('ترسلها الحين؟')) return;
+      try { const r = await api('/admin/notify', { method: 'POST', body: { text, city: $('#c', d).value } }); toast(`انرسلت لـ ${r.sent} مستخدم`); closeDrawer(); } catch (e) { toast(errMsg(e)); }
+    };
+  };
   const why = { reports: 'انخفت بالبلاغات', owner: 'صاحبها حذفها', admin: 'أنت أخفيتها', account: 'الحساب انحذف' };
-  $('#res').innerHTML = rows.map((x) => `<div class="post"><div class="row"><span class="tag">${x.t === 'p' ? 'مشاركة' : 'إجابة'} #${x.id}</span><span class="badge ${x.status === 'visible' ? 'b-live' : 'b-hidden'}">${x.status === 'visible' ? 'ظاهرة' : 'مخفية'}</span><span class="muted" style="font-size:13px">${x.reports} بلاغ${x.hidden_by ? ' · ' + (why[x.hidden_by] || '') : ''}</span></div>
-    <div>${h(x.text)}</div><div class="row">${x.status === 'visible' ? `<button class="btn p" data-t="${x.t}" data-id="${x.id}" data-h="1">إخفاء</button>` : `<button class="btn g" data-t="${x.t}" data-id="${x.id}" data-h="0">أظهرها</button>`}</div></div>`).join('') || '<div class="empty">ما فيه بلاغات. المجتمع نظيف</div>';
+  let rows;
+  if (CTAB === 'reported') {
+    const d = await api('/admin/community/reported');
+    rows = [...d.posts.map((x) => ({ ...x, t: 'p' })), ...d.answers.map((x) => ({ ...x, t: 'a' }))];
+  } else {
+    rows = (await api('/admin/community/posts')).posts.map((x) => ({ ...x, t: 'p' }));
+  }
+  const KN = { question: 'سؤال', tip: 'نصيحة', photo: 'صورة' };
+  $('#res').innerHTML = rows.map((x) => `<div class="post"><div class="row"><span class="tag">${x.t === 'p' ? (KN[x.kind] || 'مشاركة') : 'إجابة'} #${x.id}</span>${x.name ? `<b style="font-size:13px">${h(x.name)}</b>` : ''}<span class="badge ${x.status === 'visible' ? 'b-live' : 'b-hidden'}">${x.status === 'visible' ? 'ظاهرة' : 'مخفية'}</span><span class="muted" style="font-size:13px">${x.reports ? x.reports + ' بلاغ' : ''}${x.hidden_by ? ' · ' + (why[x.hidden_by] || '') : ''}${x.answers != null ? ` · ${x.answers} إجابة · ${x.thanks} شكر` : ''}</span></div>
+    ${x.photo ? `<img src="${h(x.photo)}" style="max-width:260px;border-radius:14px">` : ''}<div>${h(x.text)}</div><div class="row">${x.status === 'visible' ? `<button class="btn p" data-t="${x.t}" data-id="${x.id}" data-h="1">إخفاء</button>` : `<button class="btn g" data-t="${x.t}" data-id="${x.id}" data-h="0">أظهرها</button>`}</div></div>`).join('') || `<div class="empty">${CTAB === 'reported' ? 'ما فيه بلاغات. المجتمع نظيف' : 'ما فيه مشاركات للحين'}</div>`;
   m.querySelectorAll('[data-t]').forEach((b) => (b.onclick = async () => { await api('/admin/community/moderate', { method: 'POST', body: { target: b.dataset.t, id: +b.dataset.id, hidden: b.dataset.h === '1' } }); toast('تم'); communityView(); }));
 }
 

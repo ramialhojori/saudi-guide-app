@@ -209,3 +209,12 @@ CREATE TABLE IF NOT EXISTS user_cities (
   city TEXT NOT NULL,
   PRIMARY KEY (user_id, city)
 );
+
+-- «أنا رايح» للفعاليات
+CREATE TABLE IF NOT EXISTS event_going (
+  user_id TEXT NOT NULL,
+  event_id INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  PRIMARY KEY (user_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id);

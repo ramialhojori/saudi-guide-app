@@ -354,3 +354,19 @@ export async function passportRoute(p, env, u, request, J) {
   }
   return null;
 }
+
+/* ——— «أنا رايح» ——— */
+export async function goingRoute(id, env, u, request, J) {
+  if (request.method === 'POST') {
+    if (!u) return J({ error: 'login_required' }, 401);
+    const ev = await env.DB.prepare('SELECT id FROM events WHERE id=? AND deleted=0').bind(id).first();
+    if (!ev) return J({ error: 'not_found' }, 404);
+    const had = await env.DB.prepare('SELECT 1 FROM event_going WHERE user_id=? AND event_id=?').bind(u.id, id).first();
+    await (had ? env.DB.prepare('DELETE FROM event_going WHERE user_id=? AND event_id=?').bind(u.id, id)
+               : env.DB.prepare('INSERT INTO event_going (user_id,event_id,created) VALUES (?,?,?)').bind(u.id, id, now())).run();
+  }
+  const n = await env.DB.prepare('SELECT COUNT(*) n FROM event_going WHERE event_id=?').bind(id).first();
+  const who = await env.DB.prepare('SELECT u.id, u.name FROM event_going g JOIN users u ON u.id=g.user_id WHERE g.event_id=? AND u.deleted=0 ORDER BY g.created DESC LIMIT 3').bind(id).all();
+  const me = u ? !!(await env.DB.prepare('SELECT 1 FROM event_going WHERE user_id=? AND event_id=?').bind(u.id, id).first()) : false;
+  return J({ count: n.n, going: me, who: who.results.map((r) => ({ id: r.id, name: r.name || 'د' })) });
+}

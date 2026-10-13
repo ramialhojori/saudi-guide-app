@@ -27,7 +27,9 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS notif_user ON notifications(user_id, id)",
   "CREATE TABLE IF NOT EXISTS visits ( user_id TEXT NOT NULL, place_id INTEGER NOT NULL, city TEXT NOT NULL, dist INTEGER, created INTEGER NOT NULL, PRIMARY KEY (user_id, place_id) )",
   "CREATE INDEX IF NOT EXISTS visits_user ON visits(user_id, created)",
-  "CREATE TABLE IF NOT EXISTS user_cities ( user_id TEXT NOT NULL, city TEXT NOT NULL, PRIMARY KEY (user_id, city) )"
+  "CREATE TABLE IF NOT EXISTS user_cities ( user_id TEXT NOT NULL, city TEXT NOT NULL, PRIMARY KEY (user_id, city) )",
+  "CREATE TABLE IF NOT EXISTS event_going ( user_id TEXT NOT NULL, event_id INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, event_id) )",
+  "CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id)"
 ];
 
 let ready = false;

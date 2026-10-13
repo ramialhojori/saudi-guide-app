@@ -8,7 +8,7 @@ import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
-import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute } from './community.js';
+import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute, goingRoute } from './community.js';
 import { adminRoute } from './admin.js';
 import { PANEL_HTML } from './panel.js';
 
@@ -17,7 +17,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -165,6 +165,9 @@ async function route(request, env, ctx) {
     if (!obj) return J({ error: 'not_found' }, 404);
     return new Response(obj.body, { headers: { ...CORS, 'Content-Type': obj.httpMetadata?.contentType || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
   }
+
+  const gm = p.match(/^\/v1\/events\/(\d+)\/going$/);
+  if (gm) return goingRoute(+gm[1], env, await sessionUser(env, request), request, J);
 
   if (request.method === 'POST' && p === '/v1/devices') {
     const b = await request.json().catch(() => ({}));
