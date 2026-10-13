@@ -107,11 +107,22 @@ export async function authRoute(p, request, env, J) {
     await env.DB.batch([
       env.DB.prepare("UPDATE users SET deleted=1, email=NULL, name=NULL, bio=NULL, avatar=NULL, handle=NULL WHERE id=?").bind(u.id),
       env.DB.prepare('DELETE FROM user_trip WHERE user_id=?').bind(u.id),
+      env.DB.prepare('DELETE FROM user_cities WHERE user_id=?').bind(u.id),
       env.DB.prepare('UPDATE devices SET user_id=NULL WHERE user_id=?').bind(u.id),
       env.DB.prepare("UPDATE posts SET status='hidden', hidden_by='account' WHERE user_id=? AND status='visible'").bind(u.id),
       env.DB.prepare("UPDATE answers SET status='hidden', hidden_by='account' WHERE user_id=? AND status='visible'").bind(u.id),
     ]);
     return J({ ok: true });
+  }
+  if (p === '/v1/me/cities' && request.method === 'GET') {
+    const r = await env.DB.prepare('SELECT city FROM user_cities WHERE user_id=?').bind(u.id).all();
+    return J({ cities: r.results.map((x) => x.city) });
+  }
+  if (p === '/v1/me/cities' && request.method === 'PUT') {
+    const b = await request.json().catch(() => ({}));
+    const cs = [...new Set((Array.isArray(b.cities) ? b.cities : []).map(String))].filter((c) => /^[a-z-]{2,30}$/.test(c)).slice(0, 21);
+    await env.DB.batch([env.DB.prepare('DELETE FROM user_cities WHERE user_id=?').bind(u.id), ...cs.map((c) => env.DB.prepare('INSERT INTO user_cities (user_id,city) VALUES (?,?)').bind(u.id, c))]);
+    return J({ cities: cs });
   }
   if (p === '/v1/me/trip' && request.method === 'GET') {
     const r = await env.DB.prepare('SELECT place_id FROM user_trip WHERE user_id=? ORDER BY pos').bind(u.id).all();
@@ -123,6 +134,7 @@ export async function authRoute(p, request, env, J) {
     const t = now();
     await env.DB.batch([
       env.DB.prepare('DELETE FROM user_trip WHERE user_id=?').bind(u.id),
+      env.DB.prepare('DELETE FROM user_cities WHERE user_id=?').bind(u.id),
       ...ids.map((id, i) => env.DB.prepare('INSERT INTO user_trip (user_id,place_id,pos,added) VALUES (?,?,?,?)').bind(u.id, id, i, t)),
     ]);
     return J({ ids });

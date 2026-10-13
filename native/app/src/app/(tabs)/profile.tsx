@@ -11,6 +11,7 @@ import { Avatar, Badge, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
 import { ago, myStats, tint, type Stats } from '@/lib/community';
+import { getPassport, type Passport as PassportData } from '@/lib/passport';
 import { cityName } from '@/lib/content';
 import { brand, font, photos } from '@/theme/tokens';
 
@@ -21,7 +22,10 @@ export default function Profile() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
-  useFocusEffect(useCallback(() => { if (user) myStats().then(setStats).catch(() => {}); else setStats(null); }, [user?.id]));
+  const [pp, setPp] = useState<PassportData | null>(null);
+  useFocusEffect(useCallback(() => { if (user) { myStats().then(setStats).catch(() => {}); getPassport().then(setPp).catch(() => {}); } else { setStats(null); setPp(null); } }, [user?.id]));
+  const stampNames = user ? (pp?.cities ?? []).map((c) => pp?.all.find((a) => a.id === c.id)?.name ?? c.id) : passport.visited;
+  const stampTotal = user ? pp?.all.length ?? 21 : passport.total;
   // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
   const me = user ? {
     ...demo, name: user.name || 'مستخدم الدليل', initial: (user.name || 'د').trim()[0], handle: user.handle, since: user.since,
@@ -96,15 +100,15 @@ export default function Profile() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">جواز السعودية</AppText>
-            <AppText variant="small" color="#CFC6DE">{user ? 'قريباً: كل مدينة تزورها تنختم هنا (هذا مثال)' : 'كل مدينة تزورها تنختم في جوازك'}</AppText>
+            <AppText variant="small" color="#CFC6DE">{user && !stampNames.length ? 'اختم أول مدينة من صفحة أي مكان تزوره' : 'كل مدينة تزورها تنختم في جوازك'}</AppText>
           </View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{passport.visited.length} من {passport.total} وجهة</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{stampNames.length} من {stampTotal} وجهة</AppText>
         </View>
         <View style={st.stamps}>
-          {passport.visited.map((c, i) => (
+          {stampNames.slice(0, 9).map((c, i) => (
             <View key={c} style={[st.stamp, { backgroundColor: STAMP[i % STAMP.length] }]}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{c}</AppText></View>
           ))}
-          <View style={[st.stamp, st.stampLeft]}><AppText variant="tiny" color="#CFC6DE">+{passport.total - passport.visited.length} باقية</AppText></View>
+          <View style={[st.stamp, st.stampLeft]}><AppText variant="tiny" color="#CFC6DE">+{stampTotal - stampNames.length} باقية</AppText></View>
         </View>
       </Pressable>
 

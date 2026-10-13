@@ -57,13 +57,13 @@ export default function TripScreen() {
           <AppText variant="hero" color="#fff">{real ? `رحلتي إلى ${city}` : 'ويكند العلا'}</AppText>
           <AppText variant="small" color="#E2DAEE">{days.length} أيام   ·   {total} مكان{real ? '' : '   ·   24° نهاراً'}</AppText>
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
-            {[['ر', brand.lilac], ['ع', brand.pink], ['م', brand.sky]].map(([t, c], i) => <View key={t} style={{ marginRight: i ? -8 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
+            {(real ? [] : [['ر', brand.lilac], ['ع', brand.pink], ['م', brand.sky]]).map(([t, c], i) => <View key={t} style={{ marginRight: i ? -8 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
           </View>
         </View>
       </View>
 
       {!real ? (
-        <View style={st.demo}><Icon name="info" color={brand.purple} size={18} /><AppText variant="small" style={{ flex: 1 }} color={brand.purple}>هذي رحلة تجريبية. اضغط القلب على أي مكان ويصير هنا جدول رحلتك.</AppText></View>
+        <View style={st.demo}><Icon name="info" color={brand.purple} size={18} /><AppText variant="small" style={{ flex: 1 }} color={brand.purple}>هذي رحلة تجريبية. اضغط القلب على أي مكان، أو خلّ الدليل يرتب لك رحلة من «خطط لي» تحت.</AppText></View>
       ) : null}
 
       <View style={st.days}>
@@ -100,10 +100,10 @@ export default function TripScreen() {
         <View style={st.tip}>
           <View style={st.tipIcon}><Icon name="spark" color="#fff" size={22} /></View>
           <View style={{ flex: 1 }}>
-            <AppText style={{ fontFamily: font.bold }} color="#fff">صباح اليوم الأول فاضي</AppText>
-            <AppText variant="small" color="#CFC6DE">نقترح «البلدة القديمة» و«مزرعة فيرنا» قريبة من مسارك</AppText>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">خلّ الدليل يرتبها لك</AppText>
+            <AppText variant="small" color="#CFC6DE">اختر المدينة وكم يوم ووش تحب، ونرتب لك الأماكن يوم بيوم</AppText>
           </View>
-          <Pressable style={st.tipBtn} onPress={() => router.push('/search')}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>أضفها</AppText></Pressable>
+          <Pressable style={st.tipBtn} onPress={() => router.push({ pathname: '/planner', params: real ? { city: places![0].city } : {} })}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>خطط لي</AppText></Pressable>
         </View>
       </View>
     </ScrollView>

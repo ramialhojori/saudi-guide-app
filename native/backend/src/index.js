@@ -8,7 +8,7 @@ import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
-import { communityRoute, communityAdmin, myStats } from './community.js';
+import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute } from './community.js';
 import { adminRoute } from './admin.js';
 import { PANEL_HTML } from './panel.js';
 
@@ -134,6 +134,16 @@ async function route(request, env, ctx) {
   }
 
   /* ——— الحسابات ——— */
+  if (p === '/v1/me/visits' || p === '/v1/me/passport') {
+    const u = await sessionUser(env, request);
+    if (!u) return J({ error: 'unauthorized' }, 401);
+    const r = await passportRoute(p, env, u, request, J);
+    if (r) return r;
+  }
+  if (p === '/v1/me/notifications') {
+    const u = await sessionUser(env, request);
+    return u ? myNotifications(env, u, request, J) : J({ error: 'unauthorized' }, 401);
+  }
   if (p === '/v1/me/stats' && request.method === 'GET') {
     const u = await sessionUser(env, request);
     return u ? J(await myStats(env, u)) : J({ error: 'unauthorized' }, 401);
@@ -241,6 +251,28 @@ async function route(request, env, ctx) {
     if (city) { sql += ' AND city=?'; args.push(city); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY (start < ?), start LIMIT 100').bind(...args, new Date().toISOString()).all();
     return J({ events: results.map((r) => eventRow(r)) }, 200, 300);
+  }
+  /* ملف تقويم للفعالية: الآيفون يفتحه ويعرض «أضف للتقويم» مع تنبيه قبلها بساعتين */
+  if ((m = p.match(/^\/v1\/events\/(\d+)\.ics$/))) {
+    const r = await env.DB.prepare('SELECT * FROM events WHERE id=? AND deleted=0').bind(+m[1]).first();
+    if (!r || !r.start) return J({ error: 'not_found' }, 404);
+    const t = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const d8 = (iso) => new Date(new Date(iso).getTime() + 3 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '');
+    const esc = (x) => String(x || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
+    const plain = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
+    const end = r.end && r.end > r.start ? r.end : new Date(new Date(r.start).getTime() + 2 * 3600e3).toISOString();
+    const long = new Date(end) - new Date(r.start) > 2 * 86400e3; // فعالية طويلة: نحطها يوم البداية بس
+    const link = (r.tickets && /^https?:/.test(r.tickets) ? r.tickets : '') || r.link || '';
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Saudi Guide//AR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+      `UID:event-${r.id}@saudi-guide`, `DTSTAMP:${t(new Date().toISOString())}`,
+      ...(r.all_day || long
+        ? [`DTSTART;VALUE=DATE:${d8(r.start)}`, `DTEND;VALUE=DATE:${d8(new Date(new Date(long && new Date(end) - new Date(r.start) > 14 * 86400e3 ? r.start : end).getTime() + 86400e3).toISOString())}`]
+        : [`DTSTART:${t(r.start)}`, `DTEND:${t(end)}`]),
+      `SUMMARY:${esc(r.title)}`, `DESCRIPTION:${esc((r.summary || plain(r.body)) + (link ? '\n' + link : '') + '\n— دليل السعودية')}`,
+      ...(r.address ? [`LOCATION:${esc(r.address)}`] : []), ...(r.lat && r.lng ? [`GEO:${r.lat};${r.lng}`] : []), ...(link ? [`URL:${link}`] : []),
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(r.title)}`, `TRIGGER:${r.all_day || long ? '-PT15H' : '-PT2H'}`, 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'];
+    return new Response(lines.join('\r\n'), { headers: { ...CORS, 'Content-Type': 'text/calendar; charset=utf-8', 'Content-Disposition': `inline; filename="event-${r.id}.ics"`, 'Cache-Control': 'public, max-age=300' } });
   }
   if ((m = p.match(/^\/v1\/events\/(\d+)$/))) {
     const r = await env.DB.prepare('SELECT * FROM events WHERE id=? AND deleted=0').bind(+m[1]).first();

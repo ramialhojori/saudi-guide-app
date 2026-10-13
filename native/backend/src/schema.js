@@ -22,7 +22,12 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS answers_user ON answers(user_id, created)",
   "CREATE TABLE IF NOT EXISTS thanks ( user_id TEXT NOT NULL, target TEXT NOT NULL, target_id INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, target, target_id) )",
   "CREATE TABLE IF NOT EXISTS reports ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, target TEXT NOT NULL, target_id INTEGER NOT NULL, reason TEXT, created INTEGER NOT NULL, UNIQUE (user_id, target, target_id) )",
-  "CREATE TABLE IF NOT EXISTS blocks ( user_id TEXT NOT NULL, blocked_id TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, blocked_id) )"
+  "CREATE TABLE IF NOT EXISTS blocks ( user_id TEXT NOT NULL, blocked_id TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, blocked_id) )",
+  "CREATE TABLE IF NOT EXISTS notifications ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, type TEXT NOT NULL, actor_id TEXT, post_id INTEGER, text TEXT, read INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS notif_user ON notifications(user_id, id)",
+  "CREATE TABLE IF NOT EXISTS visits ( user_id TEXT NOT NULL, place_id INTEGER NOT NULL, city TEXT NOT NULL, dist INTEGER, created INTEGER NOT NULL, PRIMARY KEY (user_id, place_id) )",
+  "CREATE INDEX IF NOT EXISTS visits_user ON visits(user_id, created)",
+  "CREATE TABLE IF NOT EXISTS user_cities ( user_id TEXT NOT NULL, city TEXT NOT NULL, PRIMARY KEY (user_id, city) )"
 ];
 
 let ready = false;

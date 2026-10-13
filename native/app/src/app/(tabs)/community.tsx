@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, V
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
+import { BellButton } from '@/components/BellButton';
 import { Avatar, Chip, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ago, feed, initial, nAnswers, thank, tint, topHelpers, type CPost } from '@/lib/community';
@@ -52,7 +53,7 @@ export default function Community() {
             <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>مجتمع الدليل</AppText>
             <AppText variant="small" color="#E2DAEE">اسأل أهل الديرة، وشارك اللي تعرفه</AppText>
           </View>
-          <Pressable style={st.glass} onPress={() => router.push('/inbox')} accessibilityLabel="الإشعارات"><Icon name="bell" color="#fff" /></Pressable>
+          <BellButton style={st.glass} />
         </View>
         <Pressable style={st.ask} onPress={ask}>
           <Avatar t={initial(user?.name || '؟')} c={brand.lilac} size={36} />

@@ -32,6 +32,8 @@ export const trip = {
     ids = next; save();
   },
   clear() { ids = []; save(); },
+  /** تحط قائمة جديدة وتتزامن مع الحساب (من مخطط الرحلات) */
+  set(next: number[]) { ids = [...new Set(next)]; save(); },
   /** تبدّل القائمة كاملة (بعد الدمج مع الحساب) بدون ما ترجع ترسلها للسيرفر */
   replace(next: number[]) { ids = next; AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {}); emit(); },
   all: () => ids,

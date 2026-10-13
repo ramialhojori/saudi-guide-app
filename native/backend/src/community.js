@@ -6,7 +6,7 @@
    - النقاط: سؤال +2، إجابة +5، أفضل إجابة +15، شكر +1 */
 
 import { sessionUser } from './auth.js';
-import { CITIES } from './normalize.js';
+import { CITIES, km } from './normalize.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const KINDS = ['question', 'tip', 'photo'];
@@ -38,6 +38,9 @@ function answerRow(r, me) {
 }
 
 const recount = (env, postId) => env.DB.prepare("UPDATE posts SET answers=(SELECT COUNT(*) FROM answers WHERE post_id=?1 AND status='visible') WHERE id=?1").bind(postId);
+/** إشعار داخل التطبيق (ما نشعر الشخص بفعله هو) */
+const notify = (env, userId, type, actorId, postId, text) =>
+  userId && userId !== actorId ? env.DB.prepare('INSERT INTO notifications (user_id,type,actor_id,post_id,text,created) VALUES (?,?,?,?,?,?)').bind(userId, type, actorId || null, postId || null, String(text || '').slice(0, 140), now()) : null;
 const addPoints = (env, uid, n) => env.DB.prepare('UPDATE users SET points=MAX(0,points+?) WHERE id=?').bind(n, uid);
 
 export async function communityRoute(p, request, env, J, q) {
@@ -72,13 +75,25 @@ export async function communityRoute(p, request, env, J, q) {
       LEFT JOIN users bu ON bu.id=a.user_id
       WHERE p.status='visible' AND u.deleted=0`;
     if (uid) { sql += ' AND p.user_id NOT IN (SELECT blocked_id FROM blocks WHERE user_id=?)'; args.push(uid); }
-    const city = q.get('city'), kind = q.get('kind'), before = +q.get('before') || 0, mine = q.get('mine');
+    const city = q.get('city'), kind = q.get('kind'), before = +q.get('before') || 0, mine = q.get('mine'), place = +q.get('place') || 0;
+    if (place) { sql += ' AND p.place_id=?'; args.push(place); }
     if (city) { sql += ' AND p.city=?'; args.push(city); }
     if (KINDS.includes(kind)) { sql += ' AND p.kind=?'; args.push(kind); }
     if (mine && uid) { sql += ' AND p.user_id=?'; args.push(uid); }
     if (before) { sql += ' AND p.id<?'; args.push(before); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY p.id DESC LIMIT 20').bind(...args).all();
     return J({ posts: results.map((r) => postRow(r, me)) });
+  }
+
+  /* ——— ملخص المكان من المجتمع: كم زاره، وآخر نصيحة، وعدد الأسئلة ——— */
+  if ((m = p.match(/^\/v1\/community\/place\/(\d+)$/)) && M === 'GET') {
+    const id = +m[1];
+    const v = await env.DB.prepare('SELECT COUNT(*) n FROM visits WHERE place_id=?').bind(id).first();
+    const n = await env.DB.prepare("SELECT COUNT(*) n FROM posts WHERE place_id=? AND status='visible'").bind(id).first();
+    const tip = await env.DB.prepare(`SELECT p.id, p.text, u.name, u.role, u.points FROM posts p JOIN users u ON u.id=p.user_id
+      WHERE p.place_id=? AND p.kind='tip' AND p.status='visible' AND u.deleted=0 ORDER BY p.thanks DESC, p.id DESC LIMIT 1`).bind(id).first();
+    const been = uid ? !!(await env.DB.prepare('SELECT 1 FROM visits WHERE user_id=? AND place_id=?').bind(uid, id).first()) : false;
+    return J({ visits: v.n, posts: n.n, been, tip: tip ? { id: tip.id, text: tip.text, name: tip.name || 'مستخدم الدليل', badge: badgeOf(tip.role, tip.points || 0) } : null });
   }
 
   /* ——— أبطال المدينة: أكثر نقاط من إجابات الشهر ——— */
@@ -150,7 +165,8 @@ export async function communityRoute(p, request, env, J, q) {
     await env.DB.batch([
       env.DB.prepare('UPDATE posts SET answers=answers+1 WHERE id=?').bind(post.id),
       ...(post.user_id !== uid ? [addPoints(env, uid, 5)] : []),
-    ]);
+      notify(env, post.user_id, 'answer', uid, post.id, text),
+    ].filter(Boolean));
     return J({ id: r.meta.last_row_id });
   }
 
@@ -168,7 +184,10 @@ export async function communityRoute(p, request, env, J, q) {
           : env.DB.prepare('INSERT INTO thanks (user_id,target,target_id,created) VALUES (?,?,?,?)').bind(uid, target, id, now()),
       env.DB.prepare(`UPDATE ${t} SET thanks=MAX(0,thanks+?) WHERE id=?`).bind(d, id),
       addPoints(env, row.user_id, d),
-    ]);
+      // نشعر بالشكر مرة وحدة لكل مشاركة في اليوم عشان ما تزحم الإشعارات
+      ...(!had && !(await env.DB.prepare("SELECT 1 FROM notifications WHERE user_id=? AND type='thanks' AND post_id=? AND created>?").bind(row.user_id, target === 'a' ? row.post_id : row.id, now() - 86400).first())
+        ? [notify(env, row.user_id, 'thanks', uid, target === 'a' ? row.post_id : row.id, row.text)] : []),
+    ].filter(Boolean));
     return J({ thanked: !had, thanks: Math.max(0, row.thanks + d) });
   }
 
@@ -185,7 +204,7 @@ export async function communityRoute(p, request, env, J, q) {
       const old = await env.DB.prepare('SELECT user_id FROM answers WHERE id=?').bind(post.best_answer).first();
       if (old && old.user_id !== uid) ops.push(addPoints(env, old.user_id, -15));
     }
-    if (a && a.user_id !== uid) ops.push(addPoints(env, a.user_id, 15));
+    if (a && a.user_id !== uid) { ops.push(addPoints(env, a.user_id, 15)); ops.push(notify(env, a.user_id, 'best', uid, post.id, a.text)); }
     await env.DB.batch(ops);
     return J({ best: a ? a.id : null });
   }
@@ -259,6 +278,8 @@ const BADGES = [
   ['loved', 'محبوب المجتمع', 'heart', 'thanks', 100],
   ['trip', 'رحّالة', 'route', 'trip', 20],
   ['helper', 'فزعة', 'people', 'answers', 10],
+  ['explorer', 'جوّال', 'pin', 'visits', 10],
+  ['regions', 'رحّال المناطق', 'flag', 'cities', 5],
 ];
 
 export async function myStats(env, u) {
@@ -269,7 +290,9 @@ export async function myStats(env, u) {
       (SELECT COUNT(*) FROM answers WHERE user_id=?1 AND status='visible') answers,
       (SELECT COUNT(*) FROM posts p JOIN answers a ON a.id=p.best_answer WHERE a.user_id=?1 AND p.status='visible') best,
       (SELECT COALESCE(SUM(thanks),0) FROM posts WHERE user_id=?1 AND status='visible') + (SELECT COALESCE(SUM(thanks),0) FROM answers WHERE user_id=?1 AND status='visible') thanks,
-      (SELECT COUNT(*) FROM user_trip WHERE user_id=?1) trip`).bind(u.id).first();
+      (SELECT COUNT(*) FROM user_trip WHERE user_id=?1) trip,
+      (SELECT COUNT(DISTINCT city) FROM visits WHERE user_id=?1) cities,
+      (SELECT COUNT(*) FROM visits WHERE user_id=?1) visits`).bind(u.id).first();
   const pts = u.points || 0;
   let lv = 0;
   LEVELS.forEach(([at], i) => { if (pts >= at) lv = i; });
@@ -285,4 +308,49 @@ export async function myStats(env, u) {
     badges: BADGES.map(([id, name, icon, key, goal]) => ({ id, name, icon, goal, have: Math.min(c[key] || 0, goal), earned: (c[key] || 0) >= goal })),
     activity: acts.results.map((r) => ({ type: r.t, postId: r.post_id, text: r.t === 'answer' ? r.kind : r.text, kind: r.t === 'post' ? r.kind : 'answer', thanks: r.thanks, created: r.created })),
   };
+}
+
+/* ——— إشعاراتي ——— */
+export async function myNotifications(env, u, request, J) {
+  if (request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    await env.DB.prepare('UPDATE notifications SET read=1 WHERE user_id=? AND read=0').bind(u.id).run();
+    return J({ ok: true });
+  }
+  const { results } = await env.DB.prepare(`SELECT n.*, a.name actor_name, p.text post_text FROM notifications n
+      LEFT JOIN users a ON a.id=n.actor_id LEFT JOIN posts p ON p.id=n.post_id
+      WHERE n.user_id=? ORDER BY n.id DESC LIMIT 60`).bind(u.id).all();
+  const unread = await env.DB.prepare('SELECT COUNT(*) n FROM notifications WHERE user_id=? AND read=0').bind(u.id).first();
+  return J({ unread: unread.n, items: results.map((r) => ({ id: r.id, type: r.type, postId: r.post_id, actor: r.actor_name || 'مستخدم الدليل', text: r.text || '', post: (r.post_text || '').slice(0, 90), read: !!r.read, created: r.created })) });
+}
+
+/* ——— جواز السعودية ——— */
+const VISIT_RADIUS_KM = 0.5;
+export async function passportRoute(p, env, u, request, J) {
+  if (p === '/v1/me/visits' && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const place = await env.DB.prepare('SELECT id,city,title,lat,lng FROM places WHERE id=? AND deleted=0').bind(+b.placeId).first();
+    if (!place) return J({ error: 'not_found' }, 404);
+    if (!place.lat || !place.lng) return J({ error: 'place_has_no_location' }, 400);
+    const lat = +b.lat, lng = +b.lng;
+    if (!lat || !lng) return J({ error: 'location_required' }, 400);
+    const d = km(lat, lng, place.lat, place.lng);
+    if (d > VISIT_RADIUS_KM) return J({ error: 'too_far', km: Math.round(d * 10) / 10 }, 400);
+    const had = await env.DB.prepare('SELECT 1 FROM visits WHERE user_id=? AND place_id=?').bind(u.id, place.id).first();
+    if (had) return J({ ok: true, already: true });
+    const newCity = !(await env.DB.prepare('SELECT 1 FROM visits WHERE user_id=? AND city=?').bind(u.id, place.city).first());
+    const pts = 10 + (newCity ? 25 : 0);
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO visits (user_id,place_id,city,dist,created) VALUES (?,?,?,?,?)').bind(u.id, place.id, place.city, Math.round(d * 1000), now()),
+      addPoints(env, u.id, pts),
+    ]);
+    return J({ ok: true, newCity, city: place.city, points: pts });
+  }
+  if (p === '/v1/me/passport') {
+    const { results } = await env.DB.prepare('SELECT city, COUNT(*) n, MIN(created) first FROM visits WHERE user_id=? GROUP BY city ORDER BY first').bind(u.id).all();
+    const recent = await env.DB.prepare('SELECT v.place_id id, p.title, v.city, v.created FROM visits v JOIN places p ON p.id=v.place_id WHERE v.user_id=? ORDER BY v.created DESC LIMIT 10').bind(u.id).all();
+    const total = await env.DB.prepare('SELECT COUNT(*) n FROM visits WHERE user_id=?').bind(u.id).first();
+    return J({ cities: results.map((r) => ({ id: r.city, count: r.n, first: r.first })), recent: recent.results, places: total.n, all: CITIES.map((c) => ({ id: c[0], name: c[1] })) });
+  }
+  return null;
 }

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Dimensions, FlatList, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, FlatList, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
@@ -11,6 +11,9 @@ import { RichText } from '@/components/RichText';
 import { Empty, Loading } from '@/components/State';
 import { Avatar, BackButton, Badge, Button, Pill, RoundButton } from '@/components/ui';
 import { cityName, getPlace, nearby } from '@/lib/content';
+import { useAuth } from '@/lib/auth';
+import { ago, initial, nAnswers, tint, type CPost } from '@/lib/community';
+import { checkIn, placePosts, placeSocial, type PlaceSocial } from '@/lib/passport';
 import { openDirections } from '@/lib/maps';
 import { trip, useTrip } from '@/lib/trip';
 import { useAsync } from '@/lib/useAsync';
@@ -27,6 +30,24 @@ export default function PlaceScreen() {
   const { ids } = useTrip();
   const [img, setImg] = useState(0);
   const [more, setMore] = useState(false);
+  const { user } = useAuth();
+  const [social, setSocial] = useState<PlaceSocial | null>(null);
+  const [qs, setQs] = useState<CPost[]>([]);
+  const [stamping, setStamping] = useState(false);
+  useFocusEffect(useCallback(() => {
+    placeSocial(Number(id)).then(setSocial).catch(() => {});
+    placePosts(Number(id)).then(setQs).catch(() => {});
+  }, [id, user?.id]));
+  const stamp = async () => {
+    if (!user) return router.push('/login');
+    setStamping(true);
+    const r = await checkIn(Number(id)).catch(() => ({ ok: false as const, msg: 'صار خطأ، جرّب بعد شوي.' }));
+    setStamping(false);
+    if (!r.ok) return Alert.alert('ما انختم', r.msg);
+    if (r.already) return Alert.alert('مختوم من قبل', 'هذا المكان موجود في جوازك.');
+    setSocial((x) => x && { ...x, been: true, visits: x.visits + 1 });
+    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة${r.newCity ? ' · مدينة جديدة في جواز السعودية' : ''}`, [{ text: 'تمام' }, { text: 'افتح الجواز', onPress: () => router.push('/passport') }]);
+  };
 
   if (!p) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title={error ? 'ما قدرنا نفتح المكان' : 'ما لقينا المكان'} />}</View>;
 
@@ -81,10 +102,10 @@ export default function PlaceScreen() {
 
           <View style={st.facts}>
             {[
-              { v: '4.8', l: '2,140 تقييم', c: brand.orangeDeep },
-              { v: 'مفتوح', l: 'حتى 12 م', c: brand.green },
-              { v: '2–3', l: 'ساعات زيارة', c: brand.purple },
-              { v: 'م', l: 'أفضل وقت', c: brand.pinkDeep },
+              { v: String(social?.visits ?? 0), l: 'زاروه بالدليل', c: brand.orangeDeep },
+              { v: String(social?.posts ?? 0), l: 'سؤال ونصيحة', c: brand.purple },
+              { v: String(images.length), l: images.length === 1 ? 'صورة' : 'صور', c: brand.skyDeep },
+              { v: near?.length ? String(Math.max(0, near.length - 1)) : '—', l: 'مكان قريب', c: brand.green },
             ].map((f) => (
               <View key={f.l} style={st.fact}>
                 <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={f.c} center>{f.v}</AppText>
@@ -100,14 +121,40 @@ export default function PlaceScreen() {
             </View>
           ) : p.summary ? <AppText style={{ marginTop: 16 }}>{p.summary}</AppText> : null}
 
-          {/* نصيحة من أهل الديرة (من المجتمع — تجريبي) */}
-          <View style={st.tip}>
-            <Avatar t="س" c={brand.orange} size={40} />
-            <View style={{ flex: 1 }}>
-              <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>نصيحة من أهل الديرة · سارة، مرشدة موثّقة</AppText>
-              <AppText variant="small" color="#fff" style={{ lineHeight: 22 }}>احجز وقتك قبل، وتعال قبل الغروب بساعة عشان تشوف المكان بأحلى ضوء.</AppText>
+          {/* نصيحة من أهل الديرة: أكثر نصيحة انشكرت عن هذا المكان */}
+          {social?.tip ? (
+            <Pressable style={st.tip} onPress={() => router.push(`/question/${social.tip!.id}`)}>
+              <Avatar t={initial(social.tip.name)} c={brand.orange} size={40} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>نصيحة من أهل الديرة · {social.tip.name}{social.tip.badge ? '، ' + social.tip.badge : ''}</AppText>
+                <AppText variant="small" color="#fff" style={{ lineHeight: 22 }} numberOfLines={4}>{social.tip.text}</AppText>
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable style={st.tip} onPress={() => router.push({ pathname: '/ask', params: { kind: 'tip', placeId: String(p.id), place: p.title, city: p.city } })}>
+              <Avatar t="؟" c={brand.orange} size={40} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>زرته قبل؟</AppText>
+                <AppText variant="small" color="#fff" style={{ lineHeight: 22 }}>شارك نصيحة تفيد اللي بعدك، وتطلع هنا باسمك.</AppText>
+              </View>
+            </Pressable>
+          )}
+
+          {/* جواز السعودية: ختم الزيارة */}
+          {p.lat && p.lng ? (
+            <View style={st.stampCard}>
+              <Badge icon="flag" bg={social?.been ? brand.softGreen : brand.softOrange} fg={social?.been ? brand.green : brand.orangeDeep} size={44} r={14} />
+              <View style={{ flex: 1 }}>
+                <AppText style={{ fontFamily: font.bold }}>{social?.been ? 'مختوم في جوازك ✓' : 'أنت هنا الحين؟'}</AppText>
+                <AppText variant="small" muted>{social?.been ? 'زيارتك محسوبة في جواز السعودية' : 'اختم جوازك واكسب نقاط'}</AppText>
+              </View>
+              {!social?.been ? (
+                <Pressable style={st.stampBtn} onPress={stamp} disabled={stamping}>
+                  {stamping ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>اختم</AppText>}
+                </Pressable>
+              ) : null}
             </View>
-          </View>
+          ) : null}
 
           {/* الموقع */}
           {p.lat && p.lng ? (
@@ -132,17 +179,24 @@ export default function PlaceScreen() {
         </View>
 
         {/* الأسئلة */}
-        <View style={st.secRow}><AppText variant="section">أسأل اللي زاروه</AppText><AppText variant="small" muted>24 سؤال</AppText></View>
-        <View style={st.qa}>
-          <AppText style={{ fontFamily: font.bold }}>هل يناسب الأطفال والعربيات؟</AppText>
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <Avatar t="ر" c={brand.lilac} size={32} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>رامي</AppText><Pill label="مرجع الديرة" bg={brand.purple} fg="#fff" /></View>
-              <AppText variant="small" muted>إيه، الممرات مرصوفة وفيه عربيات للإيجار عند البوابة.</AppText>
-            </View>
-          </View>
-        </View>
+        <View style={st.secRow}><AppText variant="section">أسأل اللي زاروه</AppText>{qs.length ? <AppText variant="small" muted>{qs.length} مشاركة</AppText> : null}</View>
+        {qs.slice(0, 3).map((q) => (
+          <Pressable key={q.id} style={st.qa} onPress={() => router.push(`/question/${q.id}`)}>
+            <AppText style={{ fontFamily: font.bold }} numberOfLines={2}>{q.text}</AppText>
+            {q.bestAnswer ? (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                <Avatar t={initial(q.bestAnswer.name)} c={brand.lilac} size={32} />
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{q.bestAnswer.name}</AppText>{q.bestAnswer.badge ? <Pill label={q.bestAnswer.badge} bg={brand.purple} fg="#fff" /> : null}</View>
+                  <AppText variant="small" muted numberOfLines={2}>{q.bestAnswer.text}</AppText>
+                </View>
+              </View>
+            ) : (
+              <AppText variant="tiny" muted style={{ marginTop: 6 }}>{q.author.name} · {ago(q.created)} · {q.answers ? nAnswers(q.answers) : 'بانتظار أول إجابة'}</AppText>
+            )}
+          </Pressable>
+        ))}
+        {!qs.length ? <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingBottom: 4 }}>ما أحد سأل عن المكان للحين. كن أول واحد.</AppText> : null}
         <Pressable style={st.ask} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city } })}>
           <AppText muted style={{ flex: 1 }}>عندك سؤال عن المكان؟</AppText>
           <AppText style={{ fontFamily: font.bold }} color={brand.purple}>اسأل</AppText>
@@ -188,6 +242,8 @@ function Contact({ icon, label, on }: { icon: IconName; label: string; on: () =>
 }
 
 const st = StyleSheet.create({
+  stampCard: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 20, padding: 12, borderWidth: 1.5, borderColor: brand.line },
+  stampBtn: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 18, height: 38, justifyContent: 'center', minWidth: 64, alignItems: 'center' },
   thumbs: { position: 'absolute', bottom: 46, left: 16, flexDirection: 'row', gap: 8 },
   thumb: { width: 48, height: 48, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
   thumbMore: { backgroundColor: 'rgba(43,39,69,0.8)', alignItems: 'center', justifyContent: 'center' },

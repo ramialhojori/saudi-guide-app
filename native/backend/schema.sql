@@ -178,3 +178,34 @@ CREATE TABLE IF NOT EXISTS blocks (
   created INTEGER NOT NULL,
   PRIMARY KEY (user_id, blocked_id)
 );
+
+-- الإشعارات داخل التطبيق (إجابة على سؤالك، شكر، أفضل إجابة، رسائل الإدارة)
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,          -- answer | thanks | best | system
+  actor_id TEXT,
+  post_id INTEGER,
+  text TEXT,
+  read INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS notif_user ON notifications(user_id, id);
+
+-- جواز السعودية: زيارات مؤكدة بالموقع (المستخدم كان على بعد أقل من 500 متر)
+CREATE TABLE IF NOT EXISTS visits (
+  user_id TEXT NOT NULL,
+  place_id INTEGER NOT NULL,
+  city TEXT NOT NULL,
+  dist INTEGER,
+  created INTEGER NOT NULL,
+  PRIMARY KEY (user_id, place_id)
+);
+CREATE INDEX IF NOT EXISTS visits_user ON visits(user_id, created);
+
+-- المدن اللي يتابعها المستخدم (للإشعارات والصفحة الرئيسية)
+CREATE TABLE IF NOT EXISTS user_cities (
+  user_id TEXT NOT NULL,
+  city TEXT NOT NULL,
+  PRIMARY KEY (user_id, city)
+);

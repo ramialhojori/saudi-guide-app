@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { RichText } from '@/components/RichText';
@@ -13,6 +13,7 @@ import { cityName, getEvent } from '@/lib/content';
 import { openDirections } from '@/lib/maps';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
+import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
 
 const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -55,13 +56,14 @@ export default function EventScreen() {
           </View>
           <AppText variant="hero" style={{ marginTop: 8, fontSize: 26, lineHeight: 38 }}>{e.title}</AppText>
 
-          <View style={st.info}>
+          <Pressable style={st.info} onPress={() => Linking.openURL(`${env.apiUrl}/v1/events/${e.id}.ics`).catch(() => {})} accessibilityLabel="أضف للتقويم">
             <Badge icon="cal" bg={brand.softPink} fg={brand.pinkDeep} size={44} r={14} />
             <View style={{ flex: 1 }}>
               <AppText style={{ fontFamily: font.bold }}>{WD[d.getUTCDay()]} {riyadhDate(e.start)}</AppText>
               <AppText variant="small" muted>{e.end ? `حتى ${riyadhDate(e.end, false)} · ` : ''}بتوقيت مكة</AppText>
             </View>
-          </View>
+            {e.start ? <View style={st.dir}><AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>ذكّرني</AppText></View> : null}
+          </Pressable>
           <Pressable style={st.info} onPress={() => openDirections(e.lat, e.lng, e.title)}>
             <Badge icon="pin" bg={brand.softSky} fg={brand.skyDeep} size={44} r={14} />
             <View style={{ flex: 1 }}>

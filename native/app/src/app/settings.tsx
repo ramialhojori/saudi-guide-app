@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
-import { Avatar, BackButton } from '@/components/ui';
-import { deleteAccount, signOut, updateMe, useAuth } from '@/lib/auth';
+import { Avatar, BackButton, Chip } from '@/components/ui';
+import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
+import { cityName } from '@/lib/content';
+import { tint } from '@/lib/community';
 import { brand, font, START } from '@/theme/tokens';
 import { env } from '@/config/env';
 
@@ -17,6 +21,16 @@ export default function Settings() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [n, setN] = useState({ trip: true, community: true, offers: false, events: true });
+  const [bio, setBio] = useState(user?.bio ?? '');
+  const [home, setHome] = useState(user?.city ?? '');
+  const [follow, setFollow] = useState<string[]>([]);
+  const [open, setOpen] = useState<'' | 'home' | 'follow'>('');
+  // تفضيلات الإشعارات تنحفظ في الجوال، وتتفعّل مع إشعارات الجوال في النسخة الجاية
+  useEffect(() => { AsyncStorage.getItem('sg_notif_prefs_v1').then((v) => { if (v) try { setN(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  const setPref = (k: keyof typeof n, v: boolean) => { const x = { ...n, [k]: v }; setN(x); AsyncStorage.setItem('sg_notif_prefs_v1', JSON.stringify(x)).catch(() => {}); };
+  useEffect(() => { if (user) api<{ cities: string[] }>('/v1/me/cities', { token: session().token }).then((r) => setFollow(r.cities)).catch(() => {}); }, [user?.id]);
+  const saveFollow = async (next: string[]) => { setFollow(next); await api('/v1/me/cities', { method: 'PUT', body: { cities: next }, token: session().token }).catch(() => {}); };
+  const saveHome = async (c: string) => { setHome(c); setOpen(''); await updateMe({ city: c }).catch(() => {}); };
 
   const confirmDelete = () =>
     Alert.alert('حذف الحساب', 'بنحذف حسابك ورحلاتك المحفوظة نهائياً، وما نقدر نرجعها. متأكد؟', [
@@ -31,17 +45,20 @@ export default function Settings() {
       {user ? (
         <View style={st.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Avatar t={(user.name || 'د').trim()[0]} c={brand.lilac} size={52} />
+            <Avatar t={(user.name || 'د').trim()[0]} c={tint(user.id)} size={52} />
             <View style={{ flex: 1 }}>
               {editing ? (
                 <TextInput value={name} onChangeText={setName} autoFocus style={st.input} placeholder="اسمك" placeholderTextColor={brand.faint} maxLength={60} />
               ) : <AppText style={{ fontFamily: font.bold, fontSize: 17 }}>{user.name || 'مستخدم الدليل'}</AppText>}
-              <AppText variant="small" muted>مسجّل بـ Apple{user.city ? ' · ' + user.city : ''}</AppText>
+              <AppText variant="small" muted>مسجّل بـ Apple{home ? ' · من ' + (cityName(home) || home) : ''}</AppText>
             </View>
-            <Pressable style={st.edit} onPress={async () => { if (editing && name.trim()) await updateMe({ name: name.trim() }).catch(() => {}); setEditing((v) => !v); }}>
+            <Pressable style={st.edit} onPress={async () => { if (editing) await updateMe({ name: name.trim() || user.name, bio: bio.trim() }).catch(() => {}); setEditing((v) => !v); }}>
               <AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{editing ? 'حفظ' : 'تعديل'}</AppText>
             </Pressable>
           </View>
+          {editing ? (
+            <TextInput value={bio} onChangeText={setBio} placeholder="نبذة قصيرة عنك (تطلع في ملفك)" placeholderTextColor={brand.faint} maxLength={200} multiline style={[st.input, { fontFamily: font.regular, fontSize: 14, marginTop: 12, minHeight: 60 }]} />
+          ) : user.bio ? <AppText variant="small" muted style={{ marginTop: 10 }}>{user.bio}</AppText> : null}
         </View>
       ) : (
         <Pressable style={[st.card, { backgroundColor: brand.orange }]} onPress={() => router.push('/login')}>
@@ -51,15 +68,22 @@ export default function Settings() {
       )}
 
       <Group title="التفضيلات">
-        <Row label="اللغة"><Seg items={['عربي', 'English']} on={0} /></Row>
-        <Row label="المظهر"><Seg items={['تلقائي', 'فاتح', 'ليلي']} on={0} /></Row>
-        <Row label="المدن اللي أتابعها" value="4 مدن ‹" />
+        <Row label="اللغة"><Seg items={['عربي', 'English · قريباً']} on={0} /></Row>
+        {user ? <Row label="مدينتي" value={(home ? cityName(home) || home : 'اختر') + ' ‹'} onPress={() => setOpen(open === 'home' ? '' : 'home')} /> : null}
+        {open === 'home' ? <View style={st.chips}>{CITY_IDS.map((c) => <Chip key={c} label={cityName(c)} on={home === c} color={brand.ink} onPress={() => saveHome(c)} />)}</View> : null}
+        {user ? <Row label="المدن اللي أتابعها" value={(follow.length ? `${follow.length} ${follow.length === 1 ? 'مدينة' : follow.length === 2 ? 'مدينتين' : 'مدن'}` : 'ولا مدينة') + ' ‹'} onPress={() => setOpen(open === 'follow' ? '' : 'follow')} /> : null}
+        {open === 'follow' ? (
+          <View style={st.chips}>
+            <AppText variant="tiny" muted style={{ width: '100%' }}>توصلك فعاليات ومستجدات المدن اللي تختارها</AppText>
+            {CITY_IDS.map((c) => <Chip key={c} label={cityName(c)} on={follow.includes(c)} color={brand.purple} onPress={() => saveFollow(follow.includes(c) ? follow.filter((x) => x !== c) : [...follow, c])} />)}
+          </View>
+        ) : null}
       </Group>
       <Group title="الإشعارات">
-        <Row label="رحلاتي وتذكيرها"><Switch value={n.trip} onValueChange={(v) => setN({ ...n, trip: v })} trackColor={{ true: brand.green }} /></Row>
-        <Row label="إجابات وردود المجتمع"><Switch value={n.community} onValueChange={(v) => setN({ ...n, community: v })} trackColor={{ true: brand.green }} /></Row>
-        <Row label="العروض والكوبونات"><Switch value={n.offers} onValueChange={(v) => setN({ ...n, offers: v })} trackColor={{ true: brand.green }} /></Row>
-        <Row label="فعاليات مدينتي"><Switch value={n.events} onValueChange={(v) => setN({ ...n, events: v })} trackColor={{ true: brand.green }} /></Row>
+        <Row label="رحلاتي وتذكيرها"><Switch value={n.trip} onValueChange={(v) => setPref('trip', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label="إجابات وردود المجتمع"><Switch value={n.community} onValueChange={(v) => setPref('community', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label="العروض والكوبونات"><Switch value={n.offers} onValueChange={(v) => setPref('offers', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label="فعاليات مدينتي"><Switch value={n.events} onValueChange={(v) => setPref('events', v)} trackColor={{ true: brand.green }} /></Row>
       </Group>
       <Group title="عن الدليل">
         <Row label="الدليل القديم" value="‹" onPress={() => WebBrowser.openBrowserAsync(env.siteUrl)} />
@@ -101,7 +125,10 @@ function Seg({ items, on }: { items: string[]; on: number }) {
   );
 }
 
+const CITY_IDS = ['medina', 'makkah-region', 'riyadh', 'jeddah', 'alula', 'taif', 'abha', 'asir-region', 'diriyah', 'yanbu', 'umluj', 'eastern-region', 'tabuk-region', 'hail', 'qassim-region', 'albaha', 'jizan', 'najran', 'aljawf-region', 'northern-border', 'riyadh-region'];
+
 const st = StyleSheet.create({
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   card: { marginHorizontal: 16, marginTop: 16, backgroundColor: '#fff', borderRadius: 22, padding: 14 },
   input: { fontFamily: font.bold, fontSize: 17, color: brand.ink, textAlign: START, borderBottomWidth: 1.5, borderColor: brand.lilac, paddingVertical: 2 },

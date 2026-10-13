@@ -8,9 +8,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
 import { Icon, type IconName } from '@/components/Icon';
+import { BellButton } from '@/components/BellButton';
 import { Avatar, Section } from '@/components/ui';
 import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
-import { me, weather } from '@/lib/mock';
+import { weather } from '@/lib/mock';
+import { useAuth } from '@/lib/auth';
+import { initial, tint } from '@/lib/community';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem, Place } from '@/lib/types';
@@ -33,6 +36,8 @@ const greeting = () => ((new Date().getUTCHours() + 3) % 24 < 12 ? 'صباح ا�
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { data } = useAsync(getHome, []);
+  const { user } = useAuth();
+  const first = (user?.name || '').trim().split(/\s+/)[0];
   const near = useNearby();
 
   return (
@@ -44,13 +49,13 @@ export default function Home() {
         <View style={[st.top, { top: insets.top + 10 }]}>
           <Image source={require('../../../assets/brand/logo-white.png')} style={{ width: 150, height: 44 }} contentFit="contain" />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable accessibilityLabel="الإشعارات" onPress={() => router.push('/inbox')} style={st.glass}><Icon name="bell" color="#fff" size={22} /></Pressable>
-            <Pressable accessibilityLabel="ملفي" onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={me.initial} c={brand.lilac} size={44} /></Pressable>
+            <BellButton style={st.glass} />
+            <Pressable accessibilityLabel="ملفي" onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || '؟') : 'د'} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
           </View>
         </View>
         <View style={st.heroTx}>
           <View style={st.weather}><AppText variant="small" color="#fff">{weather.city} · {weather.temp}° · {weather.text}</AppText></View>
-          <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()} يا {me.first}</AppText>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()}{first ? ` يا ${first}` : ''}</AppText>
           <AppText variant="hero" color="#fff" style={{ fontSize: 34, lineHeight: 46 }}>وين تبي تروح{'\n'}هالويكند؟</AppText>
           <Pressable onPress={() => router.push('/search')} style={st.search} accessibilityRole="search">
             <Icon name="search" color={brand.purple} size={22} strokeWidth={2.2} />
