@@ -24,8 +24,9 @@ export default function Login() {
     setErr(''); setBusy(true);
     try {
       if ((await signInWithApple()) === 'ok') done();
-    } catch {
-      setErr('ما قدرنا نكمل الدخول. تأكد من النت وجرّب مرة ثانية.');
+    } catch (e: unknown) {
+      const x = e as { code?: string; message?: string };
+      setErr(`ما قدرنا نكمل الدخول. (${x?.code || x?.message || 'خطأ'})`);
     } finally { setBusy(false); }
   };
 
@@ -46,10 +47,10 @@ export default function Login() {
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
             cornerRadius={18} style={{ height: 56, width: '100%' }} onPress={onApple} />
         ) : (
-          <View style={[st.btn, { backgroundColor: '#000', opacity: 0.5 }]}>
+          <Pressable onPress={Platform.OS === 'ios' ? onApple : undefined} style={[st.btn, { backgroundColor: '#000', opacity: Platform.OS === 'ios' ? 1 : 0.5 }]}>
             <Icon name="apple" color="#fff" fill="#fff" size={22} strokeWidth={1.6} />
             <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' ? 'المتابعة مع Apple' : 'Apple على الآيفون فقط'}</AppText>
-          </View>
+          </Pressable>
         )}
         <View style={[st.btn, { backgroundColor: '#fff', borderWidth: 1.5, borderColor: brand.line }]}>
           <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#4285F4">G</AppText>

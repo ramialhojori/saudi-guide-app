@@ -56,7 +56,7 @@ async function afterLogin(token: string, user: User) {
   if (merged.length !== remote.length) api('/v1/me/trip', { method: 'PUT', body: { ids: merged }, token }).catch(() => {});
 }
 
-export const appleAvailable = () => (Platform.OS === 'ios' ? AppleAuthentication.isAvailableAsync() : Promise.resolve(false));
+export const appleAvailable = () => (Platform.OS === 'ios' ? AppleAuthentication.isAvailableAsync().catch(() => false) : Promise.resolve(false));
 
 export async function signInWithApple(): Promise<'ok' | 'cancel'> {
   try {
