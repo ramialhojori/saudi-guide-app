@@ -49,7 +49,7 @@ export const posts: Post[] = [
   { id: 1, who: 'نورة', av: 'ن', c: brand.sky, where: 'زائرة من الكويت', when: 'قبل ساعة', kind: 'question',
     text: 'أول مرة أزور المدينة مع عائلتي، وش أحسن مكان نفطر فيه قريب من الحرم؟', answers: 7, thanks: 42,
     best: { who: 'رامي', badge: 'مرشد محلي موثّق', text: 'جرّبوا فطور «قباء» الشعبي بعد صلاة الفجر، الفول والتميس عندهم ممتاز وبعدها امشوا لمسجد قباء.' } },
-  { id: 2, who: 'فهد', av: 'ف', c: brand.orange, where: 'في صخرة الفيل', when: 'من أبها', kind: 'photo', badge: 'عدسة الدليل', photo: 'rock',
+  { id: 2, who: 'فهد', av: 'ف', c: brand.orange, where: 'في صخرة الفيل', when: 'صورة من العلا', kind: 'photo', badge: 'عدسة الدليل', photo: 'rock',
     text: 'الغروب هنا شي ثاني.. نصيحة: تعالوا قبل 5 دقائق عشان تلقون جلسة قريبة.', thanks: 120 },
 ];
 
