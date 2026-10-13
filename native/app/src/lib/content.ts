@@ -84,7 +84,7 @@ export const getHome = () =>
     picks: weeklyPicks(),
     events: SNAP.events.filter(upcoming).sort(byWhen).slice(0, 10),
     articles: [...SNAP.articles].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
-  }));
+  })).then((h) => (h.picks?.length ? h : { ...h, picks: weeklyPicks() }));
 
 export const getCities = () => tryApi<{ cities: City[] }>('/v1/cities', () => ({ cities: SNAP.cities })).then((r) => r.cities);
 

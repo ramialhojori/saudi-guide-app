@@ -11,6 +11,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Avatar, Section } from '@/components/ui';
 import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
 import { me, weather } from '@/lib/mock';
+import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem, Place } from '@/lib/types';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
@@ -100,6 +101,57 @@ export default function Home() {
 
       {/* فعالية قادمة */}
       {data?.events?.[0] ? <EventBanner e={data.events[0]} /> : null}
+
+      {/* وجهات المملكة */}
+      {data?.cities?.length ? (
+        <>
+          <Section title="وجهات المملكة" action="الدليل" onAction={() => router.push('/guide')} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingHorizontal: 16 }}>
+            {data.cities.slice(0, 10).map((c) => (
+              <Pressable key={c.id} onPress={() => router.push(`/city/${c.id}`)} style={{ alignItems: 'center', width: 76 }}>
+                <View style={[st.cityRing, { borderColor: c.color }]}><Image source={c.cover} style={st.cityImg} contentFit="cover" /></View>
+                <AppText variant="tiny" center numberOfLines={1} style={{ fontFamily: font.semibold, marginTop: 6 }}>{c.name}</AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {/* فعاليات أكثر */}
+      {(data?.events?.length ?? 0) > 1 ? (
+        <>
+          <Section title="فعاليات قادمة" action="الكل" onAction={() => router.push('/events')} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+            {data!.events.slice(1, 8).map((e) => (
+              <Pressable key={e.id} onPress={() => router.push(`/event/${e.id}`)} style={st.evCard}>
+                <Image source={e.thumb || e.image || photos.fest} style={{ width: '100%', height: 120 }} contentFit="cover" />
+                <View style={{ padding: 10 }}>
+                  <AppText variant="tiny" color={brand.pinkDeep} style={{ fontFamily: font.semibold }}>{riyadhDate(e.start, false)}</AppText>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 14, lineHeight: 21 }} numberOfLines={2}>{e.title}</AppText>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {/* آخر الأخبار */}
+      {data?.articles?.length ? (
+        <>
+          <Section title="آخر الأخبار" />
+          <View style={{ gap: 10, paddingHorizontal: 16 }}>
+            {data.articles.slice(0, 3).map((a) => (
+              <Pressable key={a.id} onPress={() => router.push(`/article/${a.id}`)} style={st.near}>
+                <Image source={a.thumb} style={st.nearImg} contentFit="cover" />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 15, lineHeight: 23 }} numberOfLines={2}>{a.title}</AppText>
+                  <AppText variant="small" muted>{riyadhDate(a.date, false)}</AppText>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : null}
     </ScrollView>
   );
 }
@@ -151,7 +203,7 @@ function NearRow({ p }: { p: Place }) {
         <AppText style={{ fontFamily: font.bold, fontSize: 17 }} numberOfLines={1}>{p.title}</AppText>
         <AppText variant="small" muted numberOfLines={1}>{p.cat}</AppText>
       </View>
-      {p.km != null ? <View style={st.km}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{p.km} كم</AppText></View> : null}
+      {p.km != null ? <View style={st.km}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{p.km < 0.05 ? 'هنا' : p.km < 1 ? `${Math.round(p.km * 1000)} م` : `${p.km} كم`}</AppText></View> : null}
     </Pressable>
   );
 }
@@ -191,5 +243,8 @@ const st = StyleSheet.create({
   nearImg: { width: 72, height: 72, borderRadius: 18 },
   km: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
   ev: { marginHorizontal: 16, marginTop: 18, height: 150, borderRadius: 26, overflow: 'hidden', backgroundColor: brand.ink, justifyContent: 'center' },
+  cityRing: { width: 72, height: 72, borderRadius: 36, borderWidth: 3, padding: 3 },
+  cityImg: { width: '100%', height: '100%', borderRadius: 36 },
+  evCard: { width: 200, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
   evTag: { alignSelf: 'flex-start', backgroundColor: brand.softPink, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
 });
