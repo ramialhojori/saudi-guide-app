@@ -128,7 +128,7 @@ export default function Profile() {
 
       {/* الكوبونات */}
       <View style={st.secRow}>
-        <AppText variant="section">كوبوناتي <AppText variant="small" muted> 3 فعّالة</AppText></AppText>
+        <AppText variant="section">كوبوناتي <AppText variant="small" muted> {user ? 'أمثلة · قريباً' : '3 فعّالة'}</AppText></AppText>
         <Pressable onPress={() => router.push('/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>المحفظة</AppText></Pressable>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>

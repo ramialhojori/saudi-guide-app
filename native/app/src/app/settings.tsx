@@ -25,6 +25,7 @@ export default function Settings() {
   const [home, setHome] = useState(user?.city ?? '');
   const [follow, setFollow] = useState<string[]>([]);
   const [open, setOpen] = useState<'' | 'home' | 'follow'>('');
+  useEffect(() => { if (user) { setHome(user.city || ''); setBio(user.bio || ''); setName(user.name || ''); } }, [user?.id, user?.city, user?.bio]);
   // تفضيلات الإشعارات تنحفظ في الجوال، وتتفعّل مع إشعارات الجوال في النسخة الجاية
   useEffect(() => { AsyncStorage.getItem('sg_notif_prefs_v1').then((v) => { if (v) try { setN(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
   const setPref = (k: keyof typeof n, v: boolean) => { const x = { ...n, [k]: v }; setN(x); AsyncStorage.setItem('sg_notif_prefs_v1', JSON.stringify(x)).catch(() => {}); };

@@ -10,9 +10,11 @@ import { Avatar, Chip, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ago, feed, initial, nAnswers, thank, tint, topHelpers, type CPost } from '@/lib/community';
 import { cityName } from '@/lib/content';
-import { challenge, posts as samples, type Post } from '@/lib/mock';
+import { posts as samples, type Post } from '@/lib/mock';
+import { api } from '@/lib/api';
 import { brand, font, photos } from '@/theme/tokens';
 
+const daysLeft = (end: string) => { const d = Math.ceil((new Date(end).getTime() - Date.now()) / 86400e3); return d <= 0 ? 'آخر يوم' : d === 1 ? 'باقي يوم' : d === 2 ? 'باقي يومين' : `باقي ${d} أيام`; };
 const CITIES: [string | null, string][] = [[null, 'كل المدن'], ['medina', 'المدينة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة'], ['alula', 'العلا'], ['abha', 'أبها'], ['eastern-region', 'الشرقية']];
 
 /** المجتمع — محتوى تجريبي لين يجهز سيرفر المجتمع (المرحلة 2) */
@@ -25,12 +27,15 @@ export default function Community() {
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
   const [more, setMore] = useState(true);
+  type Ch = { title: string; prize: string; tag: string; photo: string; end: string; count: number };
+  const [ch, setCh] = useState<Ch | null>(null);
 
   const load = useCallback(async (c: string | null) => {
     setBusy(true); setErr(false);
     try {
       const [p, t] = await Promise.all([feed({ city: c }), topHelpers(c).catch(() => [])]);
       setList(p); setTop(t); setMore(p.length >= 20);
+      api<{ challenge: Ch | null }>('/v1/community/challenge').then((r) => setCh(r.challenge)).catch(() => {});
     } catch { setErr(true); setList((l) => l ?? []); } finally { setBusy(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(city); }, [city, load]));
@@ -66,16 +71,18 @@ export default function Community() {
         {CITIES.map(([id, n]) => <Chip key={n} label={n} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
       </ScrollView>
 
-      {/* تحدي الأسبوع — تجريبي */}
-      <Pressable style={st.challenge}>
-        <View style={{ flex: 1, padding: 16, gap: 4 }}>
-          <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{challenge.tag}</AppText></View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 28 }} color="#fff">{challenge.title}</AppText>
-          <AppText variant="small" color="#FFF1E4">{challenge.prize}</AppText>
-          <AppText variant="tiny" color="#FFE2C8">{challenge.left}</AppText>
-        </View>
-        <Image source={photos[challenge.photo]} style={{ width: 130 }} contentFit="cover" />
-      </Pressable>
+      {/* تحدي الأسبوع: يديره رامي من اللوحة */}
+      {ch ? (
+        <Pressable style={st.challenge} onPress={() => router.push(user ? { pathname: '/ask', params: { kind: 'photo', text: ch.tag ? `#${ch.tag} ` : '' } } : '/login')}>
+          <View style={{ flex: 1, padding: 16, gap: 4 }}>
+            <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>تحدي الأسبوع</AppText></View>
+            <AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 28 }} color="#fff">{ch.title}</AppText>
+            {ch.prize ? <AppText variant="small" color="#FFF1E4">الجائزة: {ch.prize}</AppText> : null}
+            <AppText variant="tiny" color="#FFE2C8">{[ch.end ? daysLeft(ch.end) : '', ch.count ? `${ch.count} مشاركة` : 'كن أول مشارك'].filter(Boolean).join(' · ')}</AppText>
+          </View>
+          {ch.photo ? <Image source={{ uri: ch.photo }} style={{ width: 130 }} contentFit="cover" /> : <Image source={photos.water} style={{ width: 130 }} contentFit="cover" />}
+        </Pressable>
+      ) : null}
 
       {list === null ? <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} /> : null}
       {err ? <AppText center muted style={{ marginTop: 20 }}>ما قدرنا نجيب المشاركات. اسحب لتحت وجرّب مرة ثانية.</AppText> : null}

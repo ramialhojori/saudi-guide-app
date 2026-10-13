@@ -11,7 +11,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { BellButton } from '@/components/BellButton';
 import { Avatar, Section } from '@/components/ui';
 import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
-import { weather } from '@/lib/mock';
+import { useWeather } from '@/lib/weather';
 import { useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
 import { riyadhDate } from '@/lib/text';
@@ -39,6 +39,7 @@ export default function Home() {
   const { user } = useAuth();
   const first = (user?.name || '').trim().split(/\s+/)[0];
   const near = useNearby();
+  const weather = useWeather(user?.city);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }} showsVerticalScrollIndicator={false}>
@@ -54,7 +55,7 @@ export default function Home() {
           </View>
         </View>
         <View style={st.heroTx}>
-          <View style={st.weather}><AppText variant="small" color="#fff">{weather.city} · {weather.temp}° · {weather.text}</AppText></View>
+          {weather ? <View style={st.weather}><AppText variant="small" color="#fff">{weather.city} · {weather.temp}°{weather.text ? ` · ${weather.text}` : ''}</AppText></View> : null}
           <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()}{first ? ` يا ${first}` : ''}</AppText>
           <AppText variant="hero" color="#fff" style={{ fontSize: 34, lineHeight: 46 }}>وين تبي تروح{'\n'}هالويكند؟</AppText>
           <Pressable onPress={() => router.push('/search')} style={st.search} accessibilityRole="search">

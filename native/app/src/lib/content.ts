@@ -33,6 +33,7 @@ async function tryApi<T>(path: string, fallback: () => T): Promise<T> {
 
 export const kinds: Kind[] = SNAP.kinds;
 export const cityName = (id: string) => SNAP.cities.find((c) => c.id === id)?.name ?? '';
+export const allCities = SNAP.cities;
 
 /** مختارات الأسبوع — نفس المنطق في السيرفر وفي الصفحة الرئيسية بقودبابر */
 export function weeklyPicks(now = new Date()): Place[] {

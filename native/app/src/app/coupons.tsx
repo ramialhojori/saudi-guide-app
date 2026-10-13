@@ -25,7 +25,11 @@ export default function Coupons() {
           <View style={{ flex: 1 }}><AppText variant="small" color="#FFE6EC">كوبونات</AppText><AppText variant="title" color="#fff">المدينة المنورة ▾</AppText></View>
           <View style={st.wallet}><AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff" center>{saved.length}</AppText><AppText variant="tiny" color="#fff" center>محفظتي</AppText></View>
         </View>
-        <AppText variant="small" color="#fff" style={{ marginTop: 12 }}>42 عرض فعّال من 31 نشاط في مدينتك. احفظ الكوبون واستخدمه عند الكاشير.</AppText>
+        <AppText variant="small" color="#fff" style={{ marginTop: 12 }}>احفظ الكوبون واستخدمه عند الكاشير.</AppText>
+      </View>
+      <View style={st.soonBox}>
+        <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.pinkDeep}>العروض اللي تحت أمثلة</AppText>
+        <AppText variant="tiny" muted>نجهز بوابة للمحلات يضيفون فيها عروضهم الحقيقية، وتوصلك هنا أول ما تنفتح.</AppText>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16, paddingBottom: 4 }}>
         {CATS.map((c, i) => <Chip key={c} label={c} on={cat === i} color={brand.pinkDeep} onPress={() => setCat(i)} />)}
@@ -68,6 +72,7 @@ export default function Coupons() {
 }
 
 const st = StyleSheet.create({
+  soonBox: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.softPink, borderRadius: 16, padding: 12, gap: 2 },
   head: { backgroundColor: brand.pink, paddingHorizontal: 20, paddingBottom: 22, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   wallet: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },

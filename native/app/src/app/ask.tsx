@@ -24,11 +24,11 @@ const CITIES: [string, string][] = [['medina', 'المدينة'], ['riyadh', 'ا
 /** النشر في المجتمع: سؤال أو نصيحة أو صورة */
 export default function Ask() {
   const insets = useSafeAreaInsets();
-  const prm = useLocalSearchParams<{ kind?: Kind; placeId?: string; place?: string; city?: string }>();
+  const prm = useLocalSearchParams<{ kind?: Kind; placeId?: string; place?: string; city?: string; text?: string }>();
   const { user } = useAuth();
   const [kind, setKind] = useState<Kind>(prm.kind && KINDS.some((k) => k[0] === prm.kind) ? prm.kind : 'question');
   const [city, setCity] = useState<string | null>(prm.city || user?.city || null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(prm.text || '');
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');

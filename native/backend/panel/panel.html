@@ -549,7 +549,7 @@ function editArticle(a) {
 let CTAB = 'reported';
 async function communityView() {
   const m = $('#main');
-  m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع البلاغات وكل المشاركات، وأرسل رسالة للمستخدمين تنزل في إشعارات التطبيق.</p></div><button class="btn o" id="msgBtn">رسالة للمستخدمين</button></div>
+  m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع البلاغات وكل المشاركات، وأرسل رسالة للمستخدمين تنزل في إشعارات التطبيق.</p></div><div class="row"><button class="btn" id="chBtn">تحدي الأسبوع</button><button class="btn o" id="msgBtn">رسالة للمستخدمين</button></div></div>
     <div class="tabs">${[['reported', 'البلاغات'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => { CTAB = b.dataset.c; communityView(); }));
   $('#msgBtn').onclick = () => {
@@ -564,6 +564,21 @@ async function communityView() {
       if (!confirm('ترسلها الحين؟')) return;
       try { const r = await api('/admin/notify', { method: 'POST', body: { text, city: $('#c', d).value } }); toast(`انرسلت لـ ${r.sent} مستخدم`); closeDrawer(); } catch (e) { toast(errMsg(e)); }
     };
+  };
+  $('#chBtn').onclick = async () => {
+    const cur = (await api('/admin/challenge')).challenge || {};
+    const imgs = cur.photo ? [cur.photo] : [];
+    const d = drawer(`<div class="row"><h2 class="grow">تحدي الأسبوع</h2><button class="btn ghost" id="x">إغلاق</button></div>
+      <p class="muted">يطلع بطاقة برتقالية فوق المجتمع. اللي يشارك يضغطها ويكتب مشاركته، وتنحسب المشاركات اللي فيها الوسم.</p>
+      <div class="f"><label>عنوان التحدي</label><input class="in" id="title" value="${h(cur.title || '')}" placeholder="صوّر غروب كورنيش جدة"></div>
+      <div class="f"><label>الجائزة</label><input class="in" id="prize" value="${h(cur.prize || '')}" placeholder="وسم «عدسة الدليل» + كوبون"></div>
+      <div class="two"><div class="f"><label>الوسم (بدون #)</label><input class="in" id="tag" value="${h(cur.tag || '')}" placeholder="غروب_جدة"></div><div class="f"><label>ينتهي</label><input class="in" type="datetime-local" id="end" value="${toLocal(cur.end)}"></div></div>
+      <div class="f"><label>صورة البطاقة</label><div id="imgs"></div></div>
+      <div class="bar"><button class="btn g" id="save">حفظ وانشر</button>${cur.title ? '<button class="btn ghost" id="stop" style="color:var(--pinkDeep)">أوقف التحدي</button>' : ''}</div>`);
+    imagesWidget($('#imgs', d), imgs);
+    $('#x', d).onclick = closeDrawer;
+    $('#save', d).onclick = async () => { await api('/admin/challenge', { method: 'POST', body: { title: $('#title', d).value, prize: $('#prize', d).value, tag: $('#tag', d).value.replace(/^#/, ''), end: fromLocal($('#end', d).value), photo: imgs[0] || '' } }); toast('انحفظ التحدي'); closeDrawer(); };
+    $('#stop', d) && ($('#stop', d).onclick = async () => { await api('/admin/challenge', { method: 'POST', body: { clear: true } }); toast('وقف التحدي'); closeDrawer(); });
   };
   const why = { reports: 'انخفت بالبلاغات', owner: 'صاحبها حذفها', admin: 'أنت أخفيتها', account: 'الحساب انحذف' };
   let rows;

@@ -85,6 +85,15 @@ export async function communityRoute(p, request, env, J, q) {
     return J({ posts: results.map((r) => postRow(r, me)) });
   }
 
+  /* ——— تحدي الأسبوع (تديره من اللوحة) ——— */
+  if (p === '/v1/community/challenge' && M === 'GET') {
+    const r = await env.DB.prepare("SELECT v FROM kv WHERE k='challenge'").first();
+    let c = null; try { c = r ? JSON.parse(r.v) : null; } catch {}
+    if (!c || !c.title || (c.end && c.end < new Date().toISOString())) return J({ challenge: null });
+    const n = c.tag ? await env.DB.prepare("SELECT COUNT(*) n FROM posts WHERE status='visible' AND created>? AND text LIKE ?").bind(Math.floor(new Date(c.start || 0).getTime() / 1000), `%${c.tag}%`).first() : { n: 0 };
+    return J({ challenge: { ...c, count: n.n } });
+  }
+
   /* ——— ملخص المكان من المجتمع: كم زاره، وآخر نصيحة، وعدد الأسئلة ——— */
   if ((m = p.match(/^\/v1\/community\/place\/(\d+)$/)) && M === 'GET') {
     const id = +m[1];

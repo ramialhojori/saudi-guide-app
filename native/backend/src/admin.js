@@ -280,6 +280,18 @@ export async function adminRoute(p, request, env, J, q) {
     return J({ posts: results });
   }
 
+  /* ——— تحدي الأسبوع ——— */
+  if (p === '/admin/challenge') {
+    if (M === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const c = b.clear ? null : { title: str(b.title, 80), prize: str(b.prize, 100), tag: str(b.tag, 30), photo: str(b.photo, 300), city: str(b.city, 40), start: new Date().toISOString(), end: b.end ? new Date(b.end).toISOString() : '' };
+      await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('challenge',?)").bind(JSON.stringify(c)).run();
+      return J({ ok: true, challenge: c });
+    }
+    const r = await env.DB.prepare("SELECT v FROM kv WHERE k='challenge'").first();
+    return J({ challenge: r ? parse(r.v, null) : null });
+  }
+
   /* ——— المستخدمين ——— */
   if (p === '/admin/users' && M === 'GET') {
     const args = [];
