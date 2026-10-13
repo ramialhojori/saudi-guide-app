@@ -4,7 +4,7 @@
  * — مفيد وقت التطوير قبل ما ننشر السيرفر، ويخلي التطبيق يفتح حتى بدون نت.
  */
 export const env = {
-  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? '',
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://saudi-guide-api.saudi-guide2030.workers.dev',
   siteUrl: 'https://www.saudi-guide.com',
   timeZone: 'Asia/Riyadh',
 } as const;
