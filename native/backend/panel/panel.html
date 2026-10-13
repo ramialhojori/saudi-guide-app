@@ -7,7 +7,15 @@
 <title>لوحة دليل السعودية</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+.geo{position:relative}
+.geo .map{height:280px;border-radius:16px;margin-top:8px;border:1.5px solid var(--line);z-index:1}
+.sug{position:absolute;top:46px;right:0;left:0;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(43,39,69,.18);z-index:5;overflow:hidden;display:none}
+.sug div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--chip)}
+.sug div:hover{background:var(--chip)}
+.sug b{display:block;font-size:14px}.sug span{font-size:12px;color:var(--muted)}
 :root{--ink:#2B2745;--muted:#6B6585;--faint:#9C94B5;--purple:#604C87;--lilac:#8E65AB;--orange:#F89743;--orangeDeep:#E07B22;--pink:#EB839B;--pinkDeep:#C9506F;--sky:#62B9E8;--skyDeep:#2E86B8;--green:#3E8E5A;--bg:#F4F1EE;--line:#E2DAEC;--chip:#F1ECF6;--white:#fff;--softPurple:#ECE5F3;--softOrange:#FDE7D3;--softPink:#FBE3EA;--softGreen:#E2F0E6;--softSky:#E2F1FA}
 *{box-sizing:border-box}
 body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
@@ -246,6 +254,52 @@ function parseGeo(s) {
   const m = String(s).match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || String(s).match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) || String(s).match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || String(s).match(/^\s*(-?\d+\.\d+)\s*[,،]\s*(-?\d+\.\d+)\s*$/);
   return m ? [+m[1], +m[2]] : null;
 }
+/** الموقع: بحث بالاسم (OpenStreetMap) + خريطة بدبوس تسحبه + لصق رابط قوقل ماب */
+function geoWidget(box, lat, lng, cityFn, addrEl) {
+  box.innerHTML = `<div class="geo"><input class="in" id="gq" placeholder="اكتب اسم المكان... أو الصق رابط قوقل ماب" autocomplete="off"><div class="sug" id="sug"></div>
+    <input type="hidden" id="geo" value="${lat ? lat + ', ' + lng : ''}"><div class="map" id="gmap"></div><small id="geoMsg" class="muted"></small></div>`;
+  const q = $('#gq', box), sug = $('#sug', box), out = $('#geo', box), msg = $('#geoMsg', box);
+  const center = () => { const c = META.cities.find((x) => x.id === cityFn()); return c ? [c.lat, c.lng] : [24.2, 44.5]; };
+  if (!window.L) { $('#gmap', box).remove(); window.L = { map: () => ({ setView() { return this; }, on() {}, invalidateSize() {}, addLayer() {} }), tileLayer: () => ({ addTo() {} }), marker: () => ({ addTo() { return this; }, on() {}, setLatLng() {} }) }; }
+  const map = L.map($('#gmap', box), { zoomControl: true, attributionControl: true }).setView(lat ? [lat, lng] : center(), lat ? 16 : (cityFn() ? 11 : 5));
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  let pin = null;
+  const set = (la, ln, zoom) => {
+    la = +(+la).toFixed(6); ln = +(+ln).toFixed(6);
+    out.value = la + ', ' + ln;
+    if (!pin) { pin = L.marker([la, ln], { draggable: true }).addTo(map); pin.on('dragend', () => { const p = pin.getLatLng(); set(p.lat, p.lng); }); } else pin.setLatLng([la, ln]);
+    if (zoom) map.setView([la, ln], zoom);
+    msg.innerHTML = `✓ ${la}, ${ln} · <a target="_blank" href="https://maps.google.com/?q=${la},${ln}">تأكد في قوقل ماب</a> · تقدر تسحب الدبوس لو مو مضبوط`;
+  };
+  if (lat) set(lat, lng); else msg.textContent = 'اكتب الاسم واختر من القائمة، أو اضغط على الخريطة مكان المكان';
+  setTimeout(() => map.invalidateSize(), 250);
+  map.on('click', (ev) => set(ev.latlng.lat, ev.latlng.lng));
+  let t, last = '';
+  q.oninput = () => {
+    const v = q.value.trim();
+    const g = parseGeo(v);
+    if (g) { sug.style.display = 'none'; set(g[0], g[1], 17); return; }
+    if (/^https?:\/\//.test(v)) { sug.style.display = 'none'; msg.innerHTML = '<span style="color:var(--pinkDeep)">ما قدرت أقرا الرابط. الروابط المختصرة (maps.app.goo.gl) افتحها بالمتصفح أول وانسخ الرابط الطويل، أو اكتب اسم المكان.</span>'; return; }
+    clearTimeout(t);
+    if (v.length < 3) { sug.style.display = 'none'; return; }
+    t = setTimeout(async () => {
+      if (v === last) return; last = v;
+      const c = center(), b = 1.2;
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=sa&accept-language=ar&q=${encodeURIComponent(v)}` + (cityFn() ? `&viewbox=${c[1] - b},${c[0] + b},${c[1] + b},${c[0] - b}` : '');
+      try {
+        const r = await fetch(url).then((x) => x.json());
+        sug.innerHTML = r.length ? r.map((x, i) => `<div data-i="${i}"><b>${h(x.name || x.display_name.split('،')[0].split(',')[0])}</b><span>${h(x.display_name)}</span></div>`).join('') : '<div style="cursor:default"><span>ما لقيت شي. جرّب اسم ثاني، أو اضغط على الخريطة مكان المكان.</span></div>';
+        sug.style.display = 'block';
+        sug.querySelectorAll('[data-i]').forEach((el) => (el.onclick = () => {
+          const x = r[+el.dataset.i]; sug.style.display = 'none'; q.value = x.name || '';
+          set(x.lat, x.lon, 17);
+          if (addrEl && !addrEl.value) addrEl.value = x.display_name.split(/[،,]/).slice(0, 3).join('،').trim();
+        }));
+      } catch { msg.textContent = 'البحث ما اشتغل الحين. اضغط على الخريطة مكان المكان.'; }
+    }, 600);
+  };
+  q.onblur = () => setTimeout(() => (sug.style.display = 'none'), 200);
+}
 const plainBody = (html) => String(html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>\s*<p[^>]*>/gi, '\n\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
 
 /* ——— محرّر المكان ——— */
@@ -261,7 +315,7 @@ function editPlace(p) {
     <div class="f"><label>الصور</label><div id="imgs"></div><small>أول صورة هي الغلاف</small></div>
     <div class="f"><label>وصف قصير</label><input class="in" id="summary" value="${h(p.summary)}" maxlength="400"><small>يطلع في القوائم ونتائج البحث</small></div>
     <div class="f"><label>عن المكان</label><textarea class="in" id="body">${h(plainBody(p.body))}</textarea><small>سطر فاضي بين الفقرات</small></div>
-    <div class="f"><label>الموقع على الخريطة</label><input class="in" id="geo" placeholder="الصق رابط قوقل ماب أو الإحداثيات (24.4672, 39.6111)" value="${p.lat ? p.lat + ', ' + p.lng : ''}" dir="ltr"><small id="geoMsg">${p.lat ? `<a target="_blank" href="https://maps.google.com/?q=${p.lat},${p.lng}">افتحه في قوقل ماب</a>` : 'من قوقل ماب: اضغط على المكان ← مشاركة ← نسخ الرابط'}</small></div>
+    <div class="f"><label>الموقع على الخريطة</label><div id="geoBox"></div></div>
     <div class="f"><label>العنوان</label><input class="in" id="address" value="${h(p.address)}"></div>
     <div class="two"><div class="f"><label>الجوال</label><input class="in" id="phone" value="${h(p.phone)}" dir="ltr"></div><div class="f"><label>الموقع الإلكتروني</label><input class="in" id="website" value="${h(p.website)}" dir="ltr"></div></div>
     <div class="bar"><button class="btn" id="save">حفظ</button>
@@ -272,7 +326,7 @@ function editPlace(p) {
   const kEl = $('#kinds', d);
   const drawK = () => { kEl.innerHTML = `<div class="chips">${META.kinds.map((k) => `<span class="chip ${kinds.includes(k) ? 'on' : ''}" data-k="${k}">${KIND[k]}</span>`).join('')}</div>`; kEl.querySelectorAll('.chip').forEach((c) => (c.onclick = () => { const i = kinds.indexOf(c.dataset.k); i >= 0 ? kinds.splice(i, 1) : kinds.push(c.dataset.k); drawK(); })); };
   drawK();
-  $('#geo', d).oninput = (e) => { const g = parseGeo(e.target.value); $('#geoMsg', d).innerHTML = g ? `✓ ${g[0].toFixed(5)}, ${g[1].toFixed(5)} · <a target="_blank" href="https://maps.google.com/?q=${g[0]},${g[1]}">تأكد في قوقل ماب</a>` : (e.target.value ? '<span style="color:var(--pinkDeep)">ما قدرت أقرا الإحداثيات من هذا الرابط. الروابط المختصرة (maps.app.goo.gl) افتحها بالمتصفح أول وانسخ الرابط الطويل.</span>' : ''); };
+  geoWidget($('#geoBox', d), p.lat, p.lng, () => $('#city', d).value, $('#address', d));
   $('#x', d).onclick = closeDrawer;
   const collect = () => { const g = parseGeo($('#geo', d).value); return { title: $('#title', d).value, title_en: $('#title_en', d).value, city: $('#city', d).value, cats, kinds, images, summary: $('#summary', d).value, body: $('#body', d).value, lat: g?.[0] ?? null, lng: g?.[1] ?? null, address: $('#address', d).value, phone: $('#phone', d).value, website: $('#website', d).value }; };
   const save = async (status) => {
@@ -330,7 +384,7 @@ function editEvent(e) {
     <div class="f"><label>التفاصيل</label><textarea class="in" id="body">${h(plainBody(e.body))}</textarea></div>
     <div class="two"><div class="f"><label>المدينة</label><select class="in" id="city"><option value="">تلقائي من الموقع</option>${META.cities.map((c) => `<option value="${c.id}" ${e.city === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
     <div class="f"><label>المكان (العنوان)</label><input class="in" id="address" value="${h(e.address)}" placeholder="بوليفارد سيتي، الرياض"><small>أول جزء قبل الفاصلة يصير «منطقة الموسم»</small></div></div>
-    <div class="f"><label>الموقع على الخريطة</label><input class="in" id="geo" dir="ltr" placeholder="رابط قوقل ماب أو الإحداثيات" value="${e.lat ? e.lat + ', ' + e.lng : ''}"><small id="geoMsg"></small></div>
+    <div class="f"><label>الموقع على الخريطة</label><div id="geoBox"></div></div>
     <div class="two"><div class="f"><label>رابط التذاكر</label><input class="in" id="tickets" dir="ltr" value="${h(e.tickets)}"></div><div class="f"><label>رابط الفعالية</label><input class="in" id="link" dir="ltr" value="${h(e.link)}"></div></div>
     <div class="bar"><button class="btn" id="save">حفظ</button>${e.status !== 'live' ? '<button class="btn g" id="pub">حفظ وانشر</button>' : '<button class="btn ghost" id="unpub">رجّعها مسودة</button>'}
       ${!isNew && e.status !== 'hidden' ? '<button class="btn ghost" id="hide" style="color:var(--pinkDeep)">إخفاء</button>' : ''}${!isNew ? '<button class="btn ghost" id="dup">نسخة منها</button>' : ''}</div>`);
@@ -338,7 +392,7 @@ function editEvent(e) {
   const seasonSel = cats.filter((c) => /^(موسم|لحظات)/.test(c)), typeSel = cats.filter((c) => !/^(موسم|لحظات)/.test(c));
   chipsWidget($('#season', d), [...new Set([...SEASONS, ...META.eventCats.filter((c) => /^(موسم|لحظات)/.test(c))])], seasonSel, true);
   chipsWidget($('#cats', d), [...new Set([...EV_TYPES, ...META.eventCats.filter((c) => !/^(موسم|لحظات)/.test(c))])], typeSel, true);
-  $('#geo', d).oninput = (ev) => { const g = parseGeo(ev.target.value); $('#geoMsg', d).innerHTML = g ? `✓ ${g[0].toFixed(5)}, ${g[1].toFixed(5)}` : (ev.target.value ? '<span style="color:var(--pinkDeep)">ما قدرت أقرا الإحداثيات</span>' : ''); };
+  geoWidget($('#geoBox', d), e.lat, e.lng, () => $('#city', d).value, $('#address', d));
   $('#x', d).onclick = closeDrawer;
   const collect = () => { const g = parseGeo($('#geo', d).value); return { title: $('#title', d).value, start: fromLocal($('#start', d).value), end: fromLocal($('#end', d).value), all_day: $('#all_day', d).checked, cats: [...seasonSel, ...typeSel], images, summary: $('#summary', d).value, body: $('#body', d).value, city: $('#city', d).value, address: $('#address', d).value, lat: g?.[0] ?? null, lng: g?.[1] ?? null, tickets: $('#tickets', d).value, link: $('#link', d).value }; };
   const save = async (status, asNew) => {
