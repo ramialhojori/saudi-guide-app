@@ -94,7 +94,7 @@ export default function TripScreen() {
             ) : null}
           </View>
         ))}
-        <Pressable style={st.add} onPress={() => router.push('/search')}>
+        <Pressable style={st.add} onPress={() => router.push({ pathname: '/search', params: { add: 'trip', ...(real ? { city: places![0].city } : {}) } })}>
           <AppText style={{ fontFamily: font.semibold }} color={brand.purple}>+ أضف مكان لليوم {['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][day] ?? day + 1}</AppText>
         </Pressable>
         <View style={st.tip}>

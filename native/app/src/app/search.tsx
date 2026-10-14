@@ -8,7 +8,8 @@ import { HeartButton } from '@/components/HeartButton';
 import { Icon } from '@/components/Icon';
 import { Empty, Loading } from '@/components/State';
 import { Badge, Chip, ImageRow } from '@/components/ui';
-import { cityName, kindPlaces, nearby, search } from '@/lib/content';
+import { cityName, getCityPlaces, kindPlaces, nearby, search, weeklyPicks } from '@/lib/content';
+import { trip, useTrip } from '@/lib/trip';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, START } from '@/theme/tokens';
 
@@ -18,7 +19,10 @@ const TABS = ['الكل', 'أماكن', 'كوبونات', 'فعاليات', 'أ�
 /** البحث — مثل التصميم: الحقل فوق، تبويبات النتائج، الأماكن، وكوبون ومن المجتمع */
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ near?: string; kind?: string; q?: string }>();
+  const params = useLocalSearchParams<{ near?: string; kind?: string; q?: string; city?: string; add?: string }>();
+  const addMode = params.add === 'trip';
+  const { ids: tripIds } = useTrip();
+  const [sugg, setSugg] = useState<Place[]>([]);
   const [q, setQ] = useState(params.q ?? '');
   const [kind, setKind] = useState(params.kind);
   const [tab, setTab] = useState(0);
@@ -51,11 +55,18 @@ export default function SearchScreen() {
     return () => clearTimeout(t);
   }, [q, kind, params.near]);
 
-  const showExtras = q.trim().length > 1 && tab === 0;
+  // قبل ما يكتب: اقتراحات من مدينة رحلته، أو مختارات الأسبوع
+  useEffect(() => {
+    if (params.city) getCityPlaces(params.city).then((r) => setSugg(r.places.filter((p) => p.thumb || p.image).slice(0, 40))).catch(() => {});
+    else setSugg(weeklyPicks());
+  }, [params.city]);
+  const empty = !q.trim() && !kind && params.near !== '1';
+  const shown = empty ? sugg.filter((p) => !addMode || !tripIds.includes(p.id)) : list;
+  const showExtras = false;
   const head = useMemo(() => (
     <View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 14 }}>
-        {TABS.map((t, i) => <Chip key={t} label={i === 0 ? `${t} · ${list.length}` : i === 1 ? `${t} ${list.length}` : t} on={tab === i} onPress={() => setTab(i)} />)}
+        {TABS.map((t, i) => <Chip key={t} label={empty ? t : i === 0 ? `${t} · ${list.length}` : i === 1 ? `${t} ${list.length}` : t} on={tab === i} onPress={() => setTab(i)} />)}
       </ScrollView>
       {kind ? (
         <View style={st.kindRow}>
@@ -64,9 +75,11 @@ export default function SearchScreen() {
           <Pressable onPress={() => setKind(undefined)}><AppText variant="small" color={brand.purple}>إزالة</AppText></Pressable>
         </View>
       ) : null}
-      {list.length ? <View style={st.secRow}><AppText variant="section">أماكن</AppText><AppText variant="small" muted>{list.length} نتيجة</AppText></View> : null}
+      {empty && shown.length ? (
+        <View style={st.secRow}><AppText variant="section">{params.city ? `اقتراحات في ${cityName(params.city)}` : 'مقترحة لك'}</AppText><AppText variant="small" muted>{addMode ? 'اضغط + عشان تضيف' : 'أو اكتب فوق'}</AppText></View>
+      ) : list.length ? <View style={st.secRow}><AppText variant="section">أماكن</AppText><AppText variant="small" muted>{list.length} نتيجة</AppText></View> : null}
     </View>
-  ), [list.length, tab, kind]);
+  ), [list.length, tab, kind, empty, shown.length, params.city, addMode]);
 
   const foot = showExtras ? (
     <View>
@@ -89,13 +102,13 @@ export default function SearchScreen() {
       <View style={st.bar}>
         <View style={st.field}>
           <Icon name="search" color={brand.purple} size={20} strokeWidth={2.2} />
-          <TextInput value={q} onChangeText={setQ} autoFocus={!params.kind && params.near !== '1'} placeholder="مكان، مدينة، مطعم، فعالية..." placeholderTextColor={brand.faint} style={st.input} returnKeyType="search" />
+          <TextInput value={q} onChangeText={setQ} autoFocus={!params.kind && params.near !== '1' && !addMode} placeholder="مكان، مدينة، مطعم، فعالية..." placeholderTextColor={brand.faint} style={st.input} returnKeyType="search" />
           <Icon name="mic" color={brand.lilac} size={20} />
         </View>
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}><AppText style={{ fontFamily: font.semibold }} color={brand.purple}>إلغاء</AppText></Pressable>
       </View>
       <FlatList
-        data={tab <= 1 ? list : []}
+        data={tab <= 1 ? shown : []}
         keyExtractor={(p) => String(p.id)}
         ListHeaderComponent={head}
         ListFooterComponent={foot}
@@ -106,7 +119,12 @@ export default function SearchScreen() {
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <ImageRow img={item.thumb || undefined} cat={`${item.cat} · ${cityName(item.city)}`} catColor={kindStyle[item.kinds[0]]?.fg ?? brand.purple}
-              title={item.title} sub={item.km != null ? `${item.km} كم` : item.summary} right={<HeartButton id={item.id} />} onPress={() => router.push(`/place/${item.id}`)} />
+              title={item.title} sub={item.km != null ? `${item.km} كم` : item.summary}
+              right={addMode ? (
+                <Pressable onPress={() => trip.toggle(item.id)} style={[st.add, tripIds.includes(item.id) && { backgroundColor: brand.green }]} accessibilityLabel="أضف لرحلتي">
+                  <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{tripIds.includes(item.id) ? '✓' : '+ أضف'}</AppText>
+                </Pressable>
+              ) : <HeartButton id={item.id} />} onPress={() => router.push(`/place/${item.id}`)} />
           </View>
         )}
       />
@@ -121,6 +139,7 @@ const st = StyleSheet.create({
   kindRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, backgroundColor: '#fff', borderRadius: 16, padding: 10 },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   coupon: { marginHorizontal: 16, height: 86, borderRadius: 20, backgroundColor: brand.pink, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
+  add: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 12, height: 36, justifyContent: 'center', alignItems: 'center', minWidth: 56 },
   save: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   qa: { marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 20, padding: 14 },
 });
