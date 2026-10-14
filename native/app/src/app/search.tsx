@@ -134,12 +134,12 @@ export default function SearchScreen() {
 
 const st = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
-  field: { flex: 1, height: 54, backgroundColor: '#fff', borderWidth: 2, borderColor: brand.lilac, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: brand.ink, textAlign: INPUT_START, minWidth: 0 },
-  kindRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, backgroundColor: '#fff', borderRadius: 16, padding: 10 },
+  field: { flex: 1, height: 54, backgroundColor: brand.card, borderWidth: 2, borderColor: brand.lilac, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
+  input: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: brand.text, textAlign: INPUT_START, minWidth: 0 },
+  kindRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, backgroundColor: brand.card, borderRadius: 16, padding: 10 },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   coupon: { marginHorizontal: 16, height: 86, borderRadius: 20, backgroundColor: brand.pink, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
   add: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 12, height: 36, justifyContent: 'center', alignItems: 'center', minWidth: 56 },
-  save: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
-  qa: { marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 20, padding: 14 },
+  save: { backgroundColor: brand.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  qa: { marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 20, padding: 14 },
 });

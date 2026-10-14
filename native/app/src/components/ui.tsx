@@ -20,7 +20,7 @@ export function Chip({ label, on, color = brand.purple, onPress }: { label: stri
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: !!on }}
       style={[s.chip, { backgroundColor: on ? color : brand.white }]}>
-      <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={on ? '#fff' : brand.ink}>{label}</AppText>
+      <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={on ? '#fff' : brand.text}>{label}</AppText>
     </Pressable>
   );
 }
@@ -30,7 +30,7 @@ export function RoundButton({ icon, onPress, label, light = true, size = 44, col
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6}
       style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: light ? 'rgba(255,255,255,0.92)' : brand.white }}>
-      <Icon name={icon} color={color ?? brand.ink} size={20} />
+      <Icon name={icon} color={color ?? (light ? '#2B2745' : brand.text)} size={20} />
     </Pressable>
   );
 }
@@ -95,7 +95,7 @@ export function Pill({ label, bg, fg }: { label: string; bg: string; fg: string 
 export const s = StyleSheet.create({
   chip: { height: 38, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   sec: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  card: { backgroundColor: '#fff', borderRadius: radius.xl, padding: 16, marginHorizontal: 16 },
-  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, padding: 10 },
+  card: { backgroundColor: brand.card, borderRadius: radius.xl, padding: 16, marginHorizontal: 16 },
+  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: brand.card, borderRadius: 20, padding: 10 },
   rowImg: { width: 70, height: 70, borderRadius: 16 },
 });

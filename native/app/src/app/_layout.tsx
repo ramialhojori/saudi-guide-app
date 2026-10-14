@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { Appearance, DevSettings, I18nManager, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router } from 'expo-router';
 import { prefs } from '@/lib/prefs';
 import { StatusBar } from 'expo-status-bar';
@@ -11,7 +12,7 @@ import {
   IBMPlexSansArabic_600SemiBold,
   IBMPlexSansArabic_700Bold,
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
-import { colors } from '@/theme/tokens';
+import { colors, isDark } from '@/theme/tokens';
 
 // التطبيق عربي بالكامل: الاتجاه من اليمين دائماً (في النسخ المبنية يضبطه expo-localization في app.json)
 if (!I18nManager.isRTL) {
@@ -23,6 +24,15 @@ if (!I18nManager.isRTL) {
 if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.dir = 'rtl';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+/* الوضع الليلي: الألوان تنحسب أول ما يفتح التطبيق حسب إعداد الآيفون.
+   في نسخة التجربة: لو اخترت مظهر من الإعدادات نطبقه، ولو تغيّر إعداد الآيفون نعيد التحميل عشان تتبدل الألوان */
+if (__DEV__ && Platform.OS !== 'web') {
+  AsyncStorage.getItem('sg_scheme_v1').then((c) => {
+    if ((c === 'dark' || c === 'light') && (c === 'dark') !== isDark) { Appearance.setColorScheme?.(c); setTimeout(() => DevSettings.reload(), 50); }
+  }).catch(() => {});
+  Appearance.addChangeListener(({ colorScheme }) => { if ((colorScheme === 'dark') !== isDark) DevSettings.reload(); });
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({

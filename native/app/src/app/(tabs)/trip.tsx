@@ -81,7 +81,7 @@ export default function TripScreen() {
       <View style={st.days}>
         {days.map((_, i) => (
           <Pressable key={i} onPress={() => setDay(i)} onLongPress={() => real && days.length > 1 && Alert.alert(`اليوم ${i + 1}`, 'تشيل هاليوم؟ أماكنه تنتقل لليوم اللي قبله.', [{ text: 'إلغاء', style: 'cancel' }, { text: 'شيل اليوم', style: 'destructive', onPress: () => { trip.removeDay(i); setDay(Math.max(0, i - 1)); } }])} style={[st.day, i === day && st.dayOn]}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.ink} center>اليوم {i + 1}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.text} center>اليوم {i + 1}</AppText>
             <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? `${days[i].length} أماكن` : ['الخميس 22', 'الجمعة 23', 'السبت 24'][i]}</AppText>
           </Pressable>
         ))}
@@ -142,16 +142,16 @@ const st = StyleSheet.create({
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 22 },
   demo: { marginHorizontal: 16, marginTop: 14, flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: brand.softPurple, borderRadius: 16, padding: 12 },
   days: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 16 },
-  day: { flex: 1, backgroundColor: '#fff', borderRadius: 18, paddingVertical: 10 },
+  day: { flex: 1, backgroundColor: brand.card, borderRadius: 18, paddingVertical: 10 },
   dayAdd: { flex: 0, flexGrow: 0, flexShrink: 0, width: 64, minWidth: 64, backgroundColor: brand.softPurple, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.lilac },
   dayOn: { backgroundColor: brand.purple },
   num: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
-  stop: { flex: 1, flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 22, padding: 10 },
+  stop: { flex: 1, flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: brand.card, borderRadius: 22, padding: 10 },
   stopImg: { width: 74, height: 74, borderRadius: 16 },
   drive: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 15, paddingVertical: 6 },
   line: { width: 2, height: 26, backgroundColor: brand.line },
   add: { marginTop: 14, height: 54, borderRadius: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: '#CFC6DE', alignItems: 'center', justifyContent: 'center' },
   tip: { marginTop: 14, backgroundColor: brand.ink, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   tipIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
-  tipBtn: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
+  tipBtn: { backgroundColor: brand.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
 });

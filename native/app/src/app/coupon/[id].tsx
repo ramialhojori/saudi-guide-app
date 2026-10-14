@@ -92,7 +92,7 @@ export default function CouponDetail() {
 const st = StyleSheet.create({
   head: { paddingHorizontal: 16, paddingBottom: 26, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 80, height: 80, borderRadius: 24, borderWidth: 3, borderColor: '#fff', backgroundColor: '#fff' },
+  logo: { width: 80, height: 80, borderRadius: 24, borderWidth: 3, borderColor: '#fff', backgroundColor: brand.card },
   card: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.white, borderRadius: 22, padding: 16 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
   rowLine: { borderBottomWidth: 1, borderBottomColor: brand.chip },

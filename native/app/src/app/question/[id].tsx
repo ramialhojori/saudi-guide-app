@@ -196,15 +196,15 @@ export default function Question() {
 }
 
 const st = StyleSheet.create({
-  round: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  q: { margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 24, padding: 16 },
+  round: { width: 42, height: 42, borderRadius: 21, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
+  q: { margin: 16, marginBottom: 0, backgroundColor: brand.card, borderRadius: 24, padding: 16 },
   photo: { height: 260, borderRadius: 18, marginTop: 12, backgroundColor: brand.chip },
   place: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand.bg, borderRadius: 14, padding: 12 },
-  a: { backgroundColor: '#fff', borderRadius: 22, padding: 14 },
-  none: { backgroundColor: '#fff', borderRadius: 22, padding: 20, gap: 4 },
-  gone: { marginTop: 60, backgroundColor: '#fff', borderRadius: 24, padding: 24, gap: 8, alignItems: 'center' },
+  a: { backgroundColor: brand.card, borderRadius: 22, padding: 14 },
+  none: { backgroundColor: brand.card, borderRadius: 22, padding: 20, gap: 4 },
+  gone: { marginTop: 60, backgroundColor: brand.card, borderRadius: 24, padding: 24, gap: 8, alignItems: 'center' },
   btn: { marginTop: 8, backgroundColor: brand.purple, borderRadius: 14, paddingHorizontal: 20, height: 44, justifyContent: 'center' },
-  reply: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingTop: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: brand.line },
-  input: { flex: 1, minWidth: 0, minHeight: 44, maxHeight: 120, backgroundColor: brand.bg, borderRadius: 14, paddingHorizontal: 12, paddingTop: 11, paddingBottom: 8, fontFamily: font.regular, fontSize: 14.5, color: brand.ink, textAlign: INPUT_START },
+  reply: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingTop: 10, backgroundColor: brand.card, borderTopWidth: 1, borderTopColor: brand.line },
+  input: { flex: 1, minWidth: 0, minHeight: 44, maxHeight: 120, backgroundColor: brand.bg, borderRadius: 14, paddingHorizontal: 12, paddingTop: 11, paddingBottom: 8, fontFamily: font.regular, fontSize: 14.5, color: brand.text, textAlign: INPUT_START },
   send: { backgroundColor: brand.purple, borderRadius: 12, paddingHorizontal: 14, height: 44, justifyContent: 'center' },
 });

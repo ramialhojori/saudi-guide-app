@@ -137,11 +137,11 @@ const st = StyleSheet.create({
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 44 },
   live: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 6 },
   liveDot: { width: 8, height: 8, borderRadius: 4 },
-  panel: { marginHorizontal: 16, marginTop: -28, backgroundColor: '#fff', borderRadius: 24, padding: 14 },
+  panel: { marginHorizontal: 16, marginTop: -28, backgroundColor: brand.card, borderRadius: 24, padding: 14 },
   cbox: { borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4, minWidth: 58 },
   follow: { marginTop: 12, height: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   dayHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, padding: 10 },
+  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: brand.card, borderRadius: 20, padding: 10 },
   rowImg: { width: 80, height: 80, borderRadius: 16 },
 });

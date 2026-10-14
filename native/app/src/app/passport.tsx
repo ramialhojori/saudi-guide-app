@@ -102,9 +102,9 @@ const st = StyleSheet.create({
   head: { backgroundColor: brand.ink, paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, paddingTop: 18 },
   cell: { width: '33.33%', alignItems: 'center', paddingVertical: 8 },
-  stamp: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: '#fff' },
+  stamp: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: brand.card },
   next: { margin: 16, backgroundColor: brand.purple, borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   login: { margin: 16, marginBottom: 0, backgroundColor: brand.orange, borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  visit: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 16, padding: 12 },
+  visit: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.card, borderRadius: 16, padding: 12 },
   btn: { backgroundColor: brand.orange, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10 },
 });

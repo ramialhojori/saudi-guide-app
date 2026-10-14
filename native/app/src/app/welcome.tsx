@@ -58,7 +58,7 @@ export default function Welcome() {
             const on = kinds.includes(k.id); const ks = kindStyle[k.id] ?? { fg: brand.orangeDeep, bg: brand.softOrange };
             return (
               <Pressable key={k.id} onPress={() => setKinds(on ? kinds.filter((x) => x !== k.id) : [...kinds, k.id])}
-                style={[st.kind, { borderColor: on ? ks.fg : brand.line, borderWidth: on ? 2 : 1.5, backgroundColor: on ? ks.bg : '#fff' }]}>
+                style={[st.kind, { borderColor: on ? ks.fg : brand.line, borderWidth: on ? 2 : 1.5, backgroundColor: on ? ks.bg : brand.card }]}>
                 <Icon name={k.icon} color={ks.fg} size={28} />
                 <AppText variant="small" style={{ fontFamily: font.semibold }} center>{k.t}</AppText>
                 {on ? <View style={[st.tick, { backgroundColor: ks.fg }]}><Icon name="check" color="#fff" size={12} strokeWidth={3} /></View> : null}
@@ -104,9 +104,9 @@ const st = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 18 },
   kind: { width: '31%', height: 98, borderRadius: 20, alignItems: 'center', justifyContent: 'center', gap: 6 },
   tick: { position: 'absolute', top: 8, left: 8, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  cityBox: { marginTop: 8, height: 52, backgroundColor: '#fff', borderWidth: 1.5, borderColor: brand.line, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  footer: { position: 'absolute', left: 20, right: 20, bottom: 0, paddingTop: 12, backgroundColor: 'rgba(244,241,238,0.96)' },
+  cityBox: { marginTop: 8, height: 52, backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.line, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
+  footer: { position: 'absolute', left: 20, right: 20, bottom: 0, paddingTop: 12, backgroundColor: brand.bg },
   art: { width: 220, height: 220, marginTop: 34 },
-  artPin: { position: 'absolute', top: 70, left: 70, width: 80, height: 80, borderRadius: 28, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  artPin: { position: 'absolute', top: 70, left: 70, width: 80, height: 80, borderRadius: 28, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
   artSide: { position: 'absolute', width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

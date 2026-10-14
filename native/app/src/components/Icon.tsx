@@ -1,4 +1,5 @@
 import Svg, { Path } from 'react-native-svg';
+import { brand } from '@/theme/tokens';
 
 /** أيقونات خطية — نفس المسارات المستخدمة في لوحة التصميم */
 export const ICONS = {
@@ -61,7 +62,7 @@ export type IconName = keyof typeof ICONS | 'heartFill';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number; fill?: string };
 
-export function Icon({ name, size = 22, color = '#2B2745', strokeWidth = 2, fill }: Props) {
+export function Icon({ name, size = 22, color = brand.text, strokeWidth = 2, fill }: Props) {
   const d = ICONS[name === 'heartFill' ? 'heart' : name];
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">

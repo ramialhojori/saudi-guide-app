@@ -95,7 +95,7 @@ export default function Planner() {
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
           {[1, 2, 3, 4].map((n) => (
             <Pressable key={n} onPress={() => setDays(n)} style={[st.box, days === n && { backgroundColor: brand.purple }]}>
-              <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color={days === n ? '#fff' : brand.ink}>{n}</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color={days === n ? '#fff' : brand.text}>{n}</AppText>
               <AppText variant="tiny" color={days === n ? '#E2DAEE' : brand.muted}>{n === 1 ? 'يوم' : n === 2 ? 'يومين' : 'أيام'}</AppText>
             </Pressable>
           ))}
@@ -106,9 +106,9 @@ export default function Planner() {
           {kinds.map((k) => {
             const on = want.includes(k.id), ks = kindStyle[k.id] ?? kindStyle.sights;
             return (
-              <Pressable key={k.id} onPress={() => setWant(on ? want.filter((x) => x !== k.id) : [...want, k.id])} style={[st.kind, { backgroundColor: on ? ks.fg : '#fff' }]}>
+              <Pressable key={k.id} onPress={() => setWant(on ? want.filter((x) => x !== k.id) : [...want, k.id])} style={[st.kind, { backgroundColor: on ? ks.fg : brand.card }]}>
                 <Icon name={ks.icon as IconName} size={16} color={on ? '#fff' : ks.fg} />
-                <AppText variant="small" style={{ fontFamily: font.bold }} color={on ? '#fff' : brand.ink}>{k.name}</AppText>
+                <AppText variant="small" style={{ fontFamily: font.bold }} color={on ? '#fff' : brand.text}>{k.name}</AppText>
               </Pressable>
             );
           })}
@@ -118,7 +118,7 @@ export default function Planner() {
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
           {(Object.keys(PACE) as Pace[]).map((k) => (
             <Pressable key={k} onPress={() => setPace(k)} style={[st.box, { flex: 1 }, pace === k && { backgroundColor: brand.purple }]}>
-              <AppText style={{ fontFamily: font.bold }} color={pace === k ? '#fff' : brand.ink}>{PACE[k].label}</AppText>
+              <AppText style={{ fontFamily: font.bold }} color={pace === k ? '#fff' : brand.text}>{PACE[k].label}</AppText>
               <AppText variant="tiny" color={pace === k ? '#E2DAEE' : brand.muted}>{PACE[k].n} أماكن باليوم</AppText>
             </Pressable>
           ))}
@@ -136,12 +136,12 @@ export default function Planner() {
 const st = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   h: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 },
-  box: { minWidth: 70, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 18, paddingVertical: 12, paddingHorizontal: 12 },
+  box: { minWidth: 70, alignItems: 'center', justifyContent: 'center', backgroundColor: brand.card, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 12 },
   kind: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 14, height: 40 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
   cta: { height: 54, borderRadius: 18, backgroundColor: brand.purple, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
   edit: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
-  stop: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 20, padding: 10 },
+  stop: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.card, borderRadius: 20, padding: 10 },
   num: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   img: { width: 62, height: 62, borderRadius: 14, backgroundColor: brand.chip },
   drive: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 24 },

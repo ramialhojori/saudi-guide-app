@@ -37,7 +37,7 @@ export default function MoreScreen() {
   );
 }
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: radius.lg, paddingHorizontal: space.lg },
+  card: { backgroundColor: brand.card, borderRadius: radius.lg, paddingHorizontal: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   line: { borderTopWidth: 1, borderTopColor: colors.border },
   ic: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },

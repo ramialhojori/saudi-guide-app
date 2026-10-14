@@ -25,7 +25,7 @@ export default function Explore() {
 }
 
 const st = StyleSheet.create({
-  seg: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 4, gap: 4, shadowColor: '#140A28', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  seg: { flexDirection: 'row', backgroundColor: brand.card, borderRadius: 16, padding: 4, gap: 4, shadowColor: '#140A28', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   item: { flex: 1, height: 40, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   on: { backgroundColor: brand.purple },
 });

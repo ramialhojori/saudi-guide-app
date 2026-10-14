@@ -96,14 +96,14 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
 
 const st = StyleSheet.create({
   top: { position: 'absolute', top: 0, right: 16, left: 16 },
-  search: { height: 56, borderRadius: 20, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16,
+  search: { height: 56, borderRadius: 20, backgroundColor: brand.card, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16,
     shadowColor: '#2B2745', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  cityList: { marginTop: 8, backgroundColor: '#fff', borderRadius: 20, padding: 6, elevation: 6, shadowColor: '#2B2745', shadowOpacity: 0.15, shadowRadius: 14 },
+  cityList: { marginTop: 8, backgroundColor: brand.card, borderRadius: 20, padding: 6, elevation: 6, shadowColor: '#2B2745', shadowOpacity: 0.15, shadowRadius: 14 },
   cityRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
   dot: { width: 12, height: 12, borderRadius: 6 },
   side: { position: 'absolute', left: 16, gap: 10 },
-  fab: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#2B2745', shadowOpacity: 0.12, shadowRadius: 10 },
-  card: { position: 'absolute', right: 16, left: 16, bottom: 116, backgroundColor: '#fff', borderRadius: 26, padding: 12, flexDirection: 'row', gap: 12,
+  fab: { width: 48, height: 48, borderRadius: 16, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#2B2745', shadowOpacity: 0.12, shadowRadius: 10 },
+  card: { position: 'absolute', right: 16, left: 16, bottom: 116, backgroundColor: brand.card, borderRadius: 26, padding: 12, flexDirection: 'row', gap: 12,
     shadowColor: '#2B2745', shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
   cardImg: { width: 110, height: 130, borderRadius: 18 },
   btn: { flex: 1, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

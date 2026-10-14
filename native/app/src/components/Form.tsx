@@ -47,9 +47,9 @@ export const formSt = StyleSheet.create({
 
 const st = StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
-  input: { height: 50, borderWidth: 1.5, borderColor: brand.line, borderRadius: 14, paddingHorizontal: 14, fontFamily: font.regular, fontSize: 15, color: brand.text, backgroundColor: brand.white, textAlign: INPUT_START },
+  input: { minWidth: 0, height: 50, borderWidth: 1.5, borderColor: brand.line, borderRadius: 14, paddingHorizontal: 14, fontFamily: font.regular, fontSize: 15, color: brand.text, backgroundColor: brand.white, textAlign: INPUT_START },
   trow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11 },
   line: { borderBottomWidth: 1, borderBottomColor: brand.chip },
   sw: { width: 44, height: 26, borderRadius: 13 },
-  knob: { position: 'absolute', top: 3, width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
+  knob: { position: 'absolute', top: 3, width: 20, height: 20, borderRadius: 10, backgroundColor: brand.card },
 });

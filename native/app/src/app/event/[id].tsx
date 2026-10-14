@@ -125,9 +125,9 @@ const st = StyleSheet.create({
   count: { position: 'absolute', bottom: 50, right: 20, left: 20, flexDirection: 'row', alignItems: 'center', gap: 8 },
   cbox: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, minWidth: 62 },
   sheet: { marginTop: -30, backgroundColor: brand.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 22 },
-  info: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 20, padding: 12, marginTop: 12 },
+  info: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 20, padding: 12, marginTop: 12 },
   dir: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
-  going: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 20, padding: 12, marginTop: 16 },
+  going: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 20, padding: 12, marginTop: 16 },
   goBtn: { backgroundColor: brand.pink, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, backgroundColor: 'rgba(244,241,238,0.96)' },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
 });

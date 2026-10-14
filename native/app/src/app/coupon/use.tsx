@@ -56,7 +56,7 @@ export default function CouponUse() {
         <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>بالعافية! لا تنسى تقيّم المكان بعدين.</AppText>
         <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
           {c?.biz?.placeId ? <Button label="قيّم المكان" bg="rgba(255,255,255,0.2)" onPress={() => router.replace({ pathname: '/review/[id]', params: { id: String(c.biz!.placeId) } })} /> : null}
-          <Button label="تمام" bg="#fff" fg={brand.green} onPress={() => router.back()} />
+          <Button label="تمام" bg={brand.card} fg={brand.green} onPress={() => router.back()} />
         </View>
       </View>
     );
@@ -108,8 +108,8 @@ const st = StyleSheet.create({
   close: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
   pill: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   logo: { width: 76, height: 76, borderRadius: 24, borderWidth: 3, borderColor: brand.orange },
-  box: { marginTop: 28, alignSelf: 'center', width: 300, backgroundColor: '#fff', borderRadius: 28, paddingVertical: 22 },
+  box: { marginTop: 28, alignSelf: 'center', width: 300, backgroundColor: brand.card, borderRadius: 28, paddingVertical: 22 },
   digits: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 12, direction: 'ltr' },
-  digit: { width: 52, height: 66, borderRadius: 16, backgroundColor: '#F4F1EE', alignItems: 'center', justifyContent: 'center' },
-  doneIcon: { alignSelf: 'center', width: 110, height: 110, borderRadius: 55, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  digit: { width: 52, height: 66, borderRadius: 16, backgroundColor: brand.bg, alignItems: 'center', justifyContent: 'center' },
+  doneIcon: { alignSelf: 'center', width: 110, height: 110, borderRadius: 55, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
 });

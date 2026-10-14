@@ -43,7 +43,7 @@ export function GuideScreen({ asTab, toggle }: { asTab?: boolean; toggle?: React
           <AppText variant="title">{asTab ? 'استكشف' : 'الدليل'}</AppText>
           <AppText variant="small" muted>{cities.length} وجهة · {total.toLocaleString('en')} مكان</AppText>
         </View>
-        <Pressable style={st.searchBtn} onPress={() => router.push('/search')} accessibilityLabel="بحث"><Icon name="search" color={brand.ink} size={20} /></Pressable>
+        <Pressable style={st.searchBtn} onPress={() => router.push('/search')} accessibilityLabel="بحث"><Icon name="search" color={brand.text} size={20} /></Pressable>
       </View>
       {toggle ? <View style={{ paddingHorizontal: 16, paddingTop: 14 }}>{toggle}</View> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 14 }}>
@@ -97,12 +97,12 @@ function CityTile({ c, wide, tag }: { c: City; wide?: boolean; tag?: string }) {
 
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
-  searchBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  searchBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10, paddingHorizontal: 16, paddingTop: 10 },
   tile: { borderRadius: 24, overflow: 'hidden', backgroundColor: brand.ink },
   tag: { position: 'absolute', top: 12, right: 12, backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 },
   colorBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 5 },
-  restChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderRadius: 999, paddingHorizontal: 12, height: 38 },
+  restChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: brand.card, borderRadius: 999, paddingHorizontal: 12, height: 38 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   plan: { margin: 16, marginTop: 22, backgroundColor: brand.ink, borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   planBtn: { backgroundColor: brand.orange, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10 },

@@ -42,7 +42,7 @@ export default function CityScreen() {
         <LinearGradient colors={['rgba(32,22,54,0.1)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />
-          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={brand.ink} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>الخريطة</AppText></Pressable>
+          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={brand.text} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>الخريطة</AppText></Pressable>
         </View>
         <View style={st.heroTx}>
           <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>دليل</AppText>
@@ -128,8 +128,8 @@ const st = StyleSheet.create({
   mapBtn: { flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, paddingHorizontal: 14 },
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 20 },
   glassPill: { backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  search: { marginHorizontal: 16, marginTop: 16, height: 54, backgroundColor: '#fff', borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, minWidth: 0, fontFamily: font.regular, fontSize: 15, color: brand.ink, textAlign: INPUT_START },
+  search: { marginHorizontal: 16, marginTop: 16, height: 54, backgroundColor: brand.card, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
+  input: { flex: 1, minWidth: 0, fontFamily: font.regular, fontSize: 15, color: brand.text, textAlign: INPUT_START },
   kchip: { height: 38, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12 },
   grid: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },

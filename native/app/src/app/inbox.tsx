@@ -88,7 +88,7 @@ export default function Inbox() {
                 {g.map((n) => {
                   const lk = LOOK[n.type] || LOOK.system;
                   return (
-                    <Pressable key={n.id} style={[st.row, !n.read && { backgroundColor: '#fff' }]} onPress={() => n.postId && router.push(`/question/${n.postId}`)}>
+                    <Pressable key={n.id} style={[st.row, !n.read && { backgroundColor: brand.card }]} onPress={() => n.postId && router.push(`/question/${n.postId}`)}>
                       <Badge icon={lk.icon} bg={lk.bg} fg={lk.fg} size={44} r={15} />
                       <View style={{ flex: 1 }}>
                         <AppText style={{ fontFamily: n.read ? font.semibold : font.bold, fontSize: 14.5 }}>{title(n)}</AppText>
@@ -112,6 +112,6 @@ export default function Inbox() {
 const st = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', padding: 14, borderRadius: 20 },
   dot: { width: 9, height: 9, borderRadius: 5, marginTop: 6 },
-  empty: { margin: 16, backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center', gap: 8 },
+  empty: { margin: 16, backgroundColor: brand.card, borderRadius: 24, padding: 24, alignItems: 'center', gap: 8 },
   btn: { marginTop: 8, backgroundColor: brand.purple, borderRadius: 16, paddingHorizontal: 22, height: 46, justifyContent: 'center' },
 });

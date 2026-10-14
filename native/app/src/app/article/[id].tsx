@@ -8,7 +8,7 @@ import { Empty, Loading } from '@/components/State';
 import { getArticle } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
-import { radius, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,5 +29,5 @@ export default function ArticleScreen() {
 const styles = StyleSheet.create({
   img: { width: '100%', height: 240, backgroundColor: '#E8E3EE' },
   body: { padding: space.lg, gap: space.md, paddingBottom: 120 },
-  card: { backgroundColor: '#fff', borderRadius: radius.lg, padding: space.lg },
+  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.lg },
 });

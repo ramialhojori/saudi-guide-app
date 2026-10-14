@@ -93,7 +93,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
 
       {/* الأنواع */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 16 }}>
-        <TypeChip t="الكل" icon="cal" fg={brand.ink} bg="#fff" on={!type} onPress={() => setType(null)} />
+        <TypeChip t="الكل" icon="cal" fg={brand.text} bg={brand.card} on={!type} onPress={() => setType(null)} />
         {types.map((t) => <TypeChip key={t.id} t={t.t} icon={t.icon} fg={t.fg} bg={t.bg} on={type === t.id} onPress={() => setType(type === t.id ? null : t.id)} />)}
       </ScrollView>
 
@@ -128,7 +128,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
           <View style={st.cityList}>
             {[null, ...cities].map((c) => (
               <Pressable key={c ?? 'all'} onPress={() => { setCity(c); setPickCity(false); }} style={st.cityRow}>
-                <AppText style={{ flex: 1, fontFamily: c === city ? font.bold : font.regular }} color={c === city ? brand.purple : brand.ink}>{c ? cityName(c) : 'كل المدن'}</AppText>
+                <AppText style={{ flex: 1, fontFamily: c === city ? font.bold : font.regular }} color={c === city ? brand.purple : brand.text}>{c ? cityName(c) : 'كل المدن'}</AppText>
                 <AppText variant="tiny" muted>{events.filter((e) => !c || e.city === c).length}</AppText>
               </Pressable>
             ))}
@@ -232,20 +232,20 @@ const st = StyleSheet.create({
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   whenRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
   when: { flex: 1, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 16, paddingVertical: 8 },
-  whenOn: { backgroundColor: '#fff' },
+  whenOn: { backgroundColor: brand.card },
   type: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 42, borderRadius: 14, paddingHorizontal: 14 },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   seasonCard: { width: 270, height: 170, borderRadius: 24, overflow: 'hidden' },
   seasonLive: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   liveDot: { width: 8, height: 8, borderRadius: 4 },
-  cityBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 16, height: 48, paddingHorizontal: 14 },
-  cityList: { marginTop: 6, backgroundColor: '#fff', borderRadius: 16, padding: 6 },
+  cityBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 16, height: 48, paddingHorizontal: 14 },
+  cityList: { marginTop: 6, backgroundColor: brand.card, borderRadius: 16, padding: 6 },
   cityRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },
   top: { marginHorizontal: 16, marginTop: 16, height: 280, borderRadius: 28, overflow: 'hidden', backgroundColor: brand.ink },
-  dateBox: { position: 'absolute', top: 14, left: 14, width: 56, backgroundColor: '#fff', borderRadius: 16, paddingVertical: 6 },
+  dateBox: { position: 'absolute', top: 14, left: 14, width: 56, backgroundColor: brand.card, borderRadius: 16, paddingVertical: 6 },
   dayHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   dayDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: brand.orange },
-  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, padding: 10 },
+  row: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: brand.card, borderRadius: 20, padding: 10 },
   rowImg: { width: 80, height: 80, borderRadius: 16 },
-  card: { width: 200, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
+  card: { width: 200, backgroundColor: brand.card, borderRadius: 20, overflow: 'hidden' },
 });

@@ -52,7 +52,7 @@ export default function Login() {
             <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' ? 'المتابعة مع Apple' : 'Apple على الآيفون فقط'}</AppText>
           </Pressable>
         )}
-        <View style={[st.btn, { backgroundColor: '#fff', borderWidth: 1.5, borderColor: brand.line }]}>
+        <View style={[st.btn, { backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.line }]}>
           <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#4285F4">G</AppText>
           <AppText style={st.btnTx}>المتابعة مع Google</AppText>
           <View style={st.soon}><AppText variant="tiny" color={brand.purple}>قريباً</AppText></View>
@@ -85,10 +85,10 @@ const st = StyleSheet.create({
   blob1: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(248,151,67,0.18)', top: -60, left: -80 },
   blob2: { position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(235,131,155,0.18)', bottom: -40, right: -40 },
   close: { position: 'absolute', left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
-  mark: { width: 76, height: 76, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  mark: { width: 76, height: 76, borderRadius: 22, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
   btn: { height: 56, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   btnTx: { fontFamily: font.bold, fontSize: 16 },
   soon: { position: 'absolute', left: 14, backgroundColor: brand.chip, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  perks: { marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 20, padding: 14, gap: 10 },
+  perks: { marginHorizontal: 20, backgroundColor: brand.card, borderRadius: 20, padding: 14, gap: 10 },
   terms: { position: 'absolute', left: 30, right: 30 },
 });

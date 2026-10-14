@@ -83,7 +83,7 @@ export default function Ask() {
           {KINDS.map(([k, label, icon]) => (
             <Pressable key={k} onPress={() => setKind(k)} style={[st.kind, kind === k && { backgroundColor: brand.purple }]}>
               <Icon name={icon} size={18} color={kind === k ? '#fff' : brand.purple} />
-              <AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={kind === k ? '#fff' : brand.ink}>{label}</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={kind === k ? '#fff' : brand.text}>{label}</AppText>
             </Pressable>
           ))}
         </View>
@@ -137,14 +137,14 @@ const st = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   post: { backgroundColor: brand.orange, borderRadius: 14, paddingHorizontal: 20, height: 42, justifyContent: 'center', minWidth: 76, alignItems: 'center' },
   kinds: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
-  kind: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 46, borderRadius: 16, backgroundColor: '#fff' },
-  card: { margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 24, padding: 14 },
-  input: { minHeight: 130, marginTop: 12, fontFamily: font.regular, fontSize: 16, lineHeight: 28, color: brand.ink, textAlign: INPUT_START, textAlignVertical: 'top' },
+  kind: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 46, borderRadius: 16, backgroundColor: brand.card },
+  card: { margin: 16, marginBottom: 0, backgroundColor: brand.card, borderRadius: 24, padding: 14 },
+  input: { minHeight: 130, marginTop: 12, fontFamily: font.regular, fontSize: 16, lineHeight: 28, color: brand.text, textAlign: INPUT_START, textAlignVertical: 'top' },
   photoWrap: { marginTop: 10, borderRadius: 18, overflow: 'hidden' },
   photoX: { position: 'absolute', top: 10, left: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   media: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 44, borderRadius: 14, backgroundColor: brand.softPink },
   rules: { margin: 16, marginTop: 22, backgroundColor: brand.softPurple, borderRadius: 18, padding: 14, gap: 2 },
-  gate: { marginTop: 60, backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center', gap: 8 },
+  gate: { marginTop: 60, backgroundColor: brand.card, borderRadius: 24, padding: 24, alignItems: 'center', gap: 8 },
   gateIcon: { width: 64, height: 64, borderRadius: 22, backgroundColor: brand.softPurple, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   send: { marginTop: 10, backgroundColor: brand.purple, borderRadius: 16, paddingHorizontal: 24, height: 48, justifyContent: 'center' },
 });

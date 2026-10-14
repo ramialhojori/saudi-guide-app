@@ -216,8 +216,8 @@ const st = StyleSheet.create({
   coverTop: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   guest: { marginHorizontal: 16, marginTop: -60, backgroundColor: brand.orange, borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  guestBtn: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
-  card: { marginHorizontal: 16, marginTop: -60, backgroundColor: '#fff', borderRadius: 28, padding: 18 },
+  guestBtn: { backgroundColor: brand.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
+  card: { marginHorizontal: 16, marginTop: -60, backgroundColor: brand.card, borderRadius: 28, padding: 18 },
   avRing: { borderWidth: 3, borderColor: brand.orange, borderRadius: 50, padding: 3 },
   lvl: { position: 'absolute', bottom: -6, alignSelf: 'center', backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
   bar: { height: 10, borderRadius: 5, backgroundColor: brand.chip, marginTop: 6, overflow: 'hidden' },
@@ -232,5 +232,5 @@ const st = StyleSheet.create({
   code: { width: 90, alignItems: 'center', justifyContent: 'center', gap: 8, borderRightWidth: 2, borderStyle: 'dashed', borderRightColor: 'rgba(255,255,255,0.55)', backgroundColor: 'rgba(0,0,0,0.06)' },
   biz: { margin: 16, marginBottom: 0, backgroundColor: brand.purple, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
-  act: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 18, padding: 12 },
+  act: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.card, borderRadius: 18, padding: 12 },
 });

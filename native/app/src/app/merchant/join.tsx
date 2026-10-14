@@ -104,8 +104,8 @@ export default function MerchantJoin() {
             </Field>
             <Field label="اسم النشاط" hint="عربي وإنجليزي">
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Input style={{ flex: 1 }} value={name} onChangeText={setName} placeholder="بالعربي" maxLength={80} />
-                <Input style={{ flex: 1, textAlign: 'left' }} value={nameEn} onChangeText={setNameEn} placeholder="English" maxLength={80} autoCapitalize="words" />
+                <View style={{ flex: 1 }}><Input value={name} onChangeText={setName} placeholder="بالعربي" maxLength={80} /></View>
+                <View style={{ flex: 1 }}><Input style={{ textAlign: 'left' }} value={nameEn} onChangeText={setNameEn} placeholder="English" maxLength={80} autoCapitalize="words" /></View>
               </View>
             </Field>
             <Field label="المدينة">
