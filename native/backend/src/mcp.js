@@ -46,6 +46,24 @@ async function issueTokens(env, clientId) {
   return { access_token: access, token_type: 'Bearer', expires_in: 30 * 86400, refresh_token: refresh, scope: 'admin' };
 }
 
+/** العميل: إما مسجّل عندنا (DCR) أو client_id رابط https لوثيقة تعريف (CIMD — «الهوية المنشورة» لـClaude) */
+async function getClient(env, id) {
+  const row = await env.DB.prepare('SELECT * FROM oauth_clients WHERE id=?').bind(id).first();
+  if (!/^https:\/\/[^/]+\/./.test(id)) return row;
+  if (row && now() - row.created < 86400) return row;
+  try {
+    const r = await fetch(id, { headers: { Accept: 'application/json' }, redirect: 'follow', cf: { cacheTtl: 300 } });
+    if (!r.ok) return row;
+    const d = await r.json();
+    if (d.client_id && d.client_id !== id) return row;
+    const redirects = (Array.isArray(d.redirect_uris) ? d.redirect_uris : []).map(String).filter((u) => /^https:\/\//.test(u)).slice(0, 10);
+    if (!redirects.length) return row;
+    await env.DB.prepare('INSERT INTO oauth_clients (id,name,redirects,created) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, redirects=excluded.redirects, created=excluded.created')
+      .bind(id, String(d.client_name || '').slice(0, 100), JSON.stringify(redirects), now()).run();
+    return { id, name: d.client_name || '', redirects: JSON.stringify(redirects) };
+  } catch { return row; }
+}
+
 function authorizePage(params, err) {
   const hidden = ['client_id', 'redirect_uri', 'state', 'code_challenge', 'code_challenge_method', 'response_type', 'scope'].map((k) => `<input type="hidden" name="${k}" value="${esc(params.get(k) || '')}">`).join('');
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
@@ -183,7 +201,7 @@ export async function mcpRoute(p, request, env) {
 
   if (p === '/oauth/authorize') {
     const params = M === 'POST' ? new URLSearchParams(await request.text()) : new URL(request.url).searchParams;
-    const client = await env.DB.prepare('SELECT * FROM oauth_clients WHERE id=?').bind(params.get('client_id') || '').first();
+    const client = await getClient(env, params.get('client_id') || '');
     const redirect = params.get('redirect_uri') || '';
     const html = (h, s = 200) => new Response(h, { status: s, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer' } });
     if (!client || !JSON.parse(client.redirects).includes(redirect)) return html('<p dir="rtl">رابط الربط غير صالح. ارجع لـClaude وجرّب الربط من جديد.</p>', 400);
@@ -209,6 +227,8 @@ export async function mcpRoute(p, request, env) {
   if (p === '/oauth/token' && M === 'POST') {
     const ct = request.headers.get('Content-Type') || '';
     const b = ct.includes('json') ? await request.json().catch(() => ({})) : Object.fromEntries(new URLSearchParams(await request.text()));
+    const basic = (request.headers.get('Authorization') || '').match(/^Basic (.+)$/);
+    if (basic && !b.client_id) { try { b.client_id = decodeURIComponent(atob(basic[1]).split(':')[0]); } catch {} }
     if (b.grant_type === 'authorization_code') {
       const row = await env.DB.prepare('SELECT * FROM oauth_codes WHERE code=?').bind(await sha(b.code || '')).first();
       if (!row || row.exp < now() || row.client_id !== b.client_id || row.redirect !== b.redirect_uri) return json({ error: 'invalid_grant' }, 400);
