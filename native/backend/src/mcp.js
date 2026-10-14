@@ -10,6 +10,8 @@ import { merchantAdmin } from './merchants.js';
 import { reviewsAdmin } from './reviews.js';
 import { contribAdmin } from './contrib.js';
 import { messagesAdmin } from './messages.js';
+import { communityAdmin, guideAdmin } from './community.js';
+import { dashboard } from './track.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const enc = new TextEncoder();
@@ -124,6 +126,54 @@ const TOOLS = [
   ['list_merchants', 'طلبات التجار (pending|approved|rejected|hidden|all).', S({ status: str('') }), (a) => ['GET', '/admin/merchants?' + qs(a)]],
   ['list_coupons', 'الكوبونات (pending|active|paused|all).', S({ status: str('') }), (a) => ['GET', '/admin/coupons?' + qs(a)]],
   ['list_photos', 'صور الزوار (pending|approved|rejected).', S({ status: str('') }), (a) => ['GET', '/admin/photos?' + qs(a)]],
+
+  /* —— لوحة التحكم —— */
+  ['dashboard', 'لوحة الرئيسية الكاملة: النشطين (اليوم/7/30 يوم)، أكثر الأماكن والبحث، «بحثوا وما لقوا»، المدن، المنصات، الفعاليات القادمة، والمسودات القريبة.', S({}), () => ['GET', '/admin/dashboard']],
+  ['sync_status', 'آخر عمليات المزامنة.', S({}), () => ['GET', '/admin/status']],
+  ['get_article', 'تفاصيل خبر.', S({ id: num('') }, ['id']), (a) => ['GET', `/admin/articles/${+a.id}`]],
+  ['update_article', 'يعدّل خبر: أرسل بس الحقول اللي تتغير.', S({ id: num(''), title: str(''), author: str(''), summary: str(''), body: str(''), images: { type: 'array', items: { type: 'string' } }, cats: { type: 'array', items: { type: 'string' } } }, ['id']), null, 'article'],
+
+  /* —— اسأل أهل المدينة (المجتمع) —— */
+  ['community_list', 'مشاركات «اسأل أهل المدينة»: أسئلة ونصائح وصور. unanswered=true للأسئلة اللي ما أحد جاوبها. status: visible (الافتراضي) | hidden | all.', S({ city: CITY, kind: str('question|tip|photo'), unanswered: { type: 'boolean' }, status: str(''), q: str('بحث في النص'), limit: num('حتى 100') }), (a) => ['GET', '/admin/community/list?' + qs(a)]],
+  ['community_thread', 'سؤال/مشاركة مع كل الإجابات.', S({ id: num('رقم المشاركة') }, ['id']), (a) => ['GET', '/admin/community/thread?id=' + +a.id]],
+  ['community_answer', 'يرد على سؤال باسم «فريق دليل السعودية» (شارة فريق الدليل) ويوصل إشعار لصاحب السؤال. اكتب رد مفيد ودقيق بلهجة ودودة، بدون أرقام جوال أو روابط تجارية.', S({ postId: num(''), text: str('نص الرد') }, ['postId', 'text']), (a) => ['POST', '/admin/community/answer', a]],
+  ['community_post', 'ينشر سؤال أو نصيحة أو صورة باسم «فريق دليل السعودية» (يظهر مباشرة في المجتمع — استخدمه بس لما رامي يطلب أو يوافق على النص).', S({ kind: str('question|tip|photo'), city: CITY, placeId: num('رقم مكان مرتبط (اختياري)'), text: str(''), photo: str('رابط صورة (لـphoto)') }, ['text']), (a) => ['POST', '/admin/community/post', a]],
+  ['community_best', 'يختار أفضل إجابة لسؤال (+15 نقطة لصاحبها). answerId فاضي = إلغاء الاختيار.', S({ postId: num(''), answerId: num('') }, ['postId']), (a) => ['POST', '/admin/community/best', a]],
+  ['community_reported', 'المشاركات والإجابات المبلّغ عنها.', S({}), () => ['GET', '/admin/community/reported']],
+  ['community_moderate', 'يخفي أو يُظهر مشاركة أو إجابة (ما نحذف). target: p (مشاركة) | a (إجابة).', S({ target: str('p|a'), id: num(''), hidden: { type: 'boolean' } }, ['target', 'id', 'hidden']), (a) => ['POST', '/admin/community/moderate', a]],
+  ['get_challenge', 'تحدي الأسبوع الحالي.', S({}), () => ['GET', '/admin/challenge']],
+  ['set_challenge', 'يضبط تحدي الأسبوع (title, prize, tag, photo, city, end ISO) أو clear=true لإلغائه. يظهر للزوار مباشرة.', S({ title: str(''), prize: str(''), tag: str('وسم بدون #'), photo: str(''), city: CITY, end: str('ISO مع +03:00'), clear: { type: 'boolean' } }), (a) => ['POST', '/admin/challenge', a]],
+
+  /* —— المستخدمين والمرشدين والأوسمة —— */
+  ['list_users', 'المستخدمين (حتى 100، الأعلى نقاط). q: اسم أو رقم.', S({ q: str('') }), (a) => ['GET', '/admin/users?' + qs(a)]],
+  ['set_user_role', 'يغيّر دور مستخدم: user | guide (مرشد موثّق) | admin (فريق الدليل). ⚠️ بس بطلب رامي.', S({ userId: str(''), role: str('user|guide|admin') }, ['userId', 'role']), (a) => ['POST', '/admin/community/role', a]],
+  ['list_guide_requests', 'طلبات «مرشد موثّق» مع إحصاءات كل متقدم.', S({}), () => ['GET', '/admin/guides']],
+  ['decide_guide_request', 'يقبل أو يرفض طلب مرشد موثّق (يوصله إشعار). ⚠️ القرار لرامي.', S({ userId: str(''), status: str('approved|rejected'), note: str('سبب الرفض (اختياري)') }, ['userId', 'status']), (a) => ['POST', `/admin/guides/${encodeURIComponent(a.userId)}`, { status: a.status, note: a.note }]],
+  ['badges', 'الأوسمة وعدد اللي حصلوا على كل وسام.', S({}), () => ['GET', '/admin/badges']],
+  ['heroes', 'أبطال المساهمة (الأكثر مساهمة) — عام أو لمدينة.', S({ city: CITY }), (a) => ['GET', '/admin/heroes?' + qs(a)]],
+  ['honor_heroes', 'يكرّم مستخدمين: إشعار تهنئة + نقاط إضافية (حتى 500). ⚠️ لازم confirmed=true وبس بعد موافقة رامي على الأسماء والنقاط والنص.', S({ userIds: { type: 'array', items: { type: 'string' } }, bonus: num(''), text: str(''), confirmed: { type: 'boolean' } }, ['userIds', 'confirmed']), null, 'honor'],
+
+  /* —— اقتراحات الزوار وصورهم وتقييماتهم —— */
+  ['decide_suggestion', 'يقبل أو يرفض اقتراح زائر. new → مكان مسودة (+15)، edit → يطبق الحقول (apply: title, phone, website, address, geo) (+5)، closed → يخفي المكان (+5).', S({ id: num(''), status: str('approved|rejected'), note: str(''), apply: { type: 'array', items: { type: 'string' } } }, ['id', 'status']), (a) => ['POST', `/admin/suggestions/${+a.id}`, a]],
+  ['decide_photos', 'يقبل أو يرفض صور زوار (حتى 200 مرة وحدة). القبول +5 نقاط.', S({ ids: { type: 'array', items: { type: 'number' } }, status: str('approved|rejected'), note: str('') }, ['ids', 'status']), (a) => ['POST', '/admin/photos/bulk', a]],
+  ['list_reviews', 'تقييمات الأماكن: visible | hidden | reported.', S({ status: str('') }), (a) => ['GET', '/admin/reviews?' + qs(a)]],
+  ['set_review_status', 'يخفي أو يُظهر تقييم.', S({ id: num(''), status: str('visible|hidden') }, ['id', 'status']), (a) => ['POST', `/admin/reviews/${+a.id}`, { status: a.status }]],
+
+  /* —— التجار والكوبونات —— */
+  ['decide_merchant', 'يحدّث طلب تاجر: status (pending|approved|rejected|hidden)، verified، maxCoupons (0-20)، placeId (ربط بمكان)، note. القبول/الرفض يوصل التاجر إشعار. ⚠️ القبول لرامي.', S({ id: num(''), status: str(''), verified: { type: 'boolean' }, maxCoupons: num(''), placeId: num(''), note: str(''), lat: num(''), lng: num('') }, ['id']), (a) => ['POST', `/admin/merchants/${+a.id}`, a]],
+  ['decide_coupon', 'يحدّث كوبون: status (pending|active|paused|rejected|hidden)، note. ⚠️ التفعيل لرامي.', S({ id: num(''), status: str(''), note: str('') }, ['id']), (a) => ['POST', `/admin/coupons/${+a.id}`, a]],
+  ['list_coupon_reports', 'بلاغات العملاء على الكوبونات (pending|confirmed|dismissed).', S({ status: str('') }), (a) => ['GET', '/admin/coupon-reports?' + qs(a)]],
+  ['decide_coupon_report', 'يأكد البلاغ (confirmed: إنذار للتاجر +20 نقطة للمبلّغ، 3 إنذارات = إيقاف) أو يرفضه (dismissed). ⚠️ القرار لرامي.', S({ id: num(''), status: str('confirmed|dismissed') }, ['id', 'status']), (a) => ['POST', `/admin/coupon-reports/${+a.id}`, a]],
+
+  /* —— الرسائل والإشعارات —— */
+  ['list_messages', 'الرسائل المرسلة والمجدولة وعدد الأجهزة.', S({}), () => ['GET', '/admin/messages']],
+  ['estimate_message', 'كم شخص بتوصله الرسالة (cities، segment: all|inactive|new|guides|merchants).', S({ cities: { type: 'array', items: { type: 'string' } }, segment: str('') }), (a) => ['POST', '/admin/messages/estimate', a]],
+  ['send_message', 'يرسل أو يجدول رسالة/إشعار للمستخدمين (title حتى 60، text حتى 178، link مثل /event/123، cities، segment، at ISO مع +03:00 للجدولة، push، inapp). ساعات الهدوء 23:00-08:00 مكة تتأجل تلقائياً. ⚠️ لازم confirmed=true وبس بعد ما يوافق رامي على النص والجمهور والوقت بالحرف.', S({ title: str(''), text: str(''), link: str(''), cities: { type: 'array', items: { type: 'string' } }, segment: str(''), at: str(''), push: { type: 'boolean' }, inapp: { type: 'boolean' }, confirmed: { type: 'boolean' } }, ['text', 'confirmed']), null, 'send'],
+  ['cancel_message', 'يلغي رسالة مجدولة ما انرسلت.', S({ id: num('') }, ['id']), (a) => ['POST', `/admin/messages/${+a.id}/cancel`, {}]],
+
+  /* —— مفاتيح الميزات —— */
+  ['get_features', 'مفاتيح الميزات في التطبيق (شغالة/مخفية) مع أسمائها.', S({}), () => ['GET', '/admin/features']],
+  ['set_features', 'يشغّل أو يخفي ميزات: {coupons: true, guides: false, ...}. يظهر في التطبيق خلال 5 دقايق. ⚠️ بطلب رامي.', S({ features: { type: 'object', additionalProperties: { type: 'boolean' } } }, ['features']), (a) => ['POST', '/admin/features', a.features || {}]],
 ];
 const qs = (a) => new URLSearchParams(Object.entries(a || {}).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => [k, String(v)])).toString();
 
@@ -137,7 +187,13 @@ async function adminCall(env, origin, method, path, body) {
     await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
     return { ok: true, count: (body.pool || []).length };
   }
-  const r = (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q));
+  if (p === '/admin/dashboard') return dashboard(env);
+  if (p === '/admin/status') {
+    const last = await env.DB.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 5').all();
+    return { sync: last.results };
+  }
+  const r = (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
+    || (await guideAdmin(p, req, env, J)) || (p.startsWith('/admin/community/') ? await communityAdmin(p, req, env, J) : null);
   if (!r) throw new Error('not_found');
   if (r.__s >= 400) throw new Error(r.d?.error || 'error_' + r.__s);
   return r.d;
@@ -153,6 +209,21 @@ async function callTool(env, origin, name, args) {
     if (kind === 'place' && !args.body) merged.body = cur.body; // نخلي الوصف HTML مثل ما هو
     const r = await adminCall(env, origin, 'PUT', `/admin/${kind}s/${+args.id}`, merged);
     return r;
+  }
+  if (t[4] === 'send' || t[4] === 'honor') {
+    if (args.confirmed !== true) throw new Error('needs_confirmation: اعرض النص والجمهور على رامي وخذ موافقته، وبعدها أرسل confirmed=true');
+    const { confirmed, ...rest } = args;
+    if (t[4] === 'send') {
+      const est = await adminCall(env, origin, 'POST', '/admin/messages/estimate', { cities: rest.cities, segment: rest.segment });
+      const r = await adminCall(env, origin, 'POST', '/admin/messages', rest);
+      return { ...r, estimate: est };
+    }
+    return adminCall(env, origin, 'POST', '/admin/heroes/honor', rest);
+  }
+  if (t[4] === 'article') {
+    const cur = (await adminCall(env, origin, 'GET', `/admin/articles/${+args.id}`)).article;
+    const merged = { ...cur, ...Object.fromEntries(Object.entries(args).filter(([k, v]) => k !== 'id' && v !== undefined)) };
+    return adminCall(env, origin, 'PUT', `/admin/articles/${+args.id}`, merged);
   }
   if (t[4] === 'upload') {
     const res = await fetch(String(args.url), { headers: { 'User-Agent': 'SaudiGuide/1.0' }, redirect: 'follow' });
@@ -264,7 +335,7 @@ export async function mcpRoute(p, request, env) {
         if (x.method === 'initialize') {
           return ok({ protocolVersion: x.params?.protocolVersion || '2025-06-18', capabilities: { tools: { listChanged: false } },
             serverInfo: { name: 'dalil-saudi-panel', title: 'لوحة دليل السعودية', version: '1.0.0' },
-            instructions: 'لوحة تطبيق دليل السعودية. أي مكان أو فعالية أو خبر جديد يُضاف مسودة دائماً، ولا تنشر (set_status live) إلا إذا طلب رامي ذلك صراحة. لا تحذف شيئاً: الإخفاء بدل الحذف. الأوقات بتوقيت مكة (+03:00).' });
+            instructions: 'لوحة تطبيق دليل السعودية (الأماكن والفعاليات والأخبار، «اسأل أهل المدينة»، التجار والكوبونات، صور وتقييمات الزوار، المستخدمين والمرشدين، الرسائل، مفاتيح الميزات). القواعد: أي مكان أو فعالية أو خبر جديد يُضاف مسودة دائماً، ولا تنشر (set_status live) إلا إذا طلب رامي ذلك صراحة. لا تحذف شيئاً: الإخفاء بدل الحذف. الأوقات بتوقيت مكة (+03:00). أي شي يوصل للمستخدمين مباشرة (send_message، honor_heroes، community_post، قبول/رفض التجار والكوبونات والمرشدين، set_features، set_user_role) لا تسويه إلا بطلب رامي أو بعد ما يوافق على التفاصيل. الردود في المجتمع باسم «فريق دليل السعودية» تكون دقيقة ومفيدة وبدون إعلانات.' });
         }
         if (x.method === 'ping') return ok({});
         if (x.method === 'tools/list') return ok({ tools: TOOLS.map(([name, description, inputSchema]) => ({ name, description, inputSchema })) });

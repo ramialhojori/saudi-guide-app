@@ -252,6 +252,13 @@ export async function communityRoute(p, request, env, J, q) {
   return null;
 }
 
+/** حساب «فريق دليل السعودية» الرسمي (شارة «فريق الدليل») — ينشأ أول مرة */
+const TEAM_ID = 'dalil-team';
+async function teamUser(env) {
+  await env.DB.prepare("INSERT OR IGNORE INTO users (id,name,city,bio,role,points,created,seen) VALUES (?, 'فريق دليل السعودية', '', 'الحساب الرسمي لتطبيق دليل السعودية', 'admin', 0, ?, ?)").bind(TEAM_ID, now(), now()).run();
+  return TEAM_ID;
+}
+
 /* ——— الإدارة: مراجعة البلاغات وإظهار/إخفاء ——— */
 export async function communityAdmin(p, request, env, J) {
   if (p === '/admin/community/reported') {
@@ -264,6 +271,57 @@ export async function communityAdmin(p, request, env, J) {
     const t = b.target === 'a' ? 'answers' : 'posts';
     await env.DB.prepare(`UPDATE ${t} SET status=?, hidden_by=? WHERE id=?`).bind(b.hidden ? 'hidden' : 'visible', b.hidden ? 'admin' : null, +b.id).run();
     if (t === 'answers') { const a = await env.DB.prepare('SELECT post_id FROM answers WHERE id=?').bind(+b.id).first(); if (a) await recount(env, a.post_id).run(); }
+    return J({ ok: true });
+  }
+  /* ——— «اسأل أهل المدينة» من الإدارة: نقرأ سؤال مع إجاباته، ونرد أو ننشر باسم «فريق دليل السعودية» ——— */
+  const q = new URL(request.url).searchParams;
+  if (p === '/admin/community/list' && request.method === 'GET') {
+    const where = ['1=1'], args = [];
+    if (q.get('city')) { where.push('p.city=?'); args.push(q.get('city')); }
+    if (q.get('kind')) { where.push('p.kind=?'); args.push(q.get('kind')); }
+    if (q.get('status') === 'hidden') where.push("p.status='hidden'"); else if (q.get('status') !== 'all') where.push("p.status='visible'");
+    if (q.get('unanswered') === '1' || q.get('unanswered') === 'true') where.push('p.answers=0');
+    if (q.get('q')) { where.push('p.text LIKE ?'); args.push(`%${q.get('q')}%`); }
+    const { results } = await env.DB.prepare(`SELECT p.id,p.kind,p.city,p.place_id,p.text,p.photo,p.answers,p.thanks,p.best_answer,p.reports,p.status,p.created,u.name,u.role
+      FROM posts p JOIN users u ON u.id=p.user_id WHERE ${where.join(' AND ')} ORDER BY p.id DESC LIMIT ?`).bind(...args, Math.min(100, +q.get('limit') || 50)).all();
+    return J({ posts: results });
+  }
+  if (p === '/admin/community/thread' && request.method === 'GET') {
+    const post = await env.DB.prepare('SELECT p.*, u.name, u.role FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=?').bind(+q.get('id')).first();
+    if (!post) return J({ error: 'not_found' }, 404);
+    const { results } = await env.DB.prepare('SELECT a.id,a.user_id,a.text,a.thanks,a.reports,a.status,a.created,u.name,u.role FROM answers a JOIN users u ON u.id=a.user_id WHERE a.post_id=? ORDER BY a.id').bind(post.id).all();
+    return J({ post, answers: results });
+  }
+  if ((p === '/admin/community/post' || p === '/admin/community/answer' || p === '/admin/community/best') && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const team = await teamUser(env);
+    if (p === '/admin/community/post') {
+      const text = clean(b.text, 1500);
+      if (text.length < 4) return J({ error: 'too_short' }, 400);
+      const kind = ['question', 'tip', 'photo'].includes(b.kind) ? b.kind : 'tip';
+      const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created) VALUES (?,?,?,?,?,?,?)')
+        .bind(team, kind, clean(b.city, 40) || null, +b.placeId || null, text, clean(b.photo, 300) || null, now()).run();
+      return J({ ok: true, id: r.meta.last_row_id });
+    }
+    const post = await env.DB.prepare("SELECT * FROM posts WHERE id=? AND status='visible'").bind(+b.postId).first();
+    if (!post) return J({ error: 'not_found' }, 404);
+    if (p === '/admin/community/answer') {
+      const text = clean(b.text, 1500);
+      if (text.length < 2) return J({ error: 'too_short' }, 400);
+      const r = await env.DB.prepare('INSERT INTO answers (post_id,user_id,text,created) VALUES (?,?,?,?)').bind(post.id, team, text, now()).run();
+      await env.DB.batch([recount(env, post.id), notify(env, post.user_id, 'answer', team, post.id, text)].filter(Boolean));
+      return J({ ok: true, id: r.meta.last_row_id });
+    }
+    // أفضل إجابة: نفس منطق صاحب السؤال (+15 لصاحب الإجابة، وتنسحب من القديمة)
+    const a = b.answerId ? await env.DB.prepare("SELECT * FROM answers WHERE id=? AND post_id=? AND status='visible'").bind(+b.answerId, post.id).first() : null;
+    if (b.answerId && !a) return J({ error: 'not_found' }, 404);
+    const ops = [env.DB.prepare('UPDATE posts SET best_answer=? WHERE id=?').bind(a ? a.id : null, post.id)];
+    if (post.best_answer && post.best_answer !== (a && a.id)) {
+      const old = await env.DB.prepare('SELECT user_id FROM answers WHERE id=?').bind(post.best_answer).first();
+      if (old && old.user_id !== team) ops.push(addPoints(env, old.user_id, -15));
+    }
+    if (a && a.id !== post.best_answer && a.user_id !== team) ops.push(addPoints(env, a.user_id, 15), notify(env, a.user_id, 'best', team, post.id, a.text));
+    await env.DB.batch(ops.filter(Boolean));
     return J({ ok: true });
   }
   if (p === '/admin/community/role' && request.method === 'POST') {
