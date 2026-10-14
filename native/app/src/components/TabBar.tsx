@@ -8,7 +8,8 @@ import { brand } from '@/theme/tokens';
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 import { Icon, type IconName } from './Icon';
 
-const ICON: Record<string, IconName> = { index: 'home', map: 'map', trip: 'bag', community: 'people', profile: 'user' };
+const ICON: Record<string, IconName> = { index: 'home', explore: 'map', events: 'cal', trip: 'bag', community: 'people', profile: 'user' };
+const HIDDEN = new Set(['profile']); // «ملفي» يفتح من الصورة فوق
 
 /** الشريط السفلي العائم (داكن، والزر النشط برتقالي) — مثل التصميم */
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -17,6 +18,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View pointerEvents="box-none" style={[st.wrap, { bottom: Math.max(insets.bottom, 12) + 8 }]}>
       <View style={st.bar}>
         {state.routes.map((r, i) => {
+          if (HIDDEN.has(r.name)) return null;
           const on = state.index === i;
           const { options } = descriptors[r.key];
           return (

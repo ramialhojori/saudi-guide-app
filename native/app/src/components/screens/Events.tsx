@@ -38,7 +38,7 @@ const isLong = (e: EventItem) => !!e.end && new Date(e.end).getTime() - new Date
 const isUrl = (s: string) => /^https?:\/\//.test(s);
 
 /** الفعاليات — بألوان الهوية: ترويسة ملونة، أنواع كثيرة، المواسم، والمستمرة لحالها */
-export default function EventsScreen() {
+export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
   const insets = useSafeAreaInsets();
   const { data, loading } = useAsync(getEvents, []);
   const [when, setWhen] = useState(0);
@@ -70,12 +70,12 @@ export default function EventsScreen() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 60 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: asTab ? 130 : 60 }}>
       {/* ترويسة بلون الهوية */}
       <View style={[st.head, { paddingTop: insets.top + 10 }]}>
         <View style={st.blob1} /><View style={st.blob2} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel="رجوع"><Icon name="back" color="#fff" /></Pressable>
+          {asTab ? null : <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel="رجوع"><Icon name="back" color="#fff" /></Pressable>}
           <View style={{ flex: 1 }}>
             <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>الفعاليات</AppText>
             <AppText variant="small" color="#E2DAEE">{dated.length} فعالية قادمة · {ongoing.length} مستمرة</AppText>

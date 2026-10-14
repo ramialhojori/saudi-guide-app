@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
@@ -16,7 +16,7 @@ import { brand, font, kindStyle } from '@/theme/tokens';
 
 const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 
-export default function MapScreen() {
+export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
   const insets = useSafeAreaInsets();
   const { data: cities } = useAsync(getCities, []);
   const [city, setCity] = useState<City | null>(null);
@@ -26,7 +26,7 @@ export default function MapScreen() {
   const { ids } = useTrip();
   const mapRef = useRef<{ animateToRegion?: (r: object, ms: number) => void } | null>(null);
 
-  useEffect(() => { if (!city && cities?.length) setCity(cities.find((c) => c.id === 'jeddah') ?? cities[0]); }, [cities, city]);
+  useEffect(() => { if (!city && cities?.length) setCity(cities.find((c) => c.id === 'medina') ?? cities[0]); }, [cities, city]);
   const { data } = useAsync(() => (city ? getCityPlaces(city.id) : Promise.resolve({ total: 0, places: [] })), [city?.id]);
   const all = data?.places ?? [];
   const shown = useMemo(() => (kind ? all.filter((p) => p.kinds.includes(kind)) : all), [all, kind]);
@@ -44,6 +44,7 @@ export default function MapScreen() {
       {city ? <MapCanvas key={city.id} ref={mapRef as never} places={shown} center={{ lat: city.lat, lng: city.lng }} selected={sel?.id} onSelect={setSel} /> : null}
 
       <View style={[st.top, { paddingTop: insets.top + 10 }]}>
+        {toggle ? <View style={{ marginBottom: 10 }}>{toggle}</View> : null}
         <Pressable style={st.search} onPress={() => setPick((v) => !v)} accessibilityRole="button">
           <Icon name="search" color={brand.purple} size={20} />
           <AppText style={{ flex: 1, fontFamily: font.semibold }} muted>ابحث في {city?.name ?? '...'} ▾</AppText>

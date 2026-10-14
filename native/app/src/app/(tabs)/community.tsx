@@ -58,7 +58,12 @@ export default function Community() {
             <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>مجتمع الدليل</AppText>
             <AppText variant="small" color="#E2DAEE">اسأل أهل الديرة، وشارك اللي تعرفه</AppText>
           </View>
-          <BellButton style={st.glass} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <BellButton style={st.glass} />
+            <Pressable style={st.glass} onPress={() => router.push('/profile')} accessibilityLabel="ملفي">
+              {user ? <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={38} /> : <Icon name="user" color="#fff" />}
+            </Pressable>
+          </View>
         </View>
         <Pressable style={st.ask} onPress={ask}>
           <Avatar t={initial(user?.name || '؟')} c={brand.lilac} size={36} />

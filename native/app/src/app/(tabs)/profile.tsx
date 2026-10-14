@@ -47,7 +47,10 @@ export default function Profile() {
         <Image source={photos.land} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['rgba(43,31,69,0.3)', 'rgba(43,31,69,0.85)']} style={StyleSheet.absoluteFill} />
         <View style={[st.coverTop, { top: insets.top + 10 }]}>
-          <AppText variant="title" color="#fff">ملفي</AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} accessibilityLabel="رجوع"><Icon name="back" color="#fff" size={20} /></Pressable>
+            <AppText variant="title" color="#fff">ملفي</AppText>
+          </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable style={st.glass} onPress={() => Share.share({ message: 'ملفي على دليل السعودية' }).catch(() => {})} accessibilityLabel="مشاركة"><Icon name="share" color="#fff" size={20} /></Pressable>
             <Pressable style={st.glass} onPress={() => router.push('/settings')} accessibilityLabel="الإعدادات"><Icon name="gear" color="#fff" size={20} /></Pressable>
