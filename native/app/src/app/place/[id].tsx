@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Alert, Dimensions, FlatList, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
@@ -16,6 +16,9 @@ import { ago, initial, nAnswers, tint, type CPost } from '@/lib/community';
 import { checkIn, placePosts, placeSocial, type PlaceSocial } from '@/lib/passport';
 import { openDirections } from '@/lib/maps';
 import { trip, useTrip } from '@/lib/trip';
+import { CouponCard } from '@/components/CouponCard';
+import { placeCoupons, type Coupon } from '@/lib/coupons';
+import { placeReviews, reportReview, type PlaceReviews } from '@/lib/reviews';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font, kindStyle } from '@/theme/tokens';
 
@@ -34,9 +37,14 @@ export default function PlaceScreen() {
   const [social, setSocial] = useState<PlaceSocial | null>(null);
   const [qs, setQs] = useState<CPost[]>([]);
   const [stamping, setStamping] = useState(false);
+  const [rv, setRv] = useState<PlaceReviews | null>(null);
+  const [cps, setCps] = useState<Coupon[]>([]);
+  const [shot, setShot] = useState<string | null>(null);
   useFocusEffect(useCallback(() => {
     placeSocial(Number(id)).then(setSocial).catch(() => {});
     placePosts(Number(id)).then(setQs).catch(() => {});
+    placeReviews(Number(id)).then(setRv).catch(() => {});
+    placeCoupons(Number(id)).then(setCps).catch(() => {});
   }, [id, user?.id]));
   const stamp = async () => {
     if (!user) return router.push('/login');
@@ -105,7 +113,7 @@ export default function PlaceScreen() {
               { v: String(social?.visits ?? 0), l: 'زاروه بالدليل', c: brand.orangeDeep },
               { v: String(social?.posts ?? 0), l: 'سؤال ونصيحة', c: brand.purple },
               { v: String(images.length), l: images.length === 1 ? 'صورة' : 'صور', c: brand.skyDeep },
-              { v: near?.length ? String(Math.max(0, near.length - 1)) : '—', l: 'مكان قريب', c: brand.green },
+              rv?.avg ? { v: '★ ' + rv.avg, l: `${rv.count} تقييم`, c: brand.orangeDeep } : { v: near?.length ? String(Math.max(0, near.length - 1)) : '—', l: 'مكان قريب', c: brand.green },
             ].map((f) => (
               <View key={f.l} style={st.fact}>
                 <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={f.c} center>{f.v}</AppText>
@@ -113,6 +121,8 @@ export default function PlaceScreen() {
               </View>
             ))}
           </View>
+
+          {cps.map((c) => <View key={c.id} style={{ marginTop: 14 }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
 
           {p.body ? (
             <View style={{ marginTop: 16 }}>
@@ -202,6 +212,74 @@ export default function PlaceScreen() {
           <AppText style={{ fontFamily: font.bold }} color={brand.purple}>اسأل</AppText>
         </Pressable>
 
+        {/* التقييمات وصور الزوار */}
+        <View style={st.secRow}>
+          <AppText variant="section">التقييمات</AppText>
+          {rv?.count ? <AppText variant="small" muted>{rv.count} تقييم</AppText> : null}
+        </View>
+        {rv?.count ? (
+          <View style={st.rvHead}>
+            <View style={{ alignItems: 'center', width: 86 }}>
+              <AppText style={{ fontFamily: font.bold, fontSize: 34, lineHeight: 44 }} color={brand.orangeDeep}>{rv.avg}</AppText>
+              <AppText variant="small" color={brand.orange}>{'★'.repeat(Math.floor(rv.avg ?? 0))}</AppText>
+            </View>
+            <View style={{ flex: 1, gap: 3 }}>
+              {[5, 4, 3, 2, 1].map((n) => (
+                <View key={n} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <AppText variant="tiny" muted style={{ width: 10 }}>{n}</AppText>
+                  <View style={st.rvTrack}><View style={[st.rvFill, { width: `${((rv.dist[n] ?? 0) / rv.count) * 100}%` }]} /></View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+        {rv?.tags.length ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, marginTop: 10 }}>
+            {rv.tags.map((t) => <Pill key={t.t} label={`${t.t} · ${t.n}`} bg={brand.softGreen} fg={brand.green} />)}
+          </View>
+        ) : null}
+        {rv?.photos.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
+            {rv.photos.map((ph) => (
+              <Pressable key={ph.id} onPress={() => setShot(ph.url)}>
+                <Image source={ph.url} style={{ width: 110, height: 110, borderRadius: 16 }} contentFit="cover" />
+                <AppText variant="tiny" muted numberOfLines={1} style={{ width: 110, marginTop: 2 }}>{ph.name}</AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+        {(rv?.reviews ?? []).slice(0, 4).map((r) => (
+          <View key={r.id} style={st.qa}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Avatar t={initial(r.author.name)} c={tint(r.author.id)} size={34} />
+              <View style={{ flex: 1 }}>
+                <AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{r.author.name}{r.mine ? ' (أنت)' : ''}</AppText>
+                <AppText variant="tiny" muted>{ago(r.updated)}{r.author.city ? ` · ${cityName(r.author.city)}` : ''}</AppText>
+              </View>
+              <AppText color={brand.orange} style={{ fontSize: 14 }}>{'★'.repeat(r.stars)}<AppText color={brand.line} style={{ fontSize: 14 }}>{'★'.repeat(5 - r.stars)}</AppText></AppText>
+            </View>
+            {r.tags.length ? <AppText variant="tiny" color={brand.green} style={{ marginTop: 6, fontFamily: font.semibold }}>{r.tags.join(' · ')}</AppText> : null}
+            {r.text ? <AppText variant="small" style={{ marginTop: 6, lineHeight: 22 }}>{r.text}</AppText> : null}
+            {r.photos.length ? (
+              <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+                {r.photos.slice(0, 3).map((u) => <Pressable key={u} onPress={() => setShot(u)}><Image source={u} style={{ width: 70, height: 70, borderRadius: 12 }} contentFit="cover" /></Pressable>)}
+              </View>
+            ) : null}
+            {!r.mine && user ? (
+              <Pressable hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 6 }} onPress={() => Alert.alert('بلاغ عن التقييم', 'التقييم فيه إساءة أو كلام غير لائق؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'بلّغ', style: 'destructive', onPress: () => reportReview(r.id).then(() => Alert.alert('وصلنا البلاغ', 'نراجعه في أقرب وقت. شكراً لك.')).catch(() => {}) }])}>
+                <AppText variant="tiny" muted>بلاغ</AppText>
+              </Pressable>
+            ) : null}
+          </View>
+        ))}
+        {rv && !rv.count ? <AppText variant="small" muted style={{ paddingHorizontal: 20 }}>ما أحد قيّم المكان للحين. زرته؟ كن أول واحد.</AppText> : null}
+        {rv?.myPending ? <AppText variant="tiny" color={brand.orangeDeep} style={{ paddingHorizontal: 20, marginTop: 8 }}>عندك {rv.myPending === 1 ? 'صورة' : rv.myPending + ' صور'} تنراجع الحين، وتنزل هنا بعد الموافقة.</AppText> : null}
+        <Pressable style={[st.ask, { borderColor: brand.orange }]} onPress={() => router.push({ pathname: '/review/[id]', params: { id: String(p.id) } })}>
+          <Icon name="star" color={brand.orange} size={20} />
+          <AppText muted style={{ flex: 1, marginHorizontal: 8 }}>{rv?.mine ? `تقييمك: ${'★'.repeat(rv.mine.stars)}` : 'زرته؟ قيّم تجربتك وأضف صورك'}</AppText>
+          <AppText style={{ fontFamily: font.bold }} color={brand.orangeDeep}>{rv?.mine ? 'عدّل' : 'قيّم'}</AppText>
+        </Pressable>
+
         {/* قريب منه */}
         {others.length ? (
           <>
@@ -219,6 +297,12 @@ export default function PlaceScreen() {
         ) : null}
       </ScrollView>
 
+      <Modal visible={!!shot} transparent animationType="fade" onRequestClose={() => setShot(null)}>
+        <Pressable style={st.viewer} onPress={() => setShot(null)}>
+          {shot ? <Image source={shot} style={{ width: '100%', height: '80%' }} contentFit="contain" /> : null}
+          <AppText variant="small" color="#fff" style={{ marginTop: 10 }}>اضغط للإغلاق</AppText>
+        </Pressable>
+      </Modal>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <Button label={saved ? '✓ في رحلتي' : 'أضف لرحلتي'} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => trip.toggle(p.id)} />
         <Button label="الاتجاهات" bg={brand.ink} style={{ flex: 1 }} onPress={() => openDirections(p.lat, p.lng, p.title)} />
@@ -264,7 +348,11 @@ const st = StyleSheet.create({
   dirBtn: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   contact: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, padding: 8, paddingLeft: 14 },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 10 },
-  qa: { marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 22, padding: 14 },
+  qa: { marginHorizontal: 16, marginBottom: 10, backgroundColor: brand.card, borderRadius: 22, padding: 14 },
   ask: { marginHorizontal: 16, marginTop: 10, height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: brand.line, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
+  rvHead: { marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rvTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: brand.chip },
+  rvFill: { height: '100%', borderRadius: 3, backgroundColor: brand.orange },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, backgroundColor: 'rgba(244,241,238,0.96)' },
 });

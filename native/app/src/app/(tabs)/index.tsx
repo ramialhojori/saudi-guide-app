@@ -16,6 +16,8 @@ import { useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
+import { CouponCard } from '@/components/CouponCard';
+import { cityCoupons } from '@/lib/coupons';
 import type { EventItem, Place } from '@/lib/types';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
 
@@ -107,6 +109,9 @@ export default function Home() {
 
       {/* فعالية قادمة */}
       {data?.events?.[0] ? <EventBanner e={data.events[0]} /> : null}
+
+      {/* عروض المدينة من التجار */}
+      <CityDeals city={user?.city || 'medina'} />
 
       {/* وجهات المملكة */}
       {data?.cities?.length ? (
@@ -254,3 +259,16 @@ const st = StyleSheet.create({
   evCard: { width: 200, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
   evTag: { alignSelf: 'flex-start', backgroundColor: brand.softPink, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
 });
+
+function CityDeals({ city }: { city: string }) {
+  const { data } = useAsync(() => cityCoupons(city).catch(() => []), [city]);
+  if (!data?.length) return null;
+  return (
+    <>
+      <Section title={`عروض ${cityName(city)}`} action="كل الكوبونات" onAction={() => router.push('/coupons')} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 10 }}>
+        {data.slice(0, 6).map((c) => <View key={c.id} style={{ width: Math.min(320, W - 60) }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
+      </ScrollView>
+    </>
+  );
+}

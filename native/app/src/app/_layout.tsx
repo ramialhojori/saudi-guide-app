@@ -51,6 +51,7 @@ export default function RootLayout() {
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="article/[id]" />
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
+        <Stack.Screen name="coupon/use" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       </Stack>
     </>
   );

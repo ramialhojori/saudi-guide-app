@@ -3,8 +3,14 @@
  * مطابقة للوحة التصميم (Design artifact · الاتجاه الأول): خلفية دافئة، حبر بنفسجي غامق،
  * وألوان الهوية موزعة على العناصر (ما نعتمد على البرتقالي لكل شي).
  */
-export const brand = {
-  ink: '#2B2745', // النصوص والشريط السفلي
+import { Appearance } from 'react-native';
+
+/** الوضع الليلي يتبع إعداد الآيفون (نقرأه أول ما يفتح التطبيق، ونعيد التحميل لو تغيّر — شوف _layout) */
+export const isDark = Appearance.getColorScheme() === 'dark';
+
+const LIGHT = {
+  ink: '#2B2745', // خلفيات غامقة (الشريط السفلي، أزرار غامقة)
+  text: '#2B2745', // لون النص الأساسي
   muted: '#6B6585',
   faint: '#9C94B5',
   purple: '#604C87',
@@ -18,7 +24,8 @@ export const brand = {
   skyDeep: '#2E86B8',
   green: '#3E8E5A',
   bg: '#F4F1EE',
-  white: '#FFFFFF',
+  white: '#FFFFFF', // سطح البطاقات (يصير غامق في الوضع الليلي)
+  card: '#FFFFFF',
   line: '#E2DAEC',
   chip: '#F1ECF6',
   inactive: '#C6C0DA',
@@ -29,7 +36,31 @@ export const brand = {
   softSky: '#E2F1FA',
   softGreen: '#E2F0E6',
   softBrown: '#F6E6D8',
-} as const;
+  link: '#604C87', // روابط ونصوص بنفسجية على البطاقات
+};
+/** ألوان الوضع الليلي — من تصاميم MainDark وأخواتها */
+const DARK: typeof LIGHT = {
+  ...LIGHT,
+  ink: '#2C2748',
+  text: '#EEEAF6',
+  muted: '#A79FC0',
+  faint: '#7D7598',
+  orangeInk: '#F9A158',
+  bg: '#15122A',
+  white: '#221E3A',
+  card: '#221E3A',
+  line: '#3A3358',
+  chip: '#2F2950',
+  inactive: '#6E6790',
+  softOrange: '#3D2B1C',
+  softPink: '#3B2230',
+  softPurple: '#332B55',
+  softSky: '#1C3042',
+  softGreen: '#1F3428',
+  softBrown: '#3A2C22',
+  link: '#C3ADEB',
+};
+export const brand = isDark ? DARK : LIGHT;
 
 /** لون مميز لكل نوع مكان — نفس الفكرة في كل شاشات التطبيق */
 export const kindStyle: Record<string, { fg: string; bg: string; icon: string }> = {
@@ -49,10 +80,10 @@ export const colors = {
   surface: brand.white,
   surfaceAlt: brand.chip,
   border: brand.line,
-  text: brand.ink,
+  text: brand.text,
   textMuted: brand.muted,
   header: brand.purple,
-  onHeader: brand.white,
+  onHeader: '#FFFFFF',
   primary: brand.purple,
   accent: brand.orange,
   chipOn: brand.purple,

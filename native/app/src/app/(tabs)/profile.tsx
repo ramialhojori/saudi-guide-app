@@ -1,4 +1,3 @@
-import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
@@ -13,6 +12,8 @@ import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
 import { ago, myStats, tint, type Stats } from '@/lib/community';
 import { getPassport, type Passport as PassportData } from '@/lib/passport';
 import { cityName } from '@/lib/content';
+import { CouponCard } from '@/components/CouponCard';
+import { myCoupons, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { brand, font, photos } from '@/theme/tokens';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
@@ -23,7 +24,14 @@ export default function Profile() {
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [pp, setPp] = useState<PassportData | null>(null);
-  useFocusEffect(useCallback(() => { if (user) { myStats().then(setStats).catch(() => {}); getPassport().then(setPp).catch(() => {}); } else { setStats(null); setPp(null); } }, [user?.id]));
+  const [wallet, setWallet] = useState<Coupon[] | null>(null);
+  const [biz, setBiz] = useState<Merchant | null>(null);
+  useFocusEffect(useCallback(() => {
+    if (user) {
+      myStats().then(setStats).catch(() => {}); getPassport().then(setPp).catch(() => {});
+      myCoupons().then(setWallet).catch(() => setWallet([])); myMerchant().then((r) => setBiz(r.merchant)).catch(() => {});
+    } else { setStats(null); setPp(null); setWallet(null); setBiz(null); }
+  }, [user?.id]));
   const stampNames = user ? (pp?.cities ?? []).map((c) => pp?.all.find((a) => a.id === c.id)?.name ?? c.id) : passport.visited;
   const stampTotal = user ? pp?.all.length ?? 21 : passport.total;
   // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
@@ -131,24 +139,46 @@ export default function Profile() {
 
       {/* الكوبونات */}
       <View style={st.secRow}>
-        <AppText variant="section">كوبوناتي <AppText variant="small" muted> {user ? 'أمثلة · قريباً' : '3 فعّالة'}</AppText></AppText>
-        <Pressable onPress={() => router.push('/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>المحفظة</AppText></Pressable>
+        <AppText variant="section">كوبوناتي <AppText variant="small" muted> {user ? `${wallet?.length ?? 0} محفوظة` : 'مثال'}</AppText></AppText>
+        <Pressable onPress={() => router.push(user ? '/coupons?wallet=1' : '/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{user && wallet?.length ? 'المحفظة' : 'تصفح العروض'}</AppText></Pressable>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-        {coupons.map((c) => (
-          <View key={c.code} style={[st.coupon, { backgroundColor: c.bg }]}>
-            <View style={{ flex: 1, padding: 14 }}>
-              <AppText variant="tiny" color="#FFF1E4">{c.biz}</AppText>
-              <AppText style={{ fontFamily: font.bold, fontSize: 24, lineHeight: 34 }} color="#fff">{c.off}</AppText>
-              <AppText variant="tiny" color="#FFF1E4">{c.until}</AppText>
+      {user ? (
+        wallet?.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+            {wallet.map((c) => <View key={c.id} style={{ width: 300 }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
+          </ScrollView>
+        ) : (
+          <Pressable style={[st.act, { marginHorizontal: 16 }]} onPress={() => router.push('/coupons')}>
+            <Badge icon="ticket" bg={brand.softPink} fg={brand.pinkDeep} size={36} r={12} />
+            <AppText variant="small" style={{ flex: 1 }}>احفظ عروض المحلات في مدينتك، وتلقاها هنا وقت ما تحتاجها.</AppText>
+          </Pressable>
+        )
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+          {coupons.map((c) => (
+            <View key={c.code} style={[st.coupon, { backgroundColor: c.bg }]}>
+              <View style={{ flex: 1, padding: 14 }}>
+                <AppText variant="tiny" color="#FFF1E4">{c.biz}</AppText>
+                <AppText style={{ fontFamily: font.bold, fontSize: 24, lineHeight: 34 }} color="#fff">{c.off}</AppText>
+                <AppText variant="tiny" color="#FFF1E4">{c.until}</AppText>
+              </View>
+              <View style={st.code}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">مثال</AppText></View>
             </View>
-            <Pressable style={st.code} onPress={() => Clipboard.setStringAsync(c.code).catch(() => {})}>
-              <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{c.code}</AppText>
-              <View style={st.copy}><AppText variant="tiny" color={c.bg} style={{ fontFamily: font.bold }}>نسخ</AppText></View>
-            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* بوابة التجار */}
+      {user ? (
+        <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
+          <View style={st.bizIcon}><Icon name="shop" color="#fff" size={22} /></View>
+          <View style={{ flex: 1 }}>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">{biz ? biz.name : 'عندك نشاط تجاري؟'}</AppText>
+            <AppText variant="small" color="#CFC6DE">{biz ? (biz.status === 'approved' ? 'لوحة التاجر: كوبوناتك وتأكيد الاستخدام' : biz.status === 'pending' ? 'طلبك قيد المراجعة' : 'الطلب يحتاج تعديل') : 'سجّل نشاطك مجاناً وأضف عرضك'}</AppText>
           </View>
-        ))}
-      </ScrollView>
+          <Icon name="chevron" color="#fff" size={18} />
+        </Pressable>
+      ) : null}
 
       {/* آخر نشاطي */}
       <View style={st.secRow}><AppText variant="section">آخر نشاطي</AppText></View>
@@ -200,6 +230,7 @@ const st = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 },
   coupon: { width: 270, height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden' },
   code: { width: 90, alignItems: 'center', justifyContent: 'center', gap: 8, borderRightWidth: 2, borderStyle: 'dashed', borderRightColor: 'rgba(255,255,255,0.55)', backgroundColor: 'rgba(0,0,0,0.06)' },
-  copy: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
+  biz: { margin: 16, marginBottom: 0, backgroundColor: brand.purple, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   act: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 18, padding: 12 },
 });
