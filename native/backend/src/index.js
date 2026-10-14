@@ -10,6 +10,9 @@ import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
 import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute, goingRoute } from './community.js';
 import { adminRoute } from './admin.js';
+import { merchantRoute, merchantAdmin } from './merchants.js';
+import { reviewsRoute, reviewsAdmin } from './reviews.js';
+import { messagesAdmin, runQueue } from './messages.js';
 import { PANEL_HTML } from './panel.js';
 
 const CORS = {
@@ -17,7 +20,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -119,7 +122,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = await adminRoute(p, request, env, J, q);
+    const ar = (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -131,6 +134,16 @@ async function route(request, env, ctx) {
       return J({ counts: n, sync: last.results });
     }
     return J({ error: 'not_found' }, 404);
+  }
+
+  /* ——— التجار والكوبونات + التقييمات ——— */
+  if (p.startsWith('/v1/coupons') || p.startsWith('/v1/merchant') || p === '/v1/me/coupons') {
+    const r = await merchantRoute(p, request, env, J, q);
+    if (r) return r;
+  }
+  if (/^\/v1\/places\/\d+\/reviews$/.test(p) || /^\/v1\/(reviews|photos)\/\d+\/report$/.test(p)) {
+    const r = await reviewsRoute(p, request, env, J, q);
+    if (r) return r;
   }
 
   /* ——— الحسابات ——— */
@@ -309,5 +322,6 @@ export default {
   async scheduled(event, env, ctx) {
     await ensureSchema(env);
     ctx.waitUntil(runSync(env, 'cron').catch((e) => console.log('sync', e && e.message)));
+    ctx.waitUntil(runQueue(env).catch((e) => console.log('queue', e && e.message)));
   },
 };

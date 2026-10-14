@@ -218,3 +218,120 @@ CREATE TABLE IF NOT EXISTS event_going (
   PRIMARY KEY (user_id, event_id)
 );
 CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id);
+
+-- بوابة التجار: كل تاجر مربوط بحساب مستخدم. الطلب يبدأ pending لين توافق الإدارة
+CREATE TABLE IF NOT EXISTS merchants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  name_en TEXT,
+  kind TEXT NOT NULL DEFAULT 'restaurant',   -- restaurant | cafe | sweets | shop | experience
+  city TEXT NOT NULL,
+  area TEXT,
+  lat REAL,
+  lng REAL,
+  place_id INTEGER,                          -- يربطه المشرف بمكان موجود في الدليل
+  photos TEXT NOT NULL DEFAULT '[]',
+  hours TEXT,
+  phone TEXT,
+  cr TEXT,                                   -- السجل التجاري أو معروف
+  verified INTEGER NOT NULL DEFAULT 0,
+  max_coupons INTEGER NOT NULL DEFAULT 1,    -- الباقة المجانية: كوبون واحد فعّال
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | approved | rejected | hidden
+  note TEXT,                                 -- ملاحظة الإدارة للتاجر (سبب الرفض مثلاً)
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS merchants_status ON merchants(status, city);
+
+CREATE TABLE IF NOT EXISTS coupons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  merchant_id INTEGER NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'percent',      -- percent | amount | bogo | gift
+  value TEXT,                                -- 20 (للنسبة/المبلغ) أو نص الهدية
+  title TEXT NOT NULL,
+  terms TEXT,
+  min_order INTEGER,
+  per_user INTEGER NOT NULL DEFAULT 1,       -- 1 = مرة وحدة لكل مستخدم
+  qty INTEGER,                               -- العدد المتاح (فاضي = بدون حد)
+  used INTEGER NOT NULL DEFAULT 0,
+  views INTEGER NOT NULL DEFAULT 0,
+  hours TEXT,
+  start TEXT,
+  "end" TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | active | paused | rejected | hidden
+  note TEXT,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS coupons_m ON coupons(merchant_id, status);
+
+-- محفظة المستخدم (حفظ الكوبون) + آخر مرة فتح الرمز
+CREATE TABLE IF NOT EXISTS coupon_saves (
+  user_id TEXT NOT NULL,
+  coupon_id INTEGER NOT NULL,
+  opened INTEGER,
+  created INTEGER NOT NULL,
+  PRIMARY KEY (user_id, coupon_id)
+);
+CREATE INDEX IF NOT EXISTS csaves_c ON coupon_saves(coupon_id, opened);
+
+-- كل استخدام مؤكد عند الكاشير
+CREATE TABLE IF NOT EXISTS redemptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  coupon_id INTEGER NOT NULL,
+  merchant_id INTEGER NOT NULL,
+  user_id TEXT NOT NULL,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS redeem_m ON redemptions(merchant_id, created);
+CREATE INDEX IF NOT EXISTS redeem_u ON redemptions(user_id, coupon_id);
+
+-- تقييمات الأماكن: تقييم واحد لكل مستخدم لكل مكان (يقدر يعدّله)
+CREATE TABLE IF NOT EXISTS reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  place_id INTEGER NOT NULL,
+  stars INTEGER NOT NULL,
+  tags TEXT NOT NULL DEFAULT '[]',
+  text TEXT,
+  status TEXT NOT NULL DEFAULT 'visible',    -- visible | hidden
+  reports INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
+  UNIQUE (user_id, place_id)
+);
+CREATE INDEX IF NOT EXISTS reviews_place ON reviews(place_id, status);
+
+-- صور الزوار للأماكن: تنتظر موافقة المشرف قبل ما تظهر
+CREATE TABLE IF NOT EXISTS place_photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  place_id INTEGER NOT NULL,
+  review_id INTEGER,
+  url TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | approved | rejected
+  reports INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS pphotos_place ON place_photos(place_id, status);
+CREATE INDEX IF NOT EXISTS pphotos_status ON place_photos(status, id);
+
+-- رسائل الإدارة (داخل التطبيق + إشعار للجوال) مع الجدولة والسجل
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT,
+  text TEXT NOT NULL,
+  link TEXT,                                 -- مسار داخل التطبيق مثل /event/123
+  audience TEXT NOT NULL DEFAULT '{}',       -- {cities:[], segment:'all'|'inactive'|'new'|'guides'|'merchants'}
+  inapp INTEGER NOT NULL DEFAULT 1,
+  push INTEGER NOT NULL DEFAULT 1,
+  at INTEGER NOT NULL,                       -- وقت الإرسال (ثواني)
+  status TEXT NOT NULL DEFAULT 'scheduled',  -- scheduled | sent | cancelled
+  sent_inapp INTEGER NOT NULL DEFAULT 0,
+  sent_push INTEGER NOT NULL DEFAULT 0,
+  push_errors INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL,
+  sent_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at);

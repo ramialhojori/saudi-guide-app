@@ -29,13 +29,33 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS visits_user ON visits(user_id, created)",
   "CREATE TABLE IF NOT EXISTS user_cities ( user_id TEXT NOT NULL, city TEXT NOT NULL, PRIMARY KEY (user_id, city) )",
   "CREATE TABLE IF NOT EXISTS event_going ( user_id TEXT NOT NULL, event_id INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, event_id) )",
-  "CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id)"
+  "CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id)",
+  "CREATE TABLE IF NOT EXISTS merchants ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL UNIQUE, name TEXT NOT NULL, name_en TEXT, kind TEXT NOT NULL DEFAULT 'restaurant', city TEXT NOT NULL, area TEXT, lat REAL, lng REAL, place_id INTEGER, photos TEXT NOT NULL DEFAULT '[]', hours TEXT, phone TEXT, cr TEXT, verified INTEGER NOT NULL DEFAULT 0, max_coupons INTEGER NOT NULL DEFAULT 1, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS merchants_status ON merchants(status, city)",
+  "CREATE TABLE IF NOT EXISTS coupons ( id INTEGER PRIMARY KEY AUTOINCREMENT, merchant_id INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'percent', value TEXT, title TEXT NOT NULL, terms TEXT, min_order INTEGER, per_user INTEGER NOT NULL DEFAULT 1, qty INTEGER, used INTEGER NOT NULL DEFAULT 0, views INTEGER NOT NULL DEFAULT 0, hours TEXT, start TEXT, \"end\" TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS coupons_m ON coupons(merchant_id, status)",
+  "CREATE TABLE IF NOT EXISTS coupon_saves ( user_id TEXT NOT NULL, coupon_id INTEGER NOT NULL, opened INTEGER, created INTEGER NOT NULL, PRIMARY KEY (user_id, coupon_id) )",
+  "CREATE INDEX IF NOT EXISTS csaves_c ON coupon_saves(coupon_id, opened)",
+  "CREATE TABLE IF NOT EXISTS redemptions ( id INTEGER PRIMARY KEY AUTOINCREMENT, coupon_id INTEGER NOT NULL, merchant_id INTEGER NOT NULL, user_id TEXT NOT NULL, created INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS redeem_m ON redemptions(merchant_id, created)",
+  "CREATE INDEX IF NOT EXISTS redeem_u ON redemptions(user_id, coupon_id)",
+  "CREATE TABLE IF NOT EXISTS reviews ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, place_id INTEGER NOT NULL, stars INTEGER NOT NULL, tags TEXT NOT NULL DEFAULT '[]', text TEXT, status TEXT NOT NULL DEFAULT 'visible', reports INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, updated INTEGER NOT NULL, UNIQUE (user_id, place_id) )",
+  "CREATE INDEX IF NOT EXISTS reviews_place ON reviews(place_id, status)",
+  "CREATE TABLE IF NOT EXISTS place_photos ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, place_id INTEGER NOT NULL, review_id INTEGER, url TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', reports INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS pphotos_place ON place_photos(place_id, status)",
+  "CREATE INDEX IF NOT EXISTS pphotos_status ON place_photos(status, id)",
+  "CREATE TABLE IF NOT EXISTS messages ( id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, text TEXT NOT NULL, link TEXT, audience TEXT NOT NULL DEFAULT '{}', inapp INTEGER NOT NULL DEFAULT 1, push INTEGER NOT NULL DEFAULT 1, at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'scheduled', sent_inapp INTEGER NOT NULL DEFAULT 0, sent_push INTEGER NOT NULL DEFAULT 0, push_errors INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, sent_at INTEGER )",
+  "CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at)"
 ];
+
+/* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
+const ALTERS = ['ALTER TABLE notifications ADD COLUMN link TEXT'];
 
 let ready = false;
 /** ينشئ الجداول مرة وحدة لكل نسخة من الوركر */
 export async function ensureSchema(env) {
   if (ready) return;
   await env.DB.batch(STATEMENTS.map((s) => env.DB.prepare(s)));
+  for (const a of ALTERS) await env.DB.prepare(a).run().catch(() => {});
   ready = true;
 }

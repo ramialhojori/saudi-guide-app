@@ -278,7 +278,7 @@ export const LEVELS = [
   [0, 'زائر جديد'], [20, 'مستكشف'], [60, 'رحّال'], [150, 'دليل نشيط'], [300, 'ابن الديرة'],
   [500, 'خبير المدينة'], [800, 'مرجع الديرة'], [1200, 'سفير الدليل'], [1800, 'حكيم الدليل'], [2500, 'أسطورة الدليل'],
 ];
-const BADGES = [
+export const BADGES = [
   ['first', 'أول سؤال', 'chat', 'questions', 1],
   ['tips', 'ناصح الديرة', 'star', 'tips', 10],
   ['answers', 'مرجع الديرة', 'chat', 'answers', 100],
@@ -289,6 +289,7 @@ const BADGES = [
   ['helper', 'فزعة', 'people', 'answers', 10],
   ['explorer', 'جوّال', 'pin', 'visits', 10],
   ['regions', 'رحّال المناطق', 'flag', 'cities', 5],
+  ['critic', 'ذوّاق الدليل', 'star', 'reviews', 10],
 ];
 
 export async function myStats(env, u) {
@@ -301,7 +302,10 @@ export async function myStats(env, u) {
       (SELECT COALESCE(SUM(thanks),0) FROM posts WHERE user_id=?1 AND status='visible') + (SELECT COALESCE(SUM(thanks),0) FROM answers WHERE user_id=?1 AND status='visible') thanks,
       (SELECT COUNT(*) FROM user_trip WHERE user_id=?1) trip,
       (SELECT COUNT(DISTINCT city) FROM visits WHERE user_id=?1) cities,
-      (SELECT COUNT(*) FROM visits WHERE user_id=?1) visits`).bind(u.id).first();
+      (SELECT COUNT(*) FROM visits WHERE user_id=?1) visits,
+      (SELECT COUNT(*) FROM reviews WHERE user_id=?1 AND status='visible') reviews,
+      (SELECT COUNT(*) FROM place_photos WHERE user_id=?1 AND status='approved') placePhotos`).bind(u.id).first();
+  c.photos = (c.photos || 0) + (c.placePhotos || 0);
   const pts = u.points || 0;
   let lv = 0;
   LEVELS.forEach(([at], i) => { if (pts >= at) lv = i; });
@@ -330,7 +334,7 @@ export async function myNotifications(env, u, request, J) {
       LEFT JOIN users a ON a.id=n.actor_id LEFT JOIN posts p ON p.id=n.post_id
       WHERE n.user_id=? ORDER BY n.id DESC LIMIT 60`).bind(u.id).all();
   const unread = await env.DB.prepare('SELECT COUNT(*) n FROM notifications WHERE user_id=? AND read=0').bind(u.id).first();
-  return J({ unread: unread.n, items: results.map((r) => ({ id: r.id, type: r.type, postId: r.post_id, actor: r.actor_name || 'مستخدم الدليل', text: r.text || '', post: (r.post_text || '').slice(0, 90), read: !!r.read, created: r.created })) });
+  return J({ unread: unread.n, items: results.map((r) => ({ id: r.id, type: r.type, postId: r.post_id, actor: r.actor_name || 'مستخدم الدليل', text: r.text || '', link: r.link || '', post: (r.post_text || '').slice(0, 90), read: !!r.read, created: r.created })) });
 }
 
 /* ——— جواز السعودية ——— */

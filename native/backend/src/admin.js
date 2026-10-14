@@ -5,6 +5,7 @@
    - أي تعديل من اللوحة يعلّم الصف sig='panel' عشان مزامنة قودبابر ما ترجع تغيّره */
 
 import { CITIES, KIND_OF, searchKey, nearestCity, km } from './normalize.js';
+import { BADGES, LEVELS } from './community.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const STATUS = { live: 0, hidden: 1, draft: 2 };
@@ -93,9 +94,68 @@ export async function adminRoute(p, request, env, J, q) {
       (SELECT COUNT(*) FROM events WHERE deleted=0 AND COALESCE(NULLIF("end",''),start) >= ?1) events, (SELECT COUNT(*) FROM events WHERE deleted=2) eventDrafts,
       (SELECT COUNT(*) FROM users WHERE deleted=0) users, (SELECT COUNT(*) FROM posts WHERE status='visible') posts, (SELECT COUNT(*) FROM answers WHERE status='visible') answers,
       (SELECT COUNT(*) FROM posts WHERE reports>0 AND hidden_by IS NOT 'admin') + (SELECT COUNT(*) FROM answers WHERE reports>0 AND hidden_by IS NOT 'admin') reported,
-      (SELECT COUNT(*) FROM places WHERE lat IS NULL OR lat=0) noGeo, (SELECT COUNT(*) FROM places WHERE deleted=0 AND (thumb IS NULL OR thumb='')) noPhoto`).bind(new Date().toISOString()).first();
+      (SELECT COUNT(*) FROM places WHERE lat IS NULL OR lat=0) noGeo, (SELECT COUNT(*) FROM places WHERE deleted=0 AND (thumb IS NULL OR thumb='')) noPhoto,
+      (SELECT COUNT(*) FROM merchants WHERE status='pending') merchantsPending, (SELECT COUNT(*) FROM coupons WHERE status='pending') couponsPending,
+      (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending, (SELECT COUNT(*) FROM reviews WHERE reports>0 AND status='hidden') reviewsReported`).bind(new Date().toISOString()).first();
     const recent = await env.DB.prepare("SELECT p.id, p.kind, p.text, p.created, u.name FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='visible' ORDER BY p.id DESC LIMIT 5").all();
     return J({ counts: n, recent: recent.results });
+  }
+
+  /* تقرير النشاط: المستخدمين والمشاركات آخر 30 يوم (بتوقيت مكة) */
+  if (p === '/admin/analytics') {
+    const t = now(), D = 86400, off = 3 * 3600;
+    const day0 = Math.floor((t + off) / D) - 29;
+    const series = async (sql) => {
+      const { results } = await env.DB.prepare(sql).bind(day0 * D - off).all();
+      const a = Array(30).fill(0);
+      for (const r of results) { const i = r.d - day0; if (i >= 0 && i < 30) a[i] = r.n; }
+      return a;
+    };
+    const per = (tbl, col = 'created', where = '') => series(`SELECT CAST((${col}+${off})/${D} AS INTEGER) d, COUNT(*) n FROM ${tbl} WHERE ${col}>=? ${where} GROUP BY d`);
+    const [signups, posts, answers, reviews, visits, redeems] = await Promise.all([
+      per('users', 'created', 'AND deleted=0'), per('posts'), per('answers'), per('reviews'), per('visits'), per('redemptions'),
+    ]);
+    const n = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM users WHERE deleted=0) users,
+      (SELECT COUNT(*) FROM users WHERE deleted=0 AND seen>=?1) d1, (SELECT COUNT(*) FROM users WHERE deleted=0 AND seen>=?2) d7, (SELECT COUNT(*) FROM users WHERE deleted=0 AND seen>=?3) d30,
+      (SELECT COUNT(*) FROM devices) devices, (SELECT COUNT(*) FROM devices WHERE seen>=?2) devices7,
+      (SELECT COUNT(DISTINCT user_id) FROM user_trip) trips, (SELECT COUNT(*) FROM visits) visits, (SELECT COUNT(*) FROM reviews WHERE status='visible') reviews,
+      (SELECT COUNT(*) FROM merchants WHERE status='approved') merchants, (SELECT COUNT(*) FROM coupons WHERE status='active') coupons, (SELECT COUNT(*) FROM redemptions) redeems`)
+      .bind(t - D, t - 7 * D, t - 30 * D).first();
+    const cities = await env.DB.prepare("SELECT city, COUNT(*) n FROM users WHERE deleted=0 AND city IS NOT NULL AND city!='' GROUP BY city ORDER BY n DESC LIMIT 8").all();
+    const places = await env.DB.prepare(`SELECT pl.id, pl.title, pl.city, (SELECT COUNT(*) FROM user_trip t WHERE t.place_id=pl.id) trips, (SELECT COUNT(*) FROM visits v WHERE v.place_id=pl.id) visits
+      FROM places pl WHERE pl.id IN (SELECT place_id FROM user_trip GROUP BY place_id ORDER BY COUNT(*) DESC LIMIT 10) ORDER BY trips DESC`).all();
+    return J({ counts: n, day0, series: { signups, posts, answers, reviews, visits, redeems }, cities: cities.results, places: places.results });
+  }
+
+  /* الأوسمة والمستويات: كم مستخدم وصل لكل وسام وكل مستوى، وأعلى المستخدمين */
+  if (p === '/admin/badges') {
+    const G = (sql, goal) => `(SELECT COUNT(*) FROM (${sql} GROUP BY user_id HAVING COUNT(*)>=${+goal}))`;
+    const SRC = {
+      questions: "SELECT user_id FROM posts WHERE status='visible' AND kind='question'",
+      tips: "SELECT user_id FROM posts WHERE status='visible' AND kind='tip'",
+      photos: "SELECT user_id FROM posts WHERE status='visible' AND photo IS NOT NULL UNION ALL SELECT user_id FROM place_photos WHERE status='approved'",
+      answers: "SELECT user_id FROM answers WHERE status='visible'",
+      best: 'SELECT a.user_id FROM posts p JOIN answers a ON a.id=p.best_answer',
+      trip: 'SELECT user_id FROM user_trip',
+      visits: 'SELECT user_id FROM visits',
+      cities: 'SELECT user_id FROM (SELECT DISTINCT user_id, city FROM visits)',
+      reviews: "SELECT user_id FROM reviews WHERE status='visible'",
+    };
+    const list = BADGES.filter(([, , , key]) => SRC[key] || key === 'thanks');
+    const sel = list.map(([id, , , key, goal]) => (key === 'thanks'
+      ? `(SELECT COUNT(*) FROM (SELECT user_id FROM (SELECT user_id, thanks FROM posts WHERE status='visible' UNION ALL SELECT user_id, thanks FROM answers WHERE status='visible') GROUP BY user_id HAVING SUM(thanks)>=${+goal})) AS b_${id}`
+      : `${G(`SELECT user_id FROM (${SRC[key]})`, goal)} AS b_${id}`)).join(',\n');
+    const bc = await env.DB.prepare(`SELECT ${sel}`).first();
+    const lv = await env.DB.prepare(`SELECT ${LEVELS.map(([at], i) => `SUM(points>=${at}${LEVELS[i + 1] ? ` AND points<${LEVELS[i + 1][0]}` : ''}) l${i}`).join(',')},
+      SUM(role='guide') guides, COUNT(*) total FROM users WHERE deleted=0`).first();
+    const top = await env.DB.prepare(`SELECT u.id, u.name, u.city, u.role, u.points,
+      (SELECT COUNT(*) FROM answers a WHERE a.user_id=u.id AND a.status='visible') answers, (SELECT COUNT(*) FROM visits v WHERE v.user_id=u.id) visits
+      FROM users u WHERE u.deleted=0 ORDER BY u.points DESC LIMIT 25`).all();
+    return J({
+      badges: BADGES.map(([id, name, icon, key, goal]) => ({ id, name, icon, key, goal, users: bc[`b_${id}`] ?? null })),
+      levels: LEVELS.map(([at, name], i) => ({ at, name, users: lv[`l${i}`] || 0 })), guides: lv.guides || 0, total: lv.total || 0,
+      top: top.results,
+    });
   }
 
   /* صور اللوحة → R2 */
