@@ -32,8 +32,8 @@ export default function Planner() {
   };
   const save = () => {
     if (!plan) return;
-    const ids = plan.flat().map((p) => p.id);
-    const apply = (mode: 'replace' | 'add') => { trip.set(mode === 'replace' ? ids : [...trip.all(), ...ids]); router.replace('/trip'); };
+    const pd = plan.map((d) => d.map((p) => p.id));
+    const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); router.replace('/trip'); };
     if (!trip.all().length) return apply('replace');
     Alert.alert('عندك أماكن في رحلتي', 'تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟', [
       { text: 'إلغاء', style: 'cancel' }, { text: 'أضفها', onPress: () => apply('add') }, { text: 'استبدل', style: 'destructive', onPress: () => apply('replace') },

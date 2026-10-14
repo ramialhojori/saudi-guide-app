@@ -125,19 +125,25 @@ export async function authRoute(p, request, env, J) {
     return J({ cities: cs });
   }
   if (p === '/v1/me/trip' && request.method === 'GET') {
-    const r = await env.DB.prepare('SELECT place_id FROM user_trip WHERE user_id=? ORDER BY pos').bind(u.id).all();
-    return J({ ids: r.results.map((x) => x.place_id) });
+    const r = await env.DB.prepare('SELECT place_id, pos FROM user_trip WHERE user_id=? ORDER BY pos').bind(u.id).all();
+    const days = [];
+    for (const x of r.results) { const d = Math.floor(x.pos / 1000); while (days.length <= d) days.push([]); days[d].push(x.place_id); }
+    return J({ ids: r.results.map((x) => x.place_id), days: days.length ? days : [[]] });
   }
   if (p === '/v1/me/trip' && request.method === 'PUT') {
     const b = await request.json().catch(() => ({}));
-    const ids = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 300);
+    const ok = (n) => Number.isInteger(n) && n > 0;
+    const seen = new Set();
+    // pos = اليوم × 1000 + الترتيب داخل اليوم
+    const days = (Array.isArray(b.days) ? b.days : [Array.isArray(b.ids) ? b.ids : []]).slice(0, 30)
+      .map((d) => (Array.isArray(d) ? d : []).map(Number).filter((n) => ok(n) && !seen.has(n) && (seen.add(n), true)).slice(0, 100));
     const t = now();
+    const rows = days.flatMap((d, di) => d.map((id, i) => [id, di * 1000 + i]));
     await env.DB.batch([
       env.DB.prepare('DELETE FROM user_trip WHERE user_id=?').bind(u.id),
-      env.DB.prepare('DELETE FROM user_cities WHERE user_id=?').bind(u.id),
-      ...ids.map((id, i) => env.DB.prepare('INSERT INTO user_trip (user_id,place_id,pos,added) VALUES (?,?,?,?)').bind(u.id, id, i, t)),
+      ...rows.map(([id, pos]) => env.DB.prepare('INSERT INTO user_trip (user_id,place_id,pos,added) VALUES (?,?,?,?)').bind(u.id, id, pos, t)),
     ]);
-    return J({ ids });
+    return J({ ids: rows.map((x) => x[0]), days });
   }
   return J({ error: 'not_found' }, 404);
 }

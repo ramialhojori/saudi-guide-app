@@ -19,7 +19,7 @@ const TABS = ['الكل', 'أماكن', 'كوبونات', 'فعاليات', 'أ�
 /** البحث — مثل التصميم: الحقل فوق، تبويبات النتائج، الأماكن، وكوبون ومن المجتمع */
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ near?: string; kind?: string; q?: string; city?: string; add?: string }>();
+  const params = useLocalSearchParams<{ near?: string; kind?: string; q?: string; city?: string; add?: string; day?: string }>();
   const addMode = params.add === 'trip';
   const { ids: tripIds } = useTrip();
   const [sugg, setSugg] = useState<Place[]>([]);
@@ -121,7 +121,7 @@ export default function SearchScreen() {
             <ImageRow img={item.thumb || undefined} cat={`${item.cat} · ${cityName(item.city)}`} catColor={kindStyle[item.kinds[0]]?.fg ?? brand.purple}
               title={item.title} sub={item.km != null ? `${item.km} كم` : item.summary}
               right={addMode ? (
-                <Pressable onPress={() => trip.toggle(item.id)} style={[st.add, tripIds.includes(item.id) && { backgroundColor: brand.green }]} accessibilityLabel="أضف لرحلتي">
+                <Pressable onPress={() => (tripIds.includes(item.id) ? trip.remove(item.id) : trip.addTo(item.id, Number(params.day) || 0))} style={[st.add, tripIds.includes(item.id) && { backgroundColor: brand.green }]} accessibilityLabel="أضف لرحلتي">
                   <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{tripIds.includes(item.id) ? '✓' : '+ أضف'}</AppText>
                 </Pressable>
               ) : <HeartButton id={item.id} />} onPress={() => router.push(`/place/${item.id}`)} />

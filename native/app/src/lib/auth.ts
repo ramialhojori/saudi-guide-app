@@ -40,20 +40,25 @@ const store = {
 
 /* أي تغيير في رحلتي يوصل للحساب (بعد ثانية من آخر تغيير) */
 let timer: ReturnType<typeof setTimeout> | undefined;
-trip.onChange((ids) => {
+trip.onChange((ids, days) => {
   if (!state.token) return;
   clearTimeout(timer);
-  timer = setTimeout(() => { api('/v1/me/trip', { method: 'PUT', body: { ids }, token: state.token }).catch(() => {}); }, 1000);
+  timer = setTimeout(() => { api('/v1/me/trip', { method: 'PUT', body: { ids, days }, token: state.token }).catch(() => {}); }, 1000);
 });
 
 async function afterLogin(token: string, user: User) {
   set({ token, user });
   await store.set(JSON.stringify({ token, user }));
   // دمج: اللي في الحساب + اللي في الجوال
-  const remote = await api<{ ids: number[] }>('/v1/me/trip', { token }).then((r) => r.ids).catch(() => [] as number[]);
-  const merged = [...new Set([...remote, ...trip.all()])];
-  trip.replace(merged);
-  if (merged.length !== remote.length) api('/v1/me/trip', { method: 'PUT', body: { ids: merged }, token }).catch(() => {});
+  const remote = await api<{ ids: number[]; days?: number[][] }>('/v1/me/trip', { token }).catch(() => ({ ids: [] as number[], days: undefined }));
+  const rDays = remote.days?.length ? remote.days : [remote.ids];
+  const local = trip.days();
+  // دمج: أيام الحساب أولاً، وأي مكان في الجوال مو موجود فيها ينضاف لآخر يوم
+  const have = new Set(rDays.flat());
+  const extra = local.flat().filter((x) => !have.has(x));
+  const merged = rDays.flat().length ? rDays.map((d, i) => (i === rDays.length - 1 ? [...d, ...extra] : d)) : local;
+  trip.replaceDays(merged);
+  if (extra.length || !rDays.flat().length) api('/v1/me/trip', { method: 'PUT', body: { days: merged }, token }).catch(() => {});
 }
 
 export const appleAvailable = () => (Platform.OS === 'ios' ? AppleAuthentication.isAvailableAsync().catch(() => false) : Promise.resolve(false));

@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui';
 import { cityName, getPlacesByIds } from '@/lib/content';
-import { useTrip } from '@/lib/trip';
+import { trip, useTrip } from '@/lib/trip';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
 
@@ -29,17 +29,29 @@ const DEMO: Stop[][] = [
 
 export default function TripScreen() {
   const insets = useSafeAreaInsets();
-  const { ids } = useTrip();
+  const { ids, days: tripDays } = useTrip();
   const { data: places } = useAsync(() => getPlacesByIds(ids), [ids.join(',')]);
+  const byId = new Map((places ?? []).map((p) => [p.id, p]));
   const [day, setDay] = useState(0);
 
   const real = (places ?? []).length > 0;
+  // كل يوم بأماكنه مثل ما رتّبها المستخدم
   const days: Stop[][] = real
-    ? chunk(places!.map((p, i) => ({ id: p.id, time: SLOT[i % 3], title: p.title, sub: p.cat, img: p.thumb || p.image || photos.heritage })), 3)
+    ? tripDays.map((d) => d.map((id) => byId.get(id)).filter(Boolean).map((p, i) => ({ id: p!.id, time: SLOT[i % SLOT.length], title: p!.title, sub: p!.cat, img: p!.thumb || p!.image || photos.heritage })))
     : DEMO;
   const city = real ? cityName(places![0].city) : 'العلا';
   const total = days.reduce((n, d) => n + d.length, 0);
   const cur = days[Math.min(day, days.length - 1)] ?? [];
+  const stopMenu = (id: number, title: string) => {
+    const d = Math.min(day, days.length - 1);
+    Alert.alert(title, undefined, [
+      ...days.map((_, i) => i).filter((i) => i !== d).slice(0, 4).map((i) => ({ text: `انقله لليوم ${i + 1}`, onPress: () => trip.moveToDay(id, i) })),
+      { text: 'قدّمه', onPress: () => trip.move(id, -1) },
+      { text: 'أخّره', onPress: () => trip.move(id, 1) },
+      { text: 'شيله من الرحلة', style: 'destructive' as const, onPress: () => trip.remove(id) },
+      { text: 'إلغاء', style: 'cancel' as const },
+    ]);
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
@@ -68,11 +80,17 @@ export default function TripScreen() {
 
       <View style={st.days}>
         {days.map((_, i) => (
-          <Pressable key={i} onPress={() => setDay(i)} style={[st.day, i === day && st.dayOn]}>
+          <Pressable key={i} onPress={() => setDay(i)} onLongPress={() => real && days.length > 1 && Alert.alert(`اليوم ${i + 1}`, 'تشيل هاليوم؟ أماكنه تنتقل لليوم اللي قبله.', [{ text: 'إلغاء', style: 'cancel' }, { text: 'شيل اليوم', style: 'destructive', onPress: () => { trip.removeDay(i); setDay(Math.max(0, i - 1)); } }])} style={[st.day, i === day && st.dayOn]}>
             <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.ink} center>اليوم {i + 1}</AppText>
             <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? `${days[i].length} أماكن` : ['الخميس 22', 'الجمعة 23', 'السبت 24'][i]}</AppText>
           </Pressable>
         ))}
+      {real && days.length < 7 ? (
+          <Pressable onPress={() => { const n = trip.addDay(); setDay(n); }} style={[st.day, st.dayAdd]} accessibilityLabel="أضف يوم">
+            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color={brand.purple} center>+</AppText>
+            <AppText variant="tiny" color={brand.purple} center>يوم</AppText>
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
@@ -80,13 +98,14 @@ export default function TripScreen() {
           <View key={i}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
               <View style={[st.num, { backgroundColor: STEP[i % 4] }]}><AppText style={{ fontFamily: font.bold }} color="#fff">{i + 1}</AppText></View>
-              <Pressable style={st.stop} onPress={() => s.id && router.push(`/place/${s.id}`)}>
+              <Pressable style={st.stop} onPress={() => s.id && router.push(`/place/${s.id}`)} onLongPress={() => s.id && stopMenu(s.id, s.title)}>
                 <Image source={s.img} style={st.stopImg} contentFit="cover" />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.semibold }}>{s.time}</AppText>
                   <AppText style={{ fontFamily: font.bold, fontSize: 16 }} numberOfLines={1}>{s.title}</AppText>
                   <AppText variant="small" muted numberOfLines={1}>{s.sub}</AppText>
                 </View>
+                {real && s.id ? <Pressable hitSlop={10} onPress={() => stopMenu(s.id!, s.title)} accessibilityLabel="خيارات"><AppText muted style={{ fontFamily: font.bold, fontSize: 18, paddingHorizontal: 4 }}>···</AppText></Pressable> : null}
               </Pressable>
             </View>
             {i < cur.length - 1 ? (
@@ -94,7 +113,7 @@ export default function TripScreen() {
             ) : null}
           </View>
         ))}
-        <Pressable style={st.add} onPress={() => router.push({ pathname: '/search', params: { add: 'trip', ...(real ? { city: places![0].city } : {}) } })}>
+        <Pressable style={st.add} onPress={() => router.push({ pathname: '/search', params: { add: 'trip', day: String(Math.min(day, days.length - 1)), ...(real ? { city: places![0].city } : {}) } })}>
           <AppText style={{ fontFamily: font.semibold }} color={brand.purple}>+ أضف مكان لليوم {['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][day] ?? day + 1}</AppText>
         </Pressable>
         <View style={st.tip}>
@@ -124,6 +143,7 @@ const st = StyleSheet.create({
   demo: { marginHorizontal: 16, marginTop: 14, flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: brand.softPurple, borderRadius: 16, padding: 12 },
   days: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 16 },
   day: { flex: 1, backgroundColor: '#fff', borderRadius: 18, paddingVertical: 10 },
+  dayAdd: { flex: 0, flexGrow: 0, flexShrink: 0, width: 64, minWidth: 64, backgroundColor: brand.softPurple, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.lilac },
   dayOn: { backgroundColor: brand.purple },
   num: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 30 },
   stop: { flex: 1, flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 22, padding: 10 },
