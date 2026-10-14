@@ -22,10 +22,10 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--purple)}
 .app{display:flex;min-height:100vh}
-aside{width:230px;background:var(--ink);color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+aside{width:230px;background:var(--ink);color:#fff;padding:18px 14px;position:sticky;top:0;height:100vh;flex-shrink:0;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;font-weight:700;font-size:17px}
 .brand i{width:36px;height:36px;border-radius:11px;background:var(--orange);display:grid;place-items:center;font-style:normal}
-.nav{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;cursor:pointer;color:#CFC6DE;font-weight:600;border:0;background:none;text-align:right;width:100%}
+.nav{display:flex;align-items:center;gap:10px;padding:8px 12px;flex-shrink:0;border-radius:12px;cursor:pointer;color:#CFC6DE;font-weight:600;border:0;background:none;text-align:right;width:100%}
 .nav:hover{background:rgba(255,255,255,.07)}
 .nav.on{background:var(--orange);color:#fff}
 .nav b{margin-inline-start:auto;background:var(--pinkDeep);color:#fff;border-radius:999px;padding:0 8px;font-size:12px}
@@ -186,7 +186,7 @@ async function homeView() {
   const S = (n, l, color, go) => `<div class="stat" ${go ? `data-go="${go}" style="cursor:pointer"` : ''}><div class="n" style="color:${color}">${n}</div><div class="l">${l}</div></div>`;
   m.innerHTML = `<h1>أهلاً رامي</h1><p class="sub">هذي لوحتك: أي شي تضيفه أو تعدّله هنا يوصل للتطبيق خلال دقائق.</p>
     <div class="row" style="margin-bottom:18px"><button class="btn o" id="addP">+ مكان جديد</button><button class="btn" id="addE">+ فعالية جديدة</button></div>
-    <div class="stats">${S(c.places, 'مكان منشور', 'var(--purple)', 'places')}${S(c.drafts, 'مسودة تنتظر النشر', 'var(--orangeDeep)', 'drafts')}${S(c.events, 'فعالية قادمة', 'var(--skyDeep)', 'events')}
+    <div class="stats">${S(c.places, 'مكان منشور', 'var(--purple)', 'places')}${S(c.drafts, 'مسودة تنتظر النشر', 'var(--orangeDeep)', 'drafts')}${S(c.events, 'فعالية قادمة', 'var(--skyDeep)', 'events')}${c.eventDrafts ? S(c.eventDrafts, 'فعالية مسودة تنتظر النشر', 'var(--orangeDeep)', 'events') : ''}
     ${S(c.reported, 'بلاغ يحتاج مراجعة', 'var(--pinkDeep)', 'community')}${S(c.users, 'مستخدم مسجّل', 'var(--green)', 'users')}${S(c.posts + ' / ' + c.answers, 'سؤال / إجابة', 'var(--lilac)', 'community')}
     ${c.merchantsPending + c.couponsPending ? S(c.merchantsPending + ' / ' + c.couponsPending, 'طلب تاجر / كوبون ينتظر', 'var(--pinkDeep)', 'merchants') : ''}${c.photosPending ? S(c.photosPending, 'صورة زوار تنتظر', 'var(--orangeDeep)', 'photos') : ''}${S(c.noPhoto, 'مكان بدون صورة', 'var(--muted)', 'nophoto')}${S(c.noGeo, 'مكان بدون موقع', 'var(--muted)', 'nogeo')}</div>
     <div class="card"><b>آخر مشاركات المجتمع</b><div class="list" style="margin-top:10px">${SUMMARY.recent.map((r) => `<div class="m">${h(r.name || 'مستخدم')} · ${h(r.text.slice(0, 90))}</div>`).join('') || '<div class="muted">ما فيه مشاركات للحين</div>'}</div></div>`;
