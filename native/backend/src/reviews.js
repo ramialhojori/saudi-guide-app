@@ -37,10 +37,13 @@ export async function reviewsRoute(p, request, env, J, q) {
         FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.place_id=? AND r.status='visible' AND u.deleted=0`;
       if (uid) { sql += ' AND r.user_id NOT IN (SELECT blocked_id FROM blocks WHERE user_id=?)'; args.push(uid); }
       const { results } = await env.DB.prepare(sql + ' ORDER BY (LENGTH(COALESCE(r.text,""))>20) DESC, r.updated DESC LIMIT 30').bind(...args).all();
+      // «تأثيرك»: نحسب مشاهدة لأول 4 تقييمات وأول 10 صور تطلع للزائر
+      if (results.length) await env.DB.prepare(`UPDATE reviews SET views=views+1 WHERE id IN (${results.slice(0, 4).map((r) => +r.id).join(',')}) AND user_id<>?`).bind(uid).run().catch(() => {});
       const tags = {};
       for (const r of results) for (const t of parse(r.tags)) tags[t] = (tags[t] || 0) + 1;
       const photos = await env.DB.prepare(`SELECT ph.id, ph.url, u.name FROM place_photos ph JOIN users u ON u.id=ph.user_id
         WHERE ph.place_id=? AND ph.status='approved' AND u.deleted=0 ORDER BY ph.id DESC LIMIT 30`).bind(pid).all();
+      if (photos.results.length) await env.DB.prepare(`UPDATE place_photos SET views=views+1 WHERE id IN (${photos.results.slice(0, 10).map((x) => +x.id).join(',')})`).run().catch(() => {});
       const mine = uid ? await env.DB.prepare('SELECT r.*, ? u_name FROM reviews r WHERE user_id=? AND place_id=?').bind(me.name || '', uid, pid).first() : null;
       const pending = uid ? await env.DB.prepare("SELECT COUNT(*) n FROM place_photos WHERE user_id=? AND place_id=? AND status='pending'").bind(uid, pid).first() : { n: 0 };
       return J({

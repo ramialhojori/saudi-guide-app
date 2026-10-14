@@ -7,6 +7,7 @@
 
 import { sessionUser } from './auth.js';
 import { CITIES, km } from './normalize.js';
+import { impactOf } from './contrib.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const KINDS = ['question', 'tip', 'photo'];
@@ -139,6 +140,7 @@ export async function communityRoute(p, request, env, J, q) {
         (SELECT 1 FROM thanks t WHERE t.user_id=? AND t.target='p' AND t.target_id=p.id) my_thanks
       FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=? AND p.status='visible'`).bind(uid, +m[1]).first();
     if (!r) return J({ error: 'not_found' }, 404);
+    if (r.user_id !== uid) await env.DB.prepare('UPDATE posts SET views=views+1 WHERE id=?').bind(r.id).run().catch(() => {});
     const args = [uid, +m[1]];
     let sql = `SELECT a.*, u.name u_name, u.city u_city, u.role u_role, u.points u_points,
         (SELECT 1 FROM thanks t WHERE t.user_id=? AND t.target='a' AND t.target_id=a.id) my_thanks
@@ -318,8 +320,9 @@ export async function myStats(env, u) {
       SELECT 'answer' t, a.post_id, (SELECT text FROM posts WHERE id=a.post_id) kind, a.text, a.thanks, a.created FROM answers a WHERE a.user_id=?1 AND a.status='visible'
     ) ORDER BY created DESC LIMIT 8`).bind(u.id).all();
   const gr = await env.DB.prepare('SELECT status, note FROM guide_requests WHERE user_id=?').bind(u.id).first();
+  const impact = await impactOf(env, u.id).catch(() => null);
   return {
-    balance: Math.max(0, pts - (u.spent || 0)), spent: u.spent || 0, role: u.role,
+    balance: Math.max(0, pts - (u.spent || 0)), spent: u.spent || 0, role: u.role, impact,
     guide: { eligible: pts >= GUIDE_AT && u.role === 'user', at: GUIDE_AT, request: gr ? { status: gr.status, note: gr.note || '' } : null },
     points: pts, level: lv + 1, levelName: LEVELS[lv][1], nextAt: next ? next[0] : null, nextName: next ? next[1] : null, levelAt: LEVELS[lv][0],
     counts: c,

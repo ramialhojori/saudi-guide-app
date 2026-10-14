@@ -162,18 +162,18 @@ function loginView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['features', 'المميزات']];
 async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0 };
+  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, features: featuresView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -783,7 +783,9 @@ async function badgesView() {
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px" class="msgGrid">
     <div class="card"><b>الأوسمة</b><div class="list" style="margin-top:10px">${d.badges.map((b) => `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--chip)"><span style="width:38px;height:38px;border-radius:12px;background:var(--softOrange);display:grid;place-items:center;color:var(--orangeDeep);font-weight:700">★</span><div class="grow"><b>${h(b.name)}</b><div class="muted" style="font-size:12px">${({ questions: 'سؤال', tips: 'نصيحة', answers: 'إجابة', best: 'أفضل إجابة', photos: 'صورة', thanks: 'شكر', trip: 'مكان في رحلتي', visits: 'زيارة مؤكدة', cities: 'مدينة مزارة', reviews: 'تقييم' })[b.key] || b.key} × ${b.goal}</div></div><b>${b.users == null ? '—' : b.users}</b><span class="muted" style="font-size:12px">مستخدم</span></div>`).join('')}</div></div>
     <div class="card"><b>المستويات</b><div style="margin-top:10px;display:grid;gap:8px">${d.levels.map((l, i) => `<div><div class="row" style="font-size:13px"><b>${i + 1}. ${h(l.name)}</b><span class="muted">من ${l.at} نقطة</span><span class="grow"></span><b>${l.users}</b></div><div style="height:8px;background:var(--chip);border-radius:4px;margin-top:4px"><div style="height:100%;width:${(l.users / max) * 100}%;background:var(--lilac);border-radius:4px"></div></div></div>`).join('')}</div></div></div>
+    <div class="card" style="margin-top:14px" id="heroes"></div>
     <div class="card" style="margin-top:14px"><b>أعلى 25 مستخدم</b><div class="list" style="margin-top:10px">${d.top.map((u, i) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><b style="width:26px">${i + 1}</b><div class="grow"><b>${h(u.name || 'بدون اسم')}</b> ${u.role === 'guide' ? '<span class="badge b-live">مرشد</span>' : u.role === 'admin' ? '<span class="badge b-panel">فريق الدليل</span>' : ''}<div class="muted" style="font-size:12px">${cityName(u.city)} · ${u.answers} إجابة · ${u.visits} زيارة</div></div><b style="color:var(--orangeDeep)">${u.points}</b></div>`).join('') || '<div class="muted">ما فيه مستخدمين</div>'}</div><p class="muted" style="font-size:13px">تقدر تعطي أحد «مرشد موثّق» من صفحة المستخدمين.</p></div>`;
+  heroesBlock($('#heroes'));
 }
 
 /* ——— التحليلات ——— */
@@ -808,6 +810,69 @@ async function analyticsView() {
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px" class="msgGrid">
     <div class="card"><b>المستخدمين حسب المدينة</b><div class="list" style="margin-top:8px">${d.cities.map((x) => `<div class="row" style="font-size:14px"><span class="grow">${cityName(x.city)}</span><b>${x.n}</b></div>`).join('') || '<div class="muted">ما اختاروا مدن للحين</div>'}</div></div>
     <div class="card"><b>أكثر الأماكن في «رحلتي»</b><div class="list" style="margin-top:8px">${d.places.map((x) => `<div class="row" style="font-size:14px"><span class="grow">${h(x.title)} <span class="muted" style="font-size:12px">${cityName(x.city)}</span></span><b>${x.trips}</b><span class="muted" style="font-size:12px">${x.visits} زيارة</span></div>`).join('') || '<div class="muted">ما فيه رحلات محفوظة للحين</div>'}</div></div></div>`;
+}
+
+/* ——— اقتراحات الزوار ——— */
+let STAB = 'pending';
+const SK = { new: ['مكان ناقص', 'b-live'], edit: ['تعديل', 'b-panel'], closed: ['مكان مقفل', 'b-hidden'] };
+async function suggestView() {
+  const m = $('#main');
+  m.innerHTML = `<h1>اقتراحات الزوار</h1><p class="sub">الزوار يقترحون أماكن ناقصة أو تعديلات. المكان الجديد ينضاف <b>مسودة</b> (تكمّل صوره وتنشره)، والتعديل يتطبق على طول. صاحب الاقتراح ياخذ +15 للمكان و+5 للتعديل.</p>
+    <div class="tabs">${[['pending', 'تنتظر'], ['approved', 'انقبلت'], ['rejected', 'انرفضت']].map(([k, t]) => `<button data-s="${k}" class="${STAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { STAB = b.dataset.s; suggestView(); }));
+  const d = await api('/admin/suggestions?status=' + STAB);
+  const F = { title: 'الاسم', phone: 'الجوال', website: 'الموقع', address: 'العنوان', hours: 'الساعات' };
+  $('#res').innerHTML = d.suggestions.map((x) => {
+    const dd = x.data, pl = x.place;
+    const diff = Object.entries(F).filter(([k]) => dd[k]).map(([k, l]) => `<div class="row" style="font-size:14px"><label style="min-width:70px">${STAB === 'pending' && x.type === 'edit' && k !== 'hours' ? `<input type="checkbox" data-ap="${x.id}" value="${k}" checked> ` : ''}<b>${l}</b></label><span class="muted" style="text-decoration:line-through">${h(pl?.[k] || '—')}</span> ← <span>${h(dd[k])}</span></div>`).join('')
+      + (dd.lat && dd.lng ? `<div class="row" style="font-size:14px"><label>${STAB === 'pending' && x.type === 'edit' ? `<input type="checkbox" data-ap="${x.id}" value="geo" checked> ` : ''}<b>الموقع</b></label><a target="_blank" href="https://www.google.com/maps?q=${dd.lat},${dd.lng}">${dd.lat}, ${dd.lng}</a></div>` : '');
+    return `<div class="post"><div class="row"><span class="badge ${SK[x.type][1]}">${SK[x.type][0]}</span><b class="grow">${h(x.type === 'new' ? dd.title : pl?.title || '')}</b><span class="muted" style="font-size:13px">${cityName(x.type === 'new' ? dd.city : pl?.city)} · ${h(x.user.name)} · ${dAr(x.created)}</span></div>
+      ${diff}${dd.note ? `<div style="font-size:14px">«${h(dd.note)}»</div>` : ''}${x.note ? `<div class="muted" style="font-size:13px">ملاحظتك: ${h(x.note)}</div>` : ''}
+      ${pl ? `<div><a href="#" data-open="${pl.id}">افتح المكان في اللوحة</a></div>` : ''}
+      ${STAB === 'pending' ? `<div class="row"><button class="btn g" data-ok="${x.id}">${x.type === 'new' ? 'اقبل وأضفه مسودة' : x.type === 'closed' ? 'اقبل وأخفِ المكان' : 'اقبل وطبّق المحدد'}</button><button class="btn p" data-no="${x.id}">رفض</button></div>` : ''}</div>`;
+  }).join('') || `<div class="empty">${STAB === 'pending' ? 'ما فيه اقتراحات تنتظر' : 'ما فيه شي هنا'}</div>`;
+  m.querySelectorAll('[data-open]').forEach((a) => (a.onclick = async (e) => { e.preventDefault(); const r = await api('/admin/places/' + a.dataset.open); editPlace(r.place); }));
+  m.querySelectorAll('[data-ok]').forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.ok;
+    const apply = [...m.querySelectorAll(`[data-ap="${id}"]:checked`)].map((c) => c.value);
+    try {
+      const r = await api('/admin/suggestions/' + id, { method: 'POST', body: { status: 'approved', apply } });
+      toast('انقبل ووصله إشعار'); SUMMARY = null;
+      if (r.placeId && b.textContent.includes('مسودة') && confirm('انضاف كمسودة. تفتحه الحين وتكمّل صوره؟')) { const pr = await api('/admin/places/' + r.placeId); editPlace(pr.place); }
+      suggestView();
+    } catch (e) { toast(errMsg(e)); }
+  }));
+  m.querySelectorAll('[data-no]').forEach((b) => (b.onclick = async () => { const note = prompt('سبب الرفض (يوصله)؟'); if (note === null) return; await api('/admin/suggestions/' + b.dataset.no, { method: 'POST', body: { status: 'rejected', note } }); toast('انرفض'); SUMMARY = null; suggestView(); }));
+}
+
+/* ——— المميزات: إظهار وإخفاء ——— */
+async function featuresView() {
+  const m = $('#main');
+  const d = await api('/admin/features');
+  m.innerHTML = `<h1>المميزات</h1><p class="sub">أي ميزة تطفيها هنا تختفي من التطبيق خلال دقيقة، بدون تحديث. البيانات تبقى محفوظة، وترجع لما تشغلها.</p>
+    <div class="card" style="max-width:640px">${Object.entries(d.labels).map(([k, l]) => `<label class="row" style="padding:12px 4px;border-bottom:1px solid var(--chip);cursor:pointer"><span class="grow" style="font-weight:600">${h(l)}</span><span class="badge ${d.features[k] ? 'b-live' : 'b-hidden'}" id="fb-${k}">${d.features[k] ? 'ظاهرة' : 'مخفية'}</span><input type="checkbox" data-f="${k}" ${d.features[k] ? 'checked' : ''} style="width:22px;height:22px"></label>`).join('')}</div>`;
+  m.querySelectorAll('[data-f]').forEach((c) => (c.onchange = async () => {
+    const r = await api('/admin/features', { method: 'POST', body: { [c.dataset.f]: c.checked } });
+    const on = r.features[c.dataset.f]; const b = $('#fb-' + c.dataset.f); b.textContent = on ? 'ظاهرة' : 'مخفية'; b.className = 'badge ' + (on ? 'b-live' : 'b-hidden');
+    toast(on ? 'رجعت للتطبيق' : 'انخفت من التطبيق');
+  }));
+}
+
+/* ——— أبطال الشهر (داخل صفحة الأوسمة) ——— */
+async function heroesBlock(el) {
+  const city = el.dataset.city || '';
+  const d = await api('/admin/heroes' + (city ? '?city=' + city : ''));
+  el.innerHTML = `<div class="row"><b class="grow">أبطال ${h(d.month)}</b><select class="in" style="width:auto" id="hc"><option value="">كل المدن</option>${META.cities.map((c) => `<option value="${c.id}" ${c.id === city ? 'selected' : ''}>${h(c.name)}</option>`).join('')}</select></div>
+    <p class="muted" style="font-size:13px;margin:6px 0">الترتيب من مساهمات الشهر: إجابة 5، أفضل إجابة 15، سؤال 2، تقييم 3، زيارة 10، صورة 5، سؤال سريع 1. يطلعون في المجتمع تلقائياً.</p>
+    <div class="list">${d.heroes.map((x, i) => `<label class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><input type="checkbox" data-hero="${h(x.id)}" ${i < 3 ? 'checked' : ''}><b style="width:22px">${i + 1}</b><span class="grow"><b>${h(x.name)}</b> ${x.guide ? '<span class="badge b-live">مرشد</span>' : ''}<span class="muted" style="font-size:12px"> · ${x.answers} إجابة · ${x.reviews} تقييم · ${x.visits} زيارة</span></span><b style="color:var(--orangeDeep)">${x.score}</b></label>`).join('') || '<div class="muted">ما فيه مساهمات هالشهر للحين</div>'}</div>
+    ${d.heroes.length ? `<div class="row" style="margin-top:10px"><input class="in" id="hb" type="number" value="50" min="0" max="500" style="width:110px"><span class="muted">نقطة هدية</span><button class="btn o" id="honor">كرّم المحددين</button></div>` : ''}`;
+  $('#hc', el).onchange = (e) => { el.dataset.city = e.target.value; heroesBlock(el); };
+  $('#honor', el) && ($('#honor', el).onclick = async () => {
+    const ids = [...el.querySelectorAll('[data-hero]:checked')].map((c) => c.dataset.hero);
+    if (!ids.length) return toast('حدد أحد');
+    if (!confirm(`ترسل تكريم لـ ${ids.length} وتضيف لهم ${$('#hb', el).value} نقطة؟`)) return;
+    await api('/admin/heroes/honor', { method: 'POST', body: { userIds: ids, bonus: +$('#hb', el).value } }); toast('وصلهم التكريم');
+  });
 }
 
 render();

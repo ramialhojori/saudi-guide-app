@@ -46,7 +46,11 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS pphotos_status ON place_photos(status, id)",
   "CREATE TABLE IF NOT EXISTS messages ( id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, text TEXT NOT NULL, link TEXT, audience TEXT NOT NULL DEFAULT '{}', inapp INTEGER NOT NULL DEFAULT 1, push INTEGER NOT NULL DEFAULT 1, at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'scheduled', sent_inapp INTEGER NOT NULL DEFAULT 0, sent_push INTEGER NOT NULL DEFAULT 0, push_errors INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, sent_at INTEGER )",
   "CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at)",
-  "CREATE TABLE IF NOT EXISTS guide_requests ( user_id TEXT PRIMARY KEY, about TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )"
+  "CREATE TABLE IF NOT EXISTS guide_requests ( user_id TEXT PRIMARY KEY, about TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE TABLE IF NOT EXISTS fact_votes ( user_id TEXT NOT NULL, place_id INTEGER NOT NULL, k TEXT NOT NULL, v INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, place_id, k) )",
+  "CREATE INDEX IF NOT EXISTS facts_place ON fact_votes(place_id, k)",
+  "CREATE TABLE IF NOT EXISTS suggestions ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, type TEXT NOT NULL, place_id INTEGER, data TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS sugg_status ON suggestions(status, id)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
@@ -54,7 +58,11 @@ const ALTERS = [
   'ALTER TABLE notifications ADD COLUMN link TEXT',
   'ALTER TABLE coupons ADD COLUMN points INTEGER',
   'ALTER TABLE coupons ADD COLUMN min_level INTEGER',
-  'ALTER TABLE users ADD COLUMN spent INTEGER NOT NULL DEFAULT 0', // نقاط انصرفت على كوبونات (المستوى يحسب على كل اللي جمعها)
+  'ALTER TABLE users ADD COLUMN spent INTEGER NOT NULL DEFAULT 0',
+  // «تأثيرك»: كم مرة انشافت مساهمات المستخدم
+  'ALTER TABLE posts ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE reviews ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE place_photos ADD COLUMN views INTEGER NOT NULL DEFAULT 0', // نقاط انصرفت على كوبونات (المستوى يحسب على كل اللي جمعها)
 ];
 
 let ready = false;

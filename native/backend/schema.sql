@@ -347,3 +347,28 @@ CREATE TABLE IF NOT EXISTS guide_requests (
   created INTEGER NOT NULL,
   updated INTEGER NOT NULL
 );
+
+-- أسئلة سريعة عن الأماكن (فيه مواقف؟ مناسب للعائلة؟) — جواب واحد لكل مستخدم لكل سؤال
+CREATE TABLE IF NOT EXISTS fact_votes (
+  user_id TEXT NOT NULL,
+  place_id INTEGER NOT NULL,
+  k TEXT NOT NULL,
+  v INTEGER NOT NULL,                        -- 1 نعم، 0 لا
+  created INTEGER NOT NULL,
+  PRIMARY KEY (user_id, place_id, k)
+);
+CREATE INDEX IF NOT EXISTS facts_place ON fact_votes(place_id, k);
+
+-- اقتراحات الزوار: تعديل مكان أو إضافة مكان ناقص — تنتظر موافقة المشرف
+CREATE TABLE IF NOT EXISTS suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,                        -- edit | new | closed
+  place_id INTEGER,
+  data TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | approved | rejected
+  note TEXT,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sugg_status ON suggestions(status, id);

@@ -96,7 +96,7 @@ export async function adminRoute(p, request, env, J, q) {
       (SELECT COUNT(*) FROM posts WHERE reports>0 AND hidden_by IS NOT 'admin') + (SELECT COUNT(*) FROM answers WHERE reports>0 AND hidden_by IS NOT 'admin') reported,
       (SELECT COUNT(*) FROM places WHERE lat IS NULL OR lat=0) noGeo, (SELECT COUNT(*) FROM places WHERE deleted=0 AND (thumb IS NULL OR thumb='')) noPhoto,
       (SELECT COUNT(*) FROM merchants WHERE status='pending') merchantsPending, (SELECT COUNT(*) FROM coupons WHERE status='pending') couponsPending,
-      (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending, (SELECT COUNT(*) FROM guide_requests WHERE status='pending') guidesPending, (SELECT COUNT(*) FROM reviews WHERE reports>0 AND status='hidden') reviewsReported`).bind(new Date().toISOString()).first();
+      (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending, (SELECT COUNT(*) FROM guide_requests WHERE status='pending') guidesPending, (SELECT COUNT(*) FROM suggestions WHERE status='pending') suggPending, (SELECT COUNT(*) FROM reviews WHERE reports>0 AND status='hidden') reviewsReported`).bind(new Date().toISOString()).first();
     const recent = await env.DB.prepare("SELECT p.id, p.kind, p.text, p.created, u.name FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='visible' ORDER BY p.id DESC LIMIT 5").all();
     return J({ counts: n, recent: recent.results });
   }
