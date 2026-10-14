@@ -8,6 +8,7 @@
 import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
 import { LEVELS } from './community.js';
+import { MERCHANT_TERMS, MERCHANT_TERMS_DATE, MERCHANT_TERMS_VERSION } from './terms.js';
 
 /** المستوى من مجموع النقاط اللي جمعها (الصرف ما ينزّل المستوى) */
 export const levelOf = (pts) => { let l = 1; LEVELS.forEach(([at], i) => { if ((pts || 0) >= at) l = i + 1; }); return l; };
@@ -44,12 +45,13 @@ const merchantOut = (m) => ({
   id: m.id, name: m.name, name_en: m.name_en || '', kind: m.kind, city: m.city, area: m.area || '', lat: m.lat, lng: m.lng,
   placeId: m.place_id || null, photos: parse(m.photos), hours: m.hours || '', phone: m.phone || '', cr: m.cr || '',
   verified: !!m.verified, maxCoupons: m.max_coupons, status: m.status, note: m.note || '', created: m.created, updated: m.updated,
+  termsVersion: m.terms_version || '', termsAt: m.terms_at || null, termsOk: m.terms_version === MERCHANT_TERMS_VERSION,
 });
 const couponOut = (c, extra = {}) => ({
   id: c.id, kind: c.kind, value: c.value || '', off: offText(c), title: c.title, terms: c.terms || '', minOrder: c.min_order || null,
   perUser: !!c.per_user, qty: c.qty || null, used: c.used, left: c.qty ? Math.max(0, c.qty - c.used) : null, views: c.views,
   hours: c.hours || '', start: c.start || '', end: c.end || '', status: c.status, note: c.note || '', created: c.created,
-  points: c.points || 0, minLevel: c.min_level || 0, levelName: c.min_level ? (LEVELS[c.min_level - 1] || [])[1] || '' : '',
+  license: c.license || '', points: c.points || 0, minLevel: c.min_level || 0, levelName: c.min_level ? (LEVELS[c.min_level - 1] || [])[1] || '' : '',
   ...extra,
 });
 /** كوبون عام مع بيانات المحل (للتطبيق) */
@@ -83,6 +85,7 @@ function couponFields(b) {
     hours: str(b.hours, 80), start: d(b.start), end: d(b.end),
     points: num(b.points) && +b.points > 0 ? Math.min(100000, Math.round(+b.points)) : null,
     min_level: num(b.minLevel) && +b.minLevel > 1 ? Math.min(LEVELS.length, Math.round(+b.minLevel)) : null,
+    license: str(b.license, 40),
   };
 }
 const notify = (env, userId, text) =>
@@ -185,12 +188,13 @@ export async function merchantRoute(p, request, env, J, q) {
   }
 
   /* ——— لوحة التاجر ——— */
+  if (p === '/v1/merchant/terms' && M === 'GET') return J({ version: MERCHANT_TERMS_VERSION, date: MERCHANT_TERMS_DATE, sections: MERCHANT_TERMS }, 200, 300);
   if (!p.startsWith('/v1/merchant')) return null;
   if (!me) return J({ error: 'login_required' }, 401);
   const mine = await env.DB.prepare('SELECT * FROM merchants WHERE user_id=?').bind(uid).first();
 
   if (p === '/v1/merchant' && M === 'GET') {
-    if (!mine) return J({ merchant: null, coupons: [] });
+    if (!mine) return J({ merchant: null, coupons: [], termsVersion: MERCHANT_TERMS_VERSION });
     const cs = await env.DB.prepare("SELECT * FROM coupons WHERE merchant_id=? AND status!='hidden' ORDER BY id DESC").bind(mine.id).all();
     const since = now() - 7 * 86400;
     const red = await env.DB.prepare('SELECT created FROM redemptions WHERE merchant_id=? AND created>?').bind(mine.id, since).all();
@@ -202,19 +206,35 @@ export async function merchantRoute(p, request, env, J, q) {
         (SELECT COALESCE(SUM(views),0) FROM coupons WHERE merchant_id=?1) views`).bind(mine.id).first();
     const tr = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM coupon_feedback WHERE merchant_id=?1) n, (SELECT COUNT(*) FROM coupon_feedback WHERE merchant_id=?1 AND ok=1) ok,
         (SELECT COUNT(*) FROM coupon_reports WHERE merchant_id=?1 AND status='pending') open`).bind(mine.id).first();
-    return J({ merchant: { ...merchantOut(mine), strikes: mine.strikes || 0 }, coupons: cs.results.map((c) => couponOut(c)), stats: { ...tot, week, today: d0 }, trust: { n: tr.n, ok: tr.ok, pct: tr.n ? Math.round((100 * tr.ok) / tr.n) : null, open: tr.open } });
+    return J({ termsVersion: MERCHANT_TERMS_VERSION, merchant: { ...merchantOut(mine), strikes: mine.strikes || 0 }, coupons: cs.results.map((c) => couponOut(c)), stats: { ...tot, week, today: d0 }, trust: { n: tr.n, ok: tr.ok, pct: tr.n ? Math.round((100 * tr.ok) / tr.n) : null, open: tr.open } });
+  }
+  // تسجيل الموافقة على الشروط (سجل دائم)
+  const agree = (mid) => env.DB.batch([
+    env.DB.prepare('INSERT INTO merchant_agreements (user_id,merchant_id,version,ip,ua,created) VALUES (?,?,?,?,?,?)')
+      .bind(uid, mid, MERCHANT_TERMS_VERSION, request.headers.get('CF-Connecting-IP') || '', String(request.headers.get('User-Agent') || '').slice(0, 200), now()),
+    env.DB.prepare('UPDATE merchants SET terms_version=?, terms_at=? WHERE id=?').bind(MERCHANT_TERMS_VERSION, now(), mid),
+  ]);
+  if (p === '/v1/merchant/terms' && M === 'POST') {
+    if (!mine) return J({ error: 'no_merchant' }, 404);
+    const b = await request.json().catch(() => ({}));
+    if (b.accept !== MERCHANT_TERMS_VERSION) return J({ error: 'terms_required', version: MERCHANT_TERMS_VERSION }, 400);
+    await agree(mine.id);
+    return J({ ok: true, version: MERCHANT_TERMS_VERSION });
   }
   if (p === '/v1/merchant' && M === 'POST') {
     const b = await request.json().catch(() => ({}));
+    if (!mine && b.acceptTerms !== MERCHANT_TERMS_VERSION) return J({ error: 'terms_required', version: MERCHANT_TERMS_VERSION }, 400);
     const f = merchantFields(b);
     if (f.name.length < 2) return J({ error: 'name_required' }, 400);
     if (!cityOk(f.city)) return J({ error: 'bad_city' }, 400);
     if (!mine) {
       const r = await env.DB.prepare(`INSERT INTO merchants (user_id,name,name_en,kind,city,area,lat,lng,photos,hours,phone,cr,created,updated)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(uid, f.name, f.name_en, f.kind, f.city, f.area, f.lat, f.lng, f.photos, f.hours, f.phone, f.cr, now(), now()).run();
+      await agree(r.meta.last_row_id);
       return J({ id: r.meta.last_row_id, status: 'pending' });
     }
     if (mine.status === 'hidden') return J({ error: 'suspended' }, 403);
+    if (b.acceptTerms === MERCHANT_TERMS_VERSION && mine.terms_version !== MERCHANT_TERMS_VERSION) await agree(mine.id);
     // تعديل الاسم أو المدينة لنشاط معتمد يرجعه للمراجعة؛ باقي التفاصيل تتحدث مباشرة
     const big = mine.status === 'approved' && (f.name !== mine.name || f.city !== mine.city || f.cr !== (mine.cr || ''));
     const status = mine.status === 'rejected' || big ? 'pending' : mine.status;
@@ -226,15 +246,18 @@ export async function merchantRoute(p, request, env, J, q) {
 
   if (p === '/v1/merchant/coupons' && M === 'POST') {
     if (mine.status === 'hidden' || mine.status === 'rejected') return J({ error: 'merchant_not_active' }, 403);
+    if (mine.terms_version !== MERCHANT_TERMS_VERSION) return J({ error: 'terms_required', version: MERCHANT_TERMS_VERSION }, 403);
     const b = await request.json().catch(() => ({}));
     const f = couponFields(b);
     if (f.title.length < 4) return J({ error: 'title_required' }, 400);
+    if (f.license.length < 4) return J({ error: 'license_required' }, 400);
+    if (b.declare !== true) return J({ error: 'declare_required' }, 400);
     if ((f.kind === 'percent' || f.kind === 'amount') && !+f.value) return J({ error: 'value_required' }, 400);
     if (f.end && f.start && f.end < f.start) return J({ error: 'bad_dates' }, 400);
     const live = await env.DB.prepare("SELECT COUNT(*) n FROM coupons WHERE merchant_id=? AND status IN ('pending','active','paused')").bind(mine.id).first();
     if (live.n >= mine.max_coupons) return J({ error: 'limit', max: mine.max_coupons }, 409);
-    const r = await env.DB.prepare(`INSERT INTO coupons (merchant_id,kind,value,title,terms,min_order,per_user,qty,hours,start,"end",points,min_level,created,updated)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mine.id, f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, now(), now()).run();
+    const r = await env.DB.prepare(`INSERT INTO coupons (merchant_id,kind,value,title,terms,min_order,per_user,qty,hours,start,"end",points,min_level,license,declared_at,created,updated)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mine.id, f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, f.license, now(), now(), now()).run();
     return J({ id: r.meta.last_row_id, status: 'pending' });
   }
   if ((m = p.match(/^\/v1\/merchant\/coupons\/(\d+)$/)) && (M === 'PATCH' || M === 'POST')) {
@@ -245,10 +268,13 @@ export async function merchantRoute(p, request, env, J, q) {
     if (b.action === 'resume' && c.status === 'paused') { await env.DB.prepare("UPDATE coupons SET status='active',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'active' }); }
     if (b.action === 'remove') { await env.DB.prepare("UPDATE coupons SET status='hidden',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'hidden' }); }
     // تعديل كامل → يرجع للمراجعة
+    if (mine.terms_version !== MERCHANT_TERMS_VERSION) return J({ error: 'terms_required', version: MERCHANT_TERMS_VERSION }, 403);
     const f = couponFields(b);
     if (f.title.length < 4) return J({ error: 'title_required' }, 400);
-    await env.DB.prepare(`UPDATE coupons SET kind=?,value=?,title=?,terms=?,min_order=?,per_user=?,qty=?,hours=?,start=?,"end"=?,points=?,min_level=?,status='pending',note='',updated=? WHERE id=?`)
-      .bind(f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, now(), c.id).run();
+    if (f.license.length < 4) return J({ error: 'license_required' }, 400);
+    if (b.declare !== true) return J({ error: 'declare_required' }, 400);
+    await env.DB.prepare(`UPDATE coupons SET kind=?,value=?,title=?,terms=?,min_order=?,per_user=?,qty=?,hours=?,start=?,"end"=?,points=?,min_level=?,license=?,declared_at=?,status='pending',note='',updated=? WHERE id=?`)
+      .bind(f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, f.license, now(), now(), c.id).run();
     return J({ status: 'pending' });
   }
   /* الكاشير يدخل الرمز */
@@ -304,9 +330,10 @@ export async function merchantAdmin(p, request, env, J, q) {
     const { results } = await env.DB.prepare(`SELECT m.*, u.name u_name, u.email u_email,
         (SELECT COUNT(*) FROM coupons c WHERE c.merchant_id=m.id AND c.status!='hidden') n_coupons,
         (SELECT COUNT(*) FROM redemptions r WHERE r.merchant_id=m.id) n_used,
-        (SELECT title FROM places WHERE id=m.place_id) place_title
+        (SELECT title FROM places WHERE id=m.place_id) place_title,
+        (SELECT ip FROM merchant_agreements a WHERE a.user_id=m.user_id ORDER BY a.id DESC LIMIT 1) agree_ip
       FROM merchants m LEFT JOIN users u ON u.id=m.user_id ${st === 'all' ? '' : 'WHERE m.status=?'} ORDER BY m.updated DESC LIMIT 200`).bind(...(st === 'all' ? [] : [st])).all();
-    return J({ merchants: results.map((r) => ({ ...merchantOut(r), owner: r.u_name || '', ownerEmail: r.u_email || '', coupons: r.n_coupons, used: r.n_used, placeTitle: r.place_title || '' })) });
+    return J({ merchants: results.map((r) => ({ ...merchantOut(r), owner: r.u_name || '', ownerEmail: r.u_email || '', coupons: r.n_coupons, used: r.n_used, placeTitle: r.place_title || '', agreeIp: r.agree_ip || '' })) });
   }
   if ((m = p.match(/^\/admin\/merchants\/(\d+)$/)) && M === 'POST') {
     const r = await env.DB.prepare('SELECT * FROM merchants WHERE id=?').bind(+m[1]).first();

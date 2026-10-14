@@ -21,7 +21,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.7.0';
+const VERSION = '0.7.1';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {

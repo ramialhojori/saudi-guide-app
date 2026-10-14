@@ -46,6 +46,8 @@ export default function MerchantCoupon() {
   const [dur, setDur] = useState(30);
   const [terms, setTerms] = useState('');
   const [points, setPoints] = useState(0);
+  const [license, setLicense] = useState('');
+  const [declare, setDeclare] = useState(false);
   const [minLevel, setMinLevel] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -57,7 +59,7 @@ export default function MerchantCoupon() {
       if (c) {
         setKind(c.kind); setValue(c.value); setCustom(c.kind !== 'percent' || !PCTS.includes(c.value)); setTitle(c.title); setTouched(true);
         setMinOrder(c.minOrder ? String(c.minOrder) : ''); setPerUser(c.perUser); setQty(c.qty ? String(c.qty) : ''); setHours(c.hours);
-        setStart(c.start || todayISO()); setTerms(c.terms); setPoints(c.points || 0); setMinLevel(c.minLevel || 0);
+        setStart(c.start || todayISO()); setTerms(c.terms); setPoints(c.points || 0); setMinLevel(c.minLevel || 0); setLicense(c.license || '');
         setDur(c.end ? Math.max(1, Math.round((new Date(c.end).getTime() - new Date(c.start || todayISO()).getTime()) / 86400e3)) : 0);
       }
     }).catch(() => {});
@@ -69,15 +71,18 @@ export default function MerchantCoupon() {
   const end = dur ? addDays(start, dur) : '';
   const bg = couponColor(m?.kind);
 
-  const ready = title.trim().length >= 4 && (kind === 'bogo' || kind === 'gift' || +value > 0) && !busy;
+  const ready = title.trim().length >= 4 && (kind === 'bogo' || kind === 'gift' || +value > 0) && license.trim().length >= 4 && declare && !busy;
   const submit = async () => {
-    if (!ready) { setErr(title.trim().length < 4 ? 'اكتب عنوان الكوبون.' : 'حدد قيمة الخصم.'); return; }
+    if (!ready) { setErr(title.trim().length < 4 ? 'اكتب عنوان الكوبون.' : license.trim().length < 4 ? 'اكتب رقم ترخيص التخفيضات من وزارة التجارة.' : !declare ? 'لازم توافق على الإقرار.' : 'حدد قيمة الخصم.'); return; }
     setBusy(true); setErr('');
-    const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end, points, minLevel };
+    const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end, points, minLevel, license: license.trim(), declare };
     try {
       if (editId) await editCoupon(editId, body); else await createCoupon(body);
       Alert.alert('انرسل للمراجعة', 'نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.', [{ text: 'تمام', onPress: () => router.replace('/merchant') }]);
-    } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'terms_required') { router.push('/merchant/terms?accept=1'); setErr('حدّثنا الشروط والأحكام. وافق عليها وارجع أرسل الكوبون.'); }
+      else setErr(couponErr(e));
+    } finally { setBusy(false); }
   };
 
   return (
@@ -178,6 +183,14 @@ export default function MerchantCoupon() {
               <Row label="صفحة محلك في الدليل" last><AppText variant="tiny" color={m?.placeId ? brand.green : brand.muted} style={{ fontFamily: font.semibold }}>{m?.placeId ? 'تلقائي' : 'بعد ما نربطها'}</AppText></Row>
             </View>
           </Field>
+          <Field label="رقم ترخيص التخفيضات" hint="من وزارة التجارة · إجباري">
+            <Input value={license} onChangeText={setLicense} placeholder="رقم الترخيص" maxLength={40} autoCapitalize="characters" style={{ textAlign: 'left' }} />
+            <AppText variant="tiny" muted style={{ marginTop: 6, lineHeight: 18 }}>نظام التخفيضات يلزم كل محل يقدم خصم أو عرض ترويجي يطلع ترخيص من وزارة التجارة (من موقعها أو تطبيقها). الرقم يطلع للعملاء في صفحة الكوبون.</AppText>
+          </Field>
+          <Pressable style={st.agree} onPress={() => setDeclare(!declare)}>
+            <View style={[st.box, declare && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{declare ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
+            <AppText variant="small" style={{ flex: 1, lineHeight: 22 }}>أقر بأني حاصل على ترخيص التخفيضات من وزارة التجارة لهذا العرض وأن الرقم صحيح، وأتحمل مسؤولية العرض كاملة، وألتزم بتطبيقه كما هو مكتوب حسب <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>الشروط والأحكام</AppText>.</AppText>
+          </Pressable>
           {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 14, fontFamily: font.semibold }}>{err}</AppText> : null}
         </View>
       </ScrollView>
@@ -200,6 +213,8 @@ const st = StyleSheet.create({
   kind: { width: '48.5%', height: 66, borderRadius: 16, borderWidth: 1.5, borderColor: brand.line, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
   kindOn: { borderWidth: 2, borderColor: brand.orange, backgroundColor: brand.softOrange },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  agree: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginTop: 16, backgroundColor: brand.card, borderRadius: 16, padding: 12 },
+  box: { width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: brand.faint, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   small: { height: 38, width: 90, paddingHorizontal: 10, fontSize: 14 },
   prev: { marginTop: 8, height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden', shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } },

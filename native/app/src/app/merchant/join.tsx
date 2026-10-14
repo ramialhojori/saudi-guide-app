@@ -36,14 +36,17 @@ export default function MerchantJoin() {
   const [cr, setCr] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [termsV, setTermsV] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     myMerchant().then((r) => {
+      setTermsV(r.termsVersion);
       const x = r.merchant;
       if (x) {
         setM(x); setKind(x.kind); setName(x.name); setNameEn(x.name_en); setCity(x.city); setArea(x.area);
         setGeo(x.lat && x.lng ? { lat: x.lat, lng: x.lng } : null); setPhotos(x.photos.map((u) => ({ uri: u, url: u })));
-        setHours(x.hours); setPhone(x.phone); setCr(x.cr);
+        setHours(x.hours); setPhone(x.phone); setCr(x.cr); setAgreed(x.termsOk);
       }
     }).catch(() => {}).finally(() => setLoaded(true));
   }, []);
@@ -67,14 +70,14 @@ export default function MerchantJoin() {
     if (!r.canceled) setPhotos((p) => [...p, ...r.assets.map((a) => ({ uri: a.uri }))].slice(0, 8));
   };
 
-  const ready = name.trim().length >= 2 && !!city && !busy;
+  const ready = name.trim().length >= 2 && !!city && agreed && !busy;
   const submit = async () => {
-    if (!ready) { setErr(!city ? 'اختر المدينة.' : 'اكتب اسم النشاط.'); return; }
+    if (!ready) { setErr(!agreed ? 'لازم توافق على الشروط والأحكام.' : !city ? 'اختر المدينة.' : 'اكتب اسم النشاط.'); return; }
     setBusy(true); setErr('');
     try {
       const urls: string[] = [];
       for (const p of photos) urls.push(p.url ?? (await uploadPhoto(p.uri)));
-      await saveMerchant({ kind, name: name.trim(), name_en: nameEn.trim(), city, area: area.trim(), lat: geo?.lat ?? null, lng: geo?.lng ?? null, photos: urls, hours: hours.trim(), phone: phone.trim(), cr: cr.trim() });
+      await saveMerchant({ kind, name: name.trim(), name_en: nameEn.trim(), city, area: area.trim(), lat: geo?.lat ?? null, lng: geo?.lng ?? null, photos: urls, hours: hours.trim(), phone: phone.trim(), cr: cr.trim(), acceptTerms: agreed ? termsV : undefined });
       if (!m) router.replace('/merchant/coupon?first=1');
       else router.back();
     } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }
@@ -154,6 +157,12 @@ export default function MerchantJoin() {
                 </View>
               </View>
             ) : null}
+            <Pressable style={st.agree} onPress={() => setAgreed(!agreed)}>
+              <View style={[st.box, agreed && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{agreed ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
+              <AppText variant="small" style={{ flex: 1, lineHeight: 22 }}>
+                قرأت <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>الشروط والأحكام للتجار</AppText> وأوافق عليها، وأقر بأن دليل السعودية منصة عرض فقط وأني المسؤول عن نشاطي وعروضي وتراخيصها.
+              </AppText>
+            </Pressable>
             {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 14, fontFamily: font.semibold }}>{err}</AppText> : null}
           </View>
         )}
@@ -179,6 +188,8 @@ const st = StyleSheet.create({
   ph: { width: 84, height: 84, borderRadius: 14 },
   phX: { position: 'absolute', top: 4, left: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
   add: { width: 84, height: 84, borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.faint, alignItems: 'center', justifyContent: 'center' },
+  agree: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginTop: 18, backgroundColor: brand.card, borderRadius: 16, padding: 12 },
+  box: { width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: brand.faint, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   plan: { marginTop: 18, backgroundColor: '#2B2745', borderRadius: 20, padding: 14, flexDirection: 'row', gap: 12, alignItems: 'center' },
   planIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: brand.card, paddingHorizontal: 16, paddingTop: 14, borderTopLeftRadius: 26, borderTopRightRadius: 26, shadowColor: '#2B1F45', shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 8 },

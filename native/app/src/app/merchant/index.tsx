@@ -105,6 +105,15 @@ export default function MerchantHome() {
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
+        {/* الشروط تحدثت: لازم يوافق قبل أي كوبون جديد */}
+        {!m.termsOk ? (
+          <Pressable style={[st.card, { borderWidth: 2, borderColor: brand.orange }]} onPress={() => router.push('/merchant/terms?accept=1')}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }}>وافق على الشروط والأحكام</AppText>
+            <AppText variant="small" muted style={{ lineHeight: 21 }}>{m.termsVersion ? 'حدّثنا الشروط والأحكام للتجار. اقرأها ووافق عليها عشان تقدر تضيف أو تعدّل كوبون.' : 'لازم توافق على الشروط والأحكام قبل ما تضيف كوبون.'}</AppText>
+            <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold, marginTop: 6 }}>اقرأ ووافق</AppText>
+          </Pressable>
+        ) : null}
+
         {/* حالة الطلب */}
         {!approved ? (
           <View style={[st.card, { borderWidth: 2, borderColor: m.status === 'pending' ? brand.orange : brand.pinkDeep }]}>

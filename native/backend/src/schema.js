@@ -55,7 +55,9 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS creports_c ON coupon_reports(coupon_id, status)",
   "CREATE INDEX IF NOT EXISTS creports_m ON coupon_reports(merchant_id, status)",
   "CREATE TABLE IF NOT EXISTS coupon_feedback ( user_id TEXT NOT NULL, coupon_id INTEGER NOT NULL, merchant_id INTEGER NOT NULL, ok INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, coupon_id) )",
-  "CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id)"
+  "CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id)",
+  "CREATE TABLE IF NOT EXISTS merchant_agreements ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, merchant_id INTEGER, version TEXT NOT NULL, ip TEXT, ua TEXT, created INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
@@ -69,6 +71,10 @@ const ALTERS = [
   'ALTER TABLE reviews ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE place_photos ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE merchants ADD COLUMN strikes INTEGER NOT NULL DEFAULT 0', // مخالفات مؤكدة على التاجر (3 = إيقاف)
+  'ALTER TABLE merchants ADD COLUMN terms_version TEXT', // آخر نسخة شروط وافق عليها
+  'ALTER TABLE merchants ADD COLUMN terms_at INTEGER',
+  'ALTER TABLE coupons ADD COLUMN license TEXT', // رقم ترخيص التخفيضات من وزارة التجارة
+  'ALTER TABLE coupons ADD COLUMN declared_at INTEGER', // وقت إقرار التاجر بالترخيص والمسؤولية
 ];
 
 let ready = false;

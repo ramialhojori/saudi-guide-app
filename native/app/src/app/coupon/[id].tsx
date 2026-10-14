@@ -88,6 +88,7 @@ export default function CouponDetail() {
             </View>
           </View>
         ) : null}
+        <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30, lineHeight: 18 }}>العرض مقدّم من المحل نفسه وهو المسؤول عنه{c.license ? ` · رقم ترخيص التخفيضات: ${c.license}` : ''}</AppText>
         <View style={st.guard}>
           <AppText variant="small" style={{ fontFamily: font.bold }}>ضمان الدليل</AppText>
           <AppText variant="tiny" muted style={{ lineHeight: 19, marginTop: 2 }}>نراجع كل عرض قبل النشر. ولو المحل رفض الكوبون أو غيّر العرض، بلّغنا: نراجع البلاغ، ولو ثبت تاخذ 20 نقطة اعتذار والمحل تنسجل عليه مخالفة.</AppText>

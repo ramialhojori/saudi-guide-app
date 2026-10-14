@@ -397,3 +397,15 @@ CREATE TABLE IF NOT EXISTS coupon_feedback (
   PRIMARY KEY (user_id, coupon_id)
 );
 CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id);
+
+-- موافقات التجار على الشروط والأحكام (سجل دائم: النسخة والوقت والجهاز) — دليل عند أي خلاف
+CREATE TABLE IF NOT EXISTS merchant_agreements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  merchant_id INTEGER,
+  version TEXT NOT NULL,
+  ip TEXT,
+  ua TEXT,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id);
