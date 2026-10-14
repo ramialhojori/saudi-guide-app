@@ -2,7 +2,7 @@
 import { api } from './api';
 import { session } from './auth';
 
-export type Biz = { id: number; name: string; kind: string; city: string; area: string; photo: string; verified: boolean; placeId: number | null; lat: number | null; lng: number | null };
+export type Biz = { id: number; name: string; kind: string; city: string; area: string; photo: string; verified: boolean; placeId: number | null; lat: number | null; lng: number | null; trust?: { n: number; ok: number; pct: number | null } };
 export type Coupon = {
   id: number; kind: 'percent' | 'amount' | 'bogo' | 'gift'; value: string; off: string; title: string; terms: string; minOrder: number | null;
   perUser: boolean; qty: number | null; used: number; left: number | null; views: number; hours: string; start: string; end: string;
@@ -36,10 +36,13 @@ export const myCoupons = () => api<{ coupons: Coupon[] }>('/v1/me/coupons', { to
 export const couponCode = (id: number, since: number) =>
   api<{ code?: string; left?: number; redeemed: boolean; at?: number }>(`/v1/coupons/${id}/code?since=${since}`, { token: tok(), timeoutMs: 8000 });
 
-export const myMerchant = () => api<{ merchant: Merchant | null; coupons: Coupon[]; stats?: MStats }>('/v1/merchant', { token: tok() });
+export const myMerchant = () => api<{ merchant: (Merchant & { strikes?: number }) | null; coupons: Coupon[]; stats?: MStats; trust?: { n: number; ok: number; pct: number | null; open: number } }>('/v1/merchant', { token: tok() });
 export const saveMerchant = (b: Partial<Merchant>) => api<{ id: number; status: string }>('/v1/merchant', { method: 'POST', body: b, token: tok() });
 export const createCoupon = (b: Record<string, unknown>) => api<{ id: number }>('/v1/merchant/coupons', { method: 'POST', body: b, token: tok() });
 export const editCoupon = (id: number, b: Record<string, unknown>) => api<{ status: string }>(`/v1/merchant/coupons/${id}`, { method: 'POST', body: b, token: tok() });
+export const reportCoupon = (id: number, reason: string, note: string) => api<{ ok: true; paused: boolean }>(`/v1/coupons/${id}/report`, { method: 'POST', body: { reason, note }, token: tok() });
+export const couponFeedback = (id: number, ok: boolean) => api(`/v1/coupons/${id}/feedback`, { method: 'POST', body: { ok }, token: tok() });
+export const OFFER_KINDS: [string, string][] = [['percent', 'خصم %'], ['amount', 'خصم بمبلغ'], ['bogo', '1+1'], ['gift', 'هدية']];
 export const redeem = (code: string) => api<{ ok: true; coupon: { id: number; title: string; off: string } }>('/v1/merchant/redeem', { method: 'POST', body: { code }, token: tok() });
 
 const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -56,7 +59,7 @@ export function couponErr(e: unknown) {
     value_required: 'حدد قيمة الخصم.', bad_dates: 'تاريخ النهاية قبل البداية.', name_required: 'اكتب اسم النشاط.', bad_city: 'اختر المدينة.',
     merchant_not_active: 'نشاطك ما انعتمد للحين.', wrong_code: 'الرمز غلط أو انتهى. خل العميل يحدّث الكوبون.', already_used: 'العميل استخدم هالكوبون قبل.',
     sold_out: 'خلصت الكوبونات.', need_points: 'نقاطك ما تكفي لهالكوبون.', need_level: 'هالكوبون حصري لمستوى أعلى من مستواك.',
-    customer_points: 'نقاط العميل ما تكفي لهالكوبون.', customer_level: 'العميل مستواه أقل من المطلوب للكوبون.', already_guide: 'أنت مرشد موثّق من قبل.', pending: 'طلبك قيد المراجعة.', wait: 'تقدر تطلب مرة ثانية بعد شهر من الرفض.', too_short: 'اكتب شوي أكثر عن نفسك.', rate_limited: 'محاولات كثيرة، انتظر دقيقة.', not_available: 'الكوبون انتهى أو خلص.', network: 'ما فيه اتصال، تأكد من النت.',
+    customer_points: 'نقاط العميل ما تكفي لهالكوبون.', customer_level: 'العميل مستواه أقل من المطلوب للكوبون.', already_guide: 'أنت مرشد موثّق من قبل.', already_reported: 'بلّغت عن هالكوبون قبل، ونراجع بلاغك.', pending: 'طلبك قيد المراجعة.', wait: 'تقدر تطلب مرة ثانية بعد شهر من الرفض.', too_short: 'اكتب شوي أكثر عن نفسك.', rate_limited: 'محاولات كثيرة، انتظر دقيقة.', not_available: 'الكوبون انتهى أو خلص.', network: 'ما فيه اتصال، تأكد من النت.',
     timeout: 'السيرفر تأخر، جرّب مرة ثانية.', suspended: 'النشاط موقوف. تواصل معنا.', consent_required: 'وافق على نشر الصور أول.', bad_stars: 'اختر عدد النجوم.',
   } as Record<string, string>)[c || ''] || 'صار خطأ، جرّب بعد شوي.';
 }

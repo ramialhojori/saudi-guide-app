@@ -25,6 +25,8 @@ export default function MerchantHome() {
   const [m, setM] = useState<Merchant | null | undefined>(undefined);
   const [cs, setCs] = useState<Coupon[]>([]);
   const [stats, setStats] = useState<MStats | null>(null);
+  const [trust, setTrust] = useState<{ n: number; ok: number; pct: number | null; open: number } | null>(null);
+  const [strikes, setStrikes] = useState(0);
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
@@ -33,7 +35,7 @@ export default function MerchantHome() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    try { const r = await myMerchant(); setM(r.merchant); setCs(r.coupons); setStats(r.stats ?? null); } catch { setM((x) => (x === undefined ? null : x)); }
+    try { const r = await myMerchant(); setM(r.merchant); setCs(r.coupons); setStats(r.stats ?? null); setTrust(r.trust ?? null); setStrikes(r.merchant?.strikes ?? 0); } catch { setM((x) => (x === undefined ? null : x)); }
   }, [user?.id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -114,6 +116,19 @@ export default function MerchantHome() {
               </View>
             </View>
             {m.status === 'rejected' ? <Button label="عدّل الطلب" h={46} style={{ marginTop: 12 }} onPress={() => router.push('/merchant/join')} /> : null}
+          </View>
+        ) : null}
+
+        {/* الالتزام: رأي العملاء بعد الاستخدام + المخالفات */}
+        {approved ? (
+          <View style={[st.card, strikes ? { borderWidth: 2, borderColor: brand.pinkDeep } : null]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <AppText style={{ fontFamily: font.bold, fontSize: 16, flex: 1 }}>التزامك بالعروض</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color={trust?.pct == null ? brand.muted : trust.pct >= 90 ? brand.green : trust.pct >= 70 ? brand.orangeDeep : brand.pinkDeep}>{trust?.pct == null ? '—' : trust.pct + '%'}</AppText>
+            </View>
+            <AppText variant="small" muted style={{ lineHeight: 21 }}>{trust?.n ? `من ${trust.n} عميل جاوب «انطبق العرض؟». النسبة تطلع للعملاء في صفحة الكوبون.` : 'بعد كل استخدام نسأل العميل: انطبق العرض مثل ما هو مكتوب؟ والنسبة تطلع للعملاء.'}</AppText>
+            {strikes ? <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold, marginTop: 6 }}>عليك {strikes} مخالفة مؤكدة من 3. عند 3 يتوقف النشاط.</AppText> : null}
+            {trust?.open ? <AppText variant="small" color={brand.orangeDeep} style={{ marginTop: 4 }}>فيه {trust.open} بلاغ من عملاء تحت المراجعة.</AppText> : null}
           </View>
         ) : null}
 

@@ -9,7 +9,7 @@ import { Chip } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { allCities, cityName } from '@/lib/content';
 import { useFeatures } from '@/lib/features';
-import { BIZ_KINDS, cityCouponsMe, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
+import { BIZ_KINDS, OFFER_KINDS, cityCouponsMe, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 
 /** كوبونات المدينة: عروض حقيقية من التجار بعد موافقة الإدارة، والمحفظة (المحفوظة) */
@@ -22,6 +22,7 @@ export default function Coupons() {
   const [tab, setTab] = useState<'all' | 'points' | 'wallet'>(prm.wallet ? 'wallet' : prm.tab === 'points' ? 'points' : 'all');
   const [me, setMe] = useState<Me>(null);
   const [kind, setKind] = useState('');
+  const [offer, setOffer] = useState('');
   const [list, setList] = useState<Coupon[] | null>(null);
   const [wallet, setWallet] = useState<Coupon[]>([]);
   const [err, setErr] = useState('');
@@ -47,8 +48,8 @@ export default function Coupons() {
   };
   const shown = useMemo(() => {
     const src = tab === 'wallet' ? wallet : tab === 'points' ? (list ?? []).filter((c) => c.points || c.minLevel) : list ?? [];
-    return kind ? src.filter((c) => c.biz?.kind === kind) : src;
-  }, [tab, wallet, list, kind]);
+    return src.filter((c) => (!kind || c.biz?.kind === kind) && (!offer || c.kind === offer));
+  }, [tab, wallet, list, kind, offer]);
   const kinds = BIZ_KINDS.filter(([k]) => (list ?? []).some((c) => c.biz?.kind === k));
 
   return (
@@ -88,6 +89,12 @@ export default function Coupons() {
           </View>
           <Icon name="star" color="#F9A158" size={30} />
         </View>
+      ) : null}
+      {(list ?? []).length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+          <Chip label="كل العروض" on={!offer} color={brand.orangeDeep} onPress={() => setOffer('')} />
+          {OFFER_KINDS.map(([k, t]) => <Chip key={k} label={t} on={offer === k} color={brand.orangeDeep} onPress={() => setOffer(offer === k ? '' : k)} />)}
+        </ScrollView>
       ) : null}
       {kinds.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>

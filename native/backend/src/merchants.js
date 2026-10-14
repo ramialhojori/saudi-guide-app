@@ -55,9 +55,10 @@ const couponOut = (c, extra = {}) => ({
 /** كوبون عام مع بيانات المحل (للتطبيق) */
 const publicCoupon = (r, saved) => couponOut(r, {
   saved: !!saved,
-  biz: { id: r.merchant_id, name: r.m_name, kind: r.m_kind, city: r.m_city, area: r.m_area || '', photo: parse(r.m_photos)[0] || '', verified: !!r.m_verified, placeId: r.m_place || null, lat: r.m_lat, lng: r.m_lng },
+  biz: { id: r.merchant_id, name: r.m_name, kind: r.m_kind, city: r.m_city, area: r.m_area || '', photo: parse(r.m_photos)[0] || '', verified: !!r.m_verified, placeId: r.m_place || null, lat: r.m_lat, lng: r.m_lng,
+    trust: { n: r.m_fb || 0, ok: r.m_ok || 0, pct: r.m_fb ? Math.round((100 * r.m_ok) / r.m_fb) : null } },
 });
-const PUBLIC_SQL = `SELECT c.*, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng
+const PUBLIC_SQL = `SELECT c.*, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id) m_fb, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id AND f.ok=1) m_ok, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng
   FROM coupons c JOIN merchants m ON m.id=c.merchant_id
   WHERE c.status='active' AND m.status='approved' AND (c.start IS NULL OR c.start='' OR c.start<=?1) AND (c."end" IS NULL OR c."end"='' OR c."end">=?1)
     AND (c.qty IS NULL OR c.used<c.qty)`;
@@ -141,6 +142,41 @@ export async function merchantRoute(p, request, env, J, q) {
     const t = now(), slot = Math.floor(t / SLOT);
     return J({ code: await codeFor(env, c.id, uid, slot), left: SLOT - (t % SLOT), redeemed: false });
   }
+  /* حماية المستخدم: «المحل رفض الكوبون» أو «العرض مختلف» */
+  if ((m = p.match(/^\/v1\/coupons\/(\d+)\/report$/)) && M === 'POST') {
+    if (!me) return J({ error: 'login_required' }, 401);
+    const c = await env.DB.prepare('SELECT id, merchant_id, title, status FROM coupons WHERE id=?').bind(+m[1]).first();
+    if (!c) return J({ error: 'not_found' }, 404);
+    const b = await request.json().catch(() => ({}));
+    const reason = ['refused', 'different', 'conditions', 'closed', 'other'].includes(b.reason) ? b.reason : 'other';
+    const dup = await env.DB.prepare('SELECT 1 FROM coupon_reports WHERE user_id=? AND coupon_id=? AND created>?').bind(uid, c.id, now() - 7 * 86400).first();
+    if (dup) return J({ error: 'already_reported' }, 409);
+    await env.DB.prepare('INSERT INTO coupon_reports (coupon_id,merchant_id,user_id,reason,note,created,updated) VALUES (?,?,?,?,?,?,?)')
+      .bind(c.id, c.merchant_id, uid, reason, String(b.note || '').trim().slice(0, 500), now(), now()).run();
+    // 3 أشخاص مختلفين خلال 30 يوم → نوقف الكوبون تلقائياً لين تراجعه الإدارة
+    const n = await env.DB.prepare("SELECT COUNT(DISTINCT user_id) n FROM coupon_reports WHERE coupon_id=? AND status<>'dismissed' AND created>?").bind(c.id, now() - 30 * 86400).first();
+    let paused = false;
+    if (n.n >= 3 && c.status === 'active') {
+      const mu = await env.DB.prepare('SELECT user_id FROM merchants WHERE id=?').bind(c.merchant_id).first();
+      await env.DB.batch([
+        env.DB.prepare("UPDATE coupons SET status='paused', note='أوقفناه مؤقتاً بسبب بلاغات من العملاء، ونراجعها معك', updated=? WHERE id=?").bind(now(), c.id),
+        notify(env, mu.user_id, `أوقفنا كوبون «${c.title}» مؤقتاً بسبب بلاغات من العملاء. نراجعها ونتواصل معك.`),
+      ]);
+      paused = true;
+    }
+    return J({ ok: true, paused });
+  }
+  /* بعد الاستخدام: انطبق العرض مثل ما هو مكتوب؟ */
+  if ((m = p.match(/^\/v1\/coupons\/(\d+)\/feedback$/)) && M === 'POST') {
+    if (!me) return J({ error: 'login_required' }, 401);
+    const rd = await env.DB.prepare('SELECT merchant_id FROM redemptions WHERE user_id=? AND coupon_id=? ORDER BY id DESC LIMIT 1').bind(uid, +m[1]).first();
+    if (!rd) return J({ error: 'not_used' }, 403);
+    const b = await request.json().catch(() => ({}));
+    await env.DB.prepare('INSERT INTO coupon_feedback (user_id,coupon_id,merchant_id,ok,created) VALUES (?1,?2,?3,?4,?5) ON CONFLICT(user_id,coupon_id) DO UPDATE SET ok=?4')
+      .bind(uid, +m[1], rd.merchant_id, b.ok ? 1 : 0, now()).run();
+    return J({ ok: true });
+  }
+
   /* محفظتي */
   if (p === '/v1/me/coupons' && M === 'GET') {
     if (!me) return J({ error: 'login_required' }, 401);
@@ -164,7 +200,9 @@ export async function merchantRoute(p, request, env, J, q) {
     const tot = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM redemptions WHERE merchant_id=?1) used,
         (SELECT COUNT(*) FROM coupon_saves s JOIN coupons c ON c.id=s.coupon_id WHERE c.merchant_id=?1) saves,
         (SELECT COALESCE(SUM(views),0) FROM coupons WHERE merchant_id=?1) views`).bind(mine.id).first();
-    return J({ merchant: merchantOut(mine), coupons: cs.results.map((c) => couponOut(c)), stats: { ...tot, week, today: d0 } });
+    const tr = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM coupon_feedback WHERE merchant_id=?1) n, (SELECT COUNT(*) FROM coupon_feedback WHERE merchant_id=?1 AND ok=1) ok,
+        (SELECT COUNT(*) FROM coupon_reports WHERE merchant_id=?1 AND status='pending') open`).bind(mine.id).first();
+    return J({ merchant: { ...merchantOut(mine), strikes: mine.strikes || 0 }, coupons: cs.results.map((c) => couponOut(c)), stats: { ...tot, week, today: d0 }, trust: { n: tr.n, ok: tr.ok, pct: tr.n ? Math.round((100 * tr.ok) / tr.n) : null, open: tr.open } });
   }
   if (p === '/v1/merchant' && M === 'POST') {
     const b = await request.json().catch(() => ({}));
@@ -285,6 +323,34 @@ export async function merchantAdmin(p, request, env, J, q) {
     if (status !== r.status && (status === 'approved' || status === 'rejected')) {
       await notify(env, r.user_id, status === 'approved' ? `تمت الموافقة على «${r.name}» في دليل السعودية للأعمال. أضف كوبونك الأول!` : `ما قدرنا نعتمد «${r.name}»${note ? ': ' + note : ''}. تقدر تعدّل الطلب وترسله مرة ثانية.`).run();
     }
+    return J({ ok: true });
+  }
+  if (p === '/admin/coupon-reports' && M === 'GET') {
+    const st = ['pending', 'confirmed', 'dismissed'].includes(q.get('status')) ? q.get('status') : 'pending';
+    const { results } = await env.DB.prepare(`SELECT r.*, c.title c_title, c.status c_status, m.name m_name, m.strikes m_strikes, m.city m_city, u.name u_name,
+        (SELECT COUNT(*) FROM coupon_reports x WHERE x.merchant_id=r.merchant_id AND x.status<>'dismissed') m_reports
+      FROM coupon_reports r JOIN coupons c ON c.id=r.coupon_id JOIN merchants m ON m.id=r.merchant_id LEFT JOIN users u ON u.id=r.user_id
+      WHERE r.status=? ORDER BY r.id ${st === 'pending' ? 'ASC' : 'DESC'} LIMIT 150`).bind(st).all();
+    return J({ reports: results.map((r) => ({ id: r.id, reason: r.reason, note: r.note || '', status: r.status, created: r.created, user: r.u_name || 'مستخدم الدليل',
+      coupon: { id: r.coupon_id, title: r.c_title, status: r.c_status }, merchant: { id: r.merchant_id, name: r.m_name, city: r.m_city, strikes: r.m_strikes || 0, reports: r.m_reports } })) });
+  }
+  if ((m = p.match(/^\/admin\/coupon-reports\/(\d+)$/)) && M === 'POST') {
+    const r = await env.DB.prepare('SELECT r.*, m.user_id m_user, m.strikes, m.name m_name, c.title c_title FROM coupon_reports r JOIN merchants m ON m.id=r.merchant_id JOIN coupons c ON c.id=r.coupon_id WHERE r.id=?').bind(+m[1]).first();
+    if (!r || r.status !== 'pending') return J({ error: 'not_found' }, 404);
+    const b = await request.json().catch(() => ({}));
+    const st = b.status === 'confirmed' ? 'confirmed' : 'dismissed';
+    const ops = [env.DB.prepare('UPDATE coupon_reports SET status=?, updated=? WHERE id=?').bind(st, now(), r.id)];
+    if (st === 'confirmed') {
+      const strikes = (r.strikes || 0) + 1;
+      ops.push(env.DB.prepare(`UPDATE merchants SET strikes=?${strikes >= 3 ? ", status='hidden', note='انوقف بسبب تكرار مخالفات الكوبونات'" : ''}, updated=? WHERE id=?`).bind(strikes, now(), r.merchant_id));
+      // تعويض العميل: 20 نقطة اعتذار
+      ops.push(env.DB.prepare('UPDATE users SET points=points+20 WHERE id=?').bind(r.user_id));
+      ops.push(notify(env, r.user_id, `راجعنا بلاغك عن «${r.c_title}» وثبت. أضفنا لك 20 نقطة اعتذار، واتخذنا إجراء مع المحل. شكراً لأنك تحمي غيرك.`));
+      ops.push(notify(env, r.m_user, strikes >= 3 ? `تم إيقاف «${r.m_name}» في دليل السعودية بسبب تكرار مخالفات الكوبونات.` : `تنبيه (${strikes} من 3): ثبت بلاغ عميل عن كوبون «${r.c_title}». الالتزام بالعرض المكتوب شرط للبقاء في الدليل.`));
+    } else {
+      ops.push(notify(env, r.user_id, `راجعنا بلاغك عن «${r.c_title}». شكراً لك، وإذا تكررت المشكلة بلّغنا مرة ثانية.`));
+    }
+    await env.DB.batch(ops);
     return J({ ok: true });
   }
   if (p === '/admin/coupons' && M === 'GET') {

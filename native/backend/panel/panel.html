@@ -167,7 +167,7 @@ async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
+  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
@@ -627,8 +627,20 @@ const dAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-
 async function merchantsView() {
   const m = $('#main');
   m.innerHTML = `<h1>التجار والكوبونات</h1><p class="sub">أصحاب المحلات يسجّلون من التطبيق (الملف الشخصي ← «سجّل نشاطك»). ما يظهر شي للزوار لين توافق هنا.</p>
-    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف']].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['reports', `بلاغات العملاء${SUMMARY?.counts?.creportsPending ? ' (' + SUMMARY.counts.creportsPending + ')' : ''}`], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف']].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-m]').forEach((b) => (b.onclick = () => { MTAB = b.dataset.m; merchantsView(); }));
+  if (MTAB === 'reports') {
+    const RS = { refused: 'المحل رفض الكوبون', different: 'العرض مختلف عن المكتوب', conditions: 'شروط ما كانت مكتوبة', closed: 'المحل مقفل', other: 'مشكلة ثانية' };
+    const d = await api('/admin/coupon-reports');
+    $('#res').innerHTML = `<div class="hint" style="margin-bottom:10px">3 بلاغات من 3 أشخاص على نفس الكوبون توقفه تلقائياً. «ثبت البلاغ» يعطي العميل 20 نقطة اعتذار ويسجل مخالفة على التاجر، و3 مخالفات توقف النشاط كامل.</div>` + (d.reports.map((r) => `<div class="post"><div class="row"><span class="badge b-draft">${RS[r.reason] || r.reason}</span><b class="grow">${h(r.coupon.title)}</b><span class="muted" style="font-size:13px">${h(r.merchant.name)} · ${cityName(r.merchant.city)} · من ${h(r.user)} · ${dAr(r.created)}</span></div>
+      ${r.note ? `<div>«${h(r.note)}»</div>` : ''}<div class="muted" style="font-size:13px">على هالتاجر: ${r.merchant.reports} بلاغ · ${r.merchant.strikes} مخالفة مؤكدة من 3 · الكوبون ${r.coupon.status === 'paused' ? 'موقوف تلقائياً' : (MST[r.coupon.status] || [r.coupon.status])[0]}</div>
+      <div class="row"><button class="btn p" data-rp="${r.id}" data-s="confirmed">ثبت البلاغ</button><button class="btn ghost" data-rp="${r.id}" data-s="dismissed">ما ثبت</button></div></div>`).join('') || '<div class="empty">ما فيه بلاغات. التجار ملتزمين</div>');
+    m.querySelectorAll('[data-rp]').forEach((b) => (b.onclick = async () => {
+      if (b.dataset.s === 'confirmed' && !confirm('تثبت البلاغ؟ العميل ياخذ 20 نقطة والتاجر تنسجل عليه مخالفة.')) return;
+      await api('/admin/coupon-reports/' + b.dataset.rp, { method: 'POST', body: { status: b.dataset.s } }); toast('تم ووصلهم إشعار'); SUMMARY = null; merchantsView();
+    }));
+    return;
+  }
   if (MTAB === 'coupons' || MTAB === 'allc') {
     const d = await api('/admin/coupons?status=' + (MTAB === 'coupons' ? 'pending' : 'all'));
     $('#res').innerHTML = d.coupons.map((c) => `<div class="post"><div class="row"><span style="background:var(--orange);color:#fff;border-radius:14px;padding:8px 12px;font-weight:700">${h(c.off)}</span>

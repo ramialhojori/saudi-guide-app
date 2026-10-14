@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui';
-import { couponCode, couponErr, getCoupon, type Coupon } from '@/lib/coupons';
+import { couponCode, couponErr, couponFeedback, getCoupon, type Coupon } from '@/lib/coupons';
+import { ReportCoupon } from '@/components/ReportCoupon';
 import { brand, font } from '@/theme/tokens';
 
 /** استخدام الكوبون: رمز من السيرفر يتغير كل 30 ثانية (مربوط بحسابك) → الكاشير يدخله → يوصلك تأكيد هنا */
@@ -20,6 +21,8 @@ export default function CouponUse() {
   const [left, setLeft] = useState(30);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
+  const [rep, setRep] = useState<'' | 'refused' | 'different'>('');
+  const [fb, setFb] = useState<null | boolean>(null);
   const since = useRef(Math.floor(Date.now() / 1000) - 5);
   const nextAt = useRef(0);
 
@@ -54,11 +57,23 @@ export default function CouponUse() {
         <AppText style={{ fontFamily: font.bold, fontSize: 28, lineHeight: 40, marginTop: 20 }} color="#fff" center>تم استخدام الكوبون</AppText>
         <AppText color="#fff" center>{c ? `${c.off} في ${c.biz?.name ?? ''}` : ''}</AppText>
         {c?.points ? <AppText variant="small" color="#E2F0E6" center>انخصم من رصيدك {c.points} نقطة</AppText> : null}
-        <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>بالعافية! لا تنسى تقيّم المكان بعدين.</AppText>
+        <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>بالعافية!</AppText>
+        <View style={st.fb}>
+          {fb === null ? (
+            <>
+              <AppText style={{ fontFamily: font.bold }} color="#fff" center>انطبق العرض مثل ما هو مكتوب؟</AppText>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                <Pressable style={st.fbBtn} onPress={() => { setFb(true); couponFeedback(Number(id), true).catch(() => {}); }}><AppText style={{ fontFamily: font.bold }} color={brand.green}>نعم</AppText></Pressable>
+                <Pressable style={st.fbBtn} onPress={() => { setFb(false); couponFeedback(Number(id), false).catch(() => {}); setRep('different'); }}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>لا</AppText></Pressable>
+              </View>
+            </>
+          ) : <AppText color="#fff" center style={{ fontFamily: font.semibold }}>{fb ? 'شكراً! رأيك يساعد غيرك يثق بالعروض.' : 'آسفين على هالتجربة. بلاغك يوصلنا ونراجعه.'}</AppText>}
+        </View>
         <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
           {c?.biz?.placeId ? <Button label="قيّم المكان" bg="rgba(255,255,255,0.2)" onPress={() => router.replace({ pathname: '/review/[id]', params: { id: String(c.biz!.placeId) } })} /> : null}
-          <Button label="تمام" bg={brand.card} fg={brand.green} onPress={() => router.back()} />
+          <Button label="تمام" bg="#fff" fg={brand.green} onPress={() => router.back()} />
         </View>
+        <ReportCoupon id={Number(id)} visible={!!rep} initial={rep || undefined} onClose={() => setRep('')} />
       </View>
     );
   }
@@ -95,11 +110,11 @@ export default function CouponUse() {
         </View>
       </View>
       <AppText variant="small" color="#CFC6DE" center style={{ marginTop: 18, lineHeight: 24 }}>الرمز يتغير كل 30 ثانية عشان يكون لك أنت فقط.{'\n'}بعد ما يدخله الكاشير يوصلك تأكيد هنا.</AppText>
-      {c?.terms ? (
-        <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10 }}>
-          <AppText variant="tiny" color="#CFC6DE" center numberOfLines={3}>{c.terms}</AppText>
-        </View>
-      ) : null}
+      <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
+        {c?.terms ? <AppText variant="tiny" color="#CFC6DE" center numberOfLines={3}>{c.terms}</AppText> : null}
+        <Pressable onPress={() => setRep('refused')} hitSlop={8}><AppText variant="small" color="#F9A158" center style={{ fontFamily: font.bold }}>المحل رفض الكوبون؟ بلّغنا</AppText></Pressable>
+      </View>
+      <ReportCoupon id={Number(id)} visible={!!rep} initial={rep || undefined} onClose={() => setRep('')} />
     </View>
   );
 }
@@ -110,6 +125,8 @@ const st = StyleSheet.create({
   pill: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   logo: { width: 76, height: 76, borderRadius: 24, borderWidth: 3, borderColor: brand.orange },
   box: { marginTop: 28, alignSelf: 'center', width: 300, backgroundColor: brand.card, borderRadius: 28, paddingVertical: 22 },
+  fb: { marginTop: 22, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 20, padding: 14 },
+  fbBtn: { flex: 1, height: 44, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   digits: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 12, direction: 'ltr' },
   digit: { width: 52, height: 66, borderRadius: 16, backgroundColor: brand.bg, alignItems: 'center', justifyContent: 'center' },
   doneIcon: { alignSelf: 'center', width: 110, height: 110, borderRadius: 55, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },

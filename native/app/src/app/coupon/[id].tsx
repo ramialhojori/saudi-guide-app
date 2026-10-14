@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon';
 import { Empty, Loading } from '@/components/State';
 import { BackButton, Button, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
+import { ReportCoupon } from '@/components/ReportCoupon';
 import { cityName } from '@/lib/content';
 import { bizKind, couponColor, couponErr, dayLabel, getCouponMe, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { openDirections } from '@/lib/maps';
@@ -21,6 +22,7 @@ export default function CouponDetail() {
   const [c, setC] = useState<Coupon | null>(null);
   const [me, setMe] = useState<Me>(null);
   const [err, setErr] = useState('');
+  const [rep, setRep] = useState(false);
   useFocusEffect(useCallback(() => { getCouponMe(Number(id)).then((r) => { setC(r.coupon); setMe(r.me); }).catch((e) => setErr(couponErr(e))); }, [id, user?.id]));
 
   if (!c) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{err ? <Empty title="الكوبون انتهى أو خلص" sub={err} /> : <Loading />}</View>;
@@ -75,13 +77,22 @@ export default function CouponDetail() {
               {c.biz.verified ? <Pill label="موثّق" bg={brand.softGreen} fg={brand.green} /> : null}
             </View>
             <AppText variant="small" muted>{bizKind(c.biz.kind)} · {cityName(c.biz.city)}{c.biz.area ? ` · ${c.biz.area}` : ''}</AppText>
+            {c.biz.trust?.pct != null && c.biz.trust.n >= 3 ? (
+              <AppText variant="small" color={c.biz.trust.pct >= 90 ? brand.green : c.biz.trust.pct >= 70 ? brand.orangeDeep : brand.pinkDeep} style={{ fontFamily: font.semibold, marginTop: 4 }}>
+                التزام بالعرض {c.biz.trust.pct}% · من {c.biz.trust.n} تجربة
+              </AppText>
+            ) : <AppText variant="tiny" muted style={{ marginTop: 4 }}>بعد كل استخدام نسأل العميل: انطبق العرض مثل ما هو مكتوب؟</AppText>}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               {c.biz.placeId ? <Pressable style={st.mini} onPress={() => router.push(`/place/${c.biz!.placeId}`)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>صفحة المكان</AppText></Pressable> : null}
               {c.biz.lat && c.biz.lng ? <Pressable style={st.mini} onPress={() => openDirections(c.biz!.lat, c.biz!.lng, c.biz!.name)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>الاتجاهات</AppText></Pressable> : null}
             </View>
           </View>
         ) : null}
-        <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>العرض مقدّم من المحل نفسه، ودليل السعودية يراجعه قبل النشر.</AppText>
+        <View style={st.guard}>
+          <AppText variant="small" style={{ fontFamily: font.bold }}>ضمان الدليل</AppText>
+          <AppText variant="tiny" muted style={{ lineHeight: 19, marginTop: 2 }}>نراجع كل عرض قبل النشر. ولو المحل رفض الكوبون أو غيّر العرض، بلّغنا: نراجع البلاغ، ولو ثبت تاخذ 20 نقطة اعتذار والمحل تنسجل عليه مخالفة.</AppText>
+          {user ? <Pressable onPress={() => setRep(true)} hitSlop={8}><AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold, marginTop: 8 }}>بلّغ عن مشكلة في هالكوبون</AppText></Pressable> : null}
+        </View>
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         {used ? <Button label="استخدمته ✓" bg={brand.green} />
@@ -90,11 +101,13 @@ export default function CouponDetail() {
           : <Button label={user ? 'استخدمه الحين' : 'سجّل دخولك عشان تستخدمه'} bg={bg} onPress={() => (user ? router.push({ pathname: '/coupon/use', params: { id: String(c.id) } }) : router.push('/login'))} />}
         <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{c.points && user && me ? `رصيدك ${me.balance} نقطة · تنخصم ${c.points} لما يأكد الكاشير` : 'افتحه وأنت عند الكاشير. الرمز يتغير كل 30 ثانية.'}</AppText>
       </View>
+      <ReportCoupon id={c.id} visible={rep} onClose={() => setRep(false)} />
     </View>
   );
 }
 
 const st = StyleSheet.create({
+  guard: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.softPurple, borderRadius: 20, padding: 14 },
   head: { paddingHorizontal: 16, paddingBottom: 26, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   logo: { width: 80, height: 80, borderRadius: 24, borderWidth: 3, borderColor: '#fff', backgroundColor: brand.card },

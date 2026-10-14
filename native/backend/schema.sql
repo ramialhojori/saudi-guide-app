@@ -372,3 +372,28 @@ CREATE TABLE IF NOT EXISTS suggestions (
   updated INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sugg_status ON suggestions(status, id);
+
+-- حماية المستخدم من تلاعب التجار: بلاغات على الكوبونات + تقييم «انطبق العرض؟» بعد الاستخدام
+CREATE TABLE IF NOT EXISTS coupon_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  coupon_id INTEGER NOT NULL,
+  merchant_id INTEGER NOT NULL,
+  user_id TEXT NOT NULL,
+  reason TEXT NOT NULL,                      -- refused | different | conditions | closed | other
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | confirmed | dismissed
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS creports_c ON coupon_reports(coupon_id, status);
+CREATE INDEX IF NOT EXISTS creports_m ON coupon_reports(merchant_id, status);
+
+CREATE TABLE IF NOT EXISTS coupon_feedback (
+  user_id TEXT NOT NULL,
+  coupon_id INTEGER NOT NULL,
+  merchant_id INTEGER NOT NULL,
+  ok INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  PRIMARY KEY (user_id, coupon_id)
+);
+CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id);

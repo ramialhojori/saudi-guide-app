@@ -50,7 +50,12 @@ const STATEMENTS = [
   "CREATE TABLE IF NOT EXISTS fact_votes ( user_id TEXT NOT NULL, place_id INTEGER NOT NULL, k TEXT NOT NULL, v INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, place_id, k) )",
   "CREATE INDEX IF NOT EXISTS facts_place ON fact_votes(place_id, k)",
   "CREATE TABLE IF NOT EXISTS suggestions ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, type TEXT NOT NULL, place_id INTEGER, data TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
-  "CREATE INDEX IF NOT EXISTS sugg_status ON suggestions(status, id)"
+  "CREATE INDEX IF NOT EXISTS sugg_status ON suggestions(status, id)",
+  "CREATE TABLE IF NOT EXISTS coupon_reports ( id INTEGER PRIMARY KEY AUTOINCREMENT, coupon_id INTEGER NOT NULL, merchant_id INTEGER NOT NULL, user_id TEXT NOT NULL, reason TEXT NOT NULL, note TEXT, status TEXT NOT NULL DEFAULT 'pending', created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS creports_c ON coupon_reports(coupon_id, status)",
+  "CREATE INDEX IF NOT EXISTS creports_m ON coupon_reports(merchant_id, status)",
+  "CREATE TABLE IF NOT EXISTS coupon_feedback ( user_id TEXT NOT NULL, coupon_id INTEGER NOT NULL, merchant_id INTEGER NOT NULL, ok INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, coupon_id) )",
+  "CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
@@ -58,11 +63,12 @@ const ALTERS = [
   'ALTER TABLE notifications ADD COLUMN link TEXT',
   'ALTER TABLE coupons ADD COLUMN points INTEGER',
   'ALTER TABLE coupons ADD COLUMN min_level INTEGER',
-  'ALTER TABLE users ADD COLUMN spent INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE users ADD COLUMN spent INTEGER NOT NULL DEFAULT 0', // نقاط انصرفت على كوبونات (المستوى يحسب على كل اللي جمعها)
   // «تأثيرك»: كم مرة انشافت مساهمات المستخدم
   'ALTER TABLE posts ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE reviews ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
-  'ALTER TABLE place_photos ADD COLUMN views INTEGER NOT NULL DEFAULT 0', // نقاط انصرفت على كوبونات (المستوى يحسب على كل اللي جمعها)
+  'ALTER TABLE place_photos ADD COLUMN views INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE merchants ADD COLUMN strikes INTEGER NOT NULL DEFAULT 0', // مخالفات مؤكدة على التاجر (3 = إيقاف)
 ];
 
 let ready = false;
