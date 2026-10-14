@@ -86,3 +86,32 @@
 | GET | `/v1/events/:id.ics` | ملف تقويم مع تنبيه |
 
 الإدارة: `/admin/places/similar`، `/admin/(places|events)/bulk` (مسودات، للمساعد)، `/admin/weekly`، `/admin/articles`، `/admin/seasons`، `/admin/notify`، `/admin/community/posts`.
+
+## الإصدار 0.6.0 — التجار والكوبونات، التقييمات، الرسائل
+
+### الكوبونات (عام)
+- `GET /v1/coupons?city=&place=&merchant=` — الكوبونات الفعّالة (المعتمدة والسارية ولم تخلص)
+- `GET /v1/coupons/:id` — تفاصيل + `usedByMe` (يزيد عدد المشاهدات)
+- `POST /v1/coupons/:id/save` — حفظ/إلغاء في المحفظة (دخول)
+- `GET /v1/coupons/:id/code?since=` — الرمز المتغير كل 30 ثانية (HMAC بسر السيرفر، مربوط بالمستخدم والكوبون). يرجع `{redeemed:true}` لو الكاشير أكّد بعد `since`
+- `GET /v1/me/coupons` — المحفظة
+
+### بوابة التجار (دخول)
+- `GET /v1/merchant` — النشاط + الكوبونات + الأرقام (مشاهدات، حفظ، استخدام، آخر 7 أيام)
+- `POST /v1/merchant` — تسجيل أو تعديل (يبدأ pending؛ تعديل الاسم/المدينة/السجل يرجعه للمراجعة)
+- `POST /v1/merchant/coupons` — كوبون جديد (pending، والحد = max_coupons)
+- `POST /v1/merchant/coupons/:id` — `{action:'pause'|'resume'|'remove'}` أو تعديل كامل (يرجع pending)
+- `POST /v1/merchant/redeem {code}` — الكاشير يدخل الرمز (20 محاولة خاطئة بالدقيقة كحد)
+
+### التقييمات وصور الزوار
+- `GET /v1/places/:id/reviews` — المتوسط والتوزيع والوسوم والتقييمات والصور المقبولة وتقييمي
+- `POST /v1/places/:id/reviews {stars,tags,text,photos,consent}` — تقييم واحد لكل مستخدم (+3 أول مرة)، الصور تنتظر الموافقة (+5 لكل صورة تنقبل)
+- `DELETE /v1/places/:id/reviews` — إخفاء تقييمي
+- `POST /v1/reviews/:id/report` و `POST /v1/photos/:id/report`
+
+### الإدارة
+- `/admin/merchants` و `/admin/merchants/:id` — اعتماد/رفض/إيقاف، موثّق، عدد الكوبونات، ربط بمكان، تعديل الموقع
+- `/admin/coupons` و `/admin/coupons/:id`
+- `/admin/photos` و `/admin/photos/:id` و `/admin/photos/bulk`، `/admin/reviews` و `/admin/reviews/:id`
+- `/admin/messages` (GET سجل، POST إرسال أو جدولة)، `/admin/messages/estimate`، `/admin/messages/:id/cancel` — داخل التطبيق + Expo Push، ساعات هدوء 11م–8ص، المجدول يرسله الكرون كل ساعة
+- `/admin/analytics` — آخر 30 يوم، `/admin/badges` — الأوسمة والمستويات وأعلى المستخدمين
