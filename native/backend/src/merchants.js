@@ -7,6 +7,11 @@
 
 import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
+import { LEVELS } from './community.js';
+
+/** المستوى من مجموع النقاط اللي جمعها (الصرف ما ينزّل المستوى) */
+export const levelOf = (pts) => { let l = 1; LEVELS.forEach(([at], i) => { if ((pts || 0) >= at) l = i + 1; }); return l; };
+const balanceOf = (u) => Math.max(0, (u.points || 0) - (u.spent || 0));
 
 const now = () => Math.floor(Date.now() / 1000);
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
@@ -44,6 +49,7 @@ const couponOut = (c, extra = {}) => ({
   id: c.id, kind: c.kind, value: c.value || '', off: offText(c), title: c.title, terms: c.terms || '', minOrder: c.min_order || null,
   perUser: !!c.per_user, qty: c.qty || null, used: c.used, left: c.qty ? Math.max(0, c.qty - c.used) : null, views: c.views,
   hours: c.hours || '', start: c.start || '', end: c.end || '', status: c.status, note: c.note || '', created: c.created,
+  points: c.points || 0, minLevel: c.min_level || 0, levelName: c.min_level ? (LEVELS[c.min_level - 1] || [])[1] || '' : '',
   ...extra,
 });
 /** كوبون عام مع بيانات المحل (للتطبيق) */
@@ -74,6 +80,8 @@ function couponFields(b) {
     kind, value, title: str(b.title, 90), terms: String(b.terms ?? '').trim().slice(0, 600), min_order: num(b.minOrder) ? Math.round(+b.minOrder) : null,
     per_user: b.perUser === false ? 0 : 1, qty: num(b.qty) && +b.qty > 0 ? Math.min(100000, Math.round(+b.qty)) : null,
     hours: str(b.hours, 80), start: d(b.start), end: d(b.end),
+    points: num(b.points) && +b.points > 0 ? Math.min(100000, Math.round(+b.points)) : null,
+    min_level: num(b.minLevel) && +b.minLevel > 1 ? Math.min(LEVELS.length, Math.round(+b.minLevel)) : null,
   };
 }
 const notify = (env, userId, text) =>
@@ -93,13 +101,14 @@ export async function merchantRoute(p, request, env, J, q) {
     if (q.get('city')) { sql += ' AND m.city=?2'; args.push(q.get('city')); }
     if (+q.get('place')) { sql += ` AND m.place_id=?${args.length + 1}`; args.push(+q.get('place')); }
     if (+q.get('merchant')) { sql += ` AND m.id=?${args.length + 1}`; args.push(+q.get('merchant')); }
+    if (q.get('rewards')) sql += ' AND (c.points>0 OR c.min_level>1)';
     const { results } = await env.DB.prepare(sql + ' ORDER BY m.verified DESC, c.used DESC, c.id DESC LIMIT 100').bind(...args).all();
     let saved = new Set();
     if (uid && results.length) {
       const s = await env.DB.prepare('SELECT coupon_id FROM coupon_saves WHERE user_id=?').bind(uid).all();
       saved = new Set(s.results.map((x) => x.coupon_id));
     }
-    return J({ coupons: results.map((r) => publicCoupon(r, saved.has(r.id))) });
+    return J({ coupons: results.map((r) => publicCoupon(r, saved.has(r.id))), me: me ? { balance: balanceOf(me), level: levelOf(me.points) } : null });
   }
   if ((m = p.match(/^\/v1\/coupons\/(\d+)$/)) && M === 'GET') {
     const r = await env.DB.prepare(PUBLIC_SQL + ' AND c.id=?2').bind(today(), +m[1]).first();
@@ -107,7 +116,7 @@ export async function merchantRoute(p, request, env, J, q) {
     await env.DB.prepare('UPDATE coupons SET views=views+1 WHERE id=?').bind(r.id).run();
     const s = uid ? await env.DB.prepare('SELECT 1 FROM coupon_saves WHERE user_id=? AND coupon_id=?').bind(uid, r.id).first() : null;
     const used = uid ? await env.DB.prepare('SELECT COUNT(*) n FROM redemptions WHERE user_id=? AND coupon_id=?').bind(uid, r.id).first() : { n: 0 };
-    return J({ coupon: { ...publicCoupon(r, s), usedByMe: used.n } });
+    return J({ coupon: { ...publicCoupon(r, s), usedByMe: used.n }, me: me ? { balance: balanceOf(me), level: levelOf(me.points) } : null });
   }
   if ((m = p.match(/^\/v1\/coupons\/(\d+)\/save$/)) && M === 'POST') {
     if (!me) return J({ error: 'login_required' }, 401);
@@ -126,6 +135,8 @@ export async function merchantRoute(p, request, env, J, q) {
     if (last && since && last.created >= since) return J({ redeemed: true, at: last.created });
     if (!c) return J({ error: 'not_available' }, 404);
     if (c.per_user && last) return J({ error: 'already_used', at: last.created }, 409);
+    if (c.min_level && levelOf(me.points) < c.min_level) return J({ error: 'need_level', need: c.min_level }, 403);
+    if (c.points && balanceOf(me) < c.points) return J({ error: 'need_points', need: c.points, have: balanceOf(me) }, 403);
     await env.DB.prepare('INSERT INTO coupon_saves (user_id,coupon_id,opened,created) VALUES (?1,?2,?3,?3) ON CONFLICT(user_id,coupon_id) DO UPDATE SET opened=?3').bind(uid, c.id, now()).run();
     const t = now(), slot = Math.floor(t / SLOT);
     return J({ code: await codeFor(env, c.id, uid, slot), left: SLOT - (t % SLOT), redeemed: false });
@@ -184,8 +195,8 @@ export async function merchantRoute(p, request, env, J, q) {
     if (f.end && f.start && f.end < f.start) return J({ error: 'bad_dates' }, 400);
     const live = await env.DB.prepare("SELECT COUNT(*) n FROM coupons WHERE merchant_id=? AND status IN ('pending','active','paused')").bind(mine.id).first();
     if (live.n >= mine.max_coupons) return J({ error: 'limit', max: mine.max_coupons }, 409);
-    const r = await env.DB.prepare(`INSERT INTO coupons (merchant_id,kind,value,title,terms,min_order,per_user,qty,hours,start,"end",created,updated)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mine.id, f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, now(), now()).run();
+    const r = await env.DB.prepare(`INSERT INTO coupons (merchant_id,kind,value,title,terms,min_order,per_user,qty,hours,start,"end",points,min_level,created,updated)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mine.id, f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, now(), now()).run();
     return J({ id: r.meta.last_row_id, status: 'pending' });
   }
   if ((m = p.match(/^\/v1\/merchant\/coupons\/(\d+)$/)) && (M === 'PATCH' || M === 'POST')) {
@@ -198,8 +209,8 @@ export async function merchantRoute(p, request, env, J, q) {
     // تعديل كامل → يرجع للمراجعة
     const f = couponFields(b);
     if (f.title.length < 4) return J({ error: 'title_required' }, 400);
-    await env.DB.prepare(`UPDATE coupons SET kind=?,value=?,title=?,terms=?,min_order=?,per_user=?,qty=?,hours=?,start=?,"end"=?,status='pending',note='',updated=? WHERE id=?`)
-      .bind(f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, now(), c.id).run();
+    await env.DB.prepare(`UPDATE coupons SET kind=?,value=?,title=?,terms=?,min_order=?,per_user=?,qty=?,hours=?,start=?,"end"=?,points=?,min_level=?,status='pending',note='',updated=? WHERE id=?`)
+      .bind(f.kind, f.value, f.title, f.terms, f.min_order, f.per_user, f.qty, f.hours, f.start, f.end, f.points, f.min_level, now(), c.id).run();
     return J({ status: 'pending' });
   }
   /* الكاشير يدخل الرمز */
@@ -223,11 +234,19 @@ export async function merchantRoute(p, request, env, J, q) {
           const u = await env.DB.prepare('SELECT 1 FROM redemptions WHERE user_id=? AND coupon_id=?').bind(r.user_id, r.id).first();
           if (u) return J({ error: 'already_used' }, 409);
         }
+        if (r.points || r.min_level) {
+          const cu = await env.DB.prepare('SELECT points, spent FROM users WHERE id=?').bind(r.user_id).first();
+          if (!cu || (r.min_level && levelOf(cu.points) < r.min_level)) return J({ error: 'customer_level' }, 409);
+          if (r.points) {
+            const d = await env.DB.prepare('UPDATE users SET spent=spent+?1 WHERE id=?2 AND points-spent>=?1').bind(r.points, r.user_id).run();
+            if (!d.meta.changes) return J({ error: 'customer_points' }, 409);
+          }
+        }
         await env.DB.batch([
           env.DB.prepare('INSERT INTO redemptions (coupon_id,merchant_id,user_id,created) VALUES (?,?,?,?)').bind(r.id, mine.id, r.user_id, t),
           env.DB.prepare('UPDATE coupons SET used=used+1 WHERE id=?').bind(r.id),
           env.DB.prepare('UPDATE coupon_saves SET opened=NULL WHERE user_id=? AND coupon_id=?').bind(r.user_id, r.id),
-          notify(env, r.user_id, `تم استخدام كوبون «${r.title}» في ${mine.name}. بالعافية!`),
+          notify(env, r.user_id, `تم استخدام كوبون «${r.title}» في ${mine.name}${r.points ? ` وانخصم ${r.points} نقطة` : ''}. بالعافية!`),
         ]);
         return J({ ok: true, coupon: { id: r.id, title: r.title, off: offText(r) } });
       }

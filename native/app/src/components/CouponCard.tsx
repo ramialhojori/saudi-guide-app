@@ -18,7 +18,11 @@ export function CouponCard({ c, onPress, onSave, cta = 'استخدمه', bizName
           <AppText style={{ fontFamily: font.bold, fontSize: 21, lineHeight: 30 }} color="#fff" numberOfLines={1}>{c.off}</AppText>
           <AppText variant="small" color="#fff" numberOfLines={1}>{c.title}</AppText>
         </View>
-        <AppText variant="tiny" color="#fff">{used ? 'استخدمته ✓' : leftText(c)}</AppText>
+
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+          {c.points || c.minLevel ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{[c.points ? `${c.points} نقطة` : '', c.minLevel ? `مستوى ${c.minLevel}+` : ''].filter(Boolean).join(' · ')}</AppText></View> : null}
+          <AppText variant="tiny" color="#fff" numberOfLines={1} style={{ flexShrink: 1 }}>{used ? 'استخدمته ✓' : leftText(c)}</AppText>
+        </View>
       </View>
       <View style={st.stub}>
         {onSave ? (
@@ -32,6 +36,7 @@ export function CouponCard({ c, onPress, onSave, cta = 'استخدمه', bizName
 
 const st = StyleSheet.create({
   card: { height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
+  tag: { backgroundColor: 'rgba(43,39,69,0.55)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
   noImg: { width: 92, height: 120, backgroundColor: 'rgba(0,0,0,0.12)', alignItems: 'center', justifyContent: 'center' },
   stub: { width: 78, borderLeftWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.6)', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.06)' },
 });

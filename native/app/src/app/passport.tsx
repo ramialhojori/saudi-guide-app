@@ -1,13 +1,17 @@
 import { useCallback, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import * as Location from 'expo-location';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { BackButton } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ago } from '@/lib/community';
-import { getPassport, type Passport as PassportData } from '@/lib/passport';
+import { checkIn, getPassport, type Passport as PassportData } from '@/lib/passport';
+import { nearby } from '@/lib/content';
+import type { Place } from '@/lib/types';
 import { brand, font } from '@/theme/tokens';
 
 const STAMPS = [
@@ -23,6 +27,30 @@ export default function Passport() {
   const { user } = useAuth();
   const [pp, setPp] = useState<PassportData | null>(null);
   useFocusEffect(useCallback(() => { if (user) getPassport().then(setPp).catch(() => {}); }, [user?.id]));
+  const [near, setNear] = useState<Place[] | null>(null);
+  const [finding, setFinding] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [stamping, setStamping] = useState(0);
+  // الأماكن القريبة منك اللي تقدر تختمها (أقل من 500 متر) أو قريبة تقدر تروح لها
+  const findNear = async () => {
+    setFinding(true); setMsg('');
+    const perm = await Location.requestForegroundPermissionsAsync().catch(() => null);
+    if (!perm?.granted) { setMsg('نحتاج إذن الموقع عشان نعرف وش قريب منك. فعّله من الإعدادات.'); setFinding(false); return; }
+    const pos = await Location.getCurrentPositionAsync({}).catch(() => null);
+    if (!pos) { setMsg('ما قدرنا نحدد موقعك. جرّب مرة ثانية.'); setFinding(false); return; }
+    const list = await nearby(pos.coords.latitude, pos.coords.longitude, 5).catch(() => []);
+    setNear(list.slice(0, 8)); setFinding(false);
+    if (!list.length) setMsg('ما فيه أماكن من الدليل قريبة منك (5 كم). خطط لرحلة وختمها هناك.');
+  };
+  const stampHere = async (p: Place) => {
+    setStamping(p.id);
+    const r = await checkIn(p.id).catch(() => ({ ok: false as const, msg: 'صار خطأ، جرّب بعد شوي.' }));
+    setStamping(0);
+    if (!r.ok) return Alert.alert('ما انختم', r.msg);
+    if (r.already) return Alert.alert('مختوم من قبل', 'هذا المكان موجود في جوازك.');
+    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة`);
+    getPassport().then(setPp).catch(() => {});
+  };
 
   const demo = !user;
   const all = pp?.all ?? [];
@@ -50,6 +78,40 @@ export default function Passport() {
           <AppText style={{ fontFamily: font.bold, flex: 1 }} color="#fff">سجّل دخولك عشان يصير هذا جوازك</AppText>
           <View style={[st.btn, { backgroundColor: 'rgba(255,255,255,0.25)' }]}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">دخول</AppText></View>
         </Pressable>
+      ) : null}
+      {!demo ? (
+        <View style={st.how}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 16 }}>كيف أختم جوازي؟</AppText>
+          {[['pin', 'روح لأي مكان موجود في الدليل'], ['flag', 'وأنت هناك، افتح صفحته واضغط «اختم» (لازم تكون على بعد أقل من 500 متر)'], ['star', 'كل زيارة +10 نقاط، وأول ختم في مدينة جديدة +25']].map(([i, t]) => (
+            <View key={t} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginTop: 8 }}>
+              <View style={st.howIcon}><Icon name={i as 'pin'} color={brand.orangeDeep} size={16} /></View>
+              <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{t}</AppText>
+            </View>
+          ))}
+          {near === null ? (
+            <Pressable style={st.find} onPress={findNear} disabled={finding}>
+              {finding ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold }} color="#fff">وش أقدر أختم قريب مني؟</AppText>}
+            </Pressable>
+          ) : null}
+          {msg ? <AppText variant="small" muted style={{ marginTop: 8 }}>{msg}</AppText> : null}
+          {(near ?? []).map((p) => {
+            const here = (p.km ?? 99) <= 0.5;
+            return (
+              <Pressable key={p.id} style={st.nearRow} onPress={() => router.push(`/place/${p.id}`)}>
+                {p.thumb ? <Image source={p.thumb} style={st.nearImg} contentFit="cover" /> : <View style={[st.nearImg, { backgroundColor: brand.chip }]} />}
+                <View style={{ flex: 1 }}>
+                  <AppText style={{ fontFamily: font.semibold, fontSize: 14 }} numberOfLines={1}>{p.title}</AppText>
+                  <AppText variant="tiny" muted>{p.cat} · {p.km != null ? (p.km < 1 ? Math.round(p.km * 1000) + ' م' : p.km + ' كم') : ''}</AppText>
+                </View>
+                {here ? (
+                  <Pressable style={st.stampBtn} onPress={() => stampHere(p)} disabled={!!stamping}>
+                    {stamping === p.id ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>اختم</AppText>}
+                  </Pressable>
+                ) : <AppText variant="tiny" color={brand.link} style={{ fontFamily: font.semibold }}>قرّب منه</AppText>}
+              </Pressable>
+            );
+          })}
+        </View>
       ) : null}
       <View style={st.grid}>
         {visited.map(({ name, date }, i) => (
@@ -103,6 +165,12 @@ const st = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, paddingTop: 18 },
   cell: { width: '33.33%', alignItems: 'center', paddingVertical: 8 },
   stamp: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: brand.card },
+  how: { margin: 16, marginBottom: 0, backgroundColor: brand.card, borderRadius: 22, padding: 16 },
+  howIcon: { width: 30, height: 30, borderRadius: 10, backgroundColor: brand.softOrange, alignItems: 'center', justifyContent: 'center' },
+  find: { marginTop: 14, height: 48, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  nearRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: brand.chip, marginTop: 6 },
+  nearImg: { width: 46, height: 46, borderRadius: 12 },
+  stampBtn: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 16, height: 36, justifyContent: 'center', minWidth: 60, alignItems: 'center' },
   next: { margin: 16, backgroundColor: brand.purple, borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   login: { margin: 16, marginBottom: 0, backgroundColor: brand.orange, borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   visit: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.card, borderRadius: 16, padding: 12 },

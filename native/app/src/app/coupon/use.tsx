@@ -53,6 +53,7 @@ export default function CouponUse() {
         <View style={st.doneIcon}><Icon name="check" color={brand.green} size={54} strokeWidth={3} /></View>
         <AppText style={{ fontFamily: font.bold, fontSize: 28, lineHeight: 40, marginTop: 20 }} color="#fff" center>تم استخدام الكوبون</AppText>
         <AppText color="#fff" center>{c ? `${c.off} في ${c.biz?.name ?? ''}` : ''}</AppText>
+        {c?.points ? <AppText variant="small" color="#E2F0E6" center>انخصم من رصيدك {c.points} نقطة</AppText> : null}
         <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>بالعافية! لا تنسى تقيّم المكان بعدين.</AppText>
         <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
           {c?.biz?.placeId ? <Button label="قيّم المكان" bg="rgba(255,255,255,0.2)" onPress={() => router.replace({ pathname: '/review/[id]', params: { id: String(c.biz!.placeId) } })} /> : null}

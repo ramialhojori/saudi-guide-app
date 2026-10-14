@@ -8,17 +8,18 @@ import { Icon } from '@/components/Icon';
 import { Chip } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { allCities, cityName } from '@/lib/content';
-import { BIZ_KINDS, cityCoupons, couponErr, myCoupons, toggleSave, type Coupon } from '@/lib/coupons';
+import { BIZ_KINDS, cityCouponsMe, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 
 /** كوبونات المدينة: عروض حقيقية من التجار بعد موافقة الإدارة، والمحفظة (المحفوظة) */
 export default function Coupons() {
   const insets = useSafeAreaInsets();
-  const prm = useLocalSearchParams<{ wallet?: string }>();
+  const prm = useLocalSearchParams<{ wallet?: string; tab?: string }>();
   const { user } = useAuth();
   const [city, setCity] = useState<string>(user?.city || 'medina');
   const [pick, setPick] = useState(false);
-  const [tab, setTab] = useState<'all' | 'wallet'>(prm.wallet ? 'wallet' : 'all');
+  const [tab, setTab] = useState<'all' | 'points' | 'wallet'>(prm.wallet ? 'wallet' : prm.tab === 'points' ? 'points' : 'all');
+  const [me, setMe] = useState<Me>(null);
   const [kind, setKind] = useState('');
   const [list, setList] = useState<Coupon[] | null>(null);
   const [wallet, setWallet] = useState<Coupon[]>([]);
@@ -28,8 +29,8 @@ export default function Coupons() {
   const load = useCallback(async () => {
     setErr('');
     try {
-      const [a, w] = await Promise.all([cityCoupons(city), user ? myCoupons().catch(() => []) : Promise.resolve([])]);
-      setList(a); setWallet(w);
+      const [a, w] = await Promise.all([cityCouponsMe(city), user ? myCoupons().catch(() => []) : Promise.resolve([])]);
+      setList(a.coupons); setMe(a.me); setWallet(w);
     } catch (e) { setErr(couponErr(e)); setList([]); }
   }, [city, user?.id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -43,7 +44,7 @@ export default function Coupons() {
     try { await toggleSave(c.id); } catch { load(); }
   };
   const shown = useMemo(() => {
-    const src = tab === 'wallet' ? wallet : list ?? [];
+    const src = tab === 'wallet' ? wallet : tab === 'points' ? (list ?? []).filter((c) => c.points || c.minLevel) : list ?? [];
     return kind ? src.filter((c) => c.biz?.kind === kind) : src;
   }, [tab, wallet, list, kind]);
   const kinds = BIZ_KINDS.filter(([k]) => (list ?? []).some((c) => c.biz?.kind === k));
@@ -73,10 +74,19 @@ export default function Coupons() {
       ) : null}
 
       <View style={st.tabs}>
-        {([['all', 'كل العروض'], ['wallet', `محفظتي (${wallet.length})`]] as const).map(([k, t]) => (
+        {([['all', 'كل العروض'], ['points', 'بالنقاط'], ['wallet', `محفظتي (${wallet.length})`]] as const).map(([k, t]) => (
           <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)}><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={tab === k ? '#fff' : brand.muted} center>{t}</AppText></Pressable>
         ))}
       </View>
+      {tab === 'points' ? (
+        <View style={st.bal}>
+          <View style={{ flex: 1 }}>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">{user ? `رصيدك ${me?.balance ?? 0} نقطة` : 'سجّل دخولك واجمع نقاط'}</AppText>
+            <AppText variant="small" color="#E2DAEE">{user ? `مستواك ${me?.level ?? 1}. اجمع نقاط من الأسئلة والإجابات والتقييمات وختم الجواز، واصرفها هنا.` : 'النقاط تجي من المشاركة في المجتمع والتقييمات وختم الجواز.'}</AppText>
+          </View>
+          <Icon name="star" color="#F9A158" size={30} />
+        </View>
+      ) : null}
       {kinds.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
           <Chip label="الكل" on={!kind} color={brand.pinkDeep} onPress={() => setKind('')} />
@@ -91,8 +101,8 @@ export default function Coupons() {
         {list !== null && !shown.length && !err ? (
           <View style={st.empty}>
             <Icon name="ticket" color={brand.pinkDeep} size={34} />
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{tab === 'wallet' ? 'محفظتك فاضية' : `ما فيه عروض في ${cityName(city)} للحين`}</AppText>
-            <AppText variant="small" muted center>{tab === 'wallet' ? 'اضغط القلب على أي كوبون عشان ينحفظ هنا.' : 'المحلات تقدر تضيف عروضها من «سجّل نشاطك». جرّب مدينة ثانية.'}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{tab === 'wallet' ? 'محفظتك فاضية' : tab === 'points' ? 'ما فيه عروض بالنقاط للحين' : `ما فيه عروض في ${cityName(city)} للحين`}</AppText>
+            <AppText variant="small" muted center>{tab === 'wallet' ? 'اضغط القلب على أي كوبون عشان ينحفظ هنا.' : tab === 'points' ? 'أول ما تضيف المحلات عروض تتبادل بالنقاط بتلقاها هنا. خلك تجمع نقاطك.' : 'المحلات تقدر تضيف عروضها من «سجّل نشاطك». جرّب مدينة ثانية.'}</AppText>
           </View>
         ) : null}
       </View>
@@ -117,6 +127,7 @@ const st = StyleSheet.create({
   tabs: { flexDirection: 'row', margin: 16, marginBottom: 10, backgroundColor: brand.white, borderRadius: 16, padding: 4 },
   tab: { flex: 1, height: 40, borderRadius: 12, justifyContent: 'center' },
   tabOn: { backgroundColor: brand.pinkDeep },
+  bal: { marginHorizontal: 16, marginBottom: 6, backgroundColor: brand.purple, borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   empty: { alignItems: 'center', gap: 8, backgroundColor: brand.white, borderRadius: 22, padding: 24, marginTop: 6 },
   biz: { margin: 16, marginTop: 22, backgroundColor: brand.ink, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },

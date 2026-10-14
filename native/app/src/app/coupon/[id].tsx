@@ -9,7 +9,7 @@ import { Empty, Loading } from '@/components/State';
 import { BackButton, Button, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { cityName } from '@/lib/content';
-import { bizKind, couponColor, couponErr, dayLabel, getCoupon, toggleSave, type Coupon } from '@/lib/coupons';
+import { bizKind, couponColor, couponErr, dayLabel, getCouponMe, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { openDirections } from '@/lib/maps';
 import { brand, font } from '@/theme/tokens';
 
@@ -19,13 +19,16 @@ export default function CouponDetail() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [c, setC] = useState<Coupon | null>(null);
+  const [me, setMe] = useState<Me>(null);
   const [err, setErr] = useState('');
-  useFocusEffect(useCallback(() => { getCoupon(Number(id)).then(setC).catch((e) => setErr(couponErr(e))); }, [id, user?.id]));
+  useFocusEffect(useCallback(() => { getCouponMe(Number(id)).then((r) => { setC(r.coupon); setMe(r.me); }).catch((e) => setErr(couponErr(e))); }, [id, user?.id]));
 
   if (!c) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{err ? <Empty title="الكوبون انتهى أو خلص" sub={err} /> : <Loading />}</View>;
   const bg = couponColor(c.biz?.kind);
   const used = !!c.usedByMe && c.perUser;
   const rows: [string, string][] = [
+    ...(c.points ? [['يتبادل بـ', `${c.points} نقطة من رصيدك`] as [string, string]] : []),
+    ...(c.minLevel ? [['حصري لـ', `المستوى ${c.minLevel} «${c.levelName}» وأعلى`] as [string, string]] : []),
     ...(c.minOrder ? [['الحد الأدنى للطلب', `${c.minOrder} ر.س`] as [string, string]] : []),
     ['الاستخدام', c.perUser ? 'مرة وحدة لكل شخص' : 'تقدر تستخدمه أكثر من مرة'],
     ...(c.hours ? [['الأوقات', c.hours] as [string, string]] : []),
@@ -82,8 +85,10 @@ export default function CouponDetail() {
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         {used ? <Button label="استخدمته ✓" bg={brand.green} />
+          : user && me && c.minLevel && me.level < c.minLevel ? <Button label={`يحتاج المستوى ${c.minLevel} · مستواك ${me.level}`} bg={brand.faint} />
+          : user && me && c.points && me.balance < c.points ? <Button label={`تحتاج ${c.points - me.balance} نقطة زيادة`} bg={brand.faint} onPress={() => router.push('/community')} />
           : <Button label={user ? 'استخدمه الحين' : 'سجّل دخولك عشان تستخدمه'} bg={bg} onPress={() => (user ? router.push({ pathname: '/coupon/use', params: { id: String(c.id) } }) : router.push('/login'))} />}
-        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>افتحه وأنت عند الكاشير. الرمز يتغير كل 30 ثانية.</AppText>
+        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{c.points && user && me ? `رصيدك ${me.balance} نقطة · تنخصم ${c.points} لما يأكد الكاشير` : 'افتحه وأنت عند الكاشير. الرمز يتغير كل 30 ثانية.'}</AppText>
       </View>
     </View>
   );

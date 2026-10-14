@@ -278,6 +278,8 @@ export const LEVELS = [
   [0, 'زائر جديد'], [20, 'مستكشف'], [60, 'رحّال'], [150, 'دليل نشيط'], [300, 'ابن الديرة'],
   [500, 'خبير المدينة'], [800, 'مرجع الديرة'], [1200, 'سفير الدليل'], [1800, 'حكيم الدليل'], [2500, 'أسطورة الدليل'],
 ];
+export const GUIDE_AT = 500; // من 500 نقطة يقدر يطلب «مرشد موثّق»
+
 export const BADGES = [
   ['first', 'أول سؤال', 'chat', 'questions', 1],
   ['tips', 'ناصح الديرة', 'star', 'tips', 10],
@@ -315,7 +317,10 @@ export async function myStats(env, u) {
       UNION ALL
       SELECT 'answer' t, a.post_id, (SELECT text FROM posts WHERE id=a.post_id) kind, a.text, a.thanks, a.created FROM answers a WHERE a.user_id=?1 AND a.status='visible'
     ) ORDER BY created DESC LIMIT 8`).bind(u.id).all();
+  const gr = await env.DB.prepare('SELECT status, note FROM guide_requests WHERE user_id=?').bind(u.id).first();
   return {
+    balance: Math.max(0, pts - (u.spent || 0)), spent: u.spent || 0, role: u.role,
+    guide: { eligible: pts >= GUIDE_AT && u.role === 'user', at: GUIDE_AT, request: gr ? { status: gr.status, note: gr.note || '' } : null },
     points: pts, level: lv + 1, levelName: LEVELS[lv][1], nextAt: next ? next[0] : null, nextName: next ? next[1] : null, levelAt: LEVELS[lv][0],
     counts: c,
     badges: BADGES.map(([id, name, icon, key, goal]) => ({ id, name, icon, goal, have: Math.min(c[key] || 0, goal), earned: (c[key] || 0) >= goal })),
@@ -382,4 +387,45 @@ export async function goingRoute(id, env, u, request, J) {
   const who = await env.DB.prepare('SELECT u.id, u.name FROM event_going g JOIN users u ON u.id=g.user_id WHERE g.event_id=? AND u.deleted=0 ORDER BY g.created DESC LIMIT 3').bind(id).all();
   const me = u ? !!(await env.DB.prepare('SELECT 1 FROM event_going WHERE user_id=? AND event_id=?').bind(u.id, id).first()) : false;
   return J({ count: n.n, going: me, who: who.results.map((r) => ({ id: r.id, name: r.name || 'د' })) });
+}
+
+/* ——— طلب «مرشد موثّق» ——— */
+export async function guideRequest(env, u, request, J) {
+  if (request.method !== 'POST') return J({ error: 'method_not_allowed' }, 405);
+  if (u.role !== 'user') return J({ error: 'already_guide' }, 409);
+  if ((u.points || 0) < GUIDE_AT) return J({ error: 'need_points', need: GUIDE_AT }, 403);
+  const b = await request.json().catch(() => ({}));
+  const about = clean(b.about, 600);
+  if (about.length < 20) return J({ error: 'too_short' }, 400);
+  const old = await env.DB.prepare('SELECT status, updated FROM guide_requests WHERE user_id=?').bind(u.id).first();
+  if (old && old.status === 'pending') return J({ error: 'pending' }, 409);
+  if (old && old.status === 'rejected' && old.updated > now() - 30 * 86400) return J({ error: 'wait' }, 429);
+  await env.DB.prepare(`INSERT INTO guide_requests (user_id,about,status,created,updated) VALUES (?1,?2,'pending',?3,?3)
+    ON CONFLICT(user_id) DO UPDATE SET about=?2, status='pending', note=NULL, updated=?3`).bind(u.id, about, now()).run();
+  return J({ ok: true });
+}
+export async function guideAdmin(p, request, env, J) {
+  let m;
+  if (p === '/admin/guides' && request.method === 'GET') {
+    const { results } = await env.DB.prepare(`SELECT g.*, u.name, u.city, u.points, u.role,
+        (SELECT COUNT(*) FROM answers a WHERE a.user_id=g.user_id AND a.status='visible') answers,
+        (SELECT COUNT(*) FROM posts p JOIN answers a ON a.id=p.best_answer WHERE a.user_id=g.user_id) best,
+        (SELECT COUNT(*) FROM visits v WHERE v.user_id=g.user_id) visits
+      FROM guide_requests g JOIN users u ON u.id=g.user_id WHERE u.deleted=0 ORDER BY g.status='pending' DESC, g.updated DESC LIMIT 100`).all();
+    return J({ requests: results });
+  }
+  if ((m = p.match(/^\/admin\/guides\/([^/]+)$/)) && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const st = b.status === 'approved' ? 'approved' : 'rejected';
+    const g = await env.DB.prepare('SELECT * FROM guide_requests WHERE user_id=?').bind(m[1]).first();
+    if (!g) return J({ error: 'not_found' }, 404);
+    const note = clean(b.note, 200);
+    const ops = [env.DB.prepare('UPDATE guide_requests SET status=?, note=?, updated=? WHERE user_id=?').bind(st, note || null, now(), g.user_id)];
+    if (st === 'approved') ops.push(env.DB.prepare("UPDATE users SET role='guide' WHERE id=? AND role='user'").bind(g.user_id));
+    ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(g.user_id,
+      st === 'approved' ? 'مبروك! صرت «مرشد موثّق» في دليل السعودية، والشارة تطلع جنب اسمك في المجتمع.' : `ما انقبل طلب «مرشد موثّق» هالمرة${note ? ': ' + note : ''}. تقدر تطلب مرة ثانية بعد شهر.`, now()));
+    await env.DB.batch(ops);
+    return J({ ok: true });
+  }
+  return null;
 }

@@ -32,7 +32,7 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS going_event ON event_going(event_id)",
   "CREATE TABLE IF NOT EXISTS merchants ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL UNIQUE, name TEXT NOT NULL, name_en TEXT, kind TEXT NOT NULL DEFAULT 'restaurant', city TEXT NOT NULL, area TEXT, lat REAL, lng REAL, place_id INTEGER, photos TEXT NOT NULL DEFAULT '[]', hours TEXT, phone TEXT, cr TEXT, verified INTEGER NOT NULL DEFAULT 0, max_coupons INTEGER NOT NULL DEFAULT 1, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
   "CREATE INDEX IF NOT EXISTS merchants_status ON merchants(status, city)",
-  "CREATE TABLE IF NOT EXISTS coupons ( id INTEGER PRIMARY KEY AUTOINCREMENT, merchant_id INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'percent', value TEXT, title TEXT NOT NULL, terms TEXT, min_order INTEGER, per_user INTEGER NOT NULL DEFAULT 1, qty INTEGER, used INTEGER NOT NULL DEFAULT 0, views INTEGER NOT NULL DEFAULT 0, hours TEXT, start TEXT, \"end\" TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE TABLE IF NOT EXISTS coupons ( id INTEGER PRIMARY KEY AUTOINCREMENT, merchant_id INTEGER NOT NULL, kind TEXT NOT NULL DEFAULT 'percent', value TEXT, title TEXT NOT NULL, terms TEXT, min_order INTEGER, per_user INTEGER NOT NULL DEFAULT 1, qty INTEGER, used INTEGER NOT NULL DEFAULT 0, views INTEGER NOT NULL DEFAULT 0, hours TEXT, start TEXT, \"end\" TEXT, points INTEGER, min_level INTEGER, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
   "CREATE INDEX IF NOT EXISTS coupons_m ON coupons(merchant_id, status)",
   "CREATE TABLE IF NOT EXISTS coupon_saves ( user_id TEXT NOT NULL, coupon_id INTEGER NOT NULL, opened INTEGER, created INTEGER NOT NULL, PRIMARY KEY (user_id, coupon_id) )",
   "CREATE INDEX IF NOT EXISTS csaves_c ON coupon_saves(coupon_id, opened)",
@@ -45,11 +45,17 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS pphotos_place ON place_photos(place_id, status)",
   "CREATE INDEX IF NOT EXISTS pphotos_status ON place_photos(status, id)",
   "CREATE TABLE IF NOT EXISTS messages ( id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, text TEXT NOT NULL, link TEXT, audience TEXT NOT NULL DEFAULT '{}', inapp INTEGER NOT NULL DEFAULT 1, push INTEGER NOT NULL DEFAULT 1, at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'scheduled', sent_inapp INTEGER NOT NULL DEFAULT 0, sent_push INTEGER NOT NULL DEFAULT 0, push_errors INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, sent_at INTEGER )",
-  "CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at)"
+  "CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at)",
+  "CREATE TABLE IF NOT EXISTS guide_requests ( user_id TEXT PRIMARY KEY, about TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL )"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
-const ALTERS = ['ALTER TABLE notifications ADD COLUMN link TEXT'];
+const ALTERS = [
+  'ALTER TABLE notifications ADD COLUMN link TEXT',
+  'ALTER TABLE coupons ADD COLUMN points INTEGER',
+  'ALTER TABLE coupons ADD COLUMN min_level INTEGER',
+  'ALTER TABLE users ADD COLUMN spent INTEGER NOT NULL DEFAULT 0', // نقاط انصرفت على كوبونات (المستوى يحسب على كل اللي جمعها)
+];
 
 let ready = false;
 /** ينشئ الجداول مرة وحدة لكل نسخة من الوركر */

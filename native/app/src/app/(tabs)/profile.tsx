@@ -106,6 +106,30 @@ export default function Profile() {
         </View>
       </View>
 
+      {/* النقاط: الرصيد والصرف وطريق «مرشد موثّق» */}
+      {user && stats ? (
+        <View style={st.pts}>
+          <Pressable style={st.ptsRow} onPress={() => router.push('/coupons?tab=points')}>
+            <Badge icon="star" bg={brand.softOrange} fg={brand.orangeDeep} size={40} r={14} />
+            <View style={{ flex: 1 }}>
+              <AppText style={{ fontFamily: font.bold }}>رصيدك {stats.balance} نقطة</AppText>
+              <AppText variant="tiny" muted>{stats.spent ? `صرفت ${stats.spent} · ` : ''}اصرفها على عروض المحلات</AppText>
+            </View>
+            <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>استبدل</AppText>
+          </Pressable>
+          {stats.role === 'user' ? (
+            <Pressable style={[st.ptsRow, st.ptsLine]} onPress={() => router.push('/guide-request')}>
+              <Badge icon="crown" bg={brand.softPurple} fg={brand.purple} size={40} r={14} />
+              <View style={{ flex: 1 }}>
+                <AppText style={{ fontFamily: font.bold }}>مرشد موثّق</AppText>
+                <AppText variant="tiny" muted>{stats.guide.request?.status === 'pending' ? 'طلبك قيد المراجعة' : stats.guide.eligible ? 'صرت مؤهل! قدّم طلبك الحين' : `من ${stats.guide.at} نقطة تقدر تطلب الشارة · باقي ${Math.max(0, stats.guide.at - stats.points)}`}</AppText>
+              </View>
+              {stats.guide.eligible && stats.guide.request?.status !== 'pending' ? <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>قدّم</AppText> : <Icon name="chevron" color={brand.faint} size={16} />}
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
       {/* جواز السعودية */}
       <Pressable style={st.passport} onPress={() => router.push('/passport')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -230,6 +254,9 @@ const st = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 },
   coupon: { width: 270, height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden' },
   code: { width: 90, alignItems: 'center', justifyContent: 'center', gap: 8, borderRightWidth: 2, borderStyle: 'dashed', borderRightColor: 'rgba(255,255,255,0.55)', backgroundColor: 'rgba(0,0,0,0.06)' },
+  pts: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.card, borderRadius: 22, paddingHorizontal: 14 },
+  ptsRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  ptsLine: { borderTopWidth: 1, borderTopColor: brand.chip },
   biz: { margin: 16, marginBottom: 0, backgroundColor: brand.purple, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   act: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.card, borderRadius: 18, padding: 12 },

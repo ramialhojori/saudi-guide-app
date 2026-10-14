@@ -259,6 +259,8 @@ CREATE TABLE IF NOT EXISTS coupons (
   hours TEXT,
   start TEXT,
   "end" TEXT,
+  points INTEGER,                            -- يتبادل بالنقاط (فاضي = مجاني)
+  min_level INTEGER,                         -- حصري لمستوى معيّن وأعلى
   status TEXT NOT NULL DEFAULT 'pending',    -- pending | active | paused | rejected | hidden
   note TEXT,
   created INTEGER NOT NULL,
@@ -335,3 +337,13 @@ CREATE TABLE IF NOT EXISTS messages (
   sent_at INTEGER
 );
 CREATE INDEX IF NOT EXISTS messages_due ON messages(status, at);
+
+-- طلبات «مرشد موثّق» (يقدر يطلبها اللي وصل 500 نقطة)
+CREATE TABLE IF NOT EXISTS guide_requests (
+  user_id TEXT PRIMARY KEY,
+  about TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',    -- pending | approved | rejected
+  note TEXT,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);

@@ -15,6 +15,8 @@ type K = Coupon['kind'];
 const KINDS: [K, string, string][] = [['percent', '%', 'خصم بالنسبة'], ['amount', 'ر.س', 'خصم بمبلغ'], ['bogo', '1+1', 'اشتر واحد والثاني مجاناً'], ['gift', 'هدية', 'صنف مجاني مع الطلب']];
 const PCTS = ['10', '15', '20', '25', '30'];
 const DUR: [string, number][] = [['أسبوع', 7], ['أسبوعين', 14], ['شهر', 30], ['3 شهور', 90], ['بدون نهاية', 0]];
+const PTS: [string, number][] = [['مجاني للكل', 0], ['100 نقطة', 100], ['200 نقطة', 200], ['500 نقطة', 500]];
+const LVLS: [string, number][] = [['الكل', 0], ['مستوى 3+', 3], ['مستوى 5+', 5], ['مستوى 7+', 7]];
 const todayISO = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
 const addDays = (d: string, n: number) => new Date(new Date(d + 'T00:00:00Z').getTime() + n * 86400e3).toISOString().slice(0, 10);
 
@@ -43,6 +45,8 @@ export default function MerchantCoupon() {
   const [start, setStart] = useState(todayISO());
   const [dur, setDur] = useState(30);
   const [terms, setTerms] = useState('');
+  const [points, setPoints] = useState(0);
+  const [minLevel, setMinLevel] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -53,7 +57,7 @@ export default function MerchantCoupon() {
       if (c) {
         setKind(c.kind); setValue(c.value); setCustom(c.kind !== 'percent' || !PCTS.includes(c.value)); setTitle(c.title); setTouched(true);
         setMinOrder(c.minOrder ? String(c.minOrder) : ''); setPerUser(c.perUser); setQty(c.qty ? String(c.qty) : ''); setHours(c.hours);
-        setStart(c.start || todayISO()); setTerms(c.terms);
+        setStart(c.start || todayISO()); setTerms(c.terms); setPoints(c.points || 0); setMinLevel(c.minLevel || 0);
         setDur(c.end ? Math.max(1, Math.round((new Date(c.end).getTime() - new Date(c.start || todayISO()).getTime()) / 86400e3)) : 0);
       }
     }).catch(() => {});
@@ -69,7 +73,7 @@ export default function MerchantCoupon() {
   const submit = async () => {
     if (!ready) { setErr(title.trim().length < 4 ? 'اكتب عنوان الكوبون.' : 'حدد قيمة الخصم.'); return; }
     setBusy(true); setErr('');
-    const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end };
+    const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end, points, minLevel };
     try {
       if (editId) await editCoupon(editId, body); else await createCoupon(body);
       Alert.alert('انرسل للمراجعة', 'نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.', [{ text: 'تمام', onPress: () => router.replace('/merchant') }]);
@@ -144,6 +148,12 @@ export default function MerchantCoupon() {
             </View>
           </Field>
 
+          <Field label="مكافأة لأهل النقاط" hint="اختياري">
+            <AppText variant="small" muted style={{ marginBottom: 8, lineHeight: 21 }}>مستخدمين الدليل يجمعون نقاط من المشاركة. خل عرضك يتبادل بالنقاط أو حصري للمستويات العالية، ويوصلك أنشط الناس.</AppText>
+            <View style={st.wrap}>{PTS.map(([t, n]) => <Chip key={t} label={t} on={points === n} color={brand.purple} onPress={() => setPoints(n)} />)}</View>
+            <View style={[st.wrap, { marginTop: 8 }]}>{LVLS.map(([t, n]) => <Chip key={t} label={t} on={minLevel === n} color={brand.lilac} onPress={() => setMinLevel(n)} />)}</View>
+          </Field>
+
           <Field label="تفاصيل إضافية" hint="اختياري">
             <Input value={terms} onChangeText={setTerms} multiline maxLength={600} placeholder="مثلاً: ما يشمل المشروبات، للجلسات الداخلية فقط" />
           </Field>
@@ -157,7 +167,7 @@ export default function MerchantCoupon() {
                 <AppText style={{ fontFamily: font.bold, fontSize: 21, lineHeight: 30 }} color="#fff" numberOfLines={1}>{offOf(kind, value)}</AppText>
                 <AppText variant="small" color="#fff" numberOfLines={1}>{title}</AppText>
               </View>
-              <AppText variant="tiny" color="#fff">{[end ? `حتى ${dayLabel(end)}` : '', qty ? `باقي ${qty}` : ''].filter(Boolean).join(' · ') || 'عرض مستمر'}</AppText>
+              <AppText variant="tiny" color="#fff">{[points ? `بـ ${points} نقطة` : '', minLevel ? `مستوى ${minLevel}+` : '', end ? `حتى ${dayLabel(end)}` : '', qty ? `باقي ${qty}` : ''].filter(Boolean).join(' · ') || 'عرض مستمر'}</AppText>
             </View>
             <View style={st.prevStub}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">استخدمه</AppText></View>
           </View>

@@ -49,7 +49,7 @@ async function verifyIdToken(provider, token, audiences) {
 }
 
 export function publicUser(u) {
-  return { id: u.id, name: u.name || '', handle: u.handle || '', email: u.email || '', city: u.city || '', bio: u.bio || '', avatar: u.avatar || '', role: u.role, points: u.points, since: new Date(u.created * 1000).getUTCFullYear() };
+  return { id: u.id, name: u.name || '', handle: u.handle || '', email: u.email || '', city: u.city || '', bio: u.bio || '', avatar: u.avatar || '', role: u.role, points: u.points, balance: Math.max(0, (u.points || 0) - (u.spent || 0)), since: new Date(u.created * 1000).getUTCFullYear() };
 }
 
 async function upsertUser(env, provider, sub, email, name) {

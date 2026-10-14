@@ -8,7 +8,7 @@ import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
-import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute, goingRoute } from './community.js';
+import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute, goingRoute, guideRequest, guideAdmin } from './community.js';
 import { adminRoute } from './admin.js';
 import { merchantRoute, merchantAdmin } from './merchants.js';
 import { reviewsRoute, reviewsAdmin } from './reviews.js';
@@ -20,7 +20,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.6.0';
+const VERSION = '0.6.1';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -122,7 +122,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q));
+    const ar = (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -156,6 +156,10 @@ async function route(request, env, ctx) {
   if (p === '/v1/me/notifications') {
     const u = await sessionUser(env, request);
     return u ? myNotifications(env, u, request, J) : J({ error: 'unauthorized' }, 401);
+  }
+  if (p === '/v1/me/guide') {
+    const u = await sessionUser(env, request);
+    return u ? guideRequest(env, u, request, J) : J({ error: 'unauthorized' }, 401);
   }
   if (p === '/v1/me/stats' && request.method === 'GET') {
     const u = await sessionUser(env, request);

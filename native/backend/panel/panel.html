@@ -167,7 +167,7 @@ async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0) };
+  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
@@ -586,16 +586,36 @@ async function communityView() {
 }
 
 /* ——— المستخدمين ——— */
+let UTAB = 'all';
 async function usersView(q = '') {
   const m = $('#main');
-  if (!$('#uq')) m.innerHTML = `<h1>المستخدمين</h1><p class="sub">«مرشد موثّق» يطلع جنب اسمه في المجتمع. «فريق الدليل» للإدارة.</p><div class="filters"><input class="in" id="uq" placeholder="ابحث بالاسم"></div><div id="res" class="list"></div>`;
+  if (!$('#uq') || m.dataset.ut !== UTAB) {
+    m.dataset.ut = UTAB;
+    m.innerHTML = `<h1>المستخدمين</h1><p class="sub">«مرشد موثّق» يطلع جنب اسمه في المجتمع. «فريق الدليل» للإدارة. اللي يوصل 500 نقطة يقدر يطلب التوثيق من التطبيق.</p>
+      <div class="tabs">${[['all', 'كل المستخدمين'], ['guides', 'طلبات «مرشد موثّق»']].map(([k, t]) => `<button data-u="${k}" class="${UTAB === k ? 'on' : ''}">${t}${k === 'guides' && SUMMARY?.counts?.guidesPending ? ` (${SUMMARY.counts.guidesPending})` : ''}</button>`).join('')}</div>
+      ${UTAB === 'all' ? '<div class="filters"><input class="in" id="uq" placeholder="ابحث بالاسم"></div>' : '<span id="uq"></span>'}<div id="res" class="list"></div>`;
+    m.querySelectorAll('[data-u]').forEach((b) => (b.onclick = () => { UTAB = b.dataset.u; usersView(); }));
+  }
+  if (UTAB === 'guides') {
+    const d = await api('/admin/guides');
+    const GS = { pending: ['ينتظر', 'b-draft'], approved: ['انقبل', 'b-live'], rejected: ['مرفوض', 'b-hidden'] };
+    $('#res').innerHTML = d.requests.map((g) => `<div class="post"><div class="row"><b class="grow">${h(g.name || 'بدون اسم')}</b><span class="muted" style="font-size:13px">${cityName(g.city)} · ${g.points} نقطة · ${g.answers} إجابة · ${g.best} أفضل إجابة · ${g.visits} زيارة</span><span class="badge ${GS[g.status][1]}">${GS[g.status][0]}</span></div>
+      <div>${h(g.about || '')}</div>${g.note ? `<div class="muted" style="font-size:13px">ملاحظتك: ${h(g.note)}</div>` : ''}
+      ${g.status === 'pending' ? `<div class="row"><button class="btn g" data-g="${h(g.user_id)}" data-s="approved">اعتمده مرشد موثّق</button><button class="btn p" data-g="${h(g.user_id)}" data-s="rejected">رفض</button></div>` : ''}</div>`).join('') || '<div class="empty">ما فيه طلبات للحين</div>';
+    m.querySelectorAll('[data-g]').forEach((b) => (b.onclick = async () => {
+      let note = '';
+      if (b.dataset.s === 'rejected') { note = prompt('سبب الرفض (يوصله)؟'); if (note === null) return; }
+      await api('/admin/guides/' + encodeURIComponent(b.dataset.g), { method: 'POST', body: { status: b.dataset.s, note } }); toast('تم ووصله إشعار'); SUMMARY = null; usersView();
+    }));
+    return;
+  }
   let t; $('#uq').oninput = (e) => { clearTimeout(t); t = setTimeout(() => usersView(e.target.value), 350); };
   const d = await api('/admin/users' + (q ? '?q=' + encodeURIComponent(q) : ''));
   const R = { user: 'مستخدم', guide: 'مرشد موثّق', admin: 'فريق الدليل' };
   $('#res').innerHTML = d.users.map((u) => `<div class="item" style="cursor:default"><div class="ph" style="border-radius:50%;background:var(--lilac);color:#fff;font-weight:700;font-size:20px">${h((u.name || 'د')[0])}</div>
     <div class="grow"><div class="t">${h(u.name || 'بدون اسم')}</div><div class="m">${u.points} نقطة · ${cityName(u.city)} · سجّل ${new Date(u.created * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')}</div></div>
-    <select class="in" style="width:auto" data-u="${u.id}">${Object.entries(R).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`).join('') || '<div class="empty">ما فيه مستخدمين</div>';
-  m.querySelectorAll('select[data-u]').forEach((s) => (s.onchange = async () => { await api('/admin/community/role', { method: 'POST', body: { userId: s.dataset.u, role: s.value } }); toast('تغيّرت الصلاحية'); }));
+    <select class="in" style="width:auto" data-r="${u.id}">${Object.entries(R).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`).join('') || '<div class="empty">ما فيه مستخدمين</div>';
+  m.querySelectorAll('select[data-r]').forEach((s) => (s.onchange = async () => { await api('/admin/community/role', { method: 'POST', body: { userId: s.dataset.r, role: s.value } }); toast('تغيّرت الصلاحية'); }));
 }
 
 /* ——— التجار والكوبونات ——— */
@@ -613,7 +633,7 @@ async function merchantsView() {
     const d = await api('/admin/coupons?status=' + (MTAB === 'coupons' ? 'pending' : 'all'));
     $('#res').innerHTML = d.coupons.map((c) => `<div class="post"><div class="row"><span style="background:var(--orange);color:#fff;border-radius:14px;padding:8px 12px;font-weight:700">${h(c.off)}</span>
       <div class="grow"><div class="t" style="font-weight:700">${h(c.title)}</div><div class="m muted" style="font-size:13px">${h(c.merchant.name)} · ${cityName(c.merchant.city)} ${c.merchant.status !== 'approved' ? '· <b style="color:var(--orangeDeep)">النشاط نفسه ما انعتمد للحين</b>' : ''}</div></div>${stB(c.status)}</div>
-      <div class="muted" style="font-size:13px">${[c.minOrder ? `الحد الأدنى ${c.minOrder} ر.س` : '', c.perUser ? 'مرة وحدة لكل مستخدم' : 'أكثر من مرة', c.qty ? `العدد ${c.qty}` : 'بدون حد', c.hours, c.start ? 'من ' + c.start : '', c.end ? 'إلى ' + c.end : '', `استُخدم ${c.used} · شوهد ${c.views}`].filter(Boolean).join(' · ')}</div>
+      <div class="muted" style="font-size:13px">${[c.minOrder ? `الحد الأدنى ${c.minOrder} ر.س` : '', c.perUser ? 'مرة وحدة لكل مستخدم' : 'أكثر من مرة', c.qty ? `العدد ${c.qty}` : 'بدون حد', c.hours, c.points ? `يتبادل بـ ${c.points} نقطة` : '', c.minLevel ? `حصري لمستوى ${c.minLevel}+ (${c.levelName})` : '', c.start ? 'من ' + c.start : '', c.end ? 'إلى ' + c.end : '', `استُخدم ${c.used} · شوهد ${c.views}`].filter(Boolean).join(' · ')}</div>
       ${c.terms ? `<div style="font-size:14px">${h(c.terms)}</div>` : ''}
       <div class="row">${c.status !== 'active' ? `<button class="btn g" data-c="${c.id}" data-s="active">اعتمد وانشر</button>` : `<button class="btn ghost" data-c="${c.id}" data-s="paused">أوقف مؤقتاً</button>`}${c.status === 'pending' ? `<button class="btn p" data-c="${c.id}" data-s="rejected" data-why="1">يحتاج تعديل</button>` : ''}${c.status !== 'hidden' ? `<button class="btn ghost" data-c="${c.id}" data-s="hidden">إخفاء</button>` : ''}</div></div>`).join('') || `<div class="empty">${MTAB === 'coupons' ? 'ما فيه كوبونات تنتظر' : 'ما فيه كوبونات'}</div>`;
     m.querySelectorAll('[data-c]').forEach((b) => (b.onclick = async () => {

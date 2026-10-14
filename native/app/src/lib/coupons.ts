@@ -6,7 +6,8 @@ export type Biz = { id: number; name: string; kind: string; city: string; area: 
 export type Coupon = {
   id: number; kind: 'percent' | 'amount' | 'bogo' | 'gift'; value: string; off: string; title: string; terms: string; minOrder: number | null;
   perUser: boolean; qty: number | null; used: number; left: number | null; views: number; hours: string; start: string; end: string;
-  status: 'pending' | 'active' | 'paused' | 'rejected' | 'hidden'; note: string; created: number; saved?: boolean; usedByMe?: number; biz?: Biz;
+  status: 'pending' | 'active' | 'paused' | 'rejected' | 'hidden'; note: string; created: number;
+  points: number; minLevel: number; levelName: string; saved?: boolean; usedByMe?: number; biz?: Biz;
 };
 export type Merchant = {
   id: number; name: string; name_en: string; kind: string; city: string; area: string; lat: number | null; lng: number | null; placeId: number | null;
@@ -20,9 +21,12 @@ export const bizKind = (k: string) => BIZ_KINDS.find((x) => x[0] === k)?.[1] ?? 
 export const couponColor = (k?: string) => ({ restaurant: '#F89743', cafe: '#8E65AB', sweets: '#EB839B', shop: '#2E86B8', experience: '#3E8E5A' } as Record<string, string>)[k || ''] || '#F89743';
 
 const tok = () => session().token;
+export type Me = { balance: number; level: number } | null;
 export const cityCoupons = (city?: string | null) => api<{ coupons: Coupon[] }>(`/v1/coupons${city ? `?city=${city}` : ''}`, { token: tok() }).then((r) => r.coupons);
+export const cityCouponsMe = (city?: string | null) => api<{ coupons: Coupon[]; me: Me }>(`/v1/coupons${city ? `?city=${city}` : ''}`, { token: tok() });
 export const placeCoupons = (placeId: number) => api<{ coupons: Coupon[] }>(`/v1/coupons?place=${placeId}`, { token: tok() }).then((r) => r.coupons);
 export const getCoupon = (id: number) => api<{ coupon: Coupon }>(`/v1/coupons/${id}`, { token: tok() }).then((r) => r.coupon);
+export const getCouponMe = (id: number) => api<{ coupon: Coupon; me: Me }>(`/v1/coupons/${id}`, { token: tok() });
 export const toggleSave = (id: number) => api<{ saved: boolean }>(`/v1/coupons/${id}/save`, { method: 'POST', token: tok() }).then((r) => r.saved);
 export const myCoupons = () => api<{ coupons: Coupon[] }>('/v1/me/coupons', { token: tok() }).then((r) => r.coupons);
 export const couponCode = (id: number, since: number) =>
@@ -47,7 +51,8 @@ export function couponErr(e: unknown) {
     login_required: 'سجّل دخولك أول.', limit: 'باقتك تسمح بكوبون فعّال واحد. أوقف الحالي أو تواصل معنا.', title_required: 'اكتب عنوان الكوبون.',
     value_required: 'حدد قيمة الخصم.', bad_dates: 'تاريخ النهاية قبل البداية.', name_required: 'اكتب اسم النشاط.', bad_city: 'اختر المدينة.',
     merchant_not_active: 'نشاطك ما انعتمد للحين.', wrong_code: 'الرمز غلط أو انتهى. خل العميل يحدّث الكوبون.', already_used: 'العميل استخدم هالكوبون قبل.',
-    sold_out: 'خلصت الكوبونات.', rate_limited: 'محاولات كثيرة، انتظر دقيقة.', not_available: 'الكوبون انتهى أو خلص.', network: 'ما فيه اتصال، تأكد من النت.',
+    sold_out: 'خلصت الكوبونات.', need_points: 'نقاطك ما تكفي لهالكوبون.', need_level: 'هالكوبون حصري لمستوى أعلى من مستواك.',
+    customer_points: 'نقاط العميل ما تكفي لهالكوبون.', customer_level: 'العميل مستواه أقل من المطلوب للكوبون.', already_guide: 'أنت مرشد موثّق من قبل.', pending: 'طلبك قيد المراجعة.', wait: 'تقدر تطلب مرة ثانية بعد شهر من الرفض.', too_short: 'اكتب شوي أكثر عن نفسك.', rate_limited: 'محاولات كثيرة، انتظر دقيقة.', not_available: 'الكوبون انتهى أو خلص.', network: 'ما فيه اتصال، تأكد من النت.',
     timeout: 'السيرفر تأخر، جرّب مرة ثانية.', suspended: 'النشاط موقوف. تواصل معنا.', consent_required: 'وافق على نشر الصور أول.', bad_stars: 'اختر عدد النجوم.',
   } as Record<string, string>)[c || ''] || 'صار خطأ، جرّب بعد شوي.';
 }
