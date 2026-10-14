@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { uploadPhoto } from '@/lib/community';
 import { cityName, getPlace } from '@/lib/content';
 import { couponErr } from '@/lib/coupons';
+import { useFeatures } from '@/lib/features';
 import { placeReviews, postReview, REVIEW_TAGS, STAR_WORD } from '@/lib/reviews';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle } from '@/theme/tokens';
@@ -32,6 +33,7 @@ export default function ReviewScreen() {
   const [isEdit, setIsEdit] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const F = useFeatures();
 
   useEffect(() => {
     getPlace(Number(id)).then(setP).catch(() => {});
@@ -119,7 +121,7 @@ export default function ReviewScreen() {
           <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>اكتب تجربتك <AppText variant="tiny" muted>(اختياري)</AppText></AppText>
           <Input value={text} onChangeText={setText} multiline maxLength={1200} placeholder="متى رحت؟ وش أكثر شي عجبك؟ نصيحة للي بعدك؟" style={{ minHeight: 110 }} />
 
-          <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>صورك</AppText>
+          {F.photos ? <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>صورك</AppText> : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {photos.map((ph, i) => (
               <View key={ph.uri + i}>
@@ -127,7 +129,7 @@ export default function ReviewScreen() {
                 <Pressable style={st.phX} onPress={() => setPhotos(photos.filter((_, k) => k !== i))} accessibilityLabel="شيل الصورة"><Icon name="x" color="#fff" size={14} /></Pressable>
               </View>
             ))}
-            {photos.length < 6 && Platform.OS !== 'web' ? (
+            {F.photos && photos.length < 6 && Platform.OS !== 'web' ? (
               <>
                 <Pressable style={st.add} onPress={() => pick(true)} accessibilityLabel="صوّر"><Icon name="cam" color={brand.link} size={24} /></Pressable>
                 <Pressable style={st.add} onPress={() => pick(false)} accessibilityLabel="من الصور"><Icon name="plus" color={brand.link} size={24} /></Pressable>

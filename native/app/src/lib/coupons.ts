@@ -15,10 +15,14 @@ export type Merchant = {
 };
 export type MStats = { used: number; saves: number; views: number; week: number[]; today: number };
 
-export const BIZ_KINDS: [string, string][] = [['restaurant', 'مطعم'], ['cafe', 'مقهى'], ['sweets', 'مخبز وحلويات'], ['shop', 'متجر'], ['experience', 'تجربة سياحية']];
+export const BIZ_KINDS: [string, string][] = [['restaurant', 'مطعم'], ['cafe', 'مقهى'], ['sweets', 'مخبز وحلويات'], ['juice', 'عصيرات ومشروبات'], ['dates', 'تمور ومنتجات محلية'], ['perfume', 'عطور وبخور'], ['gifts', 'هدايا وتذكارات'], ['clothing', 'ملابس وعبايات'], ['shop', 'متجر'], ['mall', 'مول ومركز تسوق'], ['hotel', 'فندق وشقق فندقية'], ['resort', 'منتجع واستراحة'], ['experience', 'تجربة سياحية'], ['tours', 'جولات ومنظم رحلات'], ['fun', 'ترفيه وألعاب'], ['car', 'تأجير سيارات ونقل'], ['umrah', 'خدمات الحج والعمرة'], ['salon', 'صالون ومشغل'], ['other', 'نشاط آخر']];
 export const bizKind = (k: string) => BIZ_KINDS.find((x) => x[0] === k)?.[1] ?? '';
 /** لون الكوبون حسب نوع النشاط (من ألوان الهوية) */
-export const couponColor = (k?: string) => ({ restaurant: '#F89743', cafe: '#8E65AB', sweets: '#EB839B', shop: '#2E86B8', experience: '#3E8E5A' } as Record<string, string>)[k || ''] || '#F89743';
+export const couponColor = (k?: string) => ({
+  restaurant: '#F89743', cafe: '#8E65AB', sweets: '#EB839B', juice: '#E07B22', dates: '#B5762E', perfume: '#8E65AB', gifts: '#C9506F',
+  clothing: '#604C87', shop: '#2E86B8', mall: '#2E86B8', hotel: '#604C87', resort: '#3E8E5A', experience: '#3E8E5A', tours: '#2E86B8',
+  fun: '#C9506F', car: '#2B2745', umrah: '#3E8E5A', salon: '#EB839B', other: '#F89743',
+} as Record<string, string>)[k || ''] || '#F89743';
 
 const tok = () => session().token;
 export type Me = { balance: number; level: number } | null;

@@ -79,7 +79,7 @@ export function errText(e: unknown) {
 export const nAnswers = (n: number) => (n === 1 ? 'إجابة وحدة' : n === 2 ? 'إجابتين' : n <= 10 ? `${n} إجابات` : `${n} إجابة`);
 
 export type Stats = {
-  balance: number; spent: number; role: string;
+  balance: number; spent: number; role: string; impact: Impact | null;
   guide: { eligible: boolean; at: number; request: { status: 'pending' | 'approved' | 'rejected'; note: string } | null };
   points: number; level: number; levelName: string; levelAt: number; nextAt: number | null; nextName: string | null;
   counts: { questions: number; tips: number; photos: number; answers: number; best: number; thanks: number; trip: number };
@@ -88,3 +88,12 @@ export type Stats = {
 };
 export const myStats = () => api<Stats>('/v1/me/stats', { token: tok() });
 export const requestGuide = (about: string) => api('/v1/me/guide', { method: 'POST', body: { about }, token: tok() });
+
+/* ——— المساهمة: الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */
+export type Fact = { k: string; q: string; yes: number; no: number; mine: 0 | 1 | null };
+export const placeFacts = (id: number) => api<{ facts: Fact[]; ask: { k: string; q: string } | null }>(`/v1/places/${id}/facts`, { token: tok() });
+export const answerFact = (id: number, k: string, v: 0 | 1) => api<{ ok: true; points: number }>(`/v1/places/${id}/facts`, { method: 'POST', body: { k, v }, token: tok() });
+export const suggest = (b: { type: 'edit' | 'new' | 'closed'; placeId?: number; data: Record<string, unknown> }) => api<{ id: number }>('/v1/suggestions', { method: 'POST', body: b, token: tok() });
+export type Hero = { id: string; name: string; city: string; score: number; answers: number; reviews: number; visits: number; guide: boolean };
+export const cityHeroes = (city?: string | null) => api<{ month: string; heroes: Hero[] }>(`/v1/community/heroes${city ? `?city=${city}` : ''}`);
+export type Impact = { views: number; photoViews: number; thanks: number; helped: number; facts: number; suggestions: number };

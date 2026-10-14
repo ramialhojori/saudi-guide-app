@@ -48,7 +48,10 @@ export default function Passport() {
     setStamping(0);
     if (!r.ok) return Alert.alert('ما انختم', r.msg);
     if (r.already) return Alert.alert('مختوم من قبل', 'هذا المكان موجود في جوازك.');
-    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة`);
+    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة\n\nكيف ${p.title}؟ قيّمه الحين وخذ +3`, [
+      { text: 'بعدين', style: 'cancel' },
+      { text: 'قيّم تجربتك', onPress: () => router.push({ pathname: '/review/[id]', params: { id: String(p.id) } }) },
+    ]);
     getPassport().then(setPp).catch(() => {});
   };
 

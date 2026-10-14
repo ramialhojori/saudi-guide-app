@@ -620,7 +620,7 @@ async function usersView(q = '') {
 
 /* ——— التجار والكوبونات ——— */
 let MTAB = 'pending';
-const MK = { restaurant: 'مطعم', cafe: 'مقهى', sweets: 'مخبز وحلويات', shop: 'متجر', experience: 'تجربة سياحية' };
+const MK = { restaurant: 'مطعم', cafe: 'مقهى', sweets: 'مخبز وحلويات', juice: 'عصيرات ومشروبات', dates: 'تمور ومنتجات محلية', perfume: 'عطور وبخور', gifts: 'هدايا وتذكارات', clothing: 'ملابس وعبايات', shop: 'متجر', mall: 'مول ومركز تسوق', hotel: 'فندق وشقق فندقية', resort: 'منتجع واستراحة', experience: 'تجربة سياحية', tours: 'جولات ومنظم رحلات', fun: 'ترفيه وألعاب', car: 'تأجير سيارات ونقل', umrah: 'خدمات الحج والعمرة', salon: 'صالون ومشغل', other: 'نشاط آخر' };
 const MST = { pending: ['قيد المراجعة', 'b-draft'], approved: ['معتمد', 'b-live'], rejected: ['مرفوض', 'b-hidden'], hidden: ['موقوف', 'b-hidden'], active: ['فعّال', 'b-live'], paused: ['موقوف مؤقتاً', 'b-hidden'] };
 const stB = (s) => `<span class="badge ${(MST[s] || ['', 'b-hidden'])[1]}">${(MST[s] || [s])[0]}</span>`;
 const dAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short' });

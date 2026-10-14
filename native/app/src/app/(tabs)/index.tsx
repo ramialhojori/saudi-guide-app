@@ -18,6 +18,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { CouponCard } from '@/components/CouponCard';
 import { cityCoupons } from '@/lib/coupons';
+import { useFeatures } from '@/lib/features';
 import type { EventItem, Place } from '@/lib/types';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
 
@@ -262,7 +263,8 @@ const st = StyleSheet.create({
 
 function CityDeals({ city }: { city: string }) {
   const { data } = useAsync(() => cityCoupons(city).catch(() => []), [city]);
-  if (!data?.length) return null;
+  const F = useFeatures();
+  if (!F.coupons || !data?.length) return null;
   return (
     <>
       <Section title={`عروض ${cityName(city)}`} action="كل الكوبونات" onAction={() => router.push('/coupons')} />

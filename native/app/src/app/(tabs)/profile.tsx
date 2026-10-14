@@ -12,6 +12,7 @@ import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
 import { ago, myStats, tint, type Stats } from '@/lib/community';
 import { getPassport, type Passport as PassportData } from '@/lib/passport';
 import { cityName } from '@/lib/content';
+import { useFeatures } from '@/lib/features';
 import { CouponCard } from '@/components/CouponCard';
 import { myCoupons, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { brand, font, photos } from '@/theme/tokens';
@@ -26,6 +27,7 @@ export default function Profile() {
   const [pp, setPp] = useState<PassportData | null>(null);
   const [wallet, setWallet] = useState<Coupon[] | null>(null);
   const [biz, setBiz] = useState<Merchant | null>(null);
+  const F = useFeatures();
   useFocusEffect(useCallback(() => {
     if (user) {
       myStats().then(setStats).catch(() => {}); getPassport().then(setPp).catch(() => {});
@@ -106,19 +108,41 @@ export default function Profile() {
         </View>
       </View>
 
+      {/* تأثيرك: مثل «مساهماتك انشافت X مرة» في قوقل ماب */}
+      {F.impact && user && stats?.impact ? (
+        <View style={st.impact}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">تأثيرك</AppText>
+          <AppText variant="tiny" color="#CFC6DE">كل شي شاركته يساعد زوار ثانيين</AppText>
+          <View style={{ flexDirection: 'row', marginTop: 12 }}>
+            {[[stats.impact.views, 'مرة انشافت مساهماتك'], [stats.impact.thanks, 'شكر وصلك'], [stats.impact.helped, 'شخص جاوبته'], [stats.impact.facts + stats.impact.suggestions, 'معلومة أضفتها']].map(([v, l]) => (
+              <View key={l as string} style={{ flex: 1, alignItems: 'center' }}>
+                <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color="#F9A158">{Number(v).toLocaleString('en')}</AppText>
+                <AppText variant="tiny" color="#E2DAEE" center>{l}</AppText>
+              </View>
+            ))}
+          </View>
+          {F.suggest ? (
+            <Pressable style={st.impactBtn} onPress={() => router.push('/suggest')}>
+              <Icon name="plus" color="#fff" size={16} />
+              <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>أضف مكان ناقص في الدليل (+15)</AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
       {/* النقاط: الرصيد والصرف وطريق «مرشد موثّق» */}
-      {user && stats ? (
+      {user && stats && (F.points || F.guides) ? (
         <View style={st.pts}>
-          <Pressable style={st.ptsRow} onPress={() => router.push('/coupons?tab=points')}>
+          {F.points && F.coupons ? <Pressable style={st.ptsRow} onPress={() => router.push('/coupons?tab=points')}>
             <Badge icon="star" bg={brand.softOrange} fg={brand.orangeDeep} size={40} r={14} />
             <View style={{ flex: 1 }}>
               <AppText style={{ fontFamily: font.bold }}>رصيدك {stats.balance} نقطة</AppText>
               <AppText variant="tiny" muted>{stats.spent ? `صرفت ${stats.spent} · ` : ''}اصرفها على عروض المحلات</AppText>
             </View>
             <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>استبدل</AppText>
-          </Pressable>
-          {stats.role === 'user' ? (
-            <Pressable style={[st.ptsRow, st.ptsLine]} onPress={() => router.push('/guide-request')}>
+          </Pressable> : null}
+          {F.guides && stats.role === 'user' ? (
+            <Pressable style={[st.ptsRow, F.points && F.coupons && st.ptsLine]} onPress={() => router.push('/guide-request')}>
               <Badge icon="crown" bg={brand.softPurple} fg={brand.purple} size={40} r={14} />
               <View style={{ flex: 1 }}>
                 <AppText style={{ fontFamily: font.bold }}>مرشد موثّق</AppText>
@@ -131,7 +155,7 @@ export default function Profile() {
       ) : null}
 
       {/* جواز السعودية */}
-      <Pressable style={st.passport} onPress={() => router.push('/passport')}>
+      {F.passport ? <Pressable style={st.passport} onPress={() => router.push('/passport')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">جواز السعودية</AppText>
@@ -145,7 +169,7 @@ export default function Profile() {
           ))}
           <View style={[st.stamp, st.stampLeft]}><AppText variant="tiny" color="#CFC6DE">+{stampTotal - stampNames.length} باقية</AppText></View>
         </View>
-      </Pressable>
+      </Pressable> : null}
 
       {/* الأوسمة */}
       <View style={st.secRow}>
@@ -162,6 +186,7 @@ export default function Profile() {
       </View>
 
       {/* الكوبونات */}
+      {F.coupons ? (<>
       <View style={st.secRow}>
         <AppText variant="section">كوبوناتي <AppText variant="small" muted> {user ? `${wallet?.length ?? 0} محفوظة` : 'مثال'}</AppText></AppText>
         <Pressable onPress={() => router.push(user ? '/coupons?wallet=1' : '/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{user && wallet?.length ? 'المحفظة' : 'تصفح العروض'}</AppText></Pressable>
@@ -192,8 +217,10 @@ export default function Profile() {
         </ScrollView>
       )}
 
+      </>) : null}
+
       {/* بوابة التجار */}
-      {user ? (
+      {user && F.merchants ? (
         <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
           <View style={st.bizIcon}><Icon name="shop" color="#fff" size={22} /></View>
           <View style={{ flex: 1 }}>
@@ -254,6 +281,8 @@ const st = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10 },
   coupon: { width: 270, height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden' },
   code: { width: 90, alignItems: 'center', justifyContent: 'center', gap: 8, borderRightWidth: 2, borderStyle: 'dashed', borderRightColor: 'rgba(255,255,255,0.55)', backgroundColor: 'rgba(0,0,0,0.06)' },
+  impact: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.purple, borderRadius: 22, padding: 16 },
+  impactBtn: { marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)' },
   pts: { marginHorizontal: 16, marginTop: 14, backgroundColor: brand.card, borderRadius: 22, paddingHorizontal: 14 },
   ptsRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   ptsLine: { borderTopWidth: 1, borderTopColor: brand.chip },

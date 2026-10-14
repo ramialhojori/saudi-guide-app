@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon';
 import { Chip } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { allCities, cityName } from '@/lib/content';
+import { useFeatures } from '@/lib/features';
 import { BIZ_KINDS, cityCouponsMe, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 
@@ -25,6 +26,7 @@ export default function Coupons() {
   const [wallet, setWallet] = useState<Coupon[]>([]);
   const [err, setErr] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const F = useFeatures();
 
   const load = useCallback(async () => {
     setErr('');
@@ -74,7 +76,7 @@ export default function Coupons() {
       ) : null}
 
       <View style={st.tabs}>
-        {([['all', 'كل العروض'], ['points', 'بالنقاط'], ['wallet', `محفظتي (${wallet.length})`]] as const).map(([k, t]) => (
+        {([['all', 'كل العروض'], ...(F.points ? [['points', 'بالنقاط']] : []), ['wallet', `محفظتي (${wallet.length})`]] as ['all' | 'points' | 'wallet', string][]).map(([k, t]) => (
           <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)}><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={tab === k ? '#fff' : brand.muted} center>{t}</AppText></Pressable>
         ))}
       </View>
@@ -107,14 +109,14 @@ export default function Coupons() {
         ) : null}
       </View>
 
-      <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
+      {F.merchants ? <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
         <View style={st.bizIcon}><Icon name="shop" color="#fff" size={22} /></View>
         <View style={{ flex: 1 }}>
           <AppText style={{ fontFamily: font.bold }} color="#fff">عندك مطعم أو مقهى أو متجر؟</AppText>
           <AppText variant="small" color="#CFC6DE">سجّل نشاطك مجاناً وأضف عرضك لزوار {cityName(city) || 'مدينتك'}.</AppText>
         </View>
         <Icon name="chevron" color="#fff" size={18} />
-      </Pressable>
+      </Pressable> : null}
     </ScrollView>
   );
 }

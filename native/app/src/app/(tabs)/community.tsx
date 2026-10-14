@@ -8,7 +8,8 @@ import { Icon } from '@/components/Icon';
 import { BellButton } from '@/components/BellButton';
 import { Avatar, Chip, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { ago, feed, initial, nAnswers, thank, tint, topHelpers, type CPost } from '@/lib/community';
+import { ago, cityHeroes, feed, initial, nAnswers, thank, tint, type CPost, type Hero } from '@/lib/community';
+import { useFeatures } from '@/lib/features';
 import { cityName } from '@/lib/content';
 import { posts as samples, type Post } from '@/lib/mock';
 import { api } from '@/lib/api';
@@ -23,7 +24,9 @@ export default function Community() {
   const { user } = useAuth();
   const [city, setCity] = useState<string | null>(null);
   const [list, setList] = useState<CPost[] | null>(null);
-  const [top, setTop] = useState<{ id: string; name: string; answers: number; badge: string }[]>([]);
+  const [top, setTop] = useState<Hero[]>([]);
+  const [month, setMonth] = useState('');
+  const F = useFeatures();
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
   const [more, setMore] = useState(true);
@@ -33,8 +36,8 @@ export default function Community() {
   const load = useCallback(async (c: string | null) => {
     setBusy(true); setErr(false);
     try {
-      const [p, t] = await Promise.all([feed({ city: c }), topHelpers(c).catch(() => [])]);
-      setList(p); setTop(t); setMore(p.length >= 20);
+      const [p, t] = await Promise.all([feed({ city: c }), cityHeroes(c).catch(() => ({ month: '', heroes: [] as Hero[] }))]);
+      setList(p); setTop(t.heroes); setMonth(t.month); setMore(p.length >= 20);
       api<{ challenge: Ch | null }>('/v1/community/challenge').then((r) => setCh(r.challenge)).catch(() => {});
     } catch { setErr(true); setList((l) => l ?? []); } finally { setBusy(false); }
   }, []);
@@ -77,7 +80,7 @@ export default function Community() {
       </ScrollView>
 
       {/* تحدي الأسبوع: يديره رامي من اللوحة */}
-      {ch ? (
+      {F.challenge && ch ? (
         <Pressable style={st.challenge} onPress={() => router.push(user ? { pathname: '/ask', params: { kind: 'photo', text: ch.tag ? `#${ch.tag} ` : '' } } : '/login')}>
           <View style={{ flex: 1, padding: 16, gap: 4 }}>
             <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>تحدي الأسبوع</AppText></View>
@@ -114,12 +117,12 @@ export default function Community() {
         </>
       ) : null}
 
-      {/* أبطال المدينة: أكثر ناس جاوبوا هالشهر */}
-      {top.length ? (
+      {/* أبطال الشهر: من مساهمات الشهر (إجابات، تقييمات، زيارات، صور، أسئلة سريعة) */}
+      {F.heroes && top.length ? (
         <View style={st.champs}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">أبطال {city ? cityLabel : 'المجتمع'} هالشهر</AppText>
-            <AppText variant="small" color="#F9A158">آخر 30 يوم</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">أبطال {city ? cityLabel : 'الدليل'} · {month}</AppText>
+            <AppText variant="small" color="#F9A158">يتجدد كل شهر</AppText>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginTop: 16 }}>
             {[top[1], top[0], top[2]].filter(Boolean).map((c) => {
@@ -128,11 +131,12 @@ export default function Community() {
                 <View key={c.id} style={{ alignItems: 'center', gap: 6 }}>
                   <View style={first ? st.ring1 : null}><Avatar t={initial(c.name)} c={tint(c.id)} size={first ? 64 : 50} /></View>
                   <AppText style={{ fontFamily: font.bold }} color="#fff">{c.name}</AppText>
-                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{c.answers} إجابة</AppText>
+                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{c.score} نقطة{c.guide ? ' · مرشد' : ''}</AppText>
                 </View>
               );
             })}
           </View>
+          <AppText variant="tiny" color="#CFC6DE" center style={{ marginTop: 12 }}>جاوب الأسئلة، قيّم الأماكن، واختم جوازك… وتكون منهم الشهر الجاي</AppText>
         </View>
       ) : null}
     </ScrollView>

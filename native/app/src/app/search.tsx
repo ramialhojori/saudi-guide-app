@@ -112,7 +112,7 @@ export default function SearchScreen() {
         keyExtractor={(p) => String(p.id)}
         ListHeaderComponent={head}
         ListFooterComponent={foot}
-        ListEmptyComponent={busy ? <Loading /> : msg ? <Empty title={msg} /> : q.trim().length > 1 ? <Empty title="ما لقينا نتيجة" sub="جرّب كلمة ثانية أو اسم المدينة" /> : tab > 1 ? <Empty title="قريباً" sub="البحث في الكوبونات والفعاليات والأسئلة ينفتح مع المرحلة الجاية" /> : <Empty title="اكتب اسم مكان أو نوعه" sub="مثل: مطعم بحري، مقهى، العلا" />}
+        ListEmptyComponent={busy ? <Loading /> : msg ? <Empty title={msg} /> : q.trim().length > 1 ? <Empty title="ما لقينا نتيجة" sub="جرّب كلمة ثانية أو اسم المدينة. أو تعرف المكان وما هو في الدليل؟" action="أضف المكان للدليل (+15 نقطة)" onAction={() => router.push({ pathname: '/suggest', params: { q: q.trim() } })} /> : tab > 1 ? <Empty title="قريباً" sub="البحث في الكوبونات والفعاليات والأسئلة ينفتح مع المرحلة الجاية" /> : <Empty title="اكتب اسم مكان أو نوعه" sub="مثل: مطعم بحري، مقهى، العلا" />}
         contentContainerStyle={{ paddingBottom: 60 }}
         keyboardShouldPersistTaps="handled"
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

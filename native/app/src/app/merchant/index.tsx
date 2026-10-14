@@ -193,7 +193,7 @@ export default function MerchantHome() {
         <View style={st.premium}>
           <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>الباقة المميزة · قريباً</AppText>
           <AppText style={{ fontFamily: font.bold, fontSize: 17, marginTop: 2 }} color="#fff">اظهر أول في {cityName(m.city)}</AppText>
-          <AppText variant="small" color="#E2DAEE" style={{ lineHeight: 21, marginTop: 4 }}>ظهور في الرئيسية، 3 كوبونات فعّالة، إشعار لمحبي {bizKind(m.kind) === 'مقهى' ? 'المقاهي' : 'المطاعم'}، وتقرير شهري.</AppText>
+          <AppText variant="small" color="#E2DAEE" style={{ lineHeight: 21, marginTop: 4 }}>ظهور في الرئيسية، 3 كوبونات فعّالة، إشعار للمهتمين بنشاطك في مدينتك، وتقرير شهري.</AppText>
         </View>
       </View>
     </ScrollView>

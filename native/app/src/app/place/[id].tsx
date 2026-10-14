@@ -12,7 +12,8 @@ import { Empty, Loading } from '@/components/State';
 import { Avatar, BackButton, Badge, Button, Pill, RoundButton } from '@/components/ui';
 import { cityName, getPlace, nearby } from '@/lib/content';
 import { useAuth } from '@/lib/auth';
-import { ago, initial, nAnswers, tint, type CPost } from '@/lib/community';
+import { ago, answerFact, initial, nAnswers, placeFacts, tint, type CPost, type Fact } from '@/lib/community';
+import { useFeatures } from '@/lib/features';
 import { checkIn, placePosts, placeSocial, type PlaceSocial } from '@/lib/passport';
 import { openDirections } from '@/lib/maps';
 import { trip, useTrip } from '@/lib/trip';
@@ -40,11 +41,16 @@ export default function PlaceScreen() {
   const [rv, setRv] = useState<PlaceReviews | null>(null);
   const [cps, setCps] = useState<Coupon[]>([]);
   const [shot, setShot] = useState<string | null>(null);
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [ask, setAsk] = useState<{ k: string; q: string } | null>(null);
+  const [factMsg, setFactMsg] = useState('');
+  const F = useFeatures();
   useFocusEffect(useCallback(() => {
     placeSocial(Number(id)).then(setSocial).catch(() => {});
     placePosts(Number(id)).then(setQs).catch(() => {});
     placeReviews(Number(id)).then(setRv).catch(() => {});
     placeCoupons(Number(id)).then(setCps).catch(() => {});
+    placeFacts(Number(id)).then((r) => { setFacts(r.facts); setAsk(r.ask); }).catch(() => {});
   }, [id, user?.id]));
   const stamp = async () => {
     if (!user) return router.push('/login');
@@ -54,11 +60,28 @@ export default function PlaceScreen() {
     if (!r.ok) return Alert.alert('ما انختم', r.msg);
     if (r.already) return Alert.alert('مختوم من قبل', 'هذا المكان موجود في جوازك.');
     setSocial((x) => x && { ...x, been: true, visits: x.visits + 1 });
-    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة${r.newCity ? ' · مدينة جديدة في جواز السعودية' : ''}`, [{ text: 'تمام' }, { text: 'افتح الجواز', onPress: () => router.push('/passport') }]);
+    // مثل قوقل: أول ما يختم نسأله عن تجربته وهو في المكان
+    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة${r.newCity ? ' · مدينة جديدة في جواز السعودية' : ''}\n\nكيف المكان؟ قيّمه الحين وخذ +3`, [
+      { text: 'بعدين', style: 'cancel' },
+      ...(F.reviews ? [{ text: 'قيّم تجربتك', onPress: () => router.push({ pathname: '/review/[id]', params: { id: String(id) } }) }] : [{ text: 'افتح الجواز', onPress: () => router.push('/passport') }]),
+    ]);
   };
 
   if (!p) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title={error ? 'ما قدرنا نفتح المكان' : 'ما لقينا المكان'} />}</View>;
 
+  const vote = async (v: 0 | 1 | null) => {
+    if (!ask) return;
+    if (!user) return router.push('/login');
+    const k = ask.k;
+    if (v === null) { setFacts((f) => f.map((x) => (x.k === k ? { ...x, mine: 0 as const, skip: true } : x))); }
+    else {
+      setFacts((f) => f.map((x) => (x.k === k ? { ...x, mine: v, yes: x.yes + v, no: x.no + (1 - v) } : x)));
+      answerFact(Number(id), k, v).then((r) => { if (r.points) setFactMsg('+1 نقطة · شكراً!'); }).catch(() => {});
+    }
+    // السؤال الجاي
+    setFacts((f) => { const next = f.filter((x) => x.mine === null && x.k !== k).sort((a, b) => a.yes + a.no - (b.yes + b.no))[0]; setAsk(next ? { k: next.k, q: next.q } : null); return f; });
+  };
+  const known = facts.filter((f) => f.yes + f.no >= 1 && f.yes / (f.yes + f.no) >= 0.6);
   const ks = kindStyle[p.kinds[0]] ?? kindStyle.sights;
   const images = p.images?.length ? p.images : p.image ? [p.image] : [];
   const saved = ids.includes(p.id);
@@ -122,7 +145,7 @@ export default function PlaceScreen() {
             ))}
           </View>
 
-          {cps.map((c) => <View key={c.id} style={{ marginTop: 14 }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
+          {F.coupons ? cps.map((c) => <View key={c.id} style={{ marginTop: 14 }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>) : null}
 
           {p.body ? (
             <View style={{ marginTop: 16 }}>
@@ -150,8 +173,34 @@ export default function PlaceScreen() {
             </Pressable>
           )}
 
+          {/* معلومات من الزوار + سؤال سريع (مثل قوقل ماب) */}
+          {F.facts && (known.length || ask) ? (
+            <View style={st.facts2}>
+              {known.length ? (
+                <>
+                  <AppText variant="small" style={{ fontFamily: font.bold }}>يقول الزوار</AppText>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                    {known.map((f) => <Pill key={f.k} label={'✓ ' + f.q.replace('؟', '').replace(/^فيه /, '').replace(/^مناسب /, 'مناسب ')} bg={brand.softGreen} fg={brand.green} />)}
+                  </View>
+                </>
+              ) : null}
+              {ask ? (
+                <View style={[known.length ? { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: brand.chip } : null]}>
+                  <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>سؤال سريع · +1 نقطة</AppText>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 15, marginTop: 2 }}>{ask.q}</AppText>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.softGreen }]} onPress={() => vote(1)}><AppText style={{ fontFamily: font.bold }} color={brand.green}>نعم</AppText></Pressable>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.softPink }]} onPress={() => vote(0)}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>لا</AppText></Pressable>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.chip }]} onPress={() => vote(null)}><AppText style={{ fontFamily: font.semibold }} muted>ما أدري</AppText></Pressable>
+                  </View>
+                </View>
+              ) : null}
+              {factMsg ? <AppText variant="tiny" color={brand.green} style={{ marginTop: 6, fontFamily: font.semibold }}>{factMsg}</AppText> : null}
+            </View>
+          ) : null}
+
           {/* جواز السعودية: ختم الزيارة */}
-          {p.lat && p.lng ? (
+          {F.passport && p.lat && p.lng ? (
             <View style={st.stampCard}>
               <Badge icon="flag" bg={social?.been ? brand.softGreen : brand.softOrange} fg={social?.been ? brand.green : brand.orangeDeep} size={44} r={14} />
               <View style={{ flex: 1 }}>
@@ -177,6 +226,14 @@ export default function PlaceScreen() {
                 <AppText variant="small" style={{ flex: 1 }} numberOfLines={1}>{p.address || cityName(p.city)}</AppText>
                 <View style={st.dirBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>الاتجاهات</AppText></View>
               </View>
+            </Pressable>
+          ) : null}
+
+          {/* اقتراح تعديل */}
+          {F.suggest ? (
+            <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }} onPress={() => (user ? router.push({ pathname: '/suggest', params: { place: String(p.id), title: p.title } }) : router.push('/login'))}>
+              <Icon name="edit" color={brand.link} size={16} />
+              <AppText variant="small" color={brand.link} style={{ fontFamily: font.semibold }}>معلومة غلط أو المكان مقفل؟ اقترح تعديل</AppText>
             </Pressable>
           ) : null}
 
@@ -213,6 +270,7 @@ export default function PlaceScreen() {
         </Pressable>
 
         {/* التقييمات وصور الزوار */}
+        {F.reviews ? (<>
         <View style={st.secRow}>
           <AppText variant="section">التقييمات</AppText>
           {rv?.count ? <AppText variant="small" muted>{rv.count} تقييم</AppText> : null}
@@ -238,7 +296,7 @@ export default function PlaceScreen() {
             {rv.tags.map((t) => <Pill key={t.t} label={`${t.t} · ${t.n}`} bg={brand.softGreen} fg={brand.green} />)}
           </View>
         ) : null}
-        {rv?.photos.length ? (
+        {F.photos && rv?.photos.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
             {rv.photos.map((ph) => (
               <Pressable key={ph.id} onPress={() => setShot(ph.url)}>
@@ -279,6 +337,7 @@ export default function PlaceScreen() {
           <AppText muted style={{ flex: 1, marginHorizontal: 8 }}>{rv?.mine ? `تقييمك: ${'★'.repeat(rv.mine.stars)}` : 'زرته؟ قيّم تجربتك وأضف صورك'}</AppText>
           <AppText style={{ fontFamily: font.bold }} color={brand.orangeDeep}>{rv?.mine ? 'عدّل' : 'قيّم'}</AppText>
         </Pressable>
+        </>) : null}
 
         {/* قريب منه */}
         {others.length ? (
@@ -350,6 +409,8 @@ const st = StyleSheet.create({
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 10 },
   qa: { marginHorizontal: 16, marginBottom: 10, backgroundColor: brand.card, borderRadius: 22, padding: 14 },
   ask: { marginHorizontal: 16, marginTop: 10, height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: brand.line, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
+  facts2: { marginTop: 14, backgroundColor: brand.card, borderRadius: 20, padding: 14 },
+  fbtn: { flex: 1, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rvHead: { marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   rvTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: brand.chip },
   rvFill: { height: '100%', borderRadius: 3, backgroundColor: brand.orange },

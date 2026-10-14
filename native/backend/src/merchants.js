@@ -18,7 +18,7 @@ const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { ret
 const str = (v, max = 300) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const num = (v) => (v === '' || v == null || isNaN(+v) ? null : +v);
 const cityOk = (c) => CITIES.some((x) => x[0] === c);
-const KINDS = ['restaurant', 'cafe', 'sweets', 'shop', 'experience'];
+const KINDS = ['restaurant', 'cafe', 'sweets', 'juice', 'dates', 'perfume', 'gifts', 'clothing', 'shop', 'mall', 'hotel', 'resort', 'experience', 'tours', 'fun', 'car', 'umrah', 'salon', 'other'];
 const CKINDS = ['percent', 'amount', 'bogo', 'gift'];
 const SLOT = 30; // ثانية
 const today = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10); // بتوقيت مكة
