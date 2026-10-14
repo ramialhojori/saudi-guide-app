@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,6 +13,7 @@ import { cityName } from '@/lib/content';
 import { bizKind, couponColor, couponErr, dayLabel, getCouponMe, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { openDirections } from '@/lib/maps';
 import { brand, font } from '@/theme/tokens';
+import { track } from '@/lib/track';
 
 /** تفاصيل الكوبون: العرض والشروط والمحل، و«استخدمه الحين» يفتح الرمز */
 export default function CouponDetail() {
@@ -23,6 +24,7 @@ export default function CouponDetail() {
   const [me, setMe] = useState<Me>(null);
   const [err, setErr] = useState('');
   const [rep, setRep] = useState(false);
+  useEffect(() => { if (id) track('coupon', Number(id)); }, [id]);
   useFocusEffect(useCallback(() => { getCouponMe(Number(id)).then((r) => { setC(r.coupon); setMe(r.me); }).catch((e) => setErr(couponErr(e))); }, [id, user?.id]));
 
   if (!c) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{err ? <Empty title="الكوبون انتهى أو خلص" sub={err} /> : <Loading />}</View>;

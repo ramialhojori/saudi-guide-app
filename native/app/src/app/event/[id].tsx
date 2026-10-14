@@ -18,12 +18,14 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
+import { track } from '@/lib/track';
 
 const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
 /** صفحة الفعالية — مثل التصميم: عدّاد تنازلي، الموعد، المكان، التذاكر، رايحين */
 export default function EventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useEffect(() => { if (id) track('event', Number(id)); }, [id]);
   const insets = useSafeAreaInsets();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);
   const [going, setGoing] = useState(false);

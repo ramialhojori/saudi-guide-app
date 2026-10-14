@@ -13,6 +13,7 @@ import {
   IBMPlexSansArabic_700Bold,
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
 import { colors, isDark } from '@/theme/tokens';
+import { startTracking } from '@/lib/track';
 
 // التطبيق عربي بالكامل: الاتجاه من اليمين دائماً (في النسخ المبنية يضبطه expo-localization في app.json)
 if (!I18nManager.isRTL) {
@@ -24,6 +25,7 @@ if (!I18nManager.isRTL) {
 if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.dir = 'rtl';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+if (Platform.OS !== 'web') startTracking();
 
 /* الوضع الليلي: الألوان تنحسب أول ما يفتح التطبيق حسب إعداد الآيفون.
    في نسخة التجربة: لو اخترت مظهر من الإعدادات نطبقه، ولو تغيّر إعداد الآيفون نعيد التحميل عشان تتبدل الألوان */

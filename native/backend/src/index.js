@@ -14,6 +14,8 @@ import { merchantRoute, merchantAdmin } from './merchants.js';
 import { reviewsRoute, reviewsAdmin } from './reviews.js';
 import { messagesAdmin, runQueue } from './messages.js';
 import { contribRoute, contribAdmin, weeklyImpact } from './contrib.js';
+import { mcpRoute } from './mcp.js';
+import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
 
 const CORS = {
@@ -21,7 +23,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.7.1';
+const VERSION = '0.8.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -108,6 +110,12 @@ async function route(request, env, ctx) {
 
   if (p === '/' || p === '/v1') return J({ name: 'saudi-guide-api', version: VERSION });
 
+  /* ——— ربط Claude باللوحة (MCP + OAuth) ——— */
+  if (p === '/mcp' || p.startsWith('/oauth/') || p.startsWith('/.well-known/oauth')) {
+    const r = await mcpRoute(p, request, env);
+    if (r) return r;
+  }
+
   /* ——— لوحة التحكم (الصفحة نفسها عامة، وكل بياناتها تحتاج مفتاح الإدارة) ——— */
   if (p === '/panel') {
     return new Response(PANEL_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' } });
@@ -129,6 +137,7 @@ async function route(request, env, ctx) {
       const r = await communityAdmin(p, request, env, J);
       if (r) return r;
     }
+    if (p === '/admin/dashboard') return J(await dashboard(env));
     if (p === '/admin/status') {
       const last = await env.DB.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 10').all();
       const n = await env.DB.prepare('SELECT (SELECT COUNT(*) FROM places WHERE deleted=0) p, (SELECT COUNT(*) FROM events WHERE deleted=0) e, (SELECT COUNT(*) FROM articles WHERE deleted=0) a, (SELECT COUNT(*) FROM devices) d').first();
@@ -193,6 +202,7 @@ async function route(request, env, ctx) {
   const gm = p.match(/^\/v1\/events\/(\d+)\/going$/);
   if (gm) return goingRoute(+gm[1], env, await sessionUser(env, request), request, J);
 
+  if (request.method === 'POST' && p === '/v1/track') return trackRoute(request, env, J);
   if (request.method === 'POST' && p === '/v1/devices') {
     const b = await request.json().catch(() => ({}));
     if (!b.token || !/^ExponentPushToken\[.+\]$/.test(b.token)) return J({ error: 'bad_token' }, 400);

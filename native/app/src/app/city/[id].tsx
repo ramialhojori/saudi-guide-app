@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,6 +13,7 @@ import { cityKinds, getCities, getCityPlaces } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
+import { track } from '@/lib/track';
 
 const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TAGLINE: Record<string, string> = {
@@ -25,6 +26,7 @@ const TAGLINE: Record<string, string> = {
 /** دليل المدينة — مثل التصميم: صورة المدينة، أرقام سريعة، أنواع، «لا تفوّتها»، وكل الأماكن */
 export default function CityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useEffect(() => { if (id) track('city', id); }, [id]);
   const insets = useSafeAreaInsets();
   const [kind, setKind] = useState<string | undefined>();
   const [q, setQ] = useState('');

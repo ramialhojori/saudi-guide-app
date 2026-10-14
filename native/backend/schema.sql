@@ -409,3 +409,19 @@ CREATE TABLE IF NOT EXISTS merchant_agreements (
   created INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id);
+
+-- قياس الاستخدام (مجهول الهوية): عدّادات يومية بدل تسجيل كل حدث — خفيفة وما فيها بيانات شخصية
+CREATE TABLE IF NOT EXISTS stats_daily (
+  day TEXT NOT NULL,                         -- YYYY-MM-DD بتوقيت مكة
+  metric TEXT NOT NULL,                      -- open | place | event | search | search_empty | coupon | share | directions | trip_add | city | platform | version
+  k TEXT NOT NULL DEFAULT '',                -- رقم المكان، كلمة البحث، المدينة…
+  n INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, metric, k)
+);
+-- الأجهزة النشطة يومياً (معرّف عشوائي من التطبيق، مو مربوط بشخص) — للمستخدمين النشطين حتى الزوار بدون حساب
+CREATE TABLE IF NOT EXISTS active_devices (
+  day TEXT NOT NULL,
+  device TEXT NOT NULL,
+  platform TEXT,
+  PRIMARY KEY (day, device)
+);

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -9,9 +10,11 @@ import { getArticle } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { colors, radius, space } from '@/theme/tokens';
+import { track } from '@/lib/track';
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  useEffect(() => { if (id) track('article', Number(id)); }, [id]);
   const { data: a, loading } = useAsync(() => getArticle(Number(id)), [id]);
   if (loading && !a) return <Screen showBack><Loading /></Screen>;
   if (!a) return <Screen showBack><Empty /></Screen>;

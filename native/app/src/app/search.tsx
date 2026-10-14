@@ -12,6 +12,7 @@ import { cityName, getCityPlaces, kindPlaces, nearby, search, weeklyPicks } from
 import { trip, useTrip } from '@/lib/trip';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, START, INPUT_START } from '@/theme/tokens';
+import { track } from '@/lib/track';
 
 const KIND_NAME: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'معالم إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TABS = ['الكل', 'أماكن', 'كوبونات', 'فعاليات', 'أسئلة'];
@@ -54,6 +55,14 @@ export default function SearchScreen() {
     }, 250);
     return () => clearTimeout(t);
   }, [q, kind, params.near]);
+
+  // نقيس البحث بعد ما يوقف كتابة (ثانية ونص): وش يدورون، ووش يدورون وما يلقون (فجوات المحتوى)
+  useEffect(() => {
+    const k = q.trim();
+    if (k.length < 2 || busy) return;
+    const t = setTimeout(() => track(list.length ? 'search' : 'search_empty', undefined, k), 1500);
+    return () => clearTimeout(t);
+  }, [q, busy, list.length]);
 
   // قبل ما يكتب: اقتراحات من مدينة رحلته، أو مختارات الأسبوع
   useEffect(() => {

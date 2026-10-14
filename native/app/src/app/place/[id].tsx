@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -14,6 +14,7 @@ import { cityName, getPlace, nearby } from '@/lib/content';
 import { useAuth } from '@/lib/auth';
 import { ago, answerFact, initial, nAnswers, placeFacts, tint, type CPost, type Fact } from '@/lib/community';
 import { useFeatures } from '@/lib/features';
+import { track } from '@/lib/track';
 import { checkIn, placePosts, placeSocial, type PlaceSocial } from '@/lib/passport';
 import { openDirections } from '@/lib/maps';
 import { trip, useTrip } from '@/lib/trip';
@@ -45,6 +46,7 @@ export default function PlaceScreen() {
   const [ask, setAsk] = useState<{ k: string; q: string } | null>(null);
   const [factMsg, setFactMsg] = useState('');
   const F = useFeatures();
+  useEffect(() => { if (id) track('place', Number(id)); }, [id]);
   useFocusEffect(useCallback(() => {
     placeSocial(Number(id)).then(setSocial).catch(() => {});
     placePosts(Number(id)).then(setQs).catch(() => {});
@@ -117,7 +119,7 @@ export default function PlaceScreen() {
         <View style={[st.topBtns, { top: insets.top + 10 }]}>
           <BackButton light />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <RoundButton icon="share" label="مشاركة" onPress={() => Share.share({ message: `${p.title} — دليل السعودية\n${p.url || ''}` }).catch(() => {})} />
+            <RoundButton icon="share" label="مشاركة" onPress={() => { track('share', p.id); Share.share({ message: `${p.title} — دليل السعودية\n${p.url || ''}` }).catch(() => {}); }} />
             <HeartButton id={p.id} size={44} light />
           </View>
         </View>
@@ -363,8 +365,8 @@ export default function PlaceScreen() {
         </Pressable>
       </Modal>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Button label={saved ? '✓ في رحلتي' : 'أضف لرحلتي'} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => trip.toggle(p.id)} />
-        <Button label="الاتجاهات" bg={brand.ink} style={{ flex: 1 }} onPress={() => openDirections(p.lat, p.lng, p.title)} />
+        <Button label={saved ? '✓ في رحلتي' : 'أضف لرحلتي'} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
+        <Button label="الاتجاهات" bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
       </View>
     </View>
   );

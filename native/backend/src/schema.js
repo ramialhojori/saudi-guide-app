@@ -57,7 +57,9 @@ const STATEMENTS = [
   "CREATE TABLE IF NOT EXISTS coupon_feedback ( user_id TEXT NOT NULL, coupon_id INTEGER NOT NULL, merchant_id INTEGER NOT NULL, ok INTEGER NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, coupon_id) )",
   "CREATE INDEX IF NOT EXISTS cfeedback_m ON coupon_feedback(merchant_id)",
   "CREATE TABLE IF NOT EXISTS merchant_agreements ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, merchant_id INTEGER, version TEXT NOT NULL, ip TEXT, ua TEXT, created INTEGER NOT NULL )",
-  "CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id)"
+  "CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id)",
+  "CREATE TABLE IF NOT EXISTS stats_daily ( day TEXT NOT NULL, metric TEXT NOT NULL, k TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, metric, k) )",
+  "CREATE TABLE IF NOT EXISTS active_devices ( day TEXT NOT NULL, device TEXT NOT NULL, platform TEXT, PRIMARY KEY (day, device) )"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
