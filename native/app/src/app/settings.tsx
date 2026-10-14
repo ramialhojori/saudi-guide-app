@@ -11,7 +11,7 @@ import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { cityName } from '@/lib/content';
 import { tint } from '@/lib/community';
-import { brand, font, START } from '@/theme/tokens';
+import { brand, font, START, INPUT_START } from '@/theme/tokens';
 import { env } from '@/config/env';
 
 /** الإعدادات — مثل التصميم. الحساب حقيقي، والتفضيلات تنحفظ في المراحل الجاية */
@@ -132,7 +132,7 @@ const st = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   card: { marginHorizontal: 16, marginTop: 16, backgroundColor: '#fff', borderRadius: 22, padding: 14 },
-  input: { fontFamily: font.bold, fontSize: 17, color: brand.ink, textAlign: START, borderBottomWidth: 1.5, borderColor: brand.lilac, paddingVertical: 2 },
+  input: { fontFamily: font.bold, fontSize: 17, color: brand.ink, textAlign: INPUT_START, borderBottomWidth: 1.5, borderColor: brand.lilac, paddingVertical: 2 },
   edit: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   group: { marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 22, paddingHorizontal: 14 },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 54, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F1ECF6' },

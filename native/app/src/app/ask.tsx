@@ -11,7 +11,7 @@ import { Avatar, BackButton, Chip } from '@/components/ui';
 import { env } from '@/config/env';
 import { useAuth } from '@/lib/auth';
 import { createPost, errText, initial, tint, uploadPhoto } from '@/lib/community';
-import { brand, font, START } from '@/theme/tokens';
+import { brand, font, START, INPUT_START } from '@/theme/tokens';
 
 type Kind = 'question' | 'tip' | 'photo';
 const KINDS: [Kind, string, IconName, string][] = [
@@ -139,7 +139,7 @@ const st = StyleSheet.create({
   kinds: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
   kind: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 46, borderRadius: 16, backgroundColor: '#fff' },
   card: { margin: 16, marginBottom: 0, backgroundColor: '#fff', borderRadius: 24, padding: 14 },
-  input: { minHeight: 130, marginTop: 12, fontFamily: font.regular, fontSize: 16, lineHeight: 28, color: brand.ink, textAlign: START, textAlignVertical: 'top' },
+  input: { minHeight: 130, marginTop: 12, fontFamily: font.regular, fontSize: 16, lineHeight: 28, color: brand.ink, textAlign: INPUT_START, textAlignVertical: 'top' },
   photoWrap: { marginTop: 10, borderRadius: 18, overflow: 'hidden' },
   photoX: { position: 'absolute', top: 10, left: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   media: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 44, borderRadius: 14, backgroundColor: brand.softPink },

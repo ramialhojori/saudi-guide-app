@@ -11,7 +11,7 @@ import { Badge, Chip, ImageRow } from '@/components/ui';
 import { cityName, getCityPlaces, kindPlaces, nearby, search, weeklyPicks } from '@/lib/content';
 import { trip, useTrip } from '@/lib/trip';
 import type { Place } from '@/lib/types';
-import { brand, font, kindStyle, START } from '@/theme/tokens';
+import { brand, font, kindStyle, START, INPUT_START } from '@/theme/tokens';
 
 const KIND_NAME: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'معالم إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TABS = ['الكل', 'أماكن', 'كوبونات', 'فعاليات', 'أسئلة'];
@@ -135,7 +135,7 @@ export default function SearchScreen() {
 const st = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
   field: { flex: 1, height: 54, backgroundColor: '#fff', borderWidth: 2, borderColor: brand.lilac, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
-  input: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: brand.ink, textAlign: START, minWidth: 0 },
+  input: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: brand.ink, textAlign: INPUT_START, minWidth: 0 },
   kindRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 14, backgroundColor: '#fff', borderRadius: 16, padding: 10 },
   secRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   coupon: { marginHorizontal: 16, height: 86, borderRadius: 20, backgroundColor: brand.pink, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },

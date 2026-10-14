@@ -104,3 +104,5 @@ export type PhotoKey = keyof typeof photos;
  */
 import { I18nManager, Platform } from 'react-native';
 export const START: 'left' | 'right' = Platform.OS !== 'web' && I18nManager.isRTL ? 'left' : 'right';
+/** حقول الكتابة (TextInput) ما تنقلب مع اتجاه التطبيق على الآيفون — نحطها يمين دايماً */
+export const INPUT_START = 'right' as const;

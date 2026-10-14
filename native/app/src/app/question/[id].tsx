@@ -9,7 +9,7 @@ import { Avatar, BackButton, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ago, answer, block, errText, getPost, hideMine, initial, markBest, nAnswers, report, thank, tint, type CAnswer, type CPost } from '@/lib/community';
 import { cityName } from '@/lib/content';
-import { brand, font, START } from '@/theme/tokens';
+import { brand, font, START, INPUT_START } from '@/theme/tokens';
 
 const KIND = { question: 'سؤال', tip: 'نصيحة', photo: 'صورة' } as const;
 const REASONS = ['إساءة أو كلام جارح', 'إعلان أو سبام', 'معلومة غلط أو مضللة', 'محتوى غير لائق'];
@@ -205,6 +205,6 @@ const st = StyleSheet.create({
   gone: { marginTop: 60, backgroundColor: '#fff', borderRadius: 24, padding: 24, gap: 8, alignItems: 'center' },
   btn: { marginTop: 8, backgroundColor: brand.purple, borderRadius: 14, paddingHorizontal: 20, height: 44, justifyContent: 'center' },
   reply: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingTop: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: brand.line },
-  input: { flex: 1, minWidth: 0, minHeight: 44, maxHeight: 120, backgroundColor: brand.bg, borderRadius: 14, paddingHorizontal: 12, paddingTop: 11, paddingBottom: 8, fontFamily: font.regular, fontSize: 14.5, color: brand.ink, textAlign: START },
+  input: { flex: 1, minWidth: 0, minHeight: 44, maxHeight: 120, backgroundColor: brand.bg, borderRadius: 14, paddingHorizontal: 12, paddingTop: 11, paddingBottom: 8, fontFamily: font.regular, fontSize: 14.5, color: brand.ink, textAlign: INPUT_START },
   send: { backgroundColor: brand.purple, borderRadius: 12, paddingHorizontal: 14, height: 44, justifyContent: 'center' },
 });
