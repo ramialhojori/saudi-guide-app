@@ -54,7 +54,7 @@ export default function AskAi() {
           <AppText variant="title">اسأل الدليل</AppText>
           <AppText variant="tiny" muted>{quota?.plus ? 'دليل+ · بدون حد' : left != null ? `باقي لك ${left} ${left === 1 ? 'سؤال' : 'أسئلة'} اليوم مجاناً` : 'مساعدك الذكي للسياحة في السعودية'}</AppText>
         </View>
-        <View style={st.plus}><Icon name="spark" color="#fff" size={14} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>دليل+</AppText></View>
+        <Pressable onPress={() => router.push('/plus')} style={st.plus}><Icon name="spark" color="#fff" size={14} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>دليل+</AppText></Pressable>
       </View>
 
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30, gap: 12 }} keyboardShouldPersistTaps="handled">
@@ -107,6 +107,7 @@ export default function AskAi() {
         ))}
         {busy ? <View style={[st.bot, { flexDirection: 'row', gap: 8, alignItems: 'center' }]}><ActivityIndicator color={brand.purple} /><AppText variant="small" muted>أدوّر لك في الدليل…</AppText></View> : null}
         {err ? <AppText center color={brand.pinkDeep} style={{ fontFamily: font.semibold }}>{err}</AppText> : null}
+        {err && left === 0 ? <Pressable onPress={() => router.push('/plus')} style={[st.follow, { alignSelf: 'center', backgroundColor: brand.purple }]}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>اشترك في دليل+ بدون حد</AppText></Pressable> : null}
       </ScrollView>
 
       <View style={[st.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
