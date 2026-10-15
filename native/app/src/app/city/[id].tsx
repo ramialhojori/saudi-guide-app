@@ -148,6 +148,7 @@ const CREDIT: Record<string, string> = {
   abha: 'Dr Muhammad Amer عبر Unsplash',
   medina: 'Yasir Gürbüz عبر Pexels',
   'tabuk-region': 'NEOM عبر Unsplash',
+  'makkah-region': 'Sam Riz عبر Unsplash',
 };
 
 const st = StyleSheet.create({

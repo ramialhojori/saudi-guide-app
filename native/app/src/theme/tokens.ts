@@ -115,8 +115,8 @@ export const type = {
 
 /** صور الهوية المحلية (حقوقها يشتريها رامي) — تستخدم في الرئيسية والبطاقات لين يجي محتوى نهائي */
 export const photos = {
-  rock: require('../../assets/photos/alula-rock.jpg'),
-  land: require('../../assets/photos/alula-land.jpg'),
+  rock: require('../../assets/photos/home-hero.jpg'), // صورة الرئيسية: تبوك (NEOM عبر Unsplash) مؤقتاً لين نشتري صخرة الفيل — القديمة غير مرخّصة ومحفوظة في صور-المدن/احتياط
+  land: require('../../assets/photos/welcome.jpg'), // العلا (SALEH عبر Unsplash)
   riyadh: require('../../assets/photos/riyadh.jpg'),
   gate: require('../../assets/photos/jeddah-gate.jpg'),
   heritage: require('../../assets/photos/heritage.jpg'),
