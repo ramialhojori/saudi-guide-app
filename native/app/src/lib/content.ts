@@ -128,6 +128,23 @@ export function search(q: string) {
   }).then((r) => r.places);
 }
 
+/** البحث الشامل: أماكن + فعاليات + كوبونات + أسئلة + مدن (Search 2.0) */
+export type SearchAll = {
+  places: Place[]; events: EventItem[]; coupons: import('./coupons').Coupon[];
+  questions: { id: number; text: string; city: string; answers: number }[];
+  cities: { id: string; name: string }[]; relaxed?: boolean; parsed?: { city: string | null; kind: string | null };
+};
+export function searchAll(q: string, o: { city?: string; kind?: string; lat?: number; lng?: number; sort?: 'best' | 'near'; home?: string } = {}) {
+  const u = new URLSearchParams({ q });
+  Object.entries(o).forEach(([k, v]) => { if (v != null && v !== '') u.set(k, String(v)); });
+  return tryApi<SearchAll>(`/v1/search?${u.toString()}`, () => {
+    const k = searchKey(q);
+    const places = k.length < 2 ? [] : withImageFirst(PLACES.filter((p) => KEYS.get(p.id)!.includes(k) && (!o.city || p.city === o.city) && (!o.kind || p.kinds.includes(o.kind)))).slice(0, 40);
+    return { places, events: [], coupons: [], questions: [], cities: [] };
+  });
+}
+export const popularSearches = () => tryApi<{ popular: string[] }>('/v1/search/popular', () => ({ popular: [] })).then((r) => r.popular);
+
 export function nearby(lat: number, lng: number, radiusKm = 25) {
   return tryApi<{ places: Place[] }>(`/v1/nearby?lat=${lat}&lng=${lng}&km=${radiusKm}`, () => ({
     places: PLACES.filter((p) => p.lat && p.lng)

@@ -16,6 +16,7 @@ import { messagesAdmin, runQueue } from './messages.js';
 import { contribRoute, contribAdmin, weeklyImpact } from './contrib.js';
 import { seasonsRoute, seasonsAdmin } from './seasons.js';
 import { aiRoute, aiAdmin } from './ai.js';
+import { searchRoute } from './search.js';
 import { mcpRoute } from './mcp.js';
 import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
@@ -25,7 +26,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.14.0';
+const VERSION = '0.15.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -265,14 +266,7 @@ async function route(request, env, ctx) {
     return J({ places: results.map((r) => placeLite(r)) }, 200, 300);
   }
 
-  if (p === '/v1/search') {
-    const k = searchKey(q.get('q') || '');
-    if (k.length < 2) return J({ places: [] });
-    const { results } = await env.DB.prepare(
-      "SELECT * FROM places WHERE deleted=0 AND search LIKE ? ORDER BY (thumb IS NULL OR thumb='') ASC, LENGTH(title) ASC LIMIT 40",
-    ).bind(`%${k}%`).all();
-    return J({ places: results.map((r) => placeLite(r)) }, 200, 300);
-  }
+  if (p === '/v1/search' || p === '/v1/search/popular') return searchRoute(request, env, p, q);
 
   if (p === '/v1/nearby') {
     const lat = +q.get('lat'), lng = +q.get('lng'), r = Math.min(+q.get('km') || 25, 200);

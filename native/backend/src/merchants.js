@@ -55,12 +55,12 @@ const couponOut = (c, extra = {}) => ({
   ...extra,
 });
 /** كوبون عام مع بيانات المحل (للتطبيق) */
-const publicCoupon = (r, saved) => couponOut(r, {
+export const publicCoupon = (r, saved) => couponOut(r, {
   saved: !!saved,
   biz: { id: r.merchant_id, name: r.m_name, kind: r.m_kind, city: r.m_city, area: r.m_area || '', photo: parse(r.m_photos)[0] || '', verified: !!r.m_verified, placeId: r.m_place || null, lat: r.m_lat, lng: r.m_lng,
     trust: { n: r.m_fb || 0, ok: r.m_ok || 0, pct: r.m_fb ? Math.round((100 * r.m_ok) / r.m_fb) : null } },
 });
-const PUBLIC_SQL = `SELECT c.*, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id) m_fb, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id AND f.ok=1) m_ok, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng
+export const PUBLIC_SQL = `SELECT c.*, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id) m_fb, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id AND f.ok=1) m_ok, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng
   FROM coupons c JOIN merchants m ON m.id=c.merchant_id
   WHERE c.status='active' AND m.status='approved' AND (c.start IS NULL OR c.start='' OR c.start<=?1) AND (c."end" IS NULL OR c."end"='' OR c."end">=?1)
     AND (c.qty IS NULL OR c.used<c.qty)`;

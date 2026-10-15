@@ -28,6 +28,9 @@ export default function AskAi() {
 
   useEffect(() => { if (user) aiStatus().then((s) => setQuota(s.quota?.chat ?? null)).catch(() => {}); }, [user]);
   useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 80); }, [msgs, busy]);
+  // جاي من البحث بسؤال جاهز: نرسله مباشرة
+  const autoSent = useRef(false);
+  useEffect(() => { if (prm.q && user && !autoSent.current) { autoSent.current = true; send(prm.q); } }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async (q?: string) => {
     const t = (q ?? text).trim();
