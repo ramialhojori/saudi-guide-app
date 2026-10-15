@@ -14,7 +14,7 @@ import { api } from '@/lib/api';
 import { session, useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
 import { openDirections } from '@/lib/maps';
-import { riyadhDate } from '@/lib/text';
+import { extLink, riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
@@ -46,7 +46,7 @@ export default function EventScreen() {
 
   if (!e) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title="ما لقينا الفعالية" />}</View>;
   const d = new Date(new Date(e.start).getTime() + 3 * 3600e3);
-  const ticket = e.tickets || e.link;
+  const ticket = extLink(e.tickets?.startsWith('http') ? e.tickets : '') || extLink(e.link);
 
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
@@ -56,7 +56,7 @@ export default function EventScreen() {
           <LinearGradient colors={['rgba(32,22,54,0.2)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
           <View style={[st.top, { top: insets.top + 10 }]}>
             <BackButton light />
-            <RoundButton icon="share" label="مشاركة" onPress={() => Share.share({ message: `${e.title}\n${e.url || ''}` }).catch(() => {})} />
+            <RoundButton icon="share" label="مشاركة" onPress={() => Share.share({ message: `${e.title} — في تطبيق دليل السعودية${extLink(e.tickets?.startsWith('http') ? e.tickets : e.link) ? '\n' + extLink(e.tickets?.startsWith('http') ? e.tickets : e.link) : ''}` }).catch(() => {})} />
           </View>
           {left ? (
             <View style={st.count}>
@@ -105,10 +105,12 @@ export default function EventScreen() {
         </View>
       </ScrollView>
 
-      <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Button label={ticket ? 'احجز تذكرتك' : 'التفاصيل في الموقع'} style={{ flex: 1 }}
-          onPress={() => { const u = (e.tickets?.startsWith('http') ? e.tickets : '') || e.link || e.url; if (u) WebBrowser.openBrowserAsync(u).catch(() => {}); }} />
-      </View>
+      {ticket ? (
+        <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          <Button label={extLink(e.tickets?.startsWith('http') ? e.tickets : '') ? 'احجز تذكرتك' : 'الموقع الرسمي للفعالية'} style={{ flex: 1 }}
+            onPress={() => { WebBrowser.openBrowserAsync(ticket).catch(() => {}); }} />
+        </View>
+      ) : null}
     </View>
   );
 }

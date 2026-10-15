@@ -9,6 +9,8 @@ import { BADGES, LEVELS } from './community.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const STATUS = { live: 0, hidden: 1, draft: 2 };
+/** روابط موقع الدليل القديم ما تنحفظ أبداً (رامي: الدومين بينتقل للتطبيق) */
+const noOwn = (u) => (u && /saudi-guide\.com|saudiguide\.carizmaapp/i.test(u) ? '' : u);
 const STATUS_NAME = ['live', 'hidden', 'draft'];
 const NEW_ID_BASE = 900000000; // أرقام اللوحة بعيدة عن أرقام قودبابر
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
@@ -33,7 +35,7 @@ function placeFields(b) {
   return {
     city: str(b.city, 40), title, title_en, cats: JSON.stringify(cats), kinds: JSON.stringify(kinds),
     summary: str(b.summary, 400), body: toHtml(str(b.body, 20000)), images: JSON.stringify(images), thumb: images[0] || '',
-    lat: num(b.lat), lng: num(b.lng), address: str(b.address, 300), phone: str(b.phone, 40), website: str(b.website, 300), email: str(b.email, 120),
+    lat: num(b.lat), lng: num(b.lng), address: str(b.address, 300), phone: str(b.phone, 40), website: noOwn(str(b.website, 300)), email: str(b.email, 120),
     search: searchKey(title, title_en, cats.join(' ')),
   };
 }
@@ -54,7 +56,7 @@ function eventFields(b) {
   return {
     title: str(b.title, 200), summary: str(b.summary, 400), body: toHtml(str(b.body, 20000)), images: JSON.stringify(images), thumb: images[0] || '',
     start: iso(b.start), end: iso(b.end), all_day: b.all_day ? 1 : 0, cats: JSON.stringify(arr(b.cats)),
-    city: str(b.city, 40) || nearestCity(lat, lng) || null, lat, lng, address: str(b.address, 300), tickets: str(b.tickets, 500), link: str(b.link, 500),
+    city: str(b.city, 40) || nearestCity(lat, lng) || null, lat, lng, address: str(b.address, 300), tickets: noOwn(str(b.tickets, 500)), link: noOwn(str(b.link, 500)),
   };
 }
 const eventOut = (r) => ({
@@ -96,7 +98,7 @@ export async function adminRoute(p, request, env, J, q) {
       (SELECT COUNT(*) FROM posts WHERE reports>0 AND hidden_by IS NOT 'admin') + (SELECT COUNT(*) FROM answers WHERE reports>0 AND hidden_by IS NOT 'admin') reported,
       (SELECT COUNT(*) FROM places WHERE lat IS NULL OR lat=0) noGeo, (SELECT COUNT(*) FROM places WHERE deleted=0 AND (thumb IS NULL OR thumb='')) noPhoto,
       (SELECT COUNT(*) FROM merchants WHERE status='pending') merchantsPending, (SELECT COUNT(*) FROM coupons WHERE status='pending') couponsPending,
-      (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending, (SELECT COUNT(*) FROM guide_requests WHERE status='pending') guidesPending, (SELECT COUNT(*) FROM suggestions WHERE status='pending') suggPending, (SELECT COUNT(*) FROM coupon_reports WHERE status='pending') creportsPending, (SELECT COUNT(*) FROM reviews WHERE reports>0 AND status='hidden') reviewsReported, (SELECT COUNT(*) FROM posts WHERE status='pending') + (SELECT COUNT(*) FROM answers WHERE status='pending') communityPending`).bind(new Date().toISOString()).first();
+      (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending, (SELECT COUNT(*) FROM guide_requests WHERE status='pending') guidesPending, (SELECT COUNT(*) FROM suggestions WHERE status='pending') suggPending, (SELECT COUNT(*) FROM coupon_reports WHERE status='pending') creportsPending, (SELECT COUNT(*) FROM reviews WHERE reports>0 AND status='hidden') reviewsReported, (SELECT COUNT(*) FROM posts WHERE status='pending') + (SELECT COUNT(*) FROM answers WHERE status='pending') communityPending, (SELECT COUNT(*) FROM contact_msgs WHERE status='new') contactNew`).bind(new Date().toISOString()).first();
     const recent = await env.DB.prepare("SELECT p.id, p.kind, p.text, p.created, u.name FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='visible' ORDER BY p.id DESC LIMIT 5").all();
     return J({ counts: n, recent: recent.results });
   }

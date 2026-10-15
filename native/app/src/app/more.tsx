@@ -17,9 +17,8 @@ const ITEMS: Item[] = [
   { icon: 'news', label: 'الأخبار', color: brand.sky, on: () => {}, soon: true },
   { icon: 'chat', label: 'اسأل أهل المدينة', color: brand.pink, on: () => {}, soon: true },
   { icon: 'ticket', label: 'العروض والكوبونات', color: brand.orange, on: () => {}, soon: true },
-  { icon: 'globe', label: 'موقع دليل السعودية', color: brand.purple, on: () => WebBrowser.openBrowserAsync(env.siteUrl) },
   { icon: 'share', label: 'تابعنا على إكس', color: brand.purple, on: () => Linking.openURL('https://x.com/SAUDIA_GUIDE') },
-  { icon: 'phone', label: 'تواصل معنا', color: '#3E8E5A', on: () => Linking.openURL('mailto:info@saudi-guide.com') },
+  { icon: 'phone', label: 'تواصل معنا', color: '#3E8E5A', on: () => router.push('/contact') },
 ];
 
 export default function MoreScreen() {

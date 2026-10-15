@@ -98,8 +98,8 @@ export default function Plus() {
           </AppText>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18 }}>
             <Pressable onPress={restore}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>استعادة المشتريات</AppText></Pressable>
-            <Pressable onPress={() => router.push('/settings')}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الشروط</AppText></Pressable>
-            <Pressable onPress={() => router.push('/settings')}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الخصوصية</AppText></Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الشروط</AppText></Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الخصوصية</AppText></Pressable>
           </View>
         </View>
       </ScrollView>

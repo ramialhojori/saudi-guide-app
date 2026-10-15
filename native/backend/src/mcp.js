@@ -124,6 +124,8 @@ const TOOLS = [
   ['ai_stats', 'إحصاءات الذكاء الاصطناعي في التطبيق (اسأل الدليل + خطط لي رحلة) آخر 30 يوم، والحدود المجانية اليومية، وعدد مشتركي دليل+، وآخر الأسئلة.', S({}), () => ['GET', '/admin/ai']],
   ['set_ai_limits', 'الحد المجاني لكل مستخدم: chat (أسئلة اسأل الدليل باليوم) و plan (خطط ذكية بالشهر). ⚠️ بطلب رامي.', S({ chat: num(''), plan: num('') }, ['chat', 'plan']), (a) => ['POST', '/admin/ai/limits', a]],
   ['grant_plus', 'يمنح مستخدم دليل+ يدوياً (هدية/تجربة) لعدد أيام، أو days=0 يلغيه. ⚠️ بطلب رامي.', S({ userId: str(''), days: num('') }, ['userId', 'days']), (a) => ['POST', '/admin/ai/plus', a]],
+  ['list_contact', 'رسائل «تواصل معنا» من التطبيق. status: new|done|archived|all (الافتراضي new)، kind: suggestion|complaint|correction|bug|ads|merchant|question|other.', S({ status: str(''), kind: str('') }), (a) => ['GET', `/admin/contact?status=${a.status || 'new'}${a.kind ? '&kind=' + a.kind : ''}`]],
+  ['reply_contact', 'يرد على رسالة تواصل (يوصل المستخدم إشعار) أو يغيّر حالتها (status: done|archived|new). ⚠️ الرد بنص يوافق عليه رامي.', S({ id: num(''), reply: str('نص الرد'), status: str('') }, ['id']), (a) => ['POST', `/admin/contact/${a.id}`, { ...(a.reply ? { reply: a.reply } : {}), ...(a.status ? { status: a.status } : {}) }]],
   ['get_weekly', 'قائمة مختارات الأسبوع (المجموعة اللي تدور منها الرئيسية).', S({}), () => ['GET', '/admin/weekly']],
   ['set_weekly', 'يحفظ قائمة مختارات الأسبوع كاملة: [{id, s: w|s|a (شتاء/صيف/كل السنة), x: 1 للنجمة}].', S({ pool: { type: 'array', items: S({ id: num(''), s: str('w|s|a'), x: num('') }) } }, ['pool']), (a) => ['POST', '/admin/weekly', { pool: a.pool }]],
   ['list_articles', 'الأخبار.', S({ status: str(''), q: str('') }), (a) => ['GET', '/admin/articles?' + qs(a)]],

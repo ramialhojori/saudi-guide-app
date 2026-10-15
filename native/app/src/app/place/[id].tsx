@@ -22,6 +22,7 @@ import { CouponCard } from '@/components/CouponCard';
 import { placeCoupons, type Coupon } from '@/lib/coupons';
 import { placeReviews, reportReview, type PlaceReviews } from '@/lib/reviews';
 import { useAsync } from '@/lib/useAsync';
+import { extLink } from '@/lib/text';
 import { brand, font, kindStyle } from '@/theme/tokens';
 
 const W = Dimensions.get('window').width;
@@ -119,7 +120,7 @@ export default function PlaceScreen() {
         <View style={[st.topBtns, { top: insets.top + 10 }]}>
           <BackButton light />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <RoundButton icon="share" label="مشاركة" onPress={() => { track('share', p.id); Share.share({ message: `${p.title} — دليل السعودية\n${p.url || ''}` }).catch(() => {}); }} />
+            <RoundButton icon="share" label="مشاركة" onPress={() => { track('share', p.id); Share.share({ message: `${p.title} — في تطبيق دليل السعودية` }).catch(() => {}); }} />
             <HeartButton id={p.id} size={44} light />
           </View>
         </View>
@@ -249,8 +250,7 @@ export default function PlaceScreen() {
           {/* تواصل */}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
             {p.phone ? <Contact icon="phone" label="اتصال" on={() => Linking.openURL(`tel:${p.phone}`)} /> : null}
-            {p.website ? <Contact icon="globe" label="الموقع" on={() => WebBrowser.openBrowserAsync(p.website)} /> : null}
-            {p.url ? <Contact icon="link" label="في الموقع" on={() => WebBrowser.openBrowserAsync(p.url)} /> : null}
+            {extLink(p.website) ? <Contact icon="globe" label="الموقع" on={() => WebBrowser.openBrowserAsync(extLink(p.website))} /> : null}
           </View>
         </View>
 

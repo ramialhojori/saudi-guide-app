@@ -74,7 +74,7 @@ export default function Login() {
       <Pressable onPress={done} style={{ marginTop: 18 }}><AppText center style={{ fontFamily: font.semibold }} color={brand.purple}>تصفح كزائر</AppText></Pressable>
 
       <AppText variant="tiny" muted center style={[st.terms, { bottom: Math.max(insets.bottom, 16) + 6 }]}>
-        بالمتابعة توافق على <AppText variant="tiny" color={brand.purple} onPress={() => WebBrowser.openBrowserAsync('https://www.saudi-guide.com/terms')}>شروط الاستخدام</AppText> و<AppText variant="tiny" color={brand.purple} onPress={() => WebBrowser.openBrowserAsync('https://www.saudi-guide.com/privacy')}>سياسة الخصوصية</AppText>
+        بالمتابعة توافق على <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}>شروط الاستخدام</AppText> و<AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}>سياسة الخصوصية</AppText>
       </AppText>
     </View>
   );

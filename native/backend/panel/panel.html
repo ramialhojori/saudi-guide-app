@@ -177,18 +177,18 @@ function loginView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
 async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
+  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, features: featuresView, ai: aiView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -215,7 +215,7 @@ async function homeView() {
   const KPI = (n, l, sub, color, go) => `<div class="kpi" ${go ? `data-go="${go}"` : ''}><div class="l">${l}</div><div class="n" style="color:${color}">${Number(n).toLocaleString('en')}</div><div class="s">${sub || '&nbsp;'}</div></div>`;
   const tasks = [
     [k.eventDrafts, 'فعالية مسودة تنتظر النشر', 'events', 'var(--orangeDeep)'], [k.placeDrafts, 'مكان مسودة ينتظر النشر', 'drafts', 'var(--orangeDeep)'],
-    [k.communityPending, 'مشاركة تنتظر مراجعتك', 'community', 'var(--orange)'], [k.reported, 'بلاغ في المجتمع', 'community', 'var(--pinkDeep)'], [k.creports, 'بلاغ عميل على كوبون', 'merchants', 'var(--pinkDeep)'],
+    [k.communityPending, 'مشاركة تنتظر مراجعتك', 'community', 'var(--orange)'], [k.contactNew, 'رسالة تواصل جديدة', 'contact', 'var(--purple)'], [k.reported, 'بلاغ في المجتمع', 'community', 'var(--pinkDeep)'], [k.creports, 'بلاغ عميل على كوبون', 'merchants', 'var(--pinkDeep)'],
     [k.merchantsPending, 'طلب تاجر جديد', 'merchants', 'var(--purple)'], [k.couponsPending, 'كوبون ينتظر الموافقة', 'merchants', 'var(--purple)'],
     [k.photosPending, 'صورة زوار تنتظر', 'photos', 'var(--skyDeep)'], [k.suggPending, 'اقتراح من الزوار', 'suggest', 'var(--skyDeep)'],
     [k.guidesPending, 'طلب «مرشد موثّق»', 'users', 'var(--green)'], [k.unanswered, 'سؤال بدون إجابة', 'community', 'var(--lilac)'],
@@ -1019,6 +1019,35 @@ async function featuresView() {
     const r = await api('/admin/features', { method: 'POST', body: { [c.dataset.f]: c.checked } });
     const on = r.features[c.dataset.f]; const b = $('#fb-' + c.dataset.f); b.textContent = on ? 'ظاهرة' : 'مخفية'; b.className = 'badge ' + (on ? 'b-live' : 'b-hidden');
     toast(on ? 'رجعت للتطبيق' : 'انخفت من التطبيق');
+  }));
+}
+
+/* ——— رسائل التواصل (من داخل التطبيق) ——— */
+let CT = { status: 'new', kind: '' };
+async function contactView() {
+  const m = $('#main');
+  const d = await api('/admin/contact?status=' + CT.status + (CT.kind ? '&kind=' + CT.kind : ''));
+  const K = d.kinds;
+  m.innerHTML = `<h1>رسائل التواصل</h1><p class="sub">كل رسائل «تواصل معنا» من التطبيق. ردّك يوصل المستخدم إشعار داخل التطبيق.</p>
+    <div class="tabs">${[['new', 'جديدة'], ['done', 'تم الرد / انتهت'], ['archived', 'مؤرشفة'], ['all', 'الكل']].map(([k, t]) => `<button data-s="${k}" class="${CT.status === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="chips" style="margin:10px 0">${[['', 'كل الأنواع'], ...Object.entries(K)].map(([k, t]) => { const n = k ? (d.counts[k]?.new || 0) : Object.values(d.counts).reduce((a, x) => a + (x.new || 0), 0); return `<span class="chip ${CT.kind === k ? 'on' : ''}" data-k="${k}">${h(t)}${n ? ` <b style="color:var(--orangeDeep)">${n}</b>` : ''}</span>`; }).join('')}</div>
+    <div class="list">${d.items.map((x) => `<div class="card" style="margin:0">
+      <div class="row"><span class="badge b-panel">${h(x.kindName)}</span><b class="grow">${x.user ? h(x.user.name) + (x.user.city ? ' · ' + h(cityName(x.user.city)) : '') : 'زائر بدون حساب'}</b><span class="muted" style="font-size:12px">${dAr(x.created)}${x.app ? ' · ' + h(x.app) : ''}</span></div>
+      <div style="white-space:pre-wrap;margin:10px 0;line-height:1.9">${h(x.text)}</div>
+      ${x.replyTo ? `<div class="muted" style="font-size:13px">للرد عليه: <b dir="ltr">${h(x.replyTo)}</b></div>` : ''}
+      ${x.reply ? `<div style="background:var(--softGreen);border-radius:12px;padding:8px 12px;margin-top:8px;font-size:14px"><b>ردّك:</b> ${h(x.reply)}</div>` : ''}
+      <div class="row" style="margin-top:10px;flex-wrap:wrap">
+        ${x.user ? `<input class="in grow" data-r="${x.id}" placeholder="اكتب ردّك (يوصله إشعار)" style="min-width:220px">` : ''}
+        ${x.user ? `<button class="btn o" data-send="${x.id}">أرسل الرد</button>` : ''}
+        ${x.status !== 'done' ? `<button class="btn ghost" data-st="done" data-id="${x.id}">تم</button>` : ''}
+        ${x.status !== 'archived' ? `<button class="btn ghost" data-st="archived" data-id="${x.id}">أرشفة</button>` : `<button class="btn ghost" data-st="new" data-id="${x.id}">رجّعها جديدة</button>`}
+      </div></div>`).join('') || '<div class="empty">ما فيه رسائل هنا</div>'}</div>`;
+  m.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { CT.status = b.dataset.s; contactView(); }));
+  m.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { CT.kind = b.dataset.k; contactView(); }));
+  m.querySelectorAll('[data-st]').forEach((b) => (b.onclick = async () => { await api('/admin/contact/' + b.dataset.id, { method: 'POST', body: { status: b.dataset.st } }); SUMMARY = null; toast('تم'); contactView(); }));
+  m.querySelectorAll('[data-send]').forEach((b) => (b.onclick = async () => {
+    const t = m.querySelector(`[data-r="${b.dataset.send}"]`).value.trim(); if (!t) return toast('اكتب الرد');
+    await api('/admin/contact/' + b.dataset.send, { method: 'POST', body: { reply: t } }); SUMMARY = null; toast('وصله الرد'); contactView();
   }));
 }
 

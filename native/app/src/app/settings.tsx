@@ -88,9 +88,10 @@ export default function Settings() {
         <Row label="فعاليات مدينتي"><Switch value={n.events} onValueChange={(v) => setPref('events', v)} trackColor={{ true: brand.green }} /></Row>
       </Group>
       <Group title="عن الدليل">
-        <Row label="الدليل القديم" value="‹" onPress={() => WebBrowser.openBrowserAsync(env.siteUrl)} />
-        <Row label="تواصل معنا" value="‹" onPress={() => WebBrowser.openBrowserAsync(`${env.siteUrl}/contact`)} />
-        <Row label="سياسة الخصوصية والشروط" value="‹" onPress={() => WebBrowser.openBrowserAsync(`${env.siteUrl}/privacy`)} />
+        <Row label="تواصل معنا" value="‹" onPress={() => router.push('/contact')} />
+        <Row label="سياسة الخصوصية" value="‹" onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })} />
+        <Row label="شروط الاستخدام" value="‹" onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })} />
+        <Row label="قواعد المجتمع" value="‹" onPress={() => router.push({ pathname: '/legal', params: { doc: 'community' } })} />
       </Group>
       {user ? (
         <Group title="الحساب">

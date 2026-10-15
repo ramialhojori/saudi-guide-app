@@ -58,3 +58,7 @@ export function eventWhen(start: string, end: string): string {
   if (start && new Date(start).getTime() < now && end && new Date(end).getTime() > now) return `مستمرة حتى ${riyadhDate(end, false)}`;
   return riyadhDate(start);
 }
+
+/** روابط موقع دليل السعودية القديم ما تنعرض في التطبيق أبداً (الدومين بينتقل للتطبيق الأصلي) */
+export const isOwnSite = (u?: string | null) => !!u && /(^|\/\/|\.)saudi-guide\.com|saudiguide\.carizmaapp/i.test(u);
+export const extLink = (u?: string | null) => (u && !isOwnSite(u) ? u : '');

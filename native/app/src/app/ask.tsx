@@ -135,7 +135,7 @@ export default function Ask() {
           <AppText variant="small" style={{ fontFamily: font.bold }}>قبل لا تنشر</AppText>
           <AppText variant="small" muted style={{ lineHeight: 22 }}>احترم الناس، وبدون إعلانات أو أرقام جوالات أو روابط. المشاركات تمر بمراجعة سريعة قبل النشر، وتكرار المخالفات يوقف المشاركة مؤقتاً.</AppText>
           <AppText variant="tiny" muted style={{ marginTop: 4 }}>
-            بالنشر توافق على <AppText variant="tiny" color={brand.purple} onPress={() => WebBrowser.openBrowserAsync(`${env.siteUrl}/terms`)}>شروط المجتمع</AppText>
+            بالنشر توافق على <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'community' } })}>شروط المجتمع</AppText>
           </AppText>
         </View>
       </ScrollView>
