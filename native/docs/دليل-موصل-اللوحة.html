@@ -14,7 +14,7 @@ code{direction:ltr;unicode-bidi:isolate;font-size:13px;background:var(--chip);pa
 .b{font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap} .no{background:var(--chip);color:var(--mut)} .yes{background:#F8974326;color:var(--or)}
 ul{padding-inline-start:22px} li{margin-bottom:6px}
 </style></head><body><main>
-<h1>دليل موصّل لوحة دليل السعودية</h1><div class="meta">آخر تحديث: 15 أكتوبر 2026 · رامي الحجوري</div>
+<h1>دليل موصّل لوحة دليل السعودية</h1><div class="meta">آخر تحديث: 15 أكتوبر 2026، الفجر · رامي الحجوري</div>
 <h2>كيف تكلمني من خلاله</h2>
 <p>الموصّل «دليل السعودية الاصلي الجديد» يربط Claude بلوحة التطبيق الجديد مباشرة، فتكلمني بكلام عادي من أي محادثة وأنا أنفذ من اللوحة. الرابط: <code>https://saudi-guide-api.saudi-guide2030.workers.dev/mcp</code></p>
 <ul><li><b>جهازك مو لازم يكون مفتوح:</b> الموصّل على سيرفر Cloudflare نفسه.</li><li><b>المحادثات الجديدة تشوفه تلقائياً:</b> تأكد من زر + في خانة الكتابة إنه مفعّل.</li><li><b>اذكر اللوحة بالاسم لو فيه لبس:</b> الموصّل الثاني «GoodBarber» هو لوحة قودبابر القديمة.</li></ul>
@@ -27,7 +27,7 @@ ul{padding-inline-start:22px} li{margin-bottom:6px}
 <tr><td>تأكيد إلزامي من السيرفر</td><td>إرسال الرسائل والإشعارات، تكريم الأبطال بالنقاط. أعرض عليك النص والجمهور والوقت أول، وبعد موافقتك أرسل</td></tr>
 <tr><td>ممنوع</td><td>الحذف (الإخفاء بداله)، النشر بدون طلبك</td></tr></tbody></table></div>
 <p>والأوقات كلها بتوقيت مكة، وساعات الهدوء للإشعارات من 11 الليل إلى 8 الصبح.</p>
-<h2>كل الأدوات (56)</h2><p>كل أداة تحت قسمها، وآخر عمود يوضح هل أحتاج موافقتك قبل ما أنفذها.</p>
+<h2>كل الأدوات (59)</h2><p>كل أداة تحت قسمها، وآخر عمود يوضح هل أحتاج موافقتك قبل ما أنفذها.</p>
 <div class="tw"><table><thead><tr><th>القسم</th><th>الأداة</th><th>وش تسوي</th><th>موافقتك</th></tr></thead><tbody>
 <tr><td>نظرة عامة</td><td><code>summary</code></td><td>ملخص اللوحة: الأماكن والمسودات والفعاليات والطلبات اللي تنتظر</td><td><span class="b no">لا</span></td></tr>
 <tr><td>نظرة عامة</td><td><code>dashboard</code></td><td>لوحة الرئيسية كاملة: النشطين، أكثر الأماكن والبحث، «بحثوا وما لقوا»، المدن، الفعاليات القادمة</td><td><span class="b no">لا</span></td></tr>
@@ -56,6 +56,9 @@ ul{padding-inline-start:22px} li{margin-bottom:6px}
 <tr><td>اسأل أهل المدينة</td><td><code>community_answer</code></td><td>يرد باسم «فريق دليل السعودية» ويوصل إشعار لصاحب السؤال</td><td><span class="b no">لا</span></td></tr>
 <tr><td>اسأل أهل المدينة</td><td><code>community_post</code></td><td>ينشر سؤال أو نصيحة باسم الفريق</td><td><span class="b yes">نعم</span></td></tr>
 <tr><td>اسأل أهل المدينة</td><td><code>community_best</code></td><td>يختار أفضل إجابة (+15 نقطة لصاحبها)</td><td><span class="b no">لا</span></td></tr>
+<tr><td>اسأل أهل المدينة</td><td><code>community_pending</code></td><td>طابور المراجعة: اللي حوّلته المراجعة الذكية لك، والمرفوض عشان ترجع اللي انرفض بالغلط</td><td><span class="b no">لا</span></td></tr>
+<tr><td>اسأل أهل المدينة</td><td><code>community_review</code></td><td>يعتمد أو يرفض مشاركة من الطابور (الرفض يحسب تنبيه على صاحبها)</td><td><span class="b yes">نعم</span></td></tr>
+<tr><td>اسأل أهل المدينة</td><td><code>community_mute</code></td><td>يوقف مستخدم عن المشاركة مؤقتاً أو يرجّعه</td><td><span class="b yes">نعم</span></td></tr>
 <tr><td>اسأل أهل المدينة</td><td><code>community_reported</code></td><td>المشاركات والإجابات المبلّغ عنها</td><td><span class="b no">لا</span></td></tr>
 <tr><td>اسأل أهل المدينة</td><td><code>community_moderate</code></td><td>يخفي أو يُظهر مشاركة أو إجابة</td><td><span class="b no">لا</span></td></tr>
 <tr><td>اسأل أهل المدينة</td><td><code>get_challenge</code></td><td>تحدي الأسبوع الحالي</td><td><span class="b no">لا</span></td></tr>
