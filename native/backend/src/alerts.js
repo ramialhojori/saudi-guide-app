@@ -1,0 +1,112 @@
+/* إشعارات المحتوى التلقائية (تتحكم فيها من اللوحة: الميزات ← «إشعارات المحتوى»)
+   1) جديد في مدينتك: أي مكان أو فعالية تنتشر (live) تنسجّل، وكل يوم الساعة 5 العصر بتوقيت مكة
+      يوصل متابعين المدينة إشعار واحد يجمع الجديد (ما نزعجهم بإشعار لكل مكان لو نشرت 30 مكان مرة وحدة)
+   2) بداية موسم: يوم بداية الموسم (من بيانات المواسم) الساعة 10 الصبح لمتابعين مدينته
+   3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم
+   المتابع = مدينته في الحساب أو المدن اللي يتابعها، والجوالات بدون حساب حسب المدن اللي اختارتها
+   الإشعار ينحفظ في صندوق الإشعارات، وإشعار الجوال يطلع من push.js حسب تفضيلات المستخدم */
+import { sendPush } from './messages.js';
+import { CITIES } from './normalize.js';
+import { getFeatures } from './contrib.js';
+import { getSeasons } from './seasons.js';
+
+const now = () => Math.floor(Date.now() / 1000);
+const makkah = () => new Date(Date.now() + 3 * 3600e3);
+const cityName = (id) => CITIES.find((c) => c[0] === id)?.[1] || '';
+const count = (n, two, few, many) => (n === 2 ? two : n <= 10 ? `${n} ${few}` : `${n} ${many}`);
+const list = (titles) => (titles.length > 3 ? `${titles.slice(0, 3).join('، ')} وغيرها` : titles.join('، '));
+
+/** يسجّل إن مكان/فعالية صارت منشورة (من مسار تغيير الحالة) */
+export async function logLive(env, kind, id) {
+  const r = await env.DB.prepare(`SELECT id, title, city, deleted FROM ${kind} WHERE id=?`).bind(id).first();
+  if (!r || r.deleted !== 0) return;
+  await env.DB.prepare('INSERT OR IGNORE INTO content_live (kind,item_id,city,title,at,sent) VALUES (?,?,?,?,?,0)')
+    .bind(kind, id, r.city || '', String(r.title || '').split(' - ').pop().slice(0, 60), now()).run();
+}
+
+/** يوصل إشعار لمتابعين مدينة (أو للكل لو city فاضية): حسابات + جوالات بدون حساب */
+async function toFollowers(env, city, text, link, pref) {
+  const t = now();
+  const where = city ? 'u.deleted=0 AND (u.city=? OR u.id IN (SELECT user_id FROM user_cities WHERE city=?))' : 'u.deleted=0';
+  const args = city ? [city, city] : [];
+  const ins = await env.DB.prepare(`INSERT INTO notifications (user_id,type,text,link,created) SELECT u.id,'system',?,?,? FROM users u WHERE ${where}`)
+    .bind(String(text).slice(0, 140), link, t, ...args).run();
+  // جوالات بدون حساب (اختارت المدينة وقت الترحيب)
+  const devs = await env.DB.prepare(`SELECT token, prefs FROM devices WHERE user_id IS NULL ${city ? 'AND cities LIKE ?' : ''}`).bind(...(city ? [`%"${city}"%`] : [])).all();
+  const tokens = devs.results.filter((d) => { try { return JSON.parse(d.prefs || '{}')[pref] !== false; } catch { return true; } }).map((d) => d.token);
+  if (tokens.length) await sendPush(env, tokens, { title: 'دليل السعودية', text, link });
+  return (ins.meta.changes || 0) + tokens.length;
+}
+
+async function onceToday(env, key) {
+  const day = makkah().toISOString().slice(0, 10);
+  const r = await env.DB.prepare('SELECT v FROM kv WHERE k=?').bind(key).first();
+  if (r?.v === day) return false;
+  await env.DB.prepare('INSERT OR REPLACE INTO kv (k,v) VALUES (?,?)').bind(key, day).run();
+  return true;
+}
+
+/** الجديد في كل مدينة (مرة باليوم، 5 العصر) */
+async function cityDigest(env) {
+  if (makkah().getUTCHours() !== 17 || !(await onceToday(env, 'alerts_digest_day'))) return;
+  const { results } = await env.DB.prepare('SELECT kind, item_id, city, title FROM content_live WHERE sent=0 AND city<>\'\' ORDER BY at').all();
+  if (!results.length) return;
+  await env.DB.prepare(`UPDATE content_live SET sent=1 WHERE sent=0`).run();
+  const byCity = {};
+  for (const r of results) (byCity[r.city] ??= { places: [], events: [] })[r.kind].push(r);
+  for (const [city, g] of Object.entries(byCity)) {
+    const name = cityName(city);
+    if (!name) continue;
+    // نتأكد إنها لسا منشورة (ممكن انخفت بعد النشر)
+    const live = async (kind, items) => {
+      if (!items.length) return [];
+      const r = await env.DB.prepare(`SELECT id FROM ${kind} WHERE deleted=0 AND id IN (${items.map((x) => +x.item_id).join(',')})`).all();
+      const ok = new Set(r.results.map((x) => x.id));
+      return items.filter((x) => ok.has(x.item_id));
+    };
+    const places = await live('places', g.places), events = await live('events', g.events);
+    if (places.length) {
+      const text = places.length === 1 ? `مكان جديد في ${name}: ${places[0].title}` : `انضاف ${count(places.length, 'مكانين جديدين', 'أماكن جديدة', 'مكان جديد')} في ${name}: ${list(places.map((x) => x.title))}`;
+      await toFollowers(env, city, text, places.length === 1 ? `/place/${places[0].item_id}` : `/city/${city}`, 'places');
+    }
+    if (events.length) {
+      const text = events.length === 1 ? `فعالية جديدة في ${name}: ${events[0].title}` : `${count(events.length, 'فعاليتين جديدتين', 'فعاليات جديدة', 'فعالية جديدة')} في ${name}: ${list(events.map((x) => x.title))}`;
+      await toFollowers(env, city, text, events.length === 1 ? `/event/${events[0].item_id}` : '/events', 'events');
+    }
+  }
+}
+
+/** بداية المواسم (10 الصبح يوم البداية) */
+async function seasonStarts(env) {
+  const mk = makkah();
+  if (mk.getUTCHours() !== 10 || !(await onceToday(env, 'alerts_season_day'))) return;
+  const today = mk.toISOString().slice(0, 10);
+  for (const s of await getSeasons(env)) {
+    if (s.hidden || s.start !== today) continue;
+    const where = s.city ? ` في ${cityName(s.city) || ''}` : '';
+    await toFollowers(env, s.city || '', `بدأ ${s.name}${where}! شوف فعالياته وخطط لزيارتك`, `/season/${encodeURIComponent(s.name)}`, 'events');
+  }
+}
+
+/** تذكير «رايح» قبل الفعالية بيوم (6 المغرب) */
+async function goingReminders(env) {
+  const mk = makkah();
+  if (mk.getUTCHours() !== 18 || !(await onceToday(env, 'alerts_going_day'))) return;
+  const tomorrow = new Date(mk.getTime() + 86400e3).toISOString().slice(0, 10);
+  const { results } = await env.DB.prepare(`SELECT g.user_id, e.id, e.title FROM event_going g JOIN events e ON e.id=g.event_id
+    WHERE e.deleted=0 AND substr(e.start,1,10)=? LIMIT 5000`).bind(tomorrow).all();
+  if (!results.length) return;
+  const t = now();
+  for (let i = 0; i < results.length; i += 50) {
+    await env.DB.batch(results.slice(i, i + 50).map((r) => env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) VALUES (?,'system',?,?,?)")
+      .bind(r.user_id, `تذكير: بكرة ${String(r.title).split(' - ').pop().slice(0, 80)}. لا تنسى تخطط لوقتك`, `/event/${r.id}`, t)));
+  }
+}
+
+/** الكرون كل 10 دقايق */
+export async function runAlerts(env) {
+  if (!(await getFeatures(env)).alerts) return;
+  await cityDigest(env);
+  await seasonStarts(env);
+  await goingReminders(env);
+}

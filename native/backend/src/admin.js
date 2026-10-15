@@ -4,6 +4,7 @@
    - ما نحذف شي: «حذف» = إخفاء
    - أي تعديل من اللوحة يعلّم الصف sig='panel' عشان مزامنة قودبابر ما ترجع تغيّره */
 
+import { logLive } from './alerts.js';
 import { CITIES, KIND_OF, searchKey, nearestCity, km } from './normalize.js';
 import { BADGES, LEVELS } from './community.js';
 
@@ -226,6 +227,8 @@ export async function adminRoute(p, request, env, J, q) {
     const b = await request.json().catch(() => ({}));
     if (!(b.status in STATUS)) return J({ error: 'bad_status' }, 400);
     await env.DB.prepare(`UPDATE ${m[1]} SET deleted=?, sig='panel', updated=? WHERE id=?`).bind(STATUS[b.status], now(), +m[2]).run();
+    // نشر جديد → يدخل في إشعار «جديد في مدينتك» اليومي (alerts.js)
+    if (b.status === 'live') await logLive(env, m[1], +m[2]).catch(() => {});
     return J({ ok: true, status: b.status });
   }
 

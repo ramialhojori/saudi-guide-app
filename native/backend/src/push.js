@@ -10,8 +10,10 @@ const quiet = () => { const h = new Date(Date.now() + 3 * 3600e3).getUTCHours();
 /** نوع الإشعار → مفتاح التفضيل في الجهاز */
 function prefKey(n) {
   if (n.type === 'answer' || n.type === 'thanks' || n.type === 'best') return 'community';
-  if (n.link && String(n.link).startsWith('/coupons')) return 'offers';
-  if (n.link && String(n.link).startsWith('/event')) return 'events';
+  const l = String(n.link || '');
+  if (l.startsWith('/coupons')) return 'offers';
+  if (l.startsWith('/event') || l.startsWith('/season')) return 'events';
+  if (l.startsWith('/city/') || l.startsWith('/place/')) return 'places';
   return null; // إشعارات الحساب (مراجعة، تواصل، نقاط) تنرسل دايماً
 }
 const TITLE = { answer: 'جاك رد على سؤالك', thanks: 'أحد شكرك', best: 'اختاروا إجابتك الأفضل' };

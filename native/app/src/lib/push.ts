@@ -19,9 +19,9 @@ function mods() {
   try { N ??= require('expo-notifications'); Device ??= require('expo-device'); return true; } catch { return false; }
 }
 
-export type PushPrefs = { trip: boolean; community: boolean; offers: boolean; events: boolean };
+export type PushPrefs = { trip: boolean; community: boolean; offers: boolean; events: boolean; places: boolean };
 export const PREFS_KEY = 'sg_notif_prefs_v1';
-const DEFAULT: PushPrefs = { trip: true, community: true, offers: false, events: true };
+const DEFAULT: PushPrefs = { trip: true, community: true, offers: false, events: true, places: true };
 export async function pushPrefs(): Promise<PushPrefs> {
   try { return { ...DEFAULT, ...JSON.parse((await AsyncStorage.getItem(PREFS_KEY)) || '{}') }; } catch { return DEFAULT; }
 }

@@ -9,6 +9,7 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS events_start ON events(start)",
   "CREATE TABLE IF NOT EXISTS articles ( id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT, date TEXT, summary TEXT, body TEXT, images TEXT NOT NULL DEFAULT '[]', thumb TEXT, cats TEXT NOT NULL DEFAULT '[]', section TEXT, url TEXT, sig TEXT, updated INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0 )",
   "CREATE INDEX IF NOT EXISTS articles_date ON articles(date)",
+  "CREATE TABLE IF NOT EXISTS content_live ( kind TEXT NOT NULL, item_id INTEGER NOT NULL, city TEXT, title TEXT, at INTEGER NOT NULL, sent INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (kind, item_id) )",
   "CREATE TABLE IF NOT EXISTS iap_subs ( orig_tx TEXT PRIMARY KEY, user_id TEXT NOT NULL, product TEXT NOT NULL, expires INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0, env TEXT, last_tx TEXT, updated INTEGER NOT NULL )",
   "CREATE INDEX IF NOT EXISTS iap_subs_user ON iap_subs(user_id)",
   "CREATE TABLE IF NOT EXISTS coupon_alerts ( user_id TEXT NOT NULL, city TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, city) )",

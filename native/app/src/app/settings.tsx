@@ -21,14 +21,14 @@ export default function Settings() {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
-  const [n, setN] = useState({ trip: true, community: true, offers: false, events: true });
+  const [n, setN] = useState({ trip: true, community: true, offers: false, events: true, places: true });
   const [bio, setBio] = useState(user?.bio ?? '');
   const [home, setHome] = useState(user?.city ?? '');
   const [follow, setFollow] = useState<string[]>([]);
   const [open, setOpen] = useState<'' | 'home' | 'follow'>('');
   useEffect(() => { if (user) { setHome(user.city || ''); setBio(user.bio || ''); setName(user.name || ''); } }, [user?.id, user?.city, user?.bio]);
   // تفضيلات الإشعارات تنحفظ في الجوال وتوصل للسيرفر مع تسجيل الجهاز (lib/push.ts)
-  useEffect(() => { AsyncStorage.getItem(PREFS_KEY).then((v) => { if (v) try { setN(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  useEffect(() => { AsyncStorage.getItem(PREFS_KEY).then((v) => { if (v) try { setN((d) => ({ ...d, ...JSON.parse(v) })); } catch {} }).catch(() => {}); }, []);
   const setPref = (k: keyof typeof n, v: boolean) => {
     const x = { ...n, [k]: v }; setN(x);
     // نحفظ ونحدّث الجهاز عند السيرفر (ولو فعّل إشعار وما عنده إذن، نطلبه)
@@ -92,7 +92,8 @@ export default function Settings() {
         <Row label="رحلاتي وتذكيرها"><Switch value={n.trip} onValueChange={(v) => setPref('trip', v)} trackColor={{ true: brand.green }} /></Row>
         <Row label="إجابات وردود المجتمع"><Switch value={n.community} onValueChange={(v) => setPref('community', v)} trackColor={{ true: brand.green }} /></Row>
         <Row label="العروض والكوبونات"><Switch value={n.offers} onValueChange={(v) => setPref('offers', v)} trackColor={{ true: brand.green }} /></Row>
-        <Row label="فعاليات مدينتي"><Switch value={n.events} onValueChange={(v) => setPref('events', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label="فعاليات ومواسم مدني"><Switch value={n.events} onValueChange={(v) => setPref('events', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label="أماكن جديدة في مدني"><Switch value={n.places} onValueChange={(v) => setPref('places', v)} trackColor={{ true: brand.green }} /></Row>
       </Group>
       <Group title="عن الدليل">
         <Row label="تواصل معنا" value="‹" onPress={() => router.push('/contact')} />

@@ -22,6 +22,7 @@ import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
 import { pushPending } from './push.js';
+import { runAlerts } from './alerts.js';
 import { mcpRoute } from './mcp.js';
 import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
@@ -227,7 +228,7 @@ async function route(request, env, ctx) {
     const cs = (Array.isArray(b.cities) ? b.cities : []).filter((c) => CITIES.some((x) => x[0] === c)).slice(0, 21);
     const me = await sessionUser(env, request);
     const prefs = {};
-    for (const k of ['community', 'offers', 'events', 'trip']) if (b.prefs && typeof b.prefs[k] === 'boolean') prefs[k] = b.prefs[k];
+    for (const k of ['community', 'offers', 'events', 'trip', 'places']) if (b.prefs && typeof b.prefs[k] === 'boolean') prefs[k] = b.prefs[k];
     // الجهاز يرتبط بالحساب المسجّل فيه (ولو سجّل خروج: b.logout يفك الربط)
     await env.DB.prepare(
       'INSERT INTO devices (token,platform,cities,user_id,prefs,created,seen) VALUES (?,?,?,?,?,?,?) ON CONFLICT(token) DO UPDATE SET platform=excluded.platform, cities=excluded.cities, user_id=excluded.user_id, prefs=excluded.prefs, seen=excluded.seen',
@@ -361,7 +362,8 @@ export default {
     await ensureSchema(env);
     // المزامنة من قودبابر متوقفة (قرار 0007) إلا لو SYNC_ENABLED=1؛ الكرون يشغّل الرسائل المجدولة وإشعارات الجوال
     if (env.SYNC_ENABLED === '1') ctx.waitUntil(runSync(env, 'cron').catch((e) => console.log('sync', e && e.message)));
-    ctx.waitUntil(pushPending(env).catch((e) => console.log('push', e && e.message)));
+    // إشعارات المحتوى أول، وبعدها إشعارات الجوال (عشان تطلع بنفس الدورة)
+    ctx.waitUntil(runAlerts(env).catch((e) => console.log('alerts', e && e.message)).then(() => pushPending(env)).catch((e) => console.log('push', e && e.message)));
     ctx.waitUntil(runQueue(env).catch((e) => console.log('queue', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
