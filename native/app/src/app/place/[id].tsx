@@ -231,6 +231,13 @@ export default function PlaceScreen() {
             </Pressable>
           ) : null}
 
+          {p.addedBy ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }}>
+              <Icon name="star" color={brand.orangeDeep} size={16} />
+              <AppText variant="small" color={brand.orangeDeep} style={{ fontFamily: font.semibold }}>أضافه للدليل: {p.addedBy}</AppText>
+            </View>
+          ) : null}
+
           {/* اقتراح تعديل */}
           {F.suggest ? (
             <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }} onPress={() => (user ? router.push({ pathname: '/suggest', params: { place: String(p.id), title: p.title } }) : router.push('/login'))}>

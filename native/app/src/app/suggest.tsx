@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,8 +10,8 @@ import { Field, Input } from '@/components/Form';
 import { Icon } from '@/components/Icon';
 import { BackButton, Chip } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { suggest } from '@/lib/community';
-import { allCities } from '@/lib/content';
+import { similarPlaces, suggest, uploadPhoto, type Similar } from '@/lib/community';
+import { allCities, cityName } from '@/lib/content';
 import { couponErr } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 
@@ -18,19 +20,22 @@ const KINDS: [string, string][] = [['sights', 'معلم'], ['heritage', 'ترا�
 /** اقتراح تعديل على مكان، أو إضافة مكان ناقص — يوصل لوحة الإدارة وبعد الموافقة ياخذ نقاط */
 export default function Suggest() {
   const insets = useSafeAreaInsets();
-  const prm = useLocalSearchParams<{ place?: string; title?: string; q?: string }>();
+  const prm = useLocalSearchParams<{ place?: string; title?: string; q?: string; city?: string; lat?: string; lng?: string }>();
   const { user } = useAuth();
   const isNew = !prm.place;
   const [mode, setMode] = useState<'edit' | 'closed'>('edit');
   const [title, setTitle] = useState(isNew ? prm.q || '' : '');
-  const [city, setCity] = useState(user?.city || '');
+  const [city, setCity] = useState(prm.city || user?.city || '');
   const [kind, setKind] = useState('');
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [address, setAddress] = useState('');
   const [hours, setHours] = useState('');
   const [note, setNote] = useState('');
-  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(prm.lat && prm.lng ? { lat: +prm.lat, lng: +prm.lng } : null);
+  const [photos, setPhotos] = useState<string[]>([]); // مسارات محلية، تنرفع وقت الإرسال
+  const [similar, setSimilar] = useState<Similar[] | null>(null); // «هل تقصد…؟»
+  const [checked, setChecked] = useState(false);
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -44,15 +49,34 @@ export default function Suggest() {
     if (pos) setGeo({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) }); else setErr('ما قدرنا نحدد موقعك.');
     setLocating(false);
   };
+  const pick = async (camera: boolean) => {
+    setErr('');
+    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { setErr(camera ? 'نحتاج إذن الكاميرا من الإعدادات.' : 'نحتاج إذن الصور من الإعدادات.'); return; }
+    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9, allowsEditing: true, aspect: [4, 3] };
+    const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
+    if (!r.canceled && r.assets[0]) setPhotos((p) => [...p, r.assets[0].uri].slice(0, 3));
+  };
   const submit = async () => {
     setErr('');
+    // مكان جديد: نتأكد مرة وحدة إنه مو موجود قبل الإرسال
+    if (isNew && !checked && title.trim().length >= 2) {
+      setBusy(true);
+      const list = await similarPlaces({ title: title.trim(), city, lat: geo?.lat, lng: geo?.lng });
+      setBusy(false); setChecked(true);
+      if (list.length) { setSimilar(list); return; }
+    }
     if (isNew && title.trim().length < 2) return setErr('اكتب اسم المكان.');
     if (isNew && !city) return setErr('اختر المدينة.');
     if (!isNew && mode === 'edit' && !title && !phone && !website && !address && !hours && !note && !geo) return setErr('اكتب وش اللي يحتاج يتعدل.');
     setBusy(true);
     try {
-      await suggest({ type: isNew ? 'new' : mode, placeId: isNew ? undefined : Number(prm.place), data: { title: title.trim(), city, kind, phone, website, address, hours, note: note.trim(), lat: geo?.lat, lng: geo?.lng } });
-      const msg = isNew ? 'بنراجعه ونضيفه للدليل، ويوصلك إشعار مع +15 نقطة.' : 'بنراجعه ويوصلك إشعار مع +5 نقاط لو انقبل.';
+      const urls: string[] = [];
+      for (const ph of photos) urls.push(await uploadPhoto(ph));
+      const r = await suggest({ type: isNew ? 'new' : mode, placeId: isNew ? undefined : Number(prm.place), data: { title: title.trim(), city, kind, phone, website, address, hours, note: note.trim(), lat: geo?.lat, lng: geo?.lng, photos: urls } });
+      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا نعتمد هالاقتراح.'); return; }
+      const bonus = urls.length ? ` و+${urls.length * 5} للصور` : '';
+      const msg = isNew ? `بنراجعه ونضيفه للدليل باسمك، ويوصلك إشعار مع +15 نقطة${bonus}.` : `بنراجعه ويوصلك إشعار مع +5 نقاط${bonus} لو انقبل.`;
       if (Platform.OS === 'web') router.back(); else Alert.alert('شكراً! وصلنا اقتراحك', msg, [{ text: 'تمام', onPress: () => router.back() }]);
     } catch (e) { setErr(e && (e as { code?: string }).code === 'empty' ? 'اكتب وش اللي يحتاج يتعدل.' : couponErr(e)); } finally { setBusy(false); }
   };
@@ -69,7 +93,7 @@ export default function Suggest() {
         </View>
         <View style={st.hint}>
           <Icon name="star" color={brand.orangeDeep} size={18} />
-          <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{isNew ? 'تعرف مكان يستاهل وما لقيته في الدليل؟ أضفه، ولو انقبل تاخذ +15 نقطة.' : 'ساعدنا نخلي المعلومات صحيحة. لو انقبل تعديلك تاخذ +5 نقاط.'}</AppText>
+          <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{isNew ? 'تعرف مكان يستاهل وما لقيته في الدليل؟ أضفه مع صوره، ولو انقبل ينضاف باسمك وتاخذ +15 نقطة.' : 'ساعدنا نخلي المعلومات صحيحة. لو انقبل تعديلك تاخذ +5 نقاط.'}</AppText>
         </View>
 
         {!isNew ? (
@@ -111,10 +135,46 @@ export default function Suggest() {
             <Field label="الموقع الإلكتروني أو حساب إنستقرام" hint="اختياري"><Input value={website} onChangeText={setWebsite} autoCapitalize="none" placeholder="https://" maxLength={200} style={{ textAlign: 'left' }} /></Field>
           </>
         ) : null}
+        {mode !== 'closed' || isNew ? (
+          <Field label="صور المكان" hint={isNew ? 'لين 3 صور، كل صورة +5 نقاط' : 'اختياري، كل صورة +5 نقاط'}>
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              {photos.map((u, i) => (
+                <Pressable key={u} onPress={() => setPhotos((p) => p.filter((_, j) => j !== i))} accessibilityLabel="شيل الصورة">
+                  <Image source={{ uri: u }} style={st.thumb} contentFit="cover" />
+                  <View style={st.x}><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 12, lineHeight: 16 }}>✕</AppText></View>
+                </Pressable>
+              ))}
+              {photos.length < 3 ? (
+                <>
+                  <Pressable style={st.add} onPress={() => pick(true)}><Icon name="cam" color={brand.orangeDeep} size={22} /><AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>صوّر</AppText></Pressable>
+                  <Pressable style={st.add} onPress={() => pick(false)}><Icon name="plus" color={brand.purple} size={22} /><AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>من الصور</AppText></Pressable>
+                </>
+              ) : null}
+            </View>
+            <AppText variant="tiny" muted style={{ marginTop: 6 }}>صوّر المكان بنفسك. لو انقبل، تطلع الصور باسمك.</AppText>
+          </Field>
+        ) : null}
         <Field label={isNew ? 'ليش يستاهل؟' : mode === 'closed' ? 'متى قفل؟ (اختياري)' : 'ملاحظات'} hint="اختياري">
           <Input value={note} onChangeText={setNote} multiline maxLength={600} placeholder={isNew ? 'وش يميزه؟ نصيحة للزوار؟' : mode === 'closed' ? 'مثلاً: قفل من شهرين وصار محل ثاني' : 'وش الغلط بالضبط؟'} />
         </Field>
         {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 12, fontFamily: font.semibold }}>{err}</AppText> : null}
+        {similar && similar.length ? (
+          <View style={st.similar}>
+            <AppText style={{ fontFamily: font.bold }}>هل تقصد واحد من هذي؟</AppText>
+            <AppText variant="small" muted style={{ marginTop: 2, marginBottom: 8 }}>لقينا أماكن قريبة منه في الدليل. لو هو نفسه، افتحه واقترح عليه تعديل أو أضف صوره.</AppText>
+            {similar.map((x) => (
+              <Pressable key={x.id} style={st.simRow} onPress={() => router.replace({ pathname: '/suggest', params: { place: String(x.id), title: x.title } })}>
+                {x.thumb ? <Image source={{ uri: x.thumb }} style={st.simImg} contentFit="cover" /> : <View style={[st.simImg, { backgroundColor: brand.softPurple, alignItems: 'center', justifyContent: 'center' }]}><Icon name="pin" color={brand.purple} size={18} /></View>}
+                <View style={{ flex: 1 }}>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 14 }} numberOfLines={1}>{x.title}</AppText>
+                  <AppText variant="tiny" muted>{[cityName(x.city), x.why].filter(Boolean).join(' · ')}</AppText>
+                </View>
+                <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>هو نفسه</AppText>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => { setSimilar(null); submit(); }} style={{ marginTop: 10 }}><AppText center color={brand.orangeDeep} style={{ fontFamily: font.bold }}>لا، مكان ثاني. أرسل الاقتراح</AppText></Pressable>
+          </View>
+        ) : null}
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Pressable style={st.cta} onPress={submit} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">أرسل الاقتراح</AppText>}</Pressable>
@@ -131,4 +191,10 @@ const st = StyleSheet.create({
   locIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   bottom: { position: 'absolute', left: 16, right: 16, bottom: 0, paddingTop: 10 },
   cta: { height: 56, borderRadius: 18, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: 84, height: 84, borderRadius: 16 },
+  x: { position: 'absolute', top: 4, left: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  add: { width: 84, height: 84, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.line, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  similar: { marginTop: 16, backgroundColor: brand.card, borderRadius: 20, padding: 14, borderWidth: 1.5, borderColor: brand.orange },
+  simRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: brand.line },
+  simImg: { width: 48, height: 48, borderRadius: 12 },
 });

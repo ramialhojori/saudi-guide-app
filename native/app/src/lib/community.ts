@@ -95,7 +95,16 @@ export const requestGuide = (about: string) => api('/v1/me/guide', { method: 'PO
 export type Fact = { k: string; q: string; yes: number; no: number; mine: 0 | 1 | null };
 export const placeFacts = (id: number) => api<{ facts: Fact[]; ask: { k: string; q: string } | null }>(`/v1/places/${id}/facts`, { token: tok() });
 export const answerFact = (id: number, k: string, v: 0 | 1) => api<{ ok: true; points: number }>(`/v1/places/${id}/facts`, { method: 'POST', body: { k, v }, token: tok() });
-export const suggest = (b: { type: 'edit' | 'new' | 'closed'; placeId?: number; data: Record<string, unknown> }) => api<{ id: number }>('/v1/suggestions', { method: 'POST', body: b, token: tok() });
+export const suggest = (b: { type: 'edit' | 'new' | 'closed'; placeId?: number; data: Record<string, unknown> }) =>
+  api<{ id: number; status?: 'pending' | 'rejected'; message?: string }>('/v1/suggestions', { method: 'POST', body: b, token: tok() });
+export type Similar = { id: number; title: string; city: string; thumb: string; why: string };
+/** «هل تقصد…؟» قبل إضافة مكان */
+export const similarPlaces = (o: { title: string; city?: string; lat?: number; lng?: number }) => {
+  const q = new URLSearchParams({ title: o.title });
+  if (o.city) q.set('city', o.city);
+  if (o.lat && o.lng) { q.set('lat', String(o.lat)); q.set('lng', String(o.lng)); }
+  return api<{ similar: Similar[] }>(`/v1/places/similar?${q}`).then((r) => r.similar).catch(() => [] as Similar[]);
+};
 export type Hero = { id: string; name: string; city: string; score: number; answers: number; reviews: number; visits: number; guide: boolean };
 export const cityHeroes = (city?: string | null) => api<{ month: string; heroes: Hero[] }>(`/v1/community/heroes${city ? `?city=${city}` : ''}`);
 export type Impact = { views: number; photoViews: number; thanks: number; helped: number; facts: number; suggestions: number };

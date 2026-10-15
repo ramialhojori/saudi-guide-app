@@ -23,7 +23,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.10.1';
+const VERSION = '0.11.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -147,7 +147,7 @@ async function route(request, env, ctx) {
   }
 
   /* ——— المساهمة: المميزات، الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */
-  if (p === '/v1/features' || p === '/v1/suggestions' || p === '/v1/community/heroes' || /^\/v1\/places\/\d+\/facts$/.test(p)) {
+  if (p === '/v1/features' || p === '/v1/suggestions' || p === '/v1/places/similar' || p === '/v1/community/heroes' || /^\/v1\/places\/\d+\/facts$/.test(p)) {
     const r = await contribRoute(p, request, env, J, q);
     if (r) return r;
   }
@@ -248,9 +248,9 @@ async function route(request, env, ctx) {
   }
 
   if ((m = p.match(/^\/v1\/places\/(\d+)$/))) {
-    const r = await env.DB.prepare('SELECT * FROM places WHERE id=? AND deleted=0').bind(+m[1]).first();
+    const r = await env.DB.prepare('SELECT p.*, u.name added_name FROM places p LEFT JOIN users u ON u.id=p.added_by AND u.deleted=0 WHERE p.id=? AND p.deleted=0').bind(+m[1]).first();
     if (!r) return J({ error: 'not_found' }, 404);
-    return J({ place: placeFull(r) }, 200, 300);
+    return J({ place: { ...placeFull(r), ...(r.added_name ? { addedBy: r.added_name } : {}) } }, 200, 300);
   }
 
   if (p === '/v1/places') { // ?ids=1,2,3 — لـ«رحلتي» و«المفضلة»

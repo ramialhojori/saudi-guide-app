@@ -122,7 +122,7 @@ const TOOLS = [
   ['list_articles', 'الأخبار.', S({ status: str(''), q: str('') }), (a) => ['GET', '/admin/articles?' + qs(a)]],
   ['create_article_draft', 'يضيف خبر كمسودة.', S({ title: str(''), author: str(''), summary: str(''), body: str(''), images: { type: 'array', items: { type: 'string' } }, cats: { type: 'array', items: { type: 'string' } } }, ['title']), (a) => ['POST', '/admin/articles', { ...a }]],
   ['upload_image_from_url', 'ينزّل صورة من رابط (jpg/png/webp حتى 10MB) ويرفعها لتخزين الدليل، ويرجع الرابط الجديد. استخدم بس صور مسموح استخدامها (رسمية أو من صاحب المكان).', S({ url: str('رابط الصورة') }, ['url']), null, 'upload'],
-  ['list_suggestions', 'اقتراحات الزوار (pending|approved|rejected).', S({ status: str('') }), (a) => ['GET', '/admin/suggestions?' + qs(a)]],
+  ['list_suggestions', 'اقتراحات الزوار (pending|approved|rejected) مع صورهم وفرز المراجعة الذكية (ai: decision, summary, body, kind, cats).', S({ status: str('') }), (a) => ['GET', '/admin/suggestions?' + qs(a)]],
   ['list_merchants', 'طلبات التجار (pending|approved|rejected|hidden|all).', S({ status: str('') }), (a) => ['GET', '/admin/merchants?' + qs(a)]],
   ['list_coupons', 'الكوبونات (pending|active|paused|all).', S({ status: str('') }), (a) => ['GET', '/admin/coupons?' + qs(a)]],
   ['list_photos', 'صور الزوار (pending|approved|rejected).', S({ status: str('') }), (a) => ['GET', '/admin/photos?' + qs(a)]],
@@ -157,7 +157,7 @@ const TOOLS = [
   ['honor_heroes', 'يكرّم مستخدمين: إشعار تهنئة + نقاط إضافية (حتى 500). ⚠️ لازم confirmed=true وبس بعد موافقة رامي على الأسماء والنقاط والنص.', S({ userIds: { type: 'array', items: { type: 'string' } }, bonus: num(''), text: str(''), confirmed: { type: 'boolean' } }, ['userIds', 'confirmed']), null, 'honor'],
 
   /* —— اقتراحات الزوار وصورهم وتقييماتهم —— */
-  ['decide_suggestion', 'يقبل أو يرفض اقتراح زائر. new → مكان مسودة (+15)، edit → يطبق الحقول (apply: title, phone, website, address, geo) (+5)، closed → يخفي المكان (+5).', S({ id: num(''), status: str('approved|rejected'), note: str(''), apply: { type: 'array', items: { type: 'string' } } }, ['id', 'status']), (a) => ['POST', `/admin/suggestions/${+a.id}`, a]],
+  ['decide_suggestion', 'يقبل أو يرفض اقتراح زائر. new → مسودة جاهزة بصور المستخدم والملخص والوصف من المراجعة الذكية واسم المساهم (+15 و+5 لكل صورة)، edit → يطبق الحقول (apply: title, phone, website, address, geo) (+5)، closed → يخفي المكان (+5).', S({ id: num(''), status: str('approved|rejected'), note: str(''), apply: { type: 'array', items: { type: 'string' } } }, ['id', 'status']), (a) => ['POST', `/admin/suggestions/${+a.id}`, a]],
   ['decide_photos', 'يقبل أو يرفض صور زوار (حتى 200 مرة وحدة). القبول +5 نقاط.', S({ ids: { type: 'array', items: { type: 'number' } }, status: str('approved|rejected'), note: str('') }, ['ids', 'status']), (a) => ['POST', '/admin/photos/bulk', a]],
   ['list_reviews', 'تقييمات الأماكن: visible | hidden | reported.', S({ status: str('') }), (a) => ['GET', '/admin/reviews?' + qs(a)]],
   ['set_review_status', 'يخفي أو يُظهر تقييم.', S({ id: num(''), status: str('visible|hidden') }, ['id', 'status']), (a) => ['POST', `/admin/reviews/${+a.id}`, { status: a.status }]],

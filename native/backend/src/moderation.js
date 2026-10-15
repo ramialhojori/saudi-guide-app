@@ -92,3 +92,47 @@ export function modMessage(status, reason) {
   if (status === 'rejected') return reason || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.';
   return '';
 }
+
+/* ═════════ مراجعة اقتراحات الأماكن الجديدة ═════════
+   Claude يفرز الاقتراح (حقيقي / وهمي أو إعلان) ويجهّز ملخص ووصف قصير وتصنيف — من المعلومات اللي كتبها المستخدم فقط */
+const KINDS_AR = { sights: 'معلم', heritage: 'تراث', islamic: 'معلم إسلامي', nature: 'طبيعة', food: 'مطعم', cafe: 'مقهى', shopping: 'تسوق', fun: 'ترفيه' };
+const SUGGEST_RULES = `أنت محرر في تطبيق "دليل السعودية" (دليل سياحي للأماكن في السعودية). يوصلك اقتراح مكان جديد من مستخدم.
+مهمتك:
+1) تقرر: approve إذا الاقتراح يبدو مكان حقيقي يستاهل يكون في دليل سياحي (معلم، مطعم، مقهى، طبيعة، تسوق، ترفيه، تراث، مسجد تاريخي...).
+   reject إذا كان كلام بلا معنى، أو تجربة، أو سب، أو إعلان واضح لخدمة شخصية (توصيل، تأجير، خدمات منزلية، أرقام للتواصل التجاري)، أو مكان غير مناسب (منزل خاص، شخص)، أو مخالف للأنظمة.
+   review إذا غير متأكد.
+2) تجهز للمحرر (لو approve أو review):
+   - summary: سطر واحد (حتى 90 حرف) يعرّف المكان بلغة عربية سهلة.
+   - body: فقرة أو فقرتين قصيرة (حتى 350 حرف) تعرّف المكان وتنصح الزائر، مبنية فقط على المعلومات المكتوبة في الاقتراح (الاسم، النوع، المدينة، ملاحظة المستخدم). لا تخترع أسعار أو تواريخ أو تقييمات أو معلومات ما ذكرها المستخدم.
+   - kind: واحد من sights, heritage, islamic, nature, food, cafe, shopping, fun.
+   - cats: من 1 إلى 3 تصنيفات عربية قصيرة (مثل: مطاعم، مقاهي، معالم سياحية، تراث، طبيعة، تسوق، ترفيه، عائلية).
+3) reason: سبب قصير. لو رفضت، اكتبه بلهجة سعودية لطيفة يُعرض للمستخدم.
+أجب بـ JSON فقط: {"decision":"approve|reject|review","reason":"...","summary":"...","body":"...","kind":"...","cats":["..."]}`;
+
+export async function reviewSuggestion(env, d, aiOn = true) {
+  const bad = quickFilter(`${d.title || ''} ${d.note || ''}`); // الجوال والموقع لهم خانات خاصة، فنفحص الاسم والملاحظة بس
+  if (bad) return { decision: 'reject', reason: bad, by: 'filter' };
+  if (!aiOn || !env.ANTHROPIC_API_KEY) return { decision: 'review', reason: '', by: 'off' };
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 12000);
+  try {
+    const txt = [`الاسم: ${d.title}`, `المدينة: ${d.cityName || d.city}`, `النوع اللي اختاره المستخدم: ${KINDS_AR[d.kind] || 'ما حدد'}`, d.address ? `العنوان: ${d.address}` : '', d.hours ? `ساعات العمل: ${d.hours}` : '', d.website ? `الموقع/الحساب: ${d.website}` : '', `ملاحظة المستخدم: ${d.note || '-'}`, `عدد الصور المرفقة: ${(d.photos || []).length}`].filter(Boolean).join('\n');
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: env.MODERATION_MODEL || 'claude-haiku-5-5', max_tokens: 600, system: SUGGEST_RULES, messages: [{ role: 'user', content: txt }] }),
+    });
+    if (!r.ok) throw new Error('anthropic_' + r.status);
+    const j = await r.json();
+    const m = String(j.content?.[0]?.text || '').match(/\{[\s\S]*\}/);
+    const v = m ? JSON.parse(m[0]) : {};
+    const decision = ['approve', 'reject', 'review'].includes(v.decision) ? v.decision : 'review';
+    return {
+      decision, by: 'ai', reason: String(v.reason || '').slice(0, 200),
+      summary: String(v.summary || '').slice(0, 140), body: String(v.body || '').slice(0, 700),
+      kind: KINDS_AR[v.kind] ? v.kind : '', cats: (Array.isArray(v.cats) ? v.cats : []).map(String).slice(0, 3),
+    };
+  } catch (e) {
+    return { decision: 'review', reason: String(e.message || e).slice(0, 80), by: 'error' };
+  } finally { clearTimeout(timer); }
+}

@@ -6,7 +6,8 @@
    - مفاتيح المميزات: المشرف يخفي أي ميزة من اللوحة بدون تحديث التطبيق */
 
 import { sessionUser } from './auth.js';
-import { CITIES, searchKey } from './normalize.js';
+import { CITIES, searchKey, km } from './normalize.js';
+import { reviewSuggestion } from './moderation.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
@@ -103,6 +104,8 @@ export async function contribRoute(p, request, env, J, q) {
     const data = {
       title: str(d.title, 120), city: str(d.city, 40), kind: str(d.kind, 30), address: str(d.address, 200), phone: str(d.phone, 20).replace(/[^\d+]/g, ''),
       website: str(d.website, 200), lat: num(d.lat), lng: num(d.lng), note: String(d.note || '').trim().slice(0, 600), hours: str(d.hours, 120),
+      // صور المستخدم (من رفع التطبيق فقط، حتى 3)
+      photos: (Array.isArray(d.photos) ? d.photos : []).map(String).filter((u) => u.includes(`/media/c/${me.id}/`)).slice(0, 3),
     };
     if (type !== 'new') {
       const pl = await env.DB.prepare('SELECT id FROM places WHERE id=? AND deleted=0').bind(+b.placeId).first();
@@ -114,9 +117,35 @@ export async function contribRoute(p, request, env, J, q) {
     if (type === 'edit' && !data.note && !data.title && !data.phone && !data.address && !data.website && !data.hours && !data.lat) return J({ error: 'empty' }, 400);
     const n = await env.DB.prepare('SELECT COUNT(*) n FROM suggestions WHERE user_id=? AND created>?').bind(me.id, now() - 86400).first();
     if (n.n >= 10) return J({ error: 'rate_limited' }, 429);
-    const r = await env.DB.prepare('INSERT INTO suggestions (user_id,type,place_id,data,created,updated) VALUES (?,?,?,?,?,?)')
-      .bind(me.id, type, type === 'new' ? null : +b.placeId, JSON.stringify(data), now(), now()).run();
-    return J({ id: r.meta.last_row_id });
+    // مكان جديد: فرز وتجهيز بالمراجعة الذكية (الوهمي والإعلانات تنرفض فوراً، والباقي يوصل المشرف جاهز)
+    let ai = null, status = 'pending', note = null;
+    if (type === 'new') {
+      const cityName = (CITIES.find((c) => c[0] === data.city) || [])[1] || data.city;
+      ai = await reviewSuggestion(env, { ...data, cityName }, (await getFeatures(env)).ai_moderation);
+      if (ai.decision === 'reject') { status = 'rejected'; note = ai.reason; }
+    }
+    const r = await env.DB.prepare('INSERT INTO suggestions (user_id,type,place_id,data,created,updated,status,note,ai) VALUES (?,?,?,?,?,?,?,?,?)')
+      .bind(me.id, type, type === 'new' ? null : +b.placeId, JSON.stringify(data), now(), now(), status, note, ai ? JSON.stringify(ai) : null).run();
+    if (status === 'rejected') return J({ id: r.meta.last_row_id, status, message: (ai.reason || 'ما قدرنا نعتمد هالاقتراح.') + ' لو المكان حقيقي، عدّل المعلومات وأرسله مرة ثانية.' });
+    return J({ id: r.meta.last_row_id, status: 'pending' });
+  }
+
+  /* «هل تقصد…؟» قبل إضافة مكان: أماكن منشورة باسم قريب أو على بعد 150 متر */
+  if (p === '/v1/places/similar' && M === 'GET') {
+    const title = searchKey(q.get('title') || ''), city = q.get('city') || '', lat = +q.get('lat') || 0, lng = +q.get('lng') || 0;
+    const out = new Map();
+    const words = title.split(' ').filter((w) => w.length > 2).slice(0, 3);
+    if (words.length) {
+      const { results } = await env.DB.prepare(`SELECT id,title,city,thumb,lat,lng FROM places WHERE deleted=0 ${city ? 'AND city=?' : ''} AND ${words.map(() => 'search LIKE ?').join(' AND ')} LIMIT 6`)
+        .bind(...(city ? [city] : []), ...words.map((w) => `%${w}%`)).all();
+      results.forEach((r) => out.set(r.id, { ...r, why: 'اسم مشابه' }));
+    }
+    if (lat && lng) {
+      const dd = 0.002;
+      const { results } = await env.DB.prepare('SELECT id,title,city,thumb,lat,lng FROM places WHERE deleted=0 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ? LIMIT 8').bind(lat - dd, lat + dd, lng - dd, lng + dd).all();
+      results.forEach((r) => { const m2 = Math.round(km(lat, lng, r.lat, r.lng) * 1000); if (m2 <= 150) out.set(r.id, { ...r, why: out.has(r.id) ? `اسم مشابه وعلى بعد ${m2} م` : `على بعد ${m2} م منك` }); });
+    }
+    return J({ similar: [...out.values()].slice(0, 5).map((x) => ({ id: x.id, title: x.title, city: x.city, thumb: x.thumb || '', why: x.why })) });
   }
 
   /* أبطال الشهر */
@@ -212,7 +241,7 @@ export async function contribAdmin(p, request, env, J, q) {
     const st = ['pending', 'approved', 'rejected'].includes(q.get('status')) ? q.get('status') : 'pending';
     const { results } = await env.DB.prepare(`SELECT s.*, u.name u_name, pl.title p_title, pl.city p_city, pl.phone p_phone, pl.website p_website, pl.address p_address, pl.lat p_lat, pl.lng p_lng
       FROM suggestions s JOIN users u ON u.id=s.user_id LEFT JOIN places pl ON pl.id=s.place_id WHERE s.status=? ORDER BY s.id ${st === 'pending' ? 'ASC' : 'DESC'} LIMIT 150`).bind(st).all();
-    return J({ suggestions: results.map((s) => ({ id: s.id, type: s.type, status: s.status, note: s.note || '', created: s.created, data: parse(s.data, {}), user: { id: s.user_id, name: s.u_name || 'مستخدم الدليل' },
+    return J({ suggestions: results.map((s) => ({ id: s.id, type: s.type, status: s.status, note: s.note || '', created: s.created, data: parse(s.data, {}), ai: parse(s.ai, null), user: { id: s.user_id, name: s.u_name || 'مستخدم الدليل' },
       place: s.place_id ? { id: s.place_id, title: s.p_title || '', city: s.p_city || '', phone: s.p_phone || '', website: s.p_website || '', address: s.p_address || '', lat: s.p_lat, lng: s.p_lng } : null })) });
   }
   if ((m = p.match(/^\/admin\/suggestions\/(\d+)$/)) && M === 'POST') {
@@ -228,10 +257,18 @@ export async function contribAdmin(p, request, env, J, q) {
       if (s.type === 'new') {
         const mx = await env.DB.prepare('SELECT MAX(id) m FROM places').first();
         placeId = Math.max(900000000, mx.m || 0) + 1;
-        const kinds = d.kind ? [d.kind] : [];
-        ops.push(env.DB.prepare(`INSERT INTO places (id,city,title,cats,kinds,summary,images,thumb,lat,lng,address,phone,website,search,sig,updated,deleted)
-          VALUES (?,?,?,'[]',?,?,'[]','',?,?,?,?,?,?,'panel',?,2)`).bind(placeId, d.city, d.title, JSON.stringify(kinds), d.note || '', d.lat, d.lng, d.address || '', d.phone || '', d.website || '', searchKey(d.title), now()));
-        pts = 15; msg = `انقبل اقتراحك «${d.title}» وانضاف للدليل، وينزل للناس بعد ما نكمّل صوره ومعلوماته. +15 نقطة`;
+        // مسودة جاهزة: صور المستخدم + ملخص ووصف المراجعة الذكية (المشرف يقدر يعدّلها قبل النشر)
+        const ai = parse(s.ai, null) || {};
+        const kind = d.kind || ai.kind || '';
+        const photos = (d.photos || []).slice(0, 3);
+        const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        const bodyTxt = ai.body || d.note || '';
+        const body = bodyTxt ? bodyTxt.split(/\n{2,}/).map((x) => `<p>${esc(x.trim())}</p>`).join('') + (d.hours ? `<p>ساعات العمل: ${esc(d.hours)}</p>` : '') : (d.hours ? `<p>ساعات العمل: ${esc(d.hours)}</p>` : '');
+        ops.push(env.DB.prepare(`INSERT INTO places (id,city,title,cats,kinds,summary,body,images,thumb,lat,lng,address,phone,website,search,sig,updated,deleted,added_by)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'panel',?,2,?)`).bind(placeId, d.city, d.title, JSON.stringify(ai.cats || []), JSON.stringify(kind ? [kind] : []), ai.summary || (d.note || '').slice(0, 140), body,
+          JSON.stringify(photos), photos[0] || '', d.lat, d.lng, d.address || '', d.phone || '', d.website || '', searchKey(d.title), now(), s.user_id));
+        pts = 15 + photos.length * 5;
+        msg = `انقبل اقتراحك «${d.title}» وانضاف للدليل باسمك، وينزل للناس بعد اللمسات الأخيرة. +${pts} نقطة`;
       } else if (s.type === 'closed') {
         ops.push(env.DB.prepare("UPDATE places SET deleted=1, sig='panel', updated=? WHERE id=?").bind(now(), s.place_id));
         pts = 5; msg = 'شكراً! أخفينا المكان المقفل من الدليل بناءً على بلاغك. +5 نقاط';
@@ -242,7 +279,9 @@ export async function contribAdmin(p, request, env, J, q) {
         for (const f of ['title', 'phone', 'website', 'address']) if (pick.includes(f) && d[f]) { sets.push(`${f}=?`); args.push(d[f]); }
         if (pick.includes('geo') && d.lat && d.lng) { sets.push('lat=?', 'lng=?'); args.push(d.lat, d.lng); }
         if (sets.length) ops.push(env.DB.prepare(`UPDATE places SET ${sets.join(',')}, sig='panel', updated=? WHERE id=?`).bind(...args, now(), s.place_id));
-        pts = 5; msg = 'انقبل تعديلك على المكان. شكراً إنك تحسّن الدليل! +5 نقاط';
+        const photos = (d.photos || []).slice(0, 3);
+        for (const u of photos) ops.push(env.DB.prepare("INSERT INTO place_photos (user_id,place_id,url,status,created) VALUES (?,?,?,'approved',?)").bind(s.user_id, s.place_id, u, now()));
+        pts = 5 + photos.length * 5; msg = `انقبل تعديلك على المكان. شكراً إنك تحسّن الدليل! +${pts} نقاط`;
       }
       ops.push(addPoints(env, s.user_id, pts), notify(env, s.user_id, msg, s.type === 'edit' && placeId ? `/place/${placeId}` : null));
     } else {

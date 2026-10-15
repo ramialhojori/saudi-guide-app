@@ -928,7 +928,7 @@ let STAB = 'pending';
 const SK = { new: ['مكان ناقص', 'b-live'], edit: ['تعديل', 'b-panel'], closed: ['مكان مقفل', 'b-hidden'] };
 async function suggestView() {
   const m = $('#main');
-  m.innerHTML = `<h1>اقتراحات الزوار</h1><p class="sub">الزوار يقترحون أماكن ناقصة أو تعديلات. المكان الجديد ينضاف <b>مسودة</b> (تكمّل صوره وتنشره)، والتعديل يتطبق على طول. صاحب الاقتراح ياخذ +15 للمكان و+5 للتعديل.</p>
+  m.innerHTML = `<h1>اقتراحات الزوار</h1><p class="sub">الزوار يقترحون أماكن ناقصة أو تعديلات ومعها صور. المراجعة الذكية ترفض الوهمي والإعلانات وتجهّز ملخص ووصف، فالمكان المقبول ينضاف <b>مسودة جاهزة</b> بصوره ووصفه، وتنشره بضغطة. صاحب الاقتراح ياخذ +15 للمكان و+5 للتعديل و+5 لكل صورة، واسمه يطلع في صفحة المكان.</p>
     <div class="tabs">${[['pending', 'تنتظر'], ['approved', 'انقبلت'], ['rejected', 'انرفضت']].map(([k, t]) => `<button data-s="${k}" class="${STAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { STAB = b.dataset.s; suggestView(); }));
   const d = await api('/admin/suggestions?status=' + STAB);
@@ -939,6 +939,8 @@ async function suggestView() {
       + (dd.lat && dd.lng ? `<div class="row" style="font-size:14px"><label>${STAB === 'pending' && x.type === 'edit' ? `<input type="checkbox" data-ap="${x.id}" value="geo" checked> ` : ''}<b>الموقع</b></label><a target="_blank" href="https://www.google.com/maps?q=${dd.lat},${dd.lng}">${dd.lat}, ${dd.lng}</a></div>` : '');
     return `<div class="post"><div class="row"><span class="badge ${SK[x.type][1]}">${SK[x.type][0]}</span><b class="grow">${h(x.type === 'new' ? dd.title : pl?.title || '')}</b><span class="muted" style="font-size:13px">${cityName(x.type === 'new' ? dd.city : pl?.city)} · ${h(x.user.name)} · ${dAr(x.created)}</span></div>
       ${diff}${dd.note ? `<div style="font-size:14px">«${h(dd.note)}»</div>` : ''}${x.note ? `<div class="muted" style="font-size:13px">ملاحظتك: ${h(x.note)}</div>` : ''}
+      ${(dd.photos || []).length ? `<div class="row" style="gap:8px">${dd.photos.map((u) => `<a href="${h(u)}" target="_blank"><img src="${h(u)}" style="width:120px;height:90px;object-fit:cover;border-radius:12px"></a>`).join('')}</div>` : ''}
+      ${x.ai && (x.ai.summary || x.ai.reason) ? `<div style="font-size:13.5px;background:var(--softPurple);border-radius:12px;padding:10px 12px"><b>المراجعة الذكية:</b> ${({ approve: 'يبدو مكان حقيقي', review: 'تحتاج نظرك', reject: 'رفضته' })[x.ai.decision] || ''}${x.ai.reason ? ' · ' + h(x.ai.reason) : ''}${x.ai.summary ? `<div style="margin-top:4px"><b>الملخص المقترح:</b> ${h(x.ai.summary)}</div>` : ''}${x.ai.body ? `<div class="muted" style="margin-top:2px">${h(x.ai.body)}</div>` : ''}</div>` : ''}
       ${pl ? `<div><a href="#" data-open="${pl.id}">افتح المكان في اللوحة</a></div>` : ''}
       ${STAB === 'pending' ? `<div class="row"><button class="btn g" data-ok="${x.id}">${x.type === 'new' ? 'اقبل وأضفه مسودة' : x.type === 'closed' ? 'اقبل وأخفِ المكان' : 'اقبل وطبّق المحدد'}</button><button class="btn p" data-no="${x.id}">رفض</button></div>` : ''}</div>`;
   }).join('') || `<div class="empty">${STAB === 'pending' ? 'ما فيه اقتراحات تنتظر' : 'ما فيه شي هنا'}</div>`;

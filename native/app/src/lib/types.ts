@@ -10,6 +10,8 @@ export type Place = {
 export type PlaceFull = Place & {
   title_en: string; cats: string[]; body: string; images: string[];
   address: string; phone: string; website: string; email: string; url: string;
+  /** اسم المستخدم اللي اقترح المكان للدليل */
+  addedBy?: string;
 };
 export type EventItem = {
   id: number; title: string; summary: string; thumb: string; image?: string; start: string; end: string;

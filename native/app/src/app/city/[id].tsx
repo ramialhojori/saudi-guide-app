@@ -14,6 +14,7 @@ import { useAsync } from '@/lib/useAsync';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
 import { track } from '@/lib/track';
+import { useFeatures } from '@/lib/features';
 
 const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TAGLINE: Record<string, string> = {
@@ -37,6 +38,16 @@ export default function CityScreen() {
   const all = data?.places ?? [];
   const featured = all.filter((p) => p.thumb).slice(0, 4);
 
+  const F = useFeatures();
+  const addCard = F.suggest ? (
+    <Pressable style={st.addCard} onPress={() => router.push({ pathname: '/suggest', params: { city: id } })}>
+      <View style={st.addIcon}><Icon name="plus" color="#fff" size={20} /></View>
+      <View style={{ flex: 1 }}>
+        <AppText style={{ fontFamily: font.bold }}>تعرف مكان في {city?.name ?? 'المدينة'} ما هو هنا؟</AppText>
+        <AppText variant="small" muted>أضفه مع صوره، وينضاف للدليل باسمك (+15 نقطة)</AppText>
+      </View>
+    </Pressable>
+  ) : null;
   const header = (
     <View>
       <View style={st.hero}>
@@ -95,6 +106,7 @@ export default function CityScreen() {
         data={all}
         keyExtractor={(p) => String(p.id)}
         ListHeaderComponent={header}
+        ListFooterComponent={addCard}
         contentContainerStyle={{ paddingBottom: 120 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         renderItem={({ item }) => (
@@ -125,6 +137,8 @@ function Feature({ p, tall }: { p: Place; tall?: boolean }) {
 }
 
 const st = StyleSheet.create({
+  addCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 20, backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.orange, borderStyle: 'dashed' },
+  addIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   hero: { height: 380, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, overflow: 'hidden', backgroundColor: brand.ink },
   top: { position: 'absolute', right: 16, left: 16, flexDirection: 'row', justifyContent: 'space-between' },
   mapBtn: { flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, paddingHorizontal: 14 },
