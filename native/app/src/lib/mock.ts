@@ -6,8 +6,9 @@ import { brand, type PhotoKey } from '@/theme/tokens';
 import type { IconName } from '@/components/Icon';
 
 export const me = {
-  name: 'رامي الحجوري', first: 'رامي', initial: 'ر', handle: 'rami', since: 2024, city: 'المدينة المنورة', level: 7,
-  bio: 'أحب المقاهي المختصة والطلعات البرية. أسألني عن المدينة وجدة.',
+  // مثال يشوفه الزائر قبل ما يسجّل (بدون اسم شخص حقيقي)
+  name: 'اسمك هنا', first: 'أنت', initial: 'د', handle: 'username', since: 2026, city: 'مدينتك', level: 7,
+  bio: 'نبذة قصيرة عنك تظهر هنا، مثل: أحب المقاهي المختصة والطلعات البرية.',
   points: 2340, nextLevelPts: 3000, nextLevel: 'سفير الدليل',
   stats: [{ v: '128', l: 'إجابة' }, { v: '73', l: 'تقييم' }, { v: '46', l: 'صورة' }, { v: '1.2 ألف', l: 'متابع' }],
 };
