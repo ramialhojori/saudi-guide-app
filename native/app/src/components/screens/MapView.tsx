@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -13,11 +13,23 @@ import { trip, useTrip } from '@/lib/trip';
 import { useAsync } from '@/lib/useAsync';
 import type { City, Place } from '@/lib/types';
 import { brand, font, kindStyle } from '@/theme/tokens';
+import { useFeatures } from '@/lib/features';
+import { useAuth } from '@/lib/auth';
 
 const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 
 export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
   const insets = useSafeAreaInsets();
+  const F = useFeatures();
+  const { user } = useAuth();
+  // ضغطة طويلة على الخريطة: يضيف مكان ناقص في نفس النقطة
+  const addHere = (c: { lat: number; lng: number }) => {
+    if (!F.suggest) return;
+    Alert.alert('تضيف مكان هنا؟', 'لو فيه مكان يستاهل في هالنقطة وما هو في الدليل، أضفه وينضاف باسمك (+15 نقطة).', [
+      { text: 'لا', style: 'cancel' },
+      { text: 'أضف مكان', onPress: () => router.push(user ? { pathname: '/suggest', params: { lat: String(c.lat), lng: String(c.lng), city: city?.id ?? '' } } : '/login') },
+    ]);
+  };
   const { data: cities } = useAsync(getCities, []);
   const [city, setCity] = useState<City | null>(null);
   const [pick, setPick] = useState(false);
@@ -41,7 +53,7 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#EEF0EA' }}>
-      {city ? <MapCanvas key={city.id} ref={mapRef as never} places={shown} center={{ lat: city.lat, lng: city.lng }} selected={sel?.id} onSelect={setSel} /> : null}
+      {city ? <MapCanvas key={city.id} ref={mapRef as never} places={shown} center={{ lat: city.lat, lng: city.lng }} selected={sel?.id} onSelect={setSel} onLongPress={addHere} /> : null}
 
       <View style={[st.top, { paddingTop: insets.top + 10 }]}>
         {toggle ? <View style={{ marginBottom: 10 }}>{toggle}</View> : null}

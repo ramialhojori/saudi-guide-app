@@ -5,14 +5,15 @@ import type { Place } from '@/lib/types';
 import { brand, kindStyle } from '@/theme/tokens';
 import { Icon, type IconName } from './Icon';
 
-type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void };
+type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void; onLongPress?: (c: { lat: number; lng: number }) => void };
 
 /** خريطة الأماكن: دبوس دائري بلون نوع المكان، والمختار أكبر وبرتقالي */
-export const MapCanvas = forwardRef<MapView, Props>(function MapCanvas({ places, center, selected, onSelect }, ref) {
+export const MapCanvas = forwardRef<MapView, Props>(function MapCanvas({ places, center, selected, onSelect, onLongPress }, ref) {
   return (
     <MapView ref={ref} style={StyleSheet.absoluteFill}
       initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }}
-      showsUserLocation showsMyLocationButton={false} toolbarEnabled={false}>
+      showsUserLocation showsMyLocationButton={false} toolbarEnabled={false}
+      onLongPress={onLongPress ? (e) => onLongPress({ lat: +e.nativeEvent.coordinate.latitude.toFixed(6), lng: +e.nativeEvent.coordinate.longitude.toFixed(6) }) : undefined}>
       {places.filter((p) => p.lat && p.lng).map((p) => {
         const ks = kindStyle[p.kinds[0]] ?? kindStyle.sights;
         const on = p.id === selected;

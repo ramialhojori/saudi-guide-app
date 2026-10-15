@@ -5,7 +5,7 @@ import type { Place } from '@/lib/types';
 import { brand, kindStyle } from '@/theme/tokens';
 import { Icon, type IconName } from './Icon';
 
-type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void };
+type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void; onLongPress?: (c: { lat: number; lng: number }) => void };
 
 /** نسخة الويب (معاينة فقط): خلفية خريطة مرسومة ودبابيس بمواقعها التقريبية */
 export const MapCanvas = forwardRef<unknown, Props>(function MapCanvas({ places, center, selected, onSelect }, _ref) {
