@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { pickPhotos } from '@/lib/photos';
 import * as Location from 'expo-location';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -51,11 +51,9 @@ export default function Suggest() {
   };
   const pick = async (camera: boolean) => {
     setErr('');
-    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setErr(camera ? 'نحتاج إذن الكاميرا من الإعدادات.' : 'نحتاج إذن الصور من الإعدادات.'); return; }
-    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9, allowsEditing: true, aspect: [4, 3] };
-    const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
-    if (!r.canceled && r.assets[0]) setPhotos((p) => [...p, r.assets[0].uri].slice(0, 3));
+    const r = await pickPhotos({ camera, edit: true });
+    if (r.error) { setErr(r.error); return; }
+    if (r.uris[0]) setPhotos((p) => [...p, r.uris[0]].slice(0, 3));
   };
   const submit = async () => {
     setErr('');

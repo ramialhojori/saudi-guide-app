@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { pickPhotos } from '@/lib/photos';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,11 +55,10 @@ export default function ReviewScreen() {
   }
 
   const pick = async (camera: boolean) => {
-    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return setErr(camera ? 'نحتاج إذن الكاميرا من الإعدادات.' : 'نحتاج إذن الصور من الإعدادات.');
-    const r = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.9 })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9, allowsMultipleSelection: true, selectionLimit: 6 - photos.length });
-    if (!r.canceled) setPhotos((x) => [...x, ...r.assets.map((a) => ({ uri: a.uri }))].slice(0, 6));
+    setErr('');
+    const r = await pickPhotos({ camera, max: 6 - photos.length });
+    if (r.error) return setErr(r.error);
+    if (r.uris.length) setPhotos((x) => [...x, ...r.uris.map((uri) => ({ uri }))].slice(0, 6));
   };
   const toggleTag = (t: string) => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t].slice(0, 6)));
   const pts = (isEdit ? 0 : 3) + photos.length * 5;
@@ -77,7 +76,7 @@ export default function ReviewScreen() {
       }
       const r = await postReview(Number(id), { stars, tags, text: text.trim(), photos: urls, consent: consent && urls.length > 0 });
       if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا نحفظ التقييم.'); return; }
-      const msg = [r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : '', failed ? `${failed === 1 ? 'صورة وحدة' : failed + ' صور'} ما ارتفعت، تقدر تضيفها بعدين من صفحة المكان.` : ''].filter(Boolean).join('\n');
+      const msg = [r.pending ? r.message || '' : '', r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : '', failed ? `${failed === 1 ? 'صورة وحدة' : failed + ' صور'} ما ارتفعت، تقدر تضيفها بعدين من صفحة المكان.` : ''].filter(Boolean).join('\n');
       Alert.alert(isEdit ? 'انحفظ تقييمك' : 'شكراً على تقييمك!', msg || undefined, [{ text: 'تمام', onPress: () => router.back() }]);
       if (Platform.OS === 'web') router.back();
     } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }

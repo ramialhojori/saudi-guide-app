@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { pickPhotos } from '@/lib/photos';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -50,11 +50,9 @@ export default function Ask() {
 
   const pick = async (camera: boolean) => {
     setErr('');
-    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setErr(camera ? 'نحتاج إذن الكاميرا من الإعدادات.' : 'نحتاج إذن الصور من الإعدادات.'); return; }
-    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9, allowsEditing: true, aspect: [4, 3] };
-    const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
-    if (!r.canceled && r.assets[0]) { setPhoto(r.assets[0].uri); if (kind === 'question' && !text) setKind('photo'); }
+    const r = await pickPhotos({ camera, edit: true });
+    if (r.error) { setErr(r.error); return; }
+    if (r.uris[0]) { setPhoto(r.uris[0]); if (kind === 'question' && !text) setKind('photo'); }
   };
 
   const ready = text.trim().length >= 8 && (kind !== 'photo' || !!photo) && !busy;

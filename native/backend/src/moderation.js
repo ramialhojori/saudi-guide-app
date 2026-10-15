@@ -86,6 +86,50 @@ export async function moderate(env, kind, text, ctx = {}, aiOn = true) {
   }
 }
 
+/* ═════════ مراجعة نص تقييمات الأماكن ═════════ */
+const REVIEW_RULES = `أنت مشرف محتوى لتقييمات الأماكن في تطبيق "دليل السعودية" (دليل سياحي).
+الزائر يقيّم مكان (مطعم، معلم، مقهى...) بنجوم ونص قصير.
+
+اقبل (approve) إذا كان النص رأياً أو تجربة حقيقية عن المكان، حتى لو كان سلبياً جداً أو قاسياً (مثل: "الأكل بارد والخدمة سيئة"، "ما يستاهل، غالي ووسخ")، أو بلهجة عامية أو فيه أخطاء.
+الرأي السلبي عن المكان نفسه مسموح دائماً، وهو مهم للزوار.
+
+ارفض (reject) إذا فيه:
+- سب أو شتم أو قذف أو تنمر أو عنصرية، أو إساءة لموظف أو شخص باسمه.
+- كلام جنسي أو خادش، أو محتوى سياسي أو طائفي أو إساءة لدين أو جنسية أو قبيلة.
+- إعلان أو ترويج لمكان أو خدمة ثانية، أو طلب تواصل خارج التطبيق.
+- كلام لا معنى له أو تجربة كتابة أو نص لا علاقة له بالمكان.
+- اتهامات خطيرة بدون تجربة (مثل جرائم أو مخالفات قانونية) أو ترويج لممنوعات.
+
+اختر "review" إذا كنت غير متأكد (مثلاً ادعاء خطير عن المكان مثل تسمم غذائي، أو حالة رمادية).
+
+السبب (reason) يُعرض للمستخدم إذا رفضت: جملة وحدة لطيفة بلهجة سعودية بيضاء بدون اتهام.
+أجب بـ JSON فقط: {"decision":"approve|reject|review","reason":"..."}`;
+
+/** يرجع {status: visible|pending|rejected, reason, by} — لو Claude ما رد ننشر التقييم عادي */
+export async function moderateReview(env, text, ctx = {}, aiOn = true) {
+  const bad = quickFilter(text);
+  if (bad) return { status: 'rejected', reason: bad.replace('المشاركة فيها', 'التقييم فيه'), by: 'filter' };
+  if (!aiOn || !env.ANTHROPIC_API_KEY || String(text).trim().length < 4) return { status: 'visible', reason: '', by: 'off' };
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: env.MODERATION_MODEL || 'claude-haiku-5-5', max_tokens: 200, system: REVIEW_RULES,
+        messages: [{ role: 'user', content: `المكان: ${ctx.place || ''}\nالنجوم: ${ctx.stars || ''} من 5\nنص التقييم:\n${text}` }] }),
+    });
+    if (!r.ok) throw new Error('anthropic_' + r.status);
+    const j = await r.json();
+    const m = String(j.content?.[0]?.text || '').match(/\{[\s\S]*\}/);
+    const v = m ? JSON.parse(m[0]) : null;
+    const d = v && ['approve', 'reject', 'review'].includes(v.decision) ? v.decision : 'review';
+    return { status: d === 'approve' ? 'visible' : d === 'reject' ? 'rejected' : 'pending', reason: String(v?.reason || '').slice(0, 200), by: 'ai' };
+  } catch (e) {
+    return { status: 'visible', reason: String(e.message || e).slice(0, 80), by: 'error' };
+  } finally { clearTimeout(timer); }
+}
+
 /** رسالة للمستخدم حسب النتيجة */
 export function modMessage(status, reason) {
   if (status === 'pending') return 'وصلت مشاركتك، وبتظهر بعد مراجعة سريعة من فريق الدليل.';

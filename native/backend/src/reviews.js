@@ -5,7 +5,8 @@
    - 3 بلاغات على تقييم → يختفي لين تراجعه الإدارة. ما نحذف شي */
 
 import { sessionUser } from './auth.js';
-import { quickFilter } from './moderation.js';
+import { moderateReview } from './moderation.js';
+import { getFeatures } from './contrib.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
@@ -68,18 +69,21 @@ export async function reviewsRoute(p, request, env, J, q) {
       const photos = (Array.isArray(b.photos) ? b.photos : []).map((x) => String(x).slice(0, 300)).filter((x) => x.includes('/media/c/' + me.id + '/')).slice(0, 6);
       if (photos.length && !b.consent) return J({ error: 'consent_required' }, 400);
       // نص التقييم: الرأي السلبي مسموح، بس بدون أرقام أو روابط أو إعلانات أو كلام مسيء
-      const bad = text ? quickFilter(text) : null;
-      if (bad) return J({ id: null, status: 'rejected', message: bad.replace('المشاركة فيها', 'التقييم فيه') });
       const n = await env.DB.prepare('SELECT COUNT(*) n FROM reviews WHERE user_id=? AND updated>?').bind(me.id, now() - 86400).first();
       if (n.n >= DAILY) return J({ error: 'rate_limited' }, 429);
+      // مراجعة النص: الفلتر المجاني ثم Claude (نفس مفتاح «المراجعة الذكية» في الميزات)
+      const mod = text ? await moderateReview(env, text, { place: place.title, stars }, (await getFeatures(env)).ai_moderation) : { status: 'visible' };
+      if (mod.status === 'rejected') return J({ id: null, status: 'rejected', message: mod.reason || 'ما قدرنا ننشر التقييم لأنه يخالف قواعد المجتمع.' });
+      // غير متأكد → نحفظه مخفي لين تراجعه الإدارة (يطلع في اللوحة: التقييمات ← المخفية)
+      const vis = mod.status === 'pending' ? 'hidden' : 'visible';
       const old = await env.DB.prepare('SELECT * FROM reviews WHERE user_id=? AND place_id=?').bind(me.id, pid).first();
       let id;
       if (old) {
         if (old.status === 'hidden' && old.reports >= HIDE_AT) return J({ error: 'under_review' }, 403);
-        await env.DB.prepare("UPDATE reviews SET stars=?,tags=?,text=?,status='visible',updated=? WHERE id=?").bind(stars, JSON.stringify(tags), text, now(), old.id).run();
+        await env.DB.prepare('UPDATE reviews SET stars=?,tags=?,text=?,status=?,updated=? WHERE id=?').bind(stars, JSON.stringify(tags), text, vis, now(), old.id).run();
         id = old.id;
       } else {
-        const r = await env.DB.prepare('INSERT INTO reviews (user_id,place_id,stars,tags,text,created,updated) VALUES (?,?,?,?,?,?,?)').bind(me.id, pid, stars, JSON.stringify(tags), text, now(), now()).run();
+        const r = await env.DB.prepare('INSERT INTO reviews (user_id,place_id,stars,tags,text,status,created,updated) VALUES (?,?,?,?,?,?,?,?)').bind(me.id, pid, stars, JSON.stringify(tags), text, vis, now(), now()).run();
         id = r.meta.last_row_id;
         await addPoints(env, me.id, 3).run();
       }
@@ -89,7 +93,7 @@ export async function reviewsRoute(p, request, env, J, q) {
         const add = photos.filter((u) => !seen.has(u));
         if (add.length) await env.DB.batch(add.map((u) => env.DB.prepare('INSERT INTO place_photos (user_id,place_id,review_id,url,created) VALUES (?,?,?,?,?)').bind(me.id, pid, id, u, now())));
       }
-      return J({ id, points: old ? 0 : 3, photosPending: photos.length });
+      return J({ id, points: old ? 0 : 3, photosPending: photos.length, ...(vis === 'hidden' ? { pending: true, message: 'وصل تقييمك، وبيظهر بعد مراجعة سريعة من فريق الدليل.' } : {}) });
     }
     if (M === 'DELETE') {
       if (!me) return J({ error: 'login_required' }, 401);

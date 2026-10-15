@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { pickPhotos } from '@/lib/photos';
 import * as Location from 'expo-location';
 import { Redirect, router } from 'expo-router';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -64,10 +64,9 @@ export default function MerchantJoin() {
     setLocating(false);
   };
   const addPhoto = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return setErr('نحتاج إذن الصور من الإعدادات.');
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9, allowsMultipleSelection: true, selectionLimit: 8 - photos.length });
-    if (!r.canceled) setPhotos((p) => [...p, ...r.assets.map((a) => ({ uri: a.uri }))].slice(0, 8));
+    const r = await pickPhotos({ camera: false, max: 8 - photos.length });
+    if (r.error) return setErr(r.error);
+    if (r.uris.length) setPhotos((p) => [...p, ...r.uris.map((uri) => ({ uri }))].slice(0, 8));
   };
 
   const ready = name.trim().length >= 2 && !!city && agreed && !busy;
