@@ -9,8 +9,9 @@ export CLOUDFLARE_ACCOUNT_ID="1a9840daeee3a68b62a00be716164393"
 echo "== 1) سيرفر الدليل =="
 (cd backend && npx wrangler deploy) || { echo "❌ نشر السيرفر ما كمل"; read -p "اضغط Enter للإغلاق"; exit 1; }
 echo ""; echo "== 2) موقع الويب =="
-WR="$PWD/backend/node_modules/.bin/wrangler"; [ -x "$WR" ] || WR="npx wrangler"
-(cd web && $WR deploy) || { echo "❌ نشر الموقع ما كمل"; read -p "اضغط Enter للإغلاق"; exit 1; }
+ROOT="$PWD"
+wr() { if [ -x "$ROOT/backend/node_modules/.bin/wrangler" ]; then "$ROOT/backend/node_modules/.bin/wrangler" "$@"; else npx wrangler "$@"; fi; }
+(cd web && wr deploy) || { echo "❌ نشر الموقع ما كمل"; read -p "اضغط Enter للإغلاق"; exit 1; }
 echo ""; echo "-- فحص سريع:"
 curl -s https://saudi-guide-api.saudi-guide2030.workers.dev/v1; echo ""
 curl -s -o /dev/null -w "الموقع: %{http_code}\n" https://saudi-guide-web.saudi-guide2030.workers.dev/
