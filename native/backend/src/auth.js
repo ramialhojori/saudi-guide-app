@@ -52,13 +52,18 @@ export function publicUser(u) {
   return { id: u.id, name: u.name || '', handle: u.handle || '', email: u.email || '', city: u.city || '', bio: u.bio || '', avatar: u.avatar || '', role: u.role, points: u.points, balance: Math.max(0, (u.points || 0) - (u.spent || 0)), since: new Date(u.created * 1000).getUTCFullYear() };
 }
 
-async function upsertUser(env, provider, sub, email, name) {
+async function upsertUser(env, provider, sub, email, name, verified) {
   const col = provider === 'apple' ? 'apple_sub' : 'google_sub';
   let u = await env.DB.prepare(`SELECT * FROM users WHERE ${col}=?`).bind(sub).first();
   if (u && u.deleted) {
     // حساب محذوف: نبدأ من جديد بنفس المعرّف عند آبل/قوقل
     await env.DB.prepare(`UPDATE users SET ${col}=NULL WHERE id=?`).bind(u.id).run();
     u = null;
+  }
+  // نفس الإيميل الموثّق بحساب ثاني (آبل ↔ قوقل): نربطه بنفس الحساب عشان ما يخسر نقاطه ومشاركاته
+  if (!u && email && verified) {
+    const same = await env.DB.prepare(`SELECT * FROM users WHERE lower(email)=lower(?) AND deleted=0 AND ${col} IS NULL`).bind(email).first();
+    if (same) { await env.DB.prepare(`UPDATE users SET ${col}=?, seen=? WHERE id=?`).bind(sub, now(), same.id).run(); u = same; return u; }
   }
   if (!u) {
     const id = crypto.randomUUID();
@@ -77,12 +82,12 @@ export async function authRoute(p, request, env, J) {
     const b = await request.json().catch(() => ({}));
     const provider = p.endsWith('apple') ? 'apple' : 'google';
     const aud = provider === 'apple'
-      ? (env.APPLE_AUDIENCES || 'com.saudiguide,host.exp.Exponent').split(',')
-      : (env.GOOGLE_CLIENT_IDS || '').split(',').filter(Boolean);
+      ? [...(env.APPLE_AUDIENCES || 'com.saudiguide,host.exp.Exponent').split(','), ...(env.APPLE_SERVICE_ID ? [env.APPLE_SERVICE_ID] : [])]
+      : [...(env.GOOGLE_CLIENT_IDS || '').split(','), env.GOOGLE_WEB_CLIENT_ID || ''].filter(Boolean);
     try {
       const pl = await verifyIdToken(provider, b.idToken, aud);
       const name = String(b.name || pl.name || '').trim().slice(0, 60);
-      const u = await upsertUser(env, provider, pl.sub, pl.email, name);
+      const u = await upsertUser(env, provider, pl.sub, pl.email, name, pl.email_verified === true || pl.email_verified === 'true');
       return J({ token: await signSession(env, u.id), user: publicUser(u) });
     } catch (e) {
       return J({ error: String(e.message || e) }, 401);

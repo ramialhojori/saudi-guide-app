@@ -23,6 +23,7 @@ import { placeCoupons, type Coupon } from '@/lib/coupons';
 import { placeReviews, reportReview, type PlaceReviews } from '@/lib/reviews';
 import { useAsync } from '@/lib/useAsync';
 import { extLink } from '@/lib/text';
+import { MapCanvas } from '@/components/MapCanvas';
 import { brand, font, kindStyle } from '@/theme/tokens';
 
 const W = Dimensions.get('window').width;
@@ -221,9 +222,8 @@ export default function PlaceScreen() {
           {/* الموقع */}
           {p.lat && p.lng ? (
             <Pressable style={st.mapCard} onPress={() => openDirections(p.lat, p.lng, p.title)}>
-              <View style={st.mapArt}>
-                <View style={st.mapRoad} /><View style={st.mapRoad2} />
-                <View style={st.mapPin} />
+              <View style={st.mapArt} pointerEvents="none">
+                <MapCanvas lite zoom={0.008} places={[p]} center={{ lat: p.lat, lng: p.lng }} selected={p.id} onSelect={() => {}} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}>
                 <AppText variant="small" style={{ flex: 1 }} numberOfLines={1}>{p.address || cityName(p.city)}</AppText>
@@ -409,7 +409,7 @@ const st = StyleSheet.create({
   fact: { flex: 1, backgroundColor: brand.card, borderRadius: 18, paddingVertical: 12 },
   tip: { marginTop: 16, backgroundColor: brand.purple, borderRadius: 22, padding: 14, flexDirection: 'row', gap: 12 },
   mapCard: { marginTop: 14, backgroundColor: brand.card, borderRadius: 22, overflow: 'hidden' },
-  mapArt: { height: 110, backgroundColor: '#EEF0EA', alignItems: 'center', justifyContent: 'center' },
+  mapArt: { height: 150, backgroundColor: '#EEF0EA', overflow: 'hidden' },
   mapRoad: { position: 'absolute', left: 0, right: 0, top: 50, height: 8, backgroundColor: brand.card },
   mapRoad2: { position: 'absolute', top: 0, bottom: 0, left: 120, width: 8, backgroundColor: brand.card, transform: [{ rotate: '20deg' }] },
   mapPin: { width: 26, height: 26, borderRadius: 13, backgroundColor: brand.orange, borderWidth: 4, borderColor: '#fff' },

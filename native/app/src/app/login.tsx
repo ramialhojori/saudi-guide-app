@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -9,6 +9,7 @@ import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Badge } from '@/components/ui';
 import { appleAvailable, signInWithApple } from '@/lib/auth';
+import { appleWebAvailable, renderGoogleButton, signInWithAppleWeb, webConfig } from '@/lib/webAuth';
 import { brand, font } from '@/theme/tokens';
 
 /** تسجيل الدخول — مثل التصميم: آبل (شغال)، قوقل والجوال (قريباً)، أو تصفح كزائر */
@@ -17,13 +18,29 @@ export default function Login() {
   const [apple, setApple] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  useEffect(() => { appleAvailable().then(setApple).catch(() => {}); }, []);
+  const web = Platform.OS === 'web';
+  const [appleWeb, setAppleWeb] = useState(false);
+  const [googleWeb, setGoogleWeb] = useState(false);
+  const gBox = useRef<View>(null);
+  useEffect(() => {
+    appleAvailable().then(setApple).catch(() => {});
+    if (web) {
+      appleWebAvailable().then(setAppleWeb).catch(() => {});
+      webConfig().then((c) => setGoogleWeb(!!c.googleWebClientId)).catch(() => {});
+    }
+  }, [web]);
+  // زر قوقل الرسمي (المتصفح فقط)
+  useEffect(() => {
+    if (!googleWeb || !gBox.current) return;
+    const el = gBox.current as unknown as HTMLElement;
+    renderGoogleButton(el, el.offsetWidth || 340, done, (m) => setErr(`ما قدرنا نكمل الدخول بقوقل. (${m})`)).catch(() => setGoogleWeb(false));
+  }, [googleWeb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const done = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const onApple = async () => {
     setErr(''); setBusy(true);
     try {
-      if ((await signInWithApple()) === 'ok') done();
+      if ((await (web ? signInWithAppleWeb() : signInWithApple())) === 'ok') done();
     } catch (e: unknown) {
       const x = e as { code?: string; message?: string };
       setErr(`ما قدرنا نكمل الدخول. (${x?.code || x?.message || 'خطأ'})`);
@@ -47,16 +64,20 @@ export default function Login() {
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
             cornerRadius={18} style={{ height: 56, width: '100%' }} onPress={onApple} />
         ) : (
-          <Pressable onPress={Platform.OS === 'ios' ? onApple : undefined} style={[st.btn, { backgroundColor: '#000', opacity: Platform.OS === 'ios' ? 1 : 0.5 }]}>
+          <Pressable onPress={Platform.OS === 'ios' || appleWeb ? onApple : undefined} style={[st.btn, { backgroundColor: '#000', opacity: Platform.OS === 'ios' || appleWeb ? 1 : 0.5 }]}>
             <Icon name="apple" color="#fff" fill="#fff" size={22} strokeWidth={1.6} />
-            <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' ? 'المتابعة مع Apple' : 'Apple على الآيفون فقط'}</AppText>
+            <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' || appleWeb ? 'المتابعة مع Apple' : web ? 'Apple قريباً على الموقع' : 'Apple على الآيفون فقط'}</AppText>
           </Pressable>
         )}
-        <View style={[st.btn, { backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.line }]}>
-          <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#4285F4">G</AppText>
-          <AppText style={st.btnTx}>المتابعة مع Google</AppText>
-          <View style={st.soon}><AppText variant="tiny" color={brand.purple}>قريباً</AppText></View>
-        </View>
+        {googleWeb ? (
+          <View ref={gBox} style={{ height: 50, alignItems: 'center', justifyContent: 'center', width: '100%' }} />
+        ) : (
+          <View style={[st.btn, { backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.line }]}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#4285F4">G</AppText>
+            <AppText style={st.btnTx}>المتابعة مع Google</AppText>
+            <View style={st.soon}><AppText variant="tiny" color={brand.purple}>قريباً</AppText></View>
+          </View>
+        )}
         <View style={[st.btn, { backgroundColor: brand.softPurple }]}>
           <Icon name="phone" color={brand.purple} size={20} />
           <AppText style={st.btnTx} color={brand.purple}>برقم الجوال</AppText>

@@ -70,10 +70,14 @@ export default function ReviewScreen() {
     setBusy(true); setErr('');
     try {
       const urls: string[] = [];
-      for (const ph of photos) urls.push(ph.url ?? (await uploadPhoto(ph.uri)));
-      const r = await postReview(Number(id), { stars, tags, text: text.trim(), photos: urls, consent });
+      let failed = 0;
+      // لو صورة ما ارتفعت، التقييم ينحفظ عادي ونقول له بس
+      for (const ph of photos) {
+        try { urls.push(ph.url ?? (await uploadPhoto(ph.uri))); } catch { failed++; }
+      }
+      const r = await postReview(Number(id), { stars, tags, text: text.trim(), photos: urls, consent: consent && urls.length > 0 });
       if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا نحفظ التقييم.'); return; }
-      const msg = [r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : ''].filter(Boolean).join('\n');
+      const msg = [r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : '', failed ? `${failed === 1 ? 'صورة وحدة' : failed + ' صور'} ما ارتفعت، تقدر تضيفها بعدين من صفحة المكان.` : ''].filter(Boolean).join('\n');
       Alert.alert(isEdit ? 'انحفظ تقييمك' : 'شكراً على تقييمك!', msg || undefined, [{ text: 'تمام', onPress: () => router.back() }]);
       if (Platform.OS === 'web') router.back();
     } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }

@@ -1,0 +1,20 @@
+# موقع دليل السعودية على الويب (saudi-guide.com) — نسخة التطبيق للمتصفح + صفحات مهيأة لقوقل
+name = "saudi-guide-web"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# ملفات التطبيق المبنية للويب (npx expo export -p web) — تنسخ هنا في مجلد dist
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+# نكلم سيرفر الدليل مباشرة داخل كلاودفلير (أسرع من الإنترنت)
+[[services]]
+binding = "API"
+service = "saudi-guide-api"
+
+[vars]
+SITE = "https://www.saudi-guide.com"
+API_URL = "https://saudi-guide-api.saudi-guide2030.workers.dev"

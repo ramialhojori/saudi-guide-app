@@ -1,4 +1,6 @@
+import { Platform } from 'react-native';
 /** المجتمع: كل الطلبات للسيرفر في مكان واحد */
+import { File, UploadType } from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { env } from '@/config/env';
 import { api, ApiError } from './api';
@@ -50,10 +52,21 @@ export const block = (userId: string) => api('/v1/community/block', { method: 'P
 /** نصغّر الصورة (أقصى عرض 1600) ونرفعها لـ R2 */
 export async function uploadPhoto(uri: string): Promise<string> {
   const small = await manipulateAsync(uri, [{ resize: { width: 1600 } }], { compress: 0.78, format: SaveFormat.JPEG });
-  const blob = await (await fetch(small.uri)).blob();
-  const res = await fetch(`${env.apiUrl}/v1/community/upload`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg', Authorization: `Bearer ${tok()}` }, body: blob });
-  const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
-  if (!res.ok || !data?.url) throw new ApiError(data?.error || `http_${res.status}`, res.status);
+  const url = `${env.apiUrl}/v1/community/upload`;
+  const headers = { 'Content-Type': 'image/jpeg', Authorization: `Bearer ${tok()}` };
+  let status = 0, body = '';
+  if (Platform.OS === 'web') {
+    const blob = await (await fetch(small.uri)).blob();
+    const res = await fetch(url, { method: 'POST', headers, body: blob });
+    status = res.status; body = await res.text();
+  } else {
+    // الجوال: رفع الملف نفسه بالطريقة الرسمية (fetch مع Blob يرسل الصورة فاضية أحياناً على الآيفون)
+    const r = await new File(small.uri).upload(url, { httpMethod: 'POST', uploadType: UploadType.BINARY_CONTENT, headers, mimeType: 'image/jpeg', sessionType: 'foreground' });
+    status = r.status; body = r.body;
+  }
+  let data: { url?: string; error?: string } | null = null;
+  try { data = JSON.parse(body); } catch { /* */ }
+  if (status < 200 || status >= 300 || !data?.url) throw new ApiError(data?.error || `upload_${status}`, status);
   return data.url;
 }
 

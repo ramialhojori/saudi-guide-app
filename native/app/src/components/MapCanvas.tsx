@@ -6,12 +6,12 @@ import { clusterPlaces, type Cluster } from '@/lib/cluster';
 import { brand, font, kindStyle } from '@/theme/tokens';
 import { Icon, type IconName } from './Icon';
 
-type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void; onLongPress?: (c: { lat: number; lng: number }) => void };
+type Props = { places: Place[]; center: { lat: number; lng: number }; selected?: number; onSelect: (p: Place) => void; onLongPress?: (c: { lat: number; lng: number }) => void; lite?: boolean; zoom?: number };
 /** خريطة الأماكن: دبوس دائري بلون نوع المكان، والمختار أكبر وبرتقالي، والمتقاربة تتجمع في دائرة برقمها */
-export const MapCanvas = forwardRef<MapView, Props>(function MapCanvas({ places, center, selected, onSelect, onLongPress }, ref) {
+export const MapCanvas = forwardRef<MapView, Props>(function MapCanvas({ places, center, selected, onSelect, onLongPress, lite, zoom }, ref) {
   const inner = useRef<MapView>(null);
   useImperativeHandle(ref, () => inner.current as MapView);
-  const [region, setRegion] = useState<Region>({ latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 });
+  const [region, setRegion] = useState<Region>({ latitude: center.lat, longitude: center.lng, latitudeDelta: zoom ?? 0.12, longitudeDelta: zoom ?? 0.12 });
   const clusters = useMemo(() => clusterPlaces(places, region, selected), [places, region, selected]);
 
   const zoomInto = (c: Cluster) => {
@@ -23,7 +23,8 @@ export const MapCanvas = forwardRef<MapView, Props>(function MapCanvas({ places,
   return (
     <MapView ref={inner} style={StyleSheet.absoluteFill}
       initialRegion={region} onRegionChangeComplete={setRegion}
-      showsUserLocation showsMyLocationButton={false} toolbarEnabled={false}
+      showsUserLocation={!lite} showsMyLocationButton={false} toolbarEnabled={false}
+      scrollEnabled={!lite} zoomEnabled={!lite} rotateEnabled={!lite} pitchEnabled={!lite} liteMode={lite}
       onLongPress={onLongPress ? (e) => onLongPress({ lat: +e.nativeEvent.coordinate.latitude.toFixed(6), lng: +e.nativeEvent.coordinate.longitude.toFixed(6) }) : undefined}>
       {clusters.map((c) => {
         if (c.items.length > 1) {

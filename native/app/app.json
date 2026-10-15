@@ -15,7 +15,11 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك."
       },
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:www.saudi-guide.com",
+        "applinks:saudi-guide.com"
+      ]
     },
     "android": {
       "package": "carizmaapps.saudiguide",
@@ -23,7 +27,54 @@
         "backgroundColor": "#604C87",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/place"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/event"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/article"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/city"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/question"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/coupon"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/season"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",

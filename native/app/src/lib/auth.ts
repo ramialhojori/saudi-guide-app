@@ -61,6 +61,12 @@ async function afterLogin(token: string, user: User) {
   if (extra.length || !rDays.flat().length) api('/v1/me/trip', { method: 'PUT', body: { days: merged }, token }).catch(() => {});
 }
 
+/** دخول بالرمز من قوقل أو آبل (نسخة الويب تستخدمه) */
+export async function signInWithIdToken(provider: 'google' | 'apple', idToken: string, name?: string) {
+  const r = await api<{ token: string; user: User }>(`/v1/auth/${provider}`, { method: 'POST', body: { idToken, name } });
+  await afterLogin(r.token, r.user);
+}
+
 export const appleAvailable = () => (Platform.OS === 'ios' ? AppleAuthentication.isAvailableAsync().catch(() => false) : Promise.resolve(false));
 
 export async function signInWithApple(): Promise<'ok' | 'cancel'> {

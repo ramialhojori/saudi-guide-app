@@ -14,6 +14,7 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
 import { colors, isDark } from '@/theme/tokens';
 import { startTracking } from '@/lib/track';
+import { WebFrame } from '@/components/WebFrame';
 
 // التطبيق عربي بالكامل: الاتجاه من اليمين دائماً (في النسخ المبنية يضبطه expo-localization في app.json)
 if (!I18nManager.isRTL) {
@@ -21,11 +22,11 @@ if (!I18nManager.isRTL) {
   I18nManager.forceRTL(true);
 }
 
-// نسخة الويب (للمعاينة فقط): الاتجاه يتضبط من وسم html
-if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.dir = 'rtl';
+// نسخة الويب (saudi-guide.com): الاتجاه واللغة من وسم html
+if (Platform.OS === 'web' && typeof document !== 'undefined') { document.documentElement.dir = 'rtl'; document.documentElement.lang = 'ar'; }
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
-if (Platform.OS !== 'web') startTracking();
+startTracking();
 
 /* الوضع الليلي: الألوان تنحسب أول ما يفتح التطبيق حسب إعداد الآيفون.
    في نسخة التجربة: لو اخترت مظهر من الإعدادات نطبقه، ولو تغيّر إعداد الآيفون نعيد التحميل عشان تتبدل الألوان */
@@ -49,6 +50,8 @@ export default function RootLayout() {
   // أول تشغيل: شاشة الترحيب
   useEffect(() => {
     if (!loaded && !error) return;
+    // الموقع: الزائر جاي من قوقل لصفحة معينة، ما نحوله لشاشة الترحيب
+    if (Platform.OS === 'web') return;
     prefs.onboarded().then((done) => { if (!done) setTimeout(() => router.replace('/welcome'), 50); });
   }, [loaded, error]);
   if (!loaded && !error) return null;
@@ -56,6 +59,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
+      <WebFrame>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="city/[id]" />
@@ -66,6 +70,7 @@ export default function RootLayout() {
         <Stack.Screen name="plus" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="coupon/use" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       </Stack>
+      </WebFrame>
     </>
   );
 }
