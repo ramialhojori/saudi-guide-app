@@ -55,7 +55,7 @@ export default function CityScreen() {
         <LinearGradient colors={['rgba(32,22,54,0.1)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />
-          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={brand.text} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>الخريطة</AppText></Pressable>
+          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={MAP_INK} size={18} /><AppText color={MAP_INK} style={{ fontFamily: font.semibold, fontSize: 13 }}>الخريطة</AppText></Pressable>
         </View>
         <View style={st.heroTx}>
           <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>دليل</AppText>
@@ -66,6 +66,7 @@ export default function CityScreen() {
               <View key={t} style={st.glassPill}><AppText variant="tiny" color="#fff">{t}</AppText></View>
             ))}
           </View>
+          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>الصورة: {CREDIT[id]}</AppText> : null}
         </View>
       </View>
 
@@ -135,6 +136,18 @@ function Feature({ p, tall }: { p: Place; tall?: boolean }) {
     </Pressable>
   );
 }
+
+/** زر الخريطة أبيض دايماً، فنصّه غامق ثابت (لون النص العام يصير فاتح في الوضع الليلي) */
+const MAP_INK = '#2B2745';
+
+/** نسبة صورة الغلاف لأصحابها: الصور الصحفية والمجانية (صور شوترستوك المشتراة ما تحتاج) */
+const CREDIT: Record<string, string> = {
+  umluj: 'البحر الأحمر الدولية',
+  alula: 'SALEH عبر Unsplash',
+  abha: 'Dr Muhammad Amer عبر Unsplash',
+  medina: 'Yasir Gürbüz عبر Pexels',
+  'tabuk-region': 'NEOM عبر Unsplash',
+};
 
 const st = StyleSheet.create({
   addCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 20, backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.orange, borderStyle: 'dashed' },
