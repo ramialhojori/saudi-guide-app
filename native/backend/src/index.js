@@ -4,6 +4,7 @@
    - ما فيه أي مفتاح سري في الكود: كل المفاتيح Secrets في Cloudflare
    مرجع المسارات: docs/api/API.md */
 
+import { withCovers } from './covers.js';
 import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
 import { searchKey, km, CITIES } from './normalize.js';
@@ -33,7 +34,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.21.0';
+const VERSION = '0.21.1';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -110,7 +111,7 @@ async function cities(env) {
   const { results } = await env.DB.prepare(
     'SELECT c.*, (SELECT COUNT(*) FROM places p WHERE p.city=c.id AND p.deleted=0) AS count FROM cities c ORDER BY sort',
   ).all();
-  return results;
+  return withCovers(results);
 }
 
 async function route(request, env, ctx) {
