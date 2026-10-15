@@ -5,6 +5,7 @@
    - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد. الخطة الذكية: خطة مجانية وحدة بالشهر افتراضياً (plan=1 شهرياً)
    - مفتاح Claude في السيرفر فقط (ANTHROPIC_API_KEY) */
 
+import { syncPlus } from './iap.js';
 import { sessionUser } from './auth.js';
 import { CITIES, searchKey } from './normalize.js';
 import { getFeatures } from './contrib.js';
@@ -240,8 +241,10 @@ export async function aiAdmin(p, request, env, J) {
     // منح دليل+ يدوياً (هدية أو تجربة) لين يجهز الاشتراك عن طريق آبل وقوقل
     const b = await request.json().catch(() => ({}));
     const days = Math.max(0, Math.min(366, Math.round(+b.days || 0)));
-    await env.DB.prepare('UPDATE users SET plus_until=? WHERE id=?').bind(days ? now() + days * 86400 : null, String(b.userId)).run();
-    return J({ ok: true });
+    // المنحة تنحفظ لحالها، والنهاية = الأبعد بين المنحة واشتراك آبل
+    await env.DB.prepare('UPDATE users SET plus_grant_until=? WHERE id=?').bind(days ? now() + days * 86400 : null, String(b.userId)).run();
+    const until = await syncPlus(env, String(b.userId));
+    return J({ ok: true, plusUntil: until });
   }
   return null;
 }

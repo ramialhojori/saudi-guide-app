@@ -20,6 +20,7 @@ import { searchRoute } from './search.js';
 import { contactRoute, contactAdmin } from './contact.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
+import { iapRoute } from './iap.js';
 import { mcpRoute } from './mcp.js';
 import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
@@ -29,7 +30,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.17.1';
+const VERSION = '0.18.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -156,6 +157,7 @@ async function route(request, env, ctx) {
   }
 
   if (p === '/v1/seasons') { const r = await seasonsRoute(p, request, env, J); if (r) return r; }
+  if (p.startsWith('/v1/iap/')) { const r = await iapRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/web/')) { const r = await webApiRoute(p, env, J); if (r) return r; }
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
   if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }

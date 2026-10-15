@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
+import { isPlus, useAuth } from '@/lib/auth';
+import { buyPlus, iapMessage, loadPrices, manageSubscriptions, restorePlus, type PlanPrice } from '@/lib/iap';
 import { brand, font, photos } from '@/theme/tokens';
 
 /**
  * صفحة اشتراك «دليل+».
- * الأسعار هنا للعرض فقط. لما نربط اشتراكات آبل (RevenueCat) تنقرأ الأسعار من المتجر نفسه بعملة الجهاز.
+ * الأسعار تنقرأ من App Store بعملة جهاز المستخدم (والأرقام هنا احتياط لو ما وصلت).
+ * الشراء والاستعادة في lib/iap.ts، والسيرفر يتحقق من إيصال آبل ويفعّل دليل+ للحساب.
  */
 type PlanId = 'yearly' | 'monthly';
 /** منتجات آبل الموجودة أصلاً في App Store Connect (مجموعة «Subscriptions» لتطبيق 1595843013): com.yearly و com.monthly، وفيها تجربة 3 أيام */
@@ -32,8 +35,38 @@ export default function Plus() {
   const [plan, setPlan] = useState<PlanId>('yearly');
   const cur = PLANS.find((p) => p.id === plan)!;
 
-  const buy = () => Alert.alert('قريباً', 'الاشتراك يفتح مع التحديث الجاي إن شاء الله.');
-  const restore = () => Alert.alert('استعادة المشتريات', 'إذا كنت مشترك من قبل، اشتراكك يرجع تلقائياً مع التحديث الجاي.');
+  const { user } = useAuth();
+  const plus = isPlus(user);
+  const [store, setStore] = useState<PlanPrice[] | null>(null);
+  const [busy, setBusy] = useState<'' | 'buy' | 'restore'>('');
+  useEffect(() => { if (Platform.OS === 'ios') loadPrices().then(setStore).catch(() => {}); }, []);
+  const priceOf = (id: PlanId) => store?.find((x) => x.id === id)?.price;
+  const curPrice = priceOf(plan) ?? `${cur.price} ${cur.per}`;
+  const until = user?.plusUntil ? new Date(user.plusUntil * 1000).toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+  const needLogin = () => Alert.alert('سجّل دخولك أول', 'عشان يرتبط اشتراكك بحسابك ويشتغل على كل أجهزتك.', [
+    { text: 'لاحقاً', style: 'cancel' }, { text: 'تسجيل الدخول', onPress: () => router.push('/login') },
+  ]);
+  const buy = async () => {
+    if (Platform.OS !== 'ios') return Alert.alert('دليل+', 'الاشتراك متوفر حالياً من تطبيق دليل السعودية على الآيفون، وقريباً على أندرويد.');
+    if (!user) return needLogin();
+    setBusy('buy');
+    try {
+      await buyPlus(plan);
+      Alert.alert('أهلاً بك في دليل+', 'اشتراكك فعّال الحين. اسأل الدليل وخطط رحلاتك بدون حدود.', [{ text: 'يلا', onPress: () => router.back() }]);
+    } catch (e) {
+      if ((e as Error)?.message !== 'cancelled') Alert.alert('الاشتراك', iapMessage(e));
+    } finally { setBusy(''); }
+  };
+  const restore = async () => {
+    if (Platform.OS !== 'ios') return Alert.alert('استعادة المشتريات', 'الاستعادة من تطبيق الآيفون.');
+    if (!user) return needLogin();
+    setBusy('restore');
+    try {
+      const u = await restorePlus();
+      Alert.alert('استعادة المشتريات', u > Date.now() / 1000 ? 'رجع اشتراكك في دليل+ وصار فعّال.' : 'لقينا اشتراك سابق لكنه منتهي.');
+    } catch (e) { Alert.alert('استعادة المشتريات', iapMessage(e)); } finally { setBusy(''); }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
@@ -76,11 +109,15 @@ export default function Plus() {
                     <AppText style={{ fontFamily: font.bold, fontSize: 17 }}>{p.title}</AppText>
                     {p.tag ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{p.tag}</AppText></View> : null}
                   </View>
-                  <AppText variant="small" muted>{p.note}</AppText>
+                  <AppText variant="small" muted>{store ? (p.id === 'yearly' ? 'أول 3 أيام مجاناً · أوفر خيار' : 'أول 3 أيام مجاناً · تقدر تلغيه بأي وقت') : p.note}</AppText>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <AppText style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? brand.purple : brand.text}>{p.price}</AppText>
-                  <AppText variant="tiny" muted>{p.per}</AppText>
+                  {priceOf(p.id) ? (
+                    <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color={on ? brand.purple : brand.text}>{priceOf(p.id)}</AppText>
+                  ) : (<>
+                    <AppText style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? brand.purple : brand.text}>{p.price}</AppText>
+                    <AppText variant="tiny" muted>{p.per}</AppText>
+                  </>)}
                 </View>
               </Pressable>
             );
@@ -97,7 +134,7 @@ export default function Plus() {
             الاشتراك يتجدد تلقائياً بنفس السعر في نهاية كل فترة إلا إذا ألغيته قبلها بـ24 ساعة على الأقل. يُخصم المبلغ من حساب Apple ID، وتقدر تدير اشتراكك أو تلغيه من إعدادات حسابك في App Store.
           </AppText>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18 }}>
-            <Pressable onPress={restore}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>استعادة المشتريات</AppText></Pressable>
+            <Pressable onPress={restore} disabled={!!busy}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{busy === 'restore' ? 'جاري الاستعادة...' : 'استعادة المشتريات'}</AppText></Pressable>
             <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الشروط</AppText></Pressable>
             <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الخصوصية</AppText></Pressable>
           </View>
@@ -106,10 +143,17 @@ export default function Plus() {
 
       {/* زر الاشتراك ثابت تحت */}
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-        <Pressable onPress={buy} style={st.cta} accessibilityRole="button">
-          <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>جرّب 3 أيام مجاناً</AppText>
-        </Pressable>
-        <AppText variant="tiny" muted center>{`بعدها ${cur.price} ${cur.per}، وتقدر تلغي قبل ما تنتهي التجربة`}</AppText>
+        {plus ? (<>
+          <Pressable onPress={() => manageSubscriptions()} style={[st.cta, { backgroundColor: brand.purple }]} accessibilityRole="button">
+            <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>أنت مشترك في دليل+</AppText>
+          </Pressable>
+          <AppText variant="tiny" muted center>{until ? `اشتراكك فعّال لين ${until} · إدارة الاشتراك من App Store` : 'إدارة الاشتراك من App Store'}</AppText>
+        </>) : (<>
+          <Pressable onPress={buy} disabled={!!busy} style={[st.cta, busy ? { opacity: 0.7 } : null]} accessibilityRole="button">
+            {busy === 'buy' ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>جرّب 3 أيام مجاناً</AppText>}
+          </Pressable>
+          <AppText variant="tiny" muted center>{`بعدها ${curPrice}، وتقدر تلغي قبل ما تنتهي التجربة`}</AppText>
+        </>)}
       </View>
     </View>
   );

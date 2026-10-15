@@ -9,6 +9,8 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS events_start ON events(start)",
   "CREATE TABLE IF NOT EXISTS articles ( id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT, date TEXT, summary TEXT, body TEXT, images TEXT NOT NULL DEFAULT '[]', thumb TEXT, cats TEXT NOT NULL DEFAULT '[]', section TEXT, url TEXT, sig TEXT, updated INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0 )",
   "CREATE INDEX IF NOT EXISTS articles_date ON articles(date)",
+  "CREATE TABLE IF NOT EXISTS iap_subs ( orig_tx TEXT PRIMARY KEY, user_id TEXT NOT NULL, product TEXT NOT NULL, expires INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0, env TEXT, last_tx TEXT, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS iap_subs_user ON iap_subs(user_id)",
   "CREATE TABLE IF NOT EXISTS coupon_alerts ( user_id TEXT NOT NULL, city TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, city) )",
   "CREATE TABLE IF NOT EXISTS contact_msgs ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, kind TEXT NOT NULL, text TEXT NOT NULL, reply_to TEXT, city TEXT, app TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'new', reply TEXT, replied INTEGER, created INTEGER NOT NULL )",
   "CREATE TABLE IF NOT EXISTS devices ( token TEXT PRIMARY KEY, platform TEXT, cities TEXT NOT NULL DEFAULT '[]', user_id TEXT, created INTEGER NOT NULL, seen INTEGER NOT NULL )",
@@ -87,7 +89,10 @@ const ALTERS = [
   'ALTER TABLE suggestions ADD COLUMN ai TEXT', // فرز وتجهيز المراجعة الذكية لاقتراح المكان
   'ALTER TABLE places ADD COLUMN added_by TEXT', // المستخدم اللي اقترح المكان (يطلع اسمه في صفحة المكان)
   'ALTER TABLE users ADD COLUMN plus_until INTEGER', // اشتراك دليل+ (أو منحة من المشرف) لين هالوقت
-  'ALTER TABLE users ADD COLUMN community_ban_until INTEGER', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
+  'ALTER TABLE users ADD COLUMN community_ban_until INTEGER',
+  'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
+  // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)
+  'UPDATE users SET plus_grant_until=plus_until WHERE plus_grant_until IS NULL AND plus_until IS NOT NULL AND id NOT IN (SELECT user_id FROM iap_subs)', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
 ];
 
 let ready = false;

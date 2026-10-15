@@ -104,7 +104,8 @@
           "cameraPermission": "يحتاج دليل السعودية الكاميرا عشان تصوّر المكان وتشاركه في المجتمع.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true

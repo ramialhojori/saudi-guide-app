@@ -9,7 +9,7 @@ import { useSyncExternalStore } from 'react';
 import { api } from './api';
 import { trip } from './trip';
 
-export type User = { id: string; name: string; handle: string; email: string; city: string; bio: string; avatar: string; role: string; points: number; balance?: number; since: number };
+export type User = { id: string; name: string; handle: string; email: string; city: string; bio: string; avatar: string; role: string; points: number; balance?: number; since: number; plusUntil?: number };
 type State = { token: string | null; user: User | null; ready: boolean };
 
 const KEY = 'sg_session_v1';
@@ -104,6 +104,15 @@ export async function deleteAccount() {
 }
 
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
+/** بعد شراء/استعادة دليل+ نحدّث الحساب المحفوظ بدون طلب جديد */
+export function setPlusUntil(plusUntil: number) {
+  if (!state.user || !state.token) return;
+  const user = { ...state.user, plusUntil };
+  set({ user });
+  store.set(JSON.stringify({ token: state.token, user })).catch(() => {});
+}
+export const isPlus = (u: User | null) => !!u?.plusUntil && u.plusUntil > Date.now() / 1000;
+
 export const useAuth = () => useSyncExternalStore(subscribe, () => state);
 
 /** للمكتبات اللي تحتاج الرمز خارج الشاشات */
