@@ -2,7 +2,7 @@
    1) «اسأل الدليل»: مساعد يجاوب من محتوى الدليل فقط (الأماكن والفعاليات وإجابات أهل المدينة والأخبار)
       Claude يبحث بنفسه في قاعدة البيانات بأدوات، ويرجع جواب + بطاقات أماكن وفعاليات
    2) «خطط لي رحلة الذكية»: خطة يوم بيوم من أماكن الدليل وفعالياته في تواريخ الرحلة، مع سبب كل اختيار
-   - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد
+   - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد. الخطة الذكية افتراضياً لمشتركين دليل+ فقط (plan=0)
    - مفتاح Claude في السيرفر فقط (ANTHROPIC_API_KEY) */
 
 import { sessionUser } from './auth.js';
@@ -25,7 +25,7 @@ async function ensure(env) { if (!ready) { await env.DB.batch(SCHEMA.map((s) => 
 export async function aiLimits(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='ai_limits'").first();
   const v = parse(r?.v, {});
-  return { chat: Number.isFinite(+v.chat) ? +v.chat : 5, plan: Number.isFinite(+v.plan) ? +v.plan : 2 };
+  return { chat: Number.isFinite(+v.chat) ? +v.chat : 5, plan: Number.isFinite(+v.plan) ? +v.plan : 0 };
 }
 async function quota(env, u, kind) {
   const plus = u.plus_until && u.plus_until > now();
@@ -183,7 +183,7 @@ export async function aiRoute(p, request, env, J) {
   if (p === '/v1/ai/plan') {
     if (!f.ai_planner) return J({ error: 'feature_off' }, 403);
     const q = await quota(env, uu, 'plan');
-    if (!q.plus && q.left <= 0) return J({ error: 'quota', quota: q }, 429);
+    if (!q.plus && q.left <= 0) return J({ error: q.limit ? 'quota' : 'plus_required', quota: q }, q.limit ? 429 : 402);
     if (!CITIES.some((c) => c[0] === b.city)) return J({ error: 'bad_city' }, 400);
     const o = { city: b.city, days: Math.max(1, Math.min(5, Math.round(+b.days || 1))), start: /^\d{4}-\d{2}-\d{2}$/.test(b.start || '') ? b.start : '', party: String(b.party || '').slice(0, 40), budget: String(b.budget || '').slice(0, 30), pace: String(b.pace || '').slice(0, 20), interests: (Array.isArray(b.interests) ? b.interests : []).filter((k) => KIND_AR[k]), notes: String(b.notes || '').slice(0, 300) };
     try {

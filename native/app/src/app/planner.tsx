@@ -53,7 +53,11 @@ export default function Planner() {
     try {
       const p = await aiPlan({ city, days, start: startDate(), party, budget, pace: PACE[pace].label, interests: want, notes: notes.trim() });
       setAi(p); setDay(0);
-    } catch (e) { Alert.alert('ما قدرنا نجهز الخطة الذكية', aiErr(e)); } finally { setBusy(false); }
+    } catch (e) {
+      const c = (e as { code?: string })?.code;
+      if (c === 'plus_required' || c === 'quota') Alert.alert('خطة ذكية مع دليل+', aiErr(e), [{ text: 'لاحقاً', style: 'cancel' }, { text: 'اعرف أكثر', onPress: () => router.push('/plus') }]);
+      else Alert.alert('ما قدرنا نجهز الخطة الذكية', aiErr(e));
+    } finally { setBusy(false); }
   };
   const saveAi = () => {
     if (!ai) return;

@@ -85,7 +85,7 @@ export default function Plus() {
           })}
           <View style={st.free}>
             <Icon name="info" color={brand.muted} size={16} />
-            <AppText variant="small" muted style={{ flex: 1, lineHeight: 20 }}>بدون اشتراك تقدر تسأل الدليل 5 مرات وتسوي خطتين ذكية كل يوم مجاناً.</AppText>
+            <AppText variant="small" muted style={{ flex: 1, lineHeight: 20 }}>بدون اشتراك تقدر تسأل الدليل 5 مرات باليوم مجاناً، والخطة الذكية خاصة بمشتركين دليل+.</AppText>
           </View>
         </View>
 

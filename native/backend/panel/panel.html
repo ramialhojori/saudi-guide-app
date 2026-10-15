@@ -1037,7 +1037,7 @@ async function aiView() {
     <div class="card" style="max-width:640px"><b>الحد المجاني اليومي</b>
       <div class="row" style="margin-top:10px"><span class="grow">أسئلة «اسأل الدليل» باليوم</span><input class="in" id="lc" type="number" min="0" max="100" value="${d.limits.chat}" style="width:90px"></div>
       <div class="row" style="margin-top:8px"><span class="grow">خطط ذكية باليوم</span><input class="in" id="lp" type="number" min="0" max="20" value="${d.limits.plan}" style="width:90px"></div>
-      <div class="muted" style="font-size:13px;margin:8px 0">0 يعني الميزة لمشتركين دليل+ فقط. ولإخفائها كلياً روح «المميزات».</div>
+      <div class="muted" style="font-size:13px;margin:8px 0">0 يعني الميزة لمشتركين دليل+ فقط (الخطة الذكية افتراضياً 0). ولإخفائها كلياً روح «المميزات».</div>
       <button class="btn o" id="ls">احفظ</button></div>
     <div class="card"><b>آخر الطلبات</b><div class="list">${(d.recent || []).map((r) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><span class="badge ${r.ok ? 'b-live' : 'b-hidden'}">${K[r.kind] || r.kind}</span><span class="grow">${h(r.q || '')}</span><span class="muted" style="font-size:12px">${h(r.name || '')} · ${dAr(r.created)}</span></div>`).join('') || '<div class="muted">ما فيه طلبات للحين</div>'}</div></div>`;
   $('#ls').onclick = async () => { await api('/admin/ai/limits', { method: 'POST', body: { chat: +$('#lc').value, plan: +$('#lp').value } }); toast('انحفظ الحد'); };
