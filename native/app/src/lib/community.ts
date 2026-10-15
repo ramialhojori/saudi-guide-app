@@ -14,6 +14,8 @@ export type CPost = {
   id: number; kind: 'question' | 'tip' | 'photo'; city: string; placeId: number | null; text: string; photo: string;
   answers: number; thanks: number; best: number | null; created: number; author: Author; mine: boolean; thanked: boolean;
   bestAnswer: { text: string; name: string; badge: string } | null;
+  /** يجي بس لصاحب المشاركة لو ما انتشرت */
+  status?: 'pending' | 'rejected'; modReason?: string;
 };
 export type CAnswer = { id: number; text: string; thanks: number; created: number; author: Author; mine: boolean; thanked: boolean };
 

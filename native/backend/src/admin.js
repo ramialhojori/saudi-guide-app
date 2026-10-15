@@ -355,7 +355,7 @@ export async function adminRoute(p, request, env, J, q) {
   /* ——— المستخدمين ——— */
   if (p === '/admin/users' && M === 'GET') {
     const args = [];
-    let sql = 'SELECT id,name,city,role,points,created,seen FROM users WHERE deleted=0';
+    let sql = 'SELECT id,name,city,role,points,created,seen,community_ban_until FROM users WHERE deleted=0';
     if (q.get('q')) { sql += ' AND (name LIKE ? OR id=?)'; args.push(`%${q.get('q')}%`, q.get('q')); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY points DESC, seen DESC LIMIT 100').bind(...args).all();
     return J({ users: results });

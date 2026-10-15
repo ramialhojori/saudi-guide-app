@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -32,6 +32,7 @@ export default function Ask() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [rej, setRej] = useState(''); // سبب عدم النشر من المراجعة
 
   if (!user) {
     return (
@@ -59,13 +60,12 @@ export default function Ask() {
   const ready = text.trim().length >= 8 && (kind !== 'photo' || !!photo) && !busy;
   const submit = async () => {
     if (!ready) return;
-    setBusy(true); setErr('');
+    setBusy(true); setErr(''); setRej('');
     try {
       const url = photo ? await uploadPhoto(photo) : undefined;
       const r = await createPost({ kind, city, text: text.trim(), photo: url, placeId: prm.placeId ? Number(prm.placeId) : undefined });
       // المراجعة الذكية: مرفوضة → نبين السبب ويعدّل نصه، تنتظر مراجعة → نبلغه ونرجع
-      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.'); return; }
-      if (r.status === 'pending') { Alert.alert('وصلت مشاركتك', r.message || 'بتظهر بعد مراجعة سريعة من فريق الدليل.'); router.back(); return; }
+      if (r.status === 'rejected') { setRej(r.message || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.'); return; }
       router.replace(`/question/${r.id}`);
     } catch (e) { setErr(errText(e)); } finally { setBusy(false); }
   };
@@ -123,10 +123,17 @@ export default function Ask() {
         </ScrollView>
 
         {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 16 }}>{err}</AppText> : null}
+        {rej ? (
+          <View style={st.rej}>
+            <AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>ما انتشرت مشاركتك</AppText>
+            <AppText variant="small" style={{ lineHeight: 23, marginTop: 4 }}>{rej}</AppText>
+            <AppText variant="tiny" muted style={{ marginTop: 6 }}>عدّل النص وانشر من جديد.</AppText>
+          </View>
+        ) : null}
 
         <View style={st.rules}>
           <AppText variant="small" style={{ fontFamily: font.bold }}>قبل لا تنشر</AppText>
-          <AppText variant="small" muted style={{ lineHeight: 22 }}>احترم الناس، وبدون إعلانات أو أرقام جوالات. أي مشاركة يبلّغ عنها ٣ أشخاص تختفي لين نراجعها.</AppText>
+          <AppText variant="small" muted style={{ lineHeight: 22 }}>احترم الناس، وبدون إعلانات أو أرقام جوالات أو روابط. المشاركات تمر بمراجعة سريعة قبل النشر، وتكرار المخالفات يوقف المشاركة مؤقتاً.</AppText>
           <AppText variant="tiny" muted style={{ marginTop: 4 }}>
             بالنشر توافق على <AppText variant="tiny" color={brand.purple} onPress={() => WebBrowser.openBrowserAsync(`${env.siteUrl}/terms`)}>شروط المجتمع</AppText>
           </AppText>
@@ -137,6 +144,7 @@ export default function Ask() {
 }
 
 const st = StyleSheet.create({
+  rej: { marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: brand.pinkDeep + '55', backgroundColor: brand.pinkDeep + '12' },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   post: { backgroundColor: brand.orange, borderRadius: 14, paddingHorizontal: 20, height: 42, justifyContent: 'center', minWidth: 76, alignItems: 'center' },
   kinds: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },

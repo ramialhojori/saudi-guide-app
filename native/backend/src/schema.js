@@ -82,6 +82,7 @@ const ALTERS = [
   'ALTER TABLE posts ADD COLUMN mod_reason TEXT',
   'ALTER TABLE answers ADD COLUMN mod TEXT',
   'ALTER TABLE answers ADD COLUMN mod_reason TEXT',
+  'ALTER TABLE users ADD COLUMN community_ban_until INTEGER', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
 ];
 
 let ready = false;

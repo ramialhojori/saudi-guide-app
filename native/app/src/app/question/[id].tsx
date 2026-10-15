@@ -115,6 +115,17 @@ export default function Question() {
           <Pressable style={st.round} onPress={() => menu('p', post)} accessibilityLabel="خيارات"><AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 22 }}>···</AppText></Pressable>
         </View>
 
+        {post.status ? (
+          <View style={[st.modBox, post.status === 'rejected' && { backgroundColor: brand.pinkDeep + '14', borderColor: brand.pinkDeep + '55' }]}>
+            <AppText style={{ fontFamily: font.bold }} color={post.status === 'rejected' ? brand.pinkDeep : brand.orangeDeep}>
+              {post.status === 'pending' ? 'وصلت مشاركتك وتنتظر مراجعة سريعة' : 'ما انتشرت مشاركتك'}
+            </AppText>
+            <AppText variant="small" muted style={{ marginTop: 4, lineHeight: 22 }}>
+              {post.status === 'pending' ? 'فريق الدليل بيراجعها، وأول ما تنتشر يوصلك إشعار. محد يشوفها غيرك الحين.' : (post.modReason || 'لأنها تخالف قواعد المجتمع.') + ' تقدر تكتبها من جديد بشكل ثاني.'}
+            </AppText>
+          </View>
+        ) : null}
+
         <View style={st.q}>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <Avatar t={initial(post.author.name)} c={tint(post.author.id)} size={42} />
@@ -184,7 +195,7 @@ export default function Question() {
       </ScrollView>
 
       {err ? <AppText variant="small" color={brand.pinkDeep} center style={{ paddingBottom: 4 }}>{err}</AppText> : null}
-      <View style={[st.reply, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {post.status ? null : <View style={[st.reply, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         {user ? (
           <>
             <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={36} />
@@ -196,12 +207,13 @@ export default function Question() {
         ) : (
           <Pressable style={[st.send, { flex: 1, alignItems: 'center' }]} onPress={needLogin}><AppText color="#fff" style={{ fontFamily: font.bold }}>سجّل عشان تجاوب</AppText></Pressable>
         )}
-      </View>
+      </View>}
     </KeyboardAvoidingView>
   );
 }
 
 const st = StyleSheet.create({
+  modBox: { marginHorizontal: 16, marginTop: 14, padding: 14, borderRadius: 18, borderWidth: 1, backgroundColor: brand.orange + '18', borderColor: brand.orange + '55' },
   round: { width: 42, height: 42, borderRadius: 21, backgroundColor: brand.card, alignItems: 'center', justifyContent: 'center' },
   q: { margin: 16, marginBottom: 0, backgroundColor: brand.card, borderRadius: 24, padding: 16 },
   photo: { height: 260, borderRadius: 18, marginTop: 12, backgroundColor: brand.chip },

@@ -710,8 +710,10 @@ async function usersView(q = '') {
   const R = { user: 'مستخدم', guide: 'مرشد موثّق', admin: 'فريق الدليل' };
   $('#res').innerHTML = d.users.map((u) => `<div class="item" style="cursor:default"><div class="ph" style="border-radius:50%;background:var(--lilac);color:#fff;font-weight:700;font-size:20px">${h((u.name || 'د')[0])}</div>
     <div class="grow"><div class="t">${h(u.name || 'بدون اسم')}</div><div class="m">${u.points} نقطة · ${cityName(u.city)} · سجّل ${new Date(u.created * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')}</div></div>
+    ${u.community_ban_until && u.community_ban_until * 1000 > Date.now() ? `<span class="badge b-hidden">موقوف عن المجتمع لين ${dAr(u.community_ban_until)}</span><button class="btn ghost" data-unmute="${u.id}">رجّع المشاركة</button>` : ''}
     <select class="in" style="width:auto" data-r="${u.id}">${Object.entries(R).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`).join('') || '<div class="empty">ما فيه مستخدمين</div>';
   m.querySelectorAll('select[data-r]').forEach((s) => (s.onchange = async () => { await api('/admin/community/role', { method: 'POST', body: { userId: s.dataset.r, role: s.value } }); toast('تغيّرت الصلاحية'); }));
+  m.querySelectorAll('[data-unmute]').forEach((b) => (b.onclick = async () => { await api('/admin/community/mute', { method: 'POST', body: { userId: b.dataset.unmute, days: 0 } }); toast('رجعت مشاركته'); usersView(); }));
 }
 
 /* ——— التجار والكوبونات ——— */

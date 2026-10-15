@@ -33,6 +33,8 @@ function postRow(r, me) {
     answers: r.answers, thanks: r.thanks, best: r.best_answer || null, created: r.created,
     author: author(r), mine: !!me && me.id === r.user_id, thanked: !!r.my_thanks,
     bestAnswer: r.b_text ? { text: r.b_text, name: r.b_name || 'مستخدم الدليل', badge: badgeOf(r.b_role, r.b_points || 0) } : null,
+    // صاحب المشاركة يشوف حالتها لو ما انتشرت (تنتظر المراجعة أو انرفضت) — غيره ما يوصلها أصلاً
+    ...(r.status && r.status !== 'visible' && me && me.id === r.user_id ? { status: r.status, modReason: r.mod_reason || '' } : {}),
   };
 }
 function answerRow(r, me) {
@@ -44,6 +46,34 @@ const recount = (env, postId) => env.DB.prepare("UPDATE posts SET answers=(SELEC
 const notify = (env, userId, type, actorId, postId, text) =>
   userId && userId !== actorId ? env.DB.prepare('INSERT INTO notifications (user_id,type,actor_id,post_id,text,created) VALUES (?,?,?,?,?,?)').bind(userId, type, actorId || null, postId || null, String(text || '').slice(0, 140), now()) : null;
 const addPoints = (env, uid, n) => env.DB.prepare('UPDATE users SET points=MAX(0,points+?) WHERE id=?').bind(n, uid);
+
+/* ——— قواعد المجتمع والتنبيهات: تذكير أول، تنبيه ثاني، وبعدها إيقاف مؤقت عن المشاركة ———
+   نحسب المشاركات اللي ما انتشرت (فلتر أو مراجعة ذكية أو رفض المشرف) خلال آخر 30 يوم */
+const RULES_LINE = 'قواعد المجتمع باختصار: أسئلة وإجابات عن المدن والأماكن، بدون أرقام أو روابط أو إعلانات، وبأسلوب محترم مع الكل.';
+const dayAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'long' });
+async function banState(env, uid) {
+  const u = await env.DB.prepare('SELECT community_ban_until b FROM users WHERE id=?').bind(uid).first();
+  return u && u.b && u.b > now() ? u.b : 0;
+}
+function banMessage(until) {
+  return `مشاركتك في «اسأل أهل المدينة» موقوفة مؤقتاً لين ${dayAr(until)}، بسبب تكرار مشاركات تخالف قواعد المجتمع. تقدر تتصفح وتستفيد من المجتمع عادي، وترجع تشارك بعدها. ${RULES_LINE}`;
+}
+/** بعد رفض مشاركة: نحسب المخالفات ونرجع رسالة مناسبة (ونوقف مؤقتاً من الثالثة) */
+async function afterReject(env, uid, reason) {
+  const since = now() - 30 * 86400;
+  const r = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM posts WHERE user_id=?1 AND status='rejected' AND created>?2) + (SELECT COUNT(*) FROM answers WHERE user_id=?1 AND status='rejected' AND created>?2) n`).bind(uid, since).first();
+  const n = r?.n || 0;
+  const base = reason || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.';
+  if (n <= 1) return `${base}\n${RULES_LINE}`;
+  if (n === 2) return `${base}\nتنبيه ودّي: هذي ثاني مشاركة ما تنتشر خلال شهر. لو تكرر الشي، بنوقف مشاركتك في المجتمع لفترة مؤقتة. ${RULES_LINE}`;
+  const days = n >= 5 ? 30 : 7;
+  const until = now() + days * 86400;
+  await env.DB.batch([
+    env.DB.prepare('UPDATE users SET community_ban_until=? WHERE id=?').bind(until, uid),
+    env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(uid, `وقفنا مشاركتك في المجتمع مؤقتاً لين ${dayAr(until)} بسبب تكرار المخالفات. نشوفك بعدها!`, now()),
+  ]);
+  return `${base}\n${banMessage(until)}`;
+}
 
 export async function communityRoute(p, request, env, J, q) {
   const M = request.method;
@@ -129,18 +159,21 @@ export async function communityRoute(p, request, env, J, q) {
     if (photo && !photo.includes('/media/c/')) return J({ error: 'bad_photo' }, 400);
     const n = await env.DB.prepare('SELECT COUNT(*) n FROM posts WHERE user_id=? AND created>?').bind(uid, now() - 86400).first();
     if (n.n >= DAILY_POSTS) return J({ error: 'rate_limited' }, 429);
+    const ban = await banState(env, uid);
+    if (ban) return J({ id: null, status: 'rejected', message: banMessage(ban) });
     const mod = await moderate(env, 'post', text, { city: b.city }, (await getFeatures(env)).ai_moderation);
     const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
       .bind(uid, kind, b.city || null, +b.placeId || null, text, photo || null, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
     if (mod.status === 'visible') await addPoints(env, uid, 2).run();
-    return J({ id: r.meta.last_row_id, status: mod.status, message: modMessage(mod.status, mod.reason) });
+    const message = mod.status === 'rejected' ? await afterReject(env, uid, mod.reason) : modMessage(mod.status, mod.reason);
+    return J({ id: r.meta.last_row_id, status: mod.status, message });
   }
 
   /* ——— سؤال واحد مع إجاباته ——— */
   if ((m = p.match(/^\/v1\/community\/(\d+)$/)) && M === 'GET') {
     const r = await env.DB.prepare(`SELECT p.*, u.name u_name, u.city u_city, u.role u_role, u.points u_points,
         (SELECT 1 FROM thanks t WHERE t.user_id=? AND t.target='p' AND t.target_id=p.id) my_thanks
-      FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=? AND p.status='visible'`).bind(uid, +m[1]).first();
+      FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=? AND (p.status='visible' OR (p.user_id=? AND p.status IN ('pending','rejected')))`).bind(uid, +m[1], uid || '-').first();
     if (!r) return J({ error: 'not_found' }, 404);
     if (r.user_id !== uid) await env.DB.prepare('UPDATE posts SET views=views+1 WHERE id=?').bind(r.id).run().catch(() => {});
     const args = [uid, +m[1]];
@@ -174,6 +207,8 @@ export async function communityRoute(p, request, env, J, q) {
     if (text.length < 2) return J({ error: 'too_short' }, 400);
     const n = await env.DB.prepare('SELECT COUNT(*) n FROM answers WHERE user_id=? AND created>?').bind(uid, now() - 86400).first();
     if (n.n >= DAILY_ANSWERS) return J({ error: 'rate_limited' }, 429);
+    const ban = await banState(env, uid);
+    if (ban) return J({ id: null, status: 'rejected', message: banMessage(ban) });
     const mod = await moderate(env, 'answer', text, { city: post.city, question: post.text }, (await getFeatures(env)).ai_moderation);
     const r = await env.DB.prepare('INSERT INTO answers (post_id,user_id,text,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?)')
       .bind(post.id, uid, text, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
@@ -184,7 +219,8 @@ export async function communityRoute(p, request, env, J, q) {
         notify(env, post.user_id, 'answer', uid, post.id, text),
       ].filter(Boolean));
     }
-    return J({ id: r.meta.last_row_id, status: mod.status, message: modMessage(mod.status, mod.reason) });
+    const message = mod.status === 'rejected' ? await afterReject(env, uid, mod.reason) : modMessage(mod.status, mod.reason);
+    return J({ id: r.meta.last_row_id, status: mod.status, message });
   }
 
   /* ——— شكر (يتبدّل: مرة يشكر ومرة يلغي) ——— */
@@ -351,12 +387,22 @@ export async function communityAdmin(p, request, env, J) {
         if (post && post.user_id !== row.user_id) ops.push(addPoints(env, row.user_id, 5), notify(env, post.user_id, 'answer', row.user_id, post.id, row.text));
       } else ops.push(addPoints(env, row.user_id, 2));
       ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,post_id,text,created) VALUES (?,'system',?,?,?)").bind(row.user_id, t === 'answers' ? row.post_id : row.id, 'انتشرت مشاركتك في «اسأل أهل المدينة» بعد المراجعة. شكراً لك!', now()));
-    } else if (row.status === 'pending') {
-      const note = clean(b.note, 160);
-      ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(row.user_id, `ما قدرنا ننشر مشاركتك في «اسأل أهل المدينة»${note ? ': ' + note : ' لأنها تخالف قواعد المجتمع'}.`, now()));
     }
     await env.DB.batch(ops.filter(Boolean));
+    if (!ok && row.status === 'pending') {
+      const note = clean(b.note, 160);
+      const msg = await afterReject(env, row.user_id, `ما قدرنا ننشر مشاركتك في «اسأل أهل المدينة»${note ? ': ' + note : ' لأنها تخالف قواعد المجتمع'}.`);
+      await env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(row.user_id, msg.replace(/\n/g, ' ').slice(0, 300), now()).run();
+    }
     return J({ ok: true, status: ok ? 'visible' : 'rejected' });
+  }
+  if (p === '/admin/community/mute' && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const days = Math.max(0, Math.min(365, Math.round(+b.days || 0)));
+    const until = days ? now() + days * 86400 : null;
+    await env.DB.prepare('UPDATE users SET community_ban_until=? WHERE id=?').bind(until, String(b.userId)).run();
+    if (days) await env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(String(b.userId), `وقفنا مشاركتك في المجتمع مؤقتاً لين ${dayAr(until)}.${b.note ? ' ' + clean(b.note, 140) : ''}`, now()).run();
+    return J({ ok: true, until });
   }
   if (p === '/admin/community/role' && request.method === 'POST') {
     const b = await request.json().catch(() => ({}));
