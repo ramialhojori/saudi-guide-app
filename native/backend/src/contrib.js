@@ -31,6 +31,8 @@ export const FEATURES = {
   heroes: 'أبطال الشهر',
   challenge: 'تحدي الأسبوع',
   ai_moderation: 'المراجعة الذكية لـ«اسأل أهل المدينة» قبل النشر',
+  ai_chat: '«اسأل الدليل» المساعد الذكي (دليل+)',
+  ai_planner: '«خطط لي رحلة» الذكي (دليل+)',
 };
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();

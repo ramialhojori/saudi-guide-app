@@ -43,6 +43,7 @@ export default function Home() {
   const first = (user?.name || '').trim().split(/\s+/)[0];
   const near = useNearby();
   const weather = useWeather(user?.city);
+  const feat = useFeatures();
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }} showsVerticalScrollIndicator={false}>
@@ -81,6 +82,26 @@ export default function Home() {
           );
         })}
       </View>
+
+      {/* دليل+ الذكي */}
+      {feat.ai_chat || feat.ai_planner ? (
+        <View style={st.aiRow}>
+          {feat.ai_chat ? (
+            <Pressable style={[st.aiCard, { backgroundColor: brand.purple }]} onPress={() => router.push('/ask-ai')}>
+              <Icon name="spark" color="#fff" size={22} />
+              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>اسأل الدليل</AppText>
+              <AppText variant="tiny" color="#E9E0FF">مساعدك الذكي يجاوبك فوراً</AppText>
+            </Pressable>
+          ) : null}
+          {feat.ai_planner ? (
+            <Pressable style={[st.aiCard, { backgroundColor: brand.orange }]} onPress={() => router.push('/planner')}>
+              <Icon name="route" color="#fff" size={22} />
+              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>خطط لي رحلتي</AppText>
+              <AppText variant="tiny" color="#FFF1E4">خطة يوم بيوم بذكاء</AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* مختارات الأسبوع */}
       <View style={st.secHead}>
@@ -242,6 +263,8 @@ const st = StyleSheet.create({
   avRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 28, gap: 4 },
   weather: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 6 },
+  aiRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginTop: 18 },
+  aiCard: { flex: 1, borderRadius: 20, padding: 14, gap: 4, minHeight: 96 },
   search: { marginTop: 14, height: 60, borderRadius: 22, backgroundColor: brand.card, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   count: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   kinds: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 24 },

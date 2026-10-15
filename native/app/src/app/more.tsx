@@ -12,6 +12,8 @@ import { strings } from '@/i18n/ar';
 type Item = { icon: IconName; label: string; color: string; on: () => void; soon?: boolean };
 
 const ITEMS: Item[] = [
+  { icon: 'spark', label: 'اسأل الدليل (مساعد ذكي)', color: brand.purple, on: () => router.push('/ask-ai') },
+  { icon: 'route', label: 'خطط لي رحلتي', color: brand.orange, on: () => router.push('/planner') },
   { icon: 'news', label: 'الأخبار', color: brand.sky, on: () => {}, soon: true },
   { icon: 'chat', label: 'اسأل أهل المدينة', color: brand.pink, on: () => {}, soon: true },
   { icon: 'ticket', label: 'العروض والكوبونات', color: brand.orange, on: () => {}, soon: true },

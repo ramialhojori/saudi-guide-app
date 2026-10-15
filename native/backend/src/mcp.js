@@ -13,6 +13,7 @@ import { messagesAdmin } from './messages.js';
 import { communityAdmin, guideAdmin } from './community.js';
 import { dashboard } from './track.js';
 import { seasonsAdmin } from './seasons.js';
+import { aiAdmin } from './ai.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const enc = new TextEncoder();
@@ -120,6 +121,9 @@ const TOOLS = [
   ['list_seasons', 'المواسم (من تصنيفات الفعاليات) وعدد فعالياتها.', S({}), () => ['GET', '/admin/seasons']],
   ['get_seasons_meta', 'بيانات المواسم الرسمية: الاسم، المدينة، البداية والنهاية (YYYY-MM-DD)، الوصف، الرابط، الغلاف، «سيعود قريباً» (returning) والفترة المعتادة (when).', S({}), () => ['GET', '/admin/seasons/meta']],
   ['set_season', 'يضيف أو يعدّل موسم واحد (بالاسم): start/end بصيغة YYYY-MM-DD، line وصف قصير، link رابط رسمي https، cover رابط صورة من تخزين الدليل فقط (صورنا الخاصة، لا تنسخ أغلفة مواقع ثانية)، returning=true للمواسم اللي انتهت وترجع، when الفترة المعتادة، hidden لإخفائه. اسم الموسم لازم يطابق تصنيف الفعاليات.', S({ name: str(''), city: CITY, start: str(''), end: str(''), line: str(''), link: str(''), cover: str(''), returning: { type: 'boolean' }, when: str(''), hidden: { type: 'boolean' } }, ['name']), (a) => ['POST', '/admin/seasons/meta', { season: a }]],
+  ['ai_stats', 'إحصاءات الذكاء الاصطناعي في التطبيق (اسأل الدليل + خطط لي رحلة) آخر 30 يوم، والحدود المجانية اليومية، وعدد مشتركي دليل+، وآخر الأسئلة.', S({}), () => ['GET', '/admin/ai']],
+  ['set_ai_limits', 'الحد المجاني اليومي لكل مستخدم: chat (أسئلة اسأل الدليل) و plan (خطط ذكية). ⚠️ بطلب رامي.', S({ chat: num(''), plan: num('') }, ['chat', 'plan']), (a) => ['POST', '/admin/ai/limits', a]],
+  ['grant_plus', 'يمنح مستخدم دليل+ يدوياً (هدية/تجربة) لعدد أيام، أو days=0 يلغيه. ⚠️ بطلب رامي.', S({ userId: str(''), days: num('') }, ['userId', 'days']), (a) => ['POST', '/admin/ai/plus', a]],
   ['get_weekly', 'قائمة مختارات الأسبوع (المجموعة اللي تدور منها الرئيسية).', S({}), () => ['GET', '/admin/weekly']],
   ['set_weekly', 'يحفظ قائمة مختارات الأسبوع كاملة: [{id, s: w|s|a (شتاء/صيف/كل السنة), x: 1 للنجمة}].', S({ pool: { type: 'array', items: S({ id: num(''), s: str('w|s|a'), x: num('') }) } }, ['pool']), (a) => ['POST', '/admin/weekly', { pool: a.pool }]],
   ['list_articles', 'الأخبار.', S({ status: str(''), q: str('') }), (a) => ['GET', '/admin/articles?' + qs(a)]],
@@ -198,7 +202,7 @@ async function adminCall(env, origin, method, path, body) {
     const last = await env.DB.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 5').all();
     return { sync: last.results };
   }
-  const r = (await seasonsAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
+  const r = (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
     || (await guideAdmin(p, req, env, J)) || (p.startsWith('/admin/community/') ? await communityAdmin(p, req, env, J) : null);
   if (!r) throw new Error('not_found');
   if (r.__s >= 400) throw new Error(r.d?.error || 'error_' + r.__s);

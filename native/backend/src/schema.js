@@ -84,6 +84,7 @@ const ALTERS = [
   'ALTER TABLE answers ADD COLUMN mod_reason TEXT',
   'ALTER TABLE suggestions ADD COLUMN ai TEXT', // فرز وتجهيز المراجعة الذكية لاقتراح المكان
   'ALTER TABLE places ADD COLUMN added_by TEXT', // المستخدم اللي اقترح المكان (يطلع اسمه في صفحة المكان)
+  'ALTER TABLE users ADD COLUMN plus_until INTEGER', // اشتراك دليل+ (أو منحة من المشرف) لين هالوقت
   'ALTER TABLE users ADD COLUMN community_ban_until INTEGER', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
 ];
 

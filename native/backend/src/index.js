@@ -15,6 +15,7 @@ import { reviewsRoute, reviewsAdmin } from './reviews.js';
 import { messagesAdmin, runQueue } from './messages.js';
 import { contribRoute, contribAdmin, weeklyImpact } from './contrib.js';
 import { seasonsRoute, seasonsAdmin } from './seasons.js';
+import { aiRoute, aiAdmin } from './ai.js';
 import { mcpRoute } from './mcp.js';
 import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
@@ -24,7 +25,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.13.0';
+const VERSION = '0.14.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -132,7 +133,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await seasonsAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -148,6 +149,7 @@ async function route(request, env, ctx) {
   }
 
   if (p === '/v1/seasons') { const r = await seasonsRoute(p, request, env, J); if (r) return r; }
+  if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }
 
   /* ——— المساهمة: المميزات، الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */
   if (p === '/v1/features' || p === '/v1/suggestions' || p === '/v1/places/similar' || p === '/v1/community/heroes' || /^\/v1\/places\/\d+\/facts$/.test(p)) {

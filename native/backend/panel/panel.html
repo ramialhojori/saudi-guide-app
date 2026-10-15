@@ -177,7 +177,7 @@ function loginView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['features', 'المميزات']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
 async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
@@ -188,7 +188,7 @@ async function render() {
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, features: featuresView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, features: featuresView, ai: aiView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -756,9 +756,14 @@ async function usersView(q = '') {
   const R = { user: 'مستخدم', guide: 'مرشد موثّق', admin: 'فريق الدليل' };
   $('#res').innerHTML = d.users.map((u) => `<div class="item" style="cursor:default"><div class="ph" style="border-radius:50%;background:var(--lilac);color:#fff;font-weight:700;font-size:20px">${h((u.name || 'د')[0])}</div>
     <div class="grow"><div class="t">${h(u.name || 'بدون اسم')}</div><div class="m">${u.points} نقطة · ${cityName(u.city)} · سجّل ${new Date(u.created * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')}</div></div>
+    ${u.plus_until && u.plus_until * 1000 > Date.now() ? `<span class="badge b-live">دليل+ لين ${dAr(u.plus_until)}</span>` : ''}<button class="btn ghost" data-plus="${u.id}" data-pn="${h(u.name || '')}">دليل+</button>
     ${u.community_ban_until && u.community_ban_until * 1000 > Date.now() ? `<span class="badge b-hidden">موقوف عن المجتمع لين ${dAr(u.community_ban_until)}</span><button class="btn ghost" data-unmute="${u.id}">رجّع المشاركة</button>` : ''}
     <select class="in" style="width:auto" data-r="${u.id}">${Object.entries(R).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`).join('') || '<div class="empty">ما فيه مستخدمين</div>';
   m.querySelectorAll('select[data-r]').forEach((s) => (s.onchange = async () => { await api('/admin/community/role', { method: 'POST', body: { userId: s.dataset.r, role: s.value } }); toast('تغيّرت الصلاحية'); }));
+  m.querySelectorAll('[data-plus]').forEach((b) => (b.onclick = async () => {
+    const d = prompt(`كم يوم دليل+ هدية لـ ${b.dataset.pn || 'هالمستخدم'}؟ (0 يلغيه)`, '30'); if (d == null) return;
+    await api('/admin/ai/plus', { method: 'POST', body: { userId: b.dataset.plus, days: +d } }); toast(+d ? 'صار عنده دليل+' : 'انلغى دليل+'); usersView();
+  }));
   m.querySelectorAll('[data-unmute]').forEach((b) => (b.onclick = async () => { await api('/admin/community/mute', { method: 'POST', body: { userId: b.dataset.unmute, days: 0 } }); toast('رجعت مشاركته'); usersView(); }));
 }
 
@@ -1015,6 +1020,27 @@ async function featuresView() {
     const on = r.features[c.dataset.f]; const b = $('#fb-' + c.dataset.f); b.textContent = on ? 'ظاهرة' : 'مخفية'; b.className = 'badge ' + (on ? 'b-live' : 'b-hidden');
     toast(on ? 'رجعت للتطبيق' : 'انخفت من التطبيق');
   }));
+}
+
+/* ——— الذكاء الاصطناعي ودليل+ ——— */
+async function aiView() {
+  const m = $('#main');
+  const d = await api('/admin/ai');
+  const K = { chat: 'اسأل الدليل', plan: 'خطط لي رحلتي' };
+  const st = Object.fromEntries((d.stats || []).map((x) => [x.kind, x]));
+  m.innerHTML = `<h1>الذكاء ودليل+</h1><p class="sub">المساعد الذكي «اسأل الدليل» ومخطط الرحلات. يجاوبون من محتوى الدليل فقط. المجاني له حد يومي، ومشترك دليل+ بدون حد.</p>
+    ${d.configured ? '' : '<div class="card" style="border:2px solid var(--orangeDeep)"><b>مفتاح Claude مو مضاف للسيرفر</b><div class="muted">شغّل «اضف-مفتاح-Claude.command» من مجلد backend.</div></div>'}
+    <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+      ${['chat', 'plan'].map((k) => { const x = st[k] || {}; return `<div class="card"><b>${K[k]}</b><div style="font-size:28px;font-weight:800;color:var(--purple)">${x.n || 0}</div><div class="muted" style="font-size:13px">طلب آخر 30 يوم · ${x.users || 0} مستخدم · نجح ${x.ok || 0} · متوسط ${Math.round((x.ms || 0) / 100) / 10} ث</div></div>`; }).join('')}
+      <div class="card"><b>مشتركين دليل+</b><div style="font-size:28px;font-weight:800;color:var(--orangeDeep)">${d.plusUsers}</div><div class="muted" style="font-size:13px">تقدر تهدي دليل+ من صفحة المستخدمين</div></div>
+    </div>
+    <div class="card" style="max-width:640px"><b>الحد المجاني اليومي</b>
+      <div class="row" style="margin-top:10px"><span class="grow">أسئلة «اسأل الدليل» باليوم</span><input class="in" id="lc" type="number" min="0" max="100" value="${d.limits.chat}" style="width:90px"></div>
+      <div class="row" style="margin-top:8px"><span class="grow">خطط ذكية باليوم</span><input class="in" id="lp" type="number" min="0" max="20" value="${d.limits.plan}" style="width:90px"></div>
+      <div class="muted" style="font-size:13px;margin:8px 0">0 يعني الميزة لمشتركين دليل+ فقط. ولإخفائها كلياً روح «المميزات».</div>
+      <button class="btn o" id="ls">احفظ</button></div>
+    <div class="card"><b>آخر الطلبات</b><div class="list">${(d.recent || []).map((r) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><span class="badge ${r.ok ? 'b-live' : 'b-hidden'}">${K[r.kind] || r.kind}</span><span class="grow">${h(r.q || '')}</span><span class="muted" style="font-size:12px">${h(r.name || '')} · ${dAr(r.created)}</span></div>`).join('') || '<div class="muted">ما فيه طلبات للحين</div>'}</div></div>`;
+  $('#ls').onclick = async () => { await api('/admin/ai/limits', { method: 'POST', body: { chat: +$('#lc').value, plan: +$('#lp').value } }); toast('انحفظ الحد'); };
 }
 
 /* ——— أبطال الشهر (داخل صفحة الأوسمة) ——— */
