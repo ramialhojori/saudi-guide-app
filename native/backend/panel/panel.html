@@ -634,7 +634,7 @@ let CTAB = 'reported';
 async function communityView() {
   const m = $('#main');
   m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع اللي حوّلته المراجعة الذكية لك، والبلاغات وكل المشاركات، وأدر تحدي الأسبوع.</p></div><div class="row"><button class="btn" id="chBtn">تحدي الأسبوع</button><button class="btn o" id="msgBtn">رسالة للمستخدمين ←</button></div></div>
-    <div class="tabs">${[['pending', 'تنتظر مراجعتك' + (SUMMARY?.counts?.communityPending ? ` (${SUMMARY.counts.communityPending})` : '')], ['reported', 'البلاغات'], ['rejected', 'رفضتها المراجعة'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+    <div class="tabs">${[['pending', 'تنتظر مراجعتك' + (SUMMARY?.counts?.communityPending ? ` (${SUMMARY.counts.communityPending})` : '')], ['unanswered', 'بدون إجابة'], ['reported', 'البلاغات'], ['rejected', 'رفضتها المراجعة'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => { CTAB = b.dataset.c; communityView(); }));
   $('#msgBtn').onclick = () => { VIEW = 'messages'; render(); };
   $('#chBtn').onclick = async () => {
@@ -653,6 +653,21 @@ async function communityView() {
     $('#stop', d) && ($('#stop', d).onclick = async () => { await api('/admin/challenge', { method: 'POST', body: { clear: true } }); toast('وقف التحدي'); closeDrawer(); });
   };
   const why = { reports: 'انخفت بالبلاغات', owner: 'صاحبها حذفها', admin: 'أنت أخفيتها', account: 'الحساب انحذف' };
+  if (CTAB === 'unanswered') {
+    // ترد بنفسك باسم «فريق دليل السعودية» (شارة فريق الدليل)، ويوصل صاحب السؤال إشعار
+    const d = await api('/admin/community/list?unanswered=1&kind=question&limit=60');
+    $('#res').innerHTML = d.posts.map((x) => `<div class="post"><div class="row"><span class="tag">سؤال #${x.id}</span><b style="font-size:13px">${h(x.name || '')}</b><span class="muted" style="font-size:13px">${cityName(x.city) || ''} · ${dAr(x.created)}</span></div>
+      <div style="font-weight:600">${h(x.text)}</div>
+      <textarea class="in" rows="3" data-ans="${x.id}" placeholder="اكتب ردك… يطلع باسم «فريق دليل السعودية»"></textarea>
+      <div class="row"><button class="btn g" data-send="${x.id}">رد كفريق الدليل</button><span class="muted" style="font-size:12.5px">أو قل لـClaude: «رد على الأسئلة اللي ما أحد جاوبها»</span></div></div>`).join('') || '<div class="empty">كل الأسئلة لها إجابات. ما شاء الله على أهل المدن</div>';
+    m.querySelectorAll('[data-send]').forEach((b) => (b.onclick = async () => {
+      const t = $(`[data-ans="${b.dataset.send}"]`).value.trim();
+      if (t.length < 2) return toast('اكتب الرد أول');
+      b.disabled = true;
+      try { await api('/admin/community/answer', { method: 'POST', body: { postId: +b.dataset.send, text: t } }); toast('انرسل الرد ووصله إشعار'); communityView(); } catch (e) { b.disabled = false; toast(errMsg(e)); }
+    }));
+    return;
+  }
   if (CTAB === 'pending' || CTAB === 'rejected') {
     const d = await api('/admin/community/pending?status=' + CTAB);
     const BY = { filter: 'الفلتر التلقائي', ai: 'المراجعة الذكية', admin_no: 'أنت رفضتها' };

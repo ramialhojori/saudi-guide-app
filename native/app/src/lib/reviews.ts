@@ -13,7 +13,7 @@ export const STAR_WORD = ['', 'ما عجبني', 'عادي', 'حلو', 'رائع
 const tok = () => session().token;
 export const placeReviews = (id: number) => api<PlaceReviews>(`/v1/places/${id}/reviews`, { token: tok() });
 export const postReview = (id: number, b: { stars: number; tags: string[]; text: string; photos: string[]; consent: boolean }) =>
-  api<{ id: number; points: number; photosPending: number }>(`/v1/places/${id}/reviews`, { method: 'POST', body: b, token: tok() });
+  api<{ id: number | null; points?: number; photosPending?: number; status?: 'rejected'; message?: string }>(`/v1/places/${id}/reviews`, { method: 'POST', body: b, token: tok() });
 export const deleteReview = (id: number) => api(`/v1/places/${id}/reviews`, { method: 'DELETE', token: tok() });
 export const reportReview = (id: number, reason = '') => api(`/v1/reviews/${id}/report`, { method: 'POST', body: { reason }, token: tok() });
 export const reportPhoto = (id: number, reason = '') => api(`/v1/photos/${id}/report`, { method: 'POST', body: { reason }, token: tok() });

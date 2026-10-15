@@ -72,6 +72,7 @@ export default function ReviewScreen() {
       const urls: string[] = [];
       for (const ph of photos) urls.push(ph.url ?? (await uploadPhoto(ph.uri)));
       const r = await postReview(Number(id), { stars, tags, text: text.trim(), photos: urls, consent });
+      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا نحفظ التقييم.'); return; }
       const msg = [r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : ''].filter(Boolean).join('\n');
       Alert.alert(isEdit ? 'انحفظ تقييمك' : 'شكراً على تقييمك!', msg || undefined, [{ text: 'تمام', onPress: () => router.back() }]);
       if (Platform.OS === 'web') router.back();

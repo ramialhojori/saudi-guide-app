@@ -400,3 +400,25 @@ export async function merchantAdmin(p, request, env, J, q) {
   }
   return null;
 }
+
+/* ——— تقرير أسبوعي للتاجر: كل خميس 7 المغرب بتوقيت مكة، إشعار بكم حفظ كوبوناته وكم استخدمها ——— */
+export async function merchantWeekly(env) {
+  const mk = new Date(Date.now() + 3 * 3600e3);
+  if (mk.getUTCDay() !== 4 || mk.getUTCHours() !== 19) return;
+  const wk = mk.toISOString().slice(0, 10);
+  const done = await env.DB.prepare("SELECT v FROM kv WHERE k='merchant_week'").first();
+  if (done?.v === wk) return;
+  await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('merchant_week',?)").bind(wk).run();
+  const since = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const { results } = await env.DB.prepare(`SELECT m.id, m.user_id, m.name,
+      (SELECT COUNT(*) FROM coupon_saves s JOIN coupons c ON c.id=s.coupon_id WHERE c.merchant_id=m.id AND s.created>=?1) saves,
+      (SELECT COUNT(*) FROM redemptions r WHERE r.merchant_id=m.id AND r.created>=?1) used,
+      (SELECT COUNT(*) FROM coupons c WHERE c.merchant_id=m.id AND c.status='active') active
+    FROM merchants m WHERE m.status='approved' LIMIT 2000`).bind(since).all();
+  for (const m of results) {
+    const text = m.active
+      ? `تقرير «${m.name}» هالأسبوع: ${m.saves} حفظوا كوبوناتك و${m.used} استخدموها. ${m.used ? 'شغل حلو!' : 'جرّب عرض أقوى أو نقاط أقل عشان يجذب أكثر.'}`
+      : `«${m.name}» ما عنده كوبون فعّال الحين. أضف كوبون جديد عشان يشوفك زوار الدليل.`;
+    await env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) VALUES (?,'system',?,'/merchant',?)").bind(m.user_id, text.slice(0, 160), Math.floor(Date.now() / 1000)).run();
+  }
+}

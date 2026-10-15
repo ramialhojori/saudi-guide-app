@@ -10,7 +10,7 @@ import { searchKey, km, CITIES } from './normalize.js';
 import { authRoute, sessionUser } from './auth.js';
 import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute, goingRoute, guideRequest, guideAdmin } from './community.js';
 import { adminRoute } from './admin.js';
-import { merchantRoute, merchantAdmin } from './merchants.js';
+import { merchantRoute, merchantAdmin, merchantWeekly } from './merchants.js';
 import { reviewsRoute, reviewsAdmin } from './reviews.js';
 import { messagesAdmin, runQueue } from './messages.js';
 import { contribRoute, contribAdmin, weeklyImpact } from './contrib.js';
@@ -23,7 +23,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.11.0';
+const VERSION = '0.12.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -345,5 +345,6 @@ export default {
     ctx.waitUntil(runSync(env, 'cron').catch((e) => console.log('sync', e && e.message)));
     ctx.waitUntil(runQueue(env).catch((e) => console.log('queue', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
+    ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
   },
 };

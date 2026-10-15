@@ -5,6 +5,7 @@
    - 3 بلاغات على تقييم → يختفي لين تراجعه الإدارة. ما نحذف شي */
 
 import { sessionUser } from './auth.js';
+import { quickFilter } from './moderation.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
@@ -66,6 +67,9 @@ export async function reviewsRoute(p, request, env, J, q) {
       const text = String(b.text || '').replace(/\n{3,}/g, '\n\n').trim().slice(0, 1200);
       const photos = (Array.isArray(b.photos) ? b.photos : []).map((x) => String(x).slice(0, 300)).filter((x) => x.includes('/media/c/' + me.id + '/')).slice(0, 6);
       if (photos.length && !b.consent) return J({ error: 'consent_required' }, 400);
+      // نص التقييم: الرأي السلبي مسموح، بس بدون أرقام أو روابط أو إعلانات أو كلام مسيء
+      const bad = text ? quickFilter(text) : null;
+      if (bad) return J({ id: null, status: 'rejected', message: bad.replace('المشاركة فيها', 'التقييم فيه') });
       const n = await env.DB.prepare('SELECT COUNT(*) n FROM reviews WHERE user_id=? AND updated>?').bind(me.id, now() - 86400).first();
       if (n.n >= DAILY) return J({ error: 'rate_limited' }, 429);
       const old = await env.DB.prepare('SELECT * FROM reviews WHERE user_id=? AND place_id=?').bind(me.id, pid).first();
