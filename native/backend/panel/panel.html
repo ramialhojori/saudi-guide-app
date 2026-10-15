@@ -560,6 +560,37 @@ async function seasonsView() {
       <div class="m muted" style="margin-top:6px">${x.live} فعالية منشورة${x.drafts ? ` · ${x.drafts} مسودة` : ''} · من ${fmt(x.start)} إلى ${fmt(x.end)}</div></div>`;
   }).join('') || '<div class="empty">ما فيه مواسم. أضف فعالية واختر لها موسم.</div>';
   m.querySelectorAll('[data-n]').forEach((el) => (el.onclick = () => { EF.q = el.dataset.n; EF.when = 'all'; VIEW = 'events'; render(); }));
+
+  // بيانات المواسم الرسمية: التواريخ والوصف والغلاف و«سيعود قريباً»
+  const meta = (await api('/admin/seasons/meta')).seasons;
+  const box = document.createElement('div');
+  box.className = 'card'; box.style.marginTop = '18px';
+  box.innerHTML = `<div class="row"><b class="grow" style="font-size:17px">بطاقات المواسم في التطبيق</b><button class="btn" id="newS">+ موسم</button></div>
+    <p class="muted" style="font-size:13.5px">التاريخ الرسمي يصحح تواريخ الموسم في التطبيق. والموسم اللي «سيعود قريباً» يطلع كبطاقة حتى لو ما فيه فعاليات. الغلاف من صورنا الخاصة فقط.</p>
+    <div class="list">${meta.map((x, i) => `<div class="item" data-sm="${i}">${x.cover ? `<img src="${h(x.cover)}">` : '<div class="ph">بدون غلاف</div>'}<div class="grow"><b>${h(x.name)}</b><div class="muted" style="font-size:13px">${x.start ? `${x.start} ← ${x.end || '؟'}` : x.returning ? 'سيعود قريباً' + (x.when ? ' · ' + h(x.when) : '') : 'التواريخ من الفعاليات'} · ${cityName(x.city)}${x.hidden ? ' · مخفي' : ''}</div><div class="muted" style="font-size:13px">${h(x.line)}</div></div></div>`).join('')}</div>`;
+  m.appendChild(box);
+  const editS = (x) => {
+    const imgs = x.cover ? [x.cover] : [];
+    const d = drawer(`<div class="row"><h2 class="grow">${x.name ? h(x.name) : 'موسم جديد'}</h2><button class="btn ghost" id="x">إغلاق</button></div>
+      <div class="f"><label>اسم الموسم (نفس تصنيف الفعاليات)</label><input class="in" id="sn" value="${h(x.name || '')}" ${x.name ? 'readonly' : ''}></div>
+      <div class="two"><div class="f"><label>البداية</label><input class="in" type="date" id="ss" value="${h(x.start || '')}"></div><div class="f"><label>النهاية</label><input class="in" type="date" id="se" value="${h(x.end || '')}"></div></div>
+      <div class="f"><label>المدينة</label><select class="in" id="sc">${META.cities.map((c) => `<option value="${c.id}" ${x.city === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
+      <div class="f"><label>وصف قصير</label><input class="in" id="sl" value="${h(x.line || '')}"></div>
+      <div class="two"><div class="f"><label>الفترة المعتادة</label><input class="in" id="sw" value="${h(x.when || '')}" placeholder="مثلاً: الشتاء"></div><div class="f"><label>الرابط الرسمي</label><input class="in" id="sk" value="${h(x.link || '')}" placeholder="https://"></div></div>
+      <label class="row" style="gap:8px"><input type="checkbox" id="sr" ${x.returning ? 'checked' : ''}> سيعود قريباً (يطلع حتى لو ما فيه فعاليات)</label>
+      <label class="row" style="gap:8px"><input type="checkbox" id="sh" ${x.hidden ? 'checked' : ''}> إخفاء من التطبيق</label>
+      <div class="f"><label>الغلاف (صورة طولية من صورنا)</label><div id="simgs"></div></div>
+      <div class="bar"><button class="btn g" id="save">حفظ</button></div>`);
+    imagesWidget($('#simgs', d), imgs);
+    $('#x', d).onclick = closeDrawer;
+    $('#save', d).onclick = async () => {
+      const season = { name: $('#sn', d).value.trim(), start: $('#ss', d).value, end: $('#se', d).value, city: $('#sc', d).value, line: $('#sl', d).value, when: $('#sw', d).value, link: $('#sk', d).value.trim(), returning: $('#sr', d).checked, hidden: $('#sh', d).checked, cover: imgs[0] || '' };
+      if (!season.name) return toast('اكتب اسم الموسم');
+      await api('/admin/seasons/meta', { method: 'POST', body: { season } }); toast('انحفظ، ويطلع في التطبيق خلال دقايق'); closeDrawer(); seasonsView();
+    };
+  };
+  box.querySelectorAll('[data-sm]').forEach((el) => (el.onclick = () => editS(meta[+el.dataset.sm])));
+  $('#newS').onclick = () => editS({ returning: true });
 }
 
 /* ——— مختارات الأسبوع ——— */

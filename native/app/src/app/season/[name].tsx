@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
+import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
@@ -9,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { Empty, Loading } from '@/components/State';
 import { BackButton, Chip, Pill, RoundButton } from '@/components/ui';
 import { cityName, getEvents } from '@/lib/content';
-import { seasonsFrom, seasonStatus, countEvents, toggleFollow, useFollowed } from '@/lib/seasons';
+import { getSeasonMeta, seasonsFrom, seasonStatus, countEvents, toggleFollow, useFollowed } from '@/lib/seasons';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem } from '@/lib/types';
@@ -24,12 +25,14 @@ export default function SeasonScreen() {
   const title = decodeURIComponent(name);
   const insets = useSafeAreaInsets();
   const { data, loading } = useAsync(getEvents, []);
+  const { data: meta, loading: ml } = useAsync(getSeasonMeta, []);
   const followed = useFollowed();
   const [zone, setZone] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(t); }, []);
 
-  const s = seasonsFrom(data ?? []).find((x) => x.name === title);
+  const s = seasonsFrom(data ?? [], Date.now(), meta ?? []).find((x) => x.name === title);
+  if (!s && ml) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton /><Loading /></View>;
   if (!s) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title="الموسم خلص أو ما لقيناه" />}</View>;
 
   const list = zone ? s.events.filter((e) => (e.address || '').startsWith(zone)) : s.events;
@@ -44,7 +47,7 @@ export default function SeasonScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 60 }}>
       <View style={[st.hero, { backgroundColor: s.color }]}>
-        <Image source={photos[s.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={s.cover ? { uri: s.cover } : photos[s.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['rgba(0,0,0,0.05)', s.color + 'F2']} locations={[0.2, 0.95]} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />
@@ -54,12 +57,15 @@ export default function SeasonScreen() {
           <View style={st.live}><View style={[st.liveDot, { backgroundColor: s.live ? '#7CFC9A' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(s, now)}</AppText></View>
           <AppText variant="hero" color="#fff" style={{ fontSize: 36, lineHeight: 48 }}>{s.name}</AppText>
           <AppText variant="small" color="#F2ECF8">{s.line}</AppText>
-          <AppText variant="small" color="#F2ECF8" style={{ marginTop: 4 }}>{riyadhDate(new Date(s.start).toISOString(), false)} – {riyadhDate(new Date(s.end).toISOString(), false)} · {countEvents(s.events.length)}</AppText>
+          {s.returning ? null : <AppText variant="small" color="#F2ECF8" style={{ marginTop: 4 }}>{riyadhDate(new Date(s.start).toISOString(), false)} – {riyadhDate(new Date(s.end).toISOString(), false)} · {countEvents(s.events.length)}</AppText>}
         </View>
       </View>
 
       {/* العداد + المتابعة */}
       <View style={st.panel}>
+        {s.returning ? (
+          <AppText style={{ fontFamily: font.semibold, lineHeight: 26 }}>الموسم انتهى ويرجع كل سنة{s.when ? ` (عادة ${s.when})` : ''}. تابعه ونبلغك أول ما تنعلن مواعيده وفعالياته.</AppText>
+        ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {[[cd.d, 'يوم'], [cd.h, 'ساعة'], [cd.m, 'دقيقة']].map(([v, l]) => (
             <View key={l} style={[st.cbox, { backgroundColor: s.color + '18' }]}>
@@ -69,11 +75,13 @@ export default function SeasonScreen() {
           ))}
           <AppText variant="small" style={{ flex: 1, fontFamily: font.semibold }}>{s.live ? 'على الختام' : 'على الافتتاح'}</AppText>
         </View>
+        )}
         <Pressable onPress={() => toggleFollow(s.name)} style={[st.follow, { backgroundColor: isFollowed ? brand.green : s.color }]}>
           <Icon name={isFollowed ? 'check' : 'bell'} color="#fff" size={18} />
           <AppText style={{ fontFamily: font.bold }} color="#fff">{isFollowed ? 'تتابع الموسم' : 'تابع الموسم'}</AppText>
         </Pressable>
         <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{isFollowed ? 'بنرسل لك الفعاليات الجديدة أول بأول' : 'توصلك فعالياته الجديدة أول ما تنضاف'}</AppText>
+        {s.link ? <Pressable onPress={() => WebBrowser.openBrowserAsync(s.link).catch(() => {})} style={{ marginTop: 10 }}><AppText center color={brand.link} style={{ fontFamily: font.bold }}>الموقع الرسمي للموسم ↗</AppText></Pressable> : null}
       </View>
 
       {/* المناطق */}

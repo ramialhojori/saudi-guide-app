@@ -11,7 +11,7 @@ import { Pill } from '@/components/ui';
 import { cityName, getEvents } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
-import { countEvents, seasonsFrom, seasonStatus, slug } from '@/lib/seasons';
+import { countEvents, getSeasonMeta, seasonsFrom, seasonStatus, slug } from '@/lib/seasons';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
 
@@ -41,6 +41,7 @@ const isUrl = (s: string) => /^https?:\/\//.test(s);
 export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
   const insets = useSafeAreaInsets();
   const { data, loading } = useAsync(getEvents, []);
+  const { data: meta } = useAsync(getSeasonMeta, []);
   const [when, setWhen] = useState(0);
   const [type, setType] = useState<string | null>(null);
   const [season, setSeason] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
   const types = TYPES.filter((t) => events.some((e) => typeOf(e)?.id === t.id));
   const on = (e: EventItem, k: string) => ksaKey(new Date(e.start).getTime()) <= k && ksaKey(new Date(e.end || e.start).getTime()) >= k;
 
-  const seasonList = useMemo(() => seasonsFrom(events, now), [events]);
+  const seasonList = useMemo(() => seasonsFrom(events, now, meta ?? []), [events, meta]);
   const cities = useMemo(() => [...new Set(events.map((e) => e.city).filter(Boolean))] as string[], [events]);
   const filtered = events.filter((e) => (!type || typeOf(e)?.id === type) && (!season || (e.cats || []).includes(season)) && (!city || e.city === city));
   const dated = filtered.filter((e) => !isLong(e));
@@ -104,12 +105,12 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {seasonList.map((x) => (
               <Pressable key={x.name} onPress={() => router.push(`/season/${slug(x.name)}`)} style={[st.seasonCard, { backgroundColor: x.color }]}>
-                <Image source={photos[x.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <Image source={x.cover ? { uri: x.cover } : photos[x.photo]} style={[StyleSheet.absoluteFill, x.returning && { opacity: 0.55 }]} contentFit="cover" />
                 <LinearGradient colors={['rgba(0,0,0,0)', x.color + 'F0']} locations={[0.15, 0.9]} style={StyleSheet.absoluteFill} />
-                <View style={st.seasonLive}><View style={[st.liveDot, { backgroundColor: x.live ? '#7CFC9A' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(x, now)}</AppText></View>
+                <View style={st.seasonLive}><View style={[st.liveDot, { backgroundColor: x.live ? '#7CFC9A' : x.returning ? '#C9C2DA' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(x, now)}</AppText></View>
                 <View style={{ position: 'absolute', right: 14, left: 14, bottom: 12 }}>
                   <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 30 }} color="#fff">{x.name}</AppText>
-                  <AppText variant="tiny" color="#F2ECF8">{countEvents(x.events.length)} · {x.line}</AppText>
+                  <AppText variant="tiny" color="#F2ECF8" numberOfLines={1}>{x.returning ? x.line : `${countEvents(x.events.length)} · ${x.line}`}</AppText>
                 </View>
               </Pressable>
             ))}
