@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -24,6 +24,12 @@ export default function Community() {
   const [city, setCity] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // «تحتاج إجابة»
   const openRef = useRef(false);
+  const [q, setQ] = useState('');
+  const qRef = useRef('');
+  const qTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onSearch = (v: string) => { setQ(v); qRef.current = v; clearTimeout(qTimer.current); qTimer.current = setTimeout(() => { setList(null); load(cityRef.current); }, 450); };
+  const cityRef = useRef<string | null>(null);
+  cityRef.current = city;
   const [act, setAct] = useState<CityActivity[]>([]);
   useEffect(() => { communityCities().then(setAct); }, []);
   // كل المدن: مدينتي أول، بعدها الأنشط، وبعدها الباقي بالترتيب المعتاد
@@ -46,7 +52,7 @@ export default function Community() {
   const load = useCallback(async (c: string | null) => {
     setBusy(true); setErr(false);
     try {
-      const [p, t] = await Promise.all([feed({ city: c, open: openRef.current }), cityHeroes(c).catch(() => ({ month: '', heroes: [] as Hero[] }))]);
+      const [p, t] = await Promise.all([feed({ city: c, open: openRef.current, q: qRef.current }), cityHeroes(c).catch(() => ({ month: '', heroes: [] as Hero[] }))]);
       setList(p); setTop(t.heroes); setMonth(t.month); setMore(p.length >= 20);
       api<{ challenge: Ch | null }>('/v1/community/challenge').then((r) => setCh(r.challenge)).catch(() => {});
     } catch { setErr(true); setList((l) => l ?? []); } finally { setBusy(false); }
@@ -56,7 +62,7 @@ export default function Community() {
   const loadMore = async () => {
     if (!list?.length || !more || busy) return;
     setBusy(true);
-    try { const p = await feed({ city, open, before: list[list.length - 1].id }); setList([...list, ...p]); setMore(p.length >= 20); } catch {} finally { setBusy(false); }
+    try { const p = await feed({ city, open, q, before: list[list.length - 1].id }); setList([...list, ...p]); setMore(p.length >= 20); } catch {} finally { setBusy(false); }
   };
   const ask = () => router.push(user ? '/ask' : '/login');
   const cityLabel = city ? cityName(city) : '';
@@ -85,6 +91,11 @@ export default function Community() {
         </Pressable>
       </View>
 
+      <View style={st.search}>
+        <Icon name="search" color={brand.muted} size={18} />
+        <TextInput value={q} onChangeText={onSearch} placeholder="ابحث في الأسئلة والنصايح: مواقف، فطور، عوائل…" placeholderTextColor={brand.muted} style={st.searchIn} returnKeyType="search" />
+        {q ? <Pressable onPress={() => onSearch('')} hitSlop={10} accessibilityLabel="مسح البحث"><Icon name="x" color={brand.muted} size={16} /></Pressable> : null}
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
         <Chip label="كل المدن" on={!city} color={brand.ink} onPress={() => { setCity(null); setList(null); }} />
         {cities.map((id) => <Chip key={id} label={`${id === user?.city ? 'مدينتي · ' : ''}${cityName(id)}`} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
@@ -121,7 +132,7 @@ export default function Community() {
         <>
           <Pressable style={st.empty} onPress={ask}>
             <View style={st.emptyIcon}><Icon name="chat" color={brand.purple} size={28} /></View>
-            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{city ? `ما أحد سأل عن ${cityLabel} للحين` : 'المجتمع ينتظر أول سؤال'}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{q ? `ما لقينا شي عن «${q}»، اسأل وأهل الديرة يجاوبونك` : city ? `ما أحد سأل عن ${cityLabel} للحين` : 'المجتمع ينتظر أول سؤال'}</AppText>
             <AppText variant="small" muted center>كن أول واحد يسأل أو يشارك نصيحة، وأهل الديرة يردّون عليك.</AppText>
             <View style={st.emptyBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>{user ? 'اكتب سؤالك' : 'سجّل واسأل'}</AppText></View>
           </Pressable>
@@ -198,6 +209,7 @@ export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => vo
           <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>شكراً{p.thanks ? ' · ' + p.thanks : ''}</AppText>
         </Pressable>
         <AppText variant="small" muted>{p.answers ? nAnswers(p.answers) : p.kind === 'question' ? 'كن أول من يجاوب' : 'علّق'}</AppText>
+        {p.double ? <Pill label="نقاط ×2" bg={brand.softOrange} fg={brand.orangeDeep} /> : null}
       </View>
     </Pressable>
   );
@@ -236,6 +248,8 @@ function PostCard({ p }: { p: Post }) {
 }
 
 const st = StyleSheet.create({
+  search: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 14, backgroundColor: brand.card, borderRadius: 16, paddingHorizontal: 14, height: 46, borderWidth: 1, borderColor: brand.line },
+  searchIn: { flex: 1, fontFamily: font.regular, fontSize: 14, color: brand.text, textAlign: 'right' },
   head: { backgroundColor: brand.purple, paddingHorizontal: 20, paddingBottom: 20, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   glass: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
   ask: { marginTop: 16, height: 60, backgroundColor: brand.card, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 },

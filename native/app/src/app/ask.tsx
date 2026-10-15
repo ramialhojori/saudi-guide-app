@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { Image } from 'expo-image';
 import { pickPhotos } from '@/lib/photos';
@@ -11,7 +11,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Avatar, BackButton, Chip } from '@/components/ui';
 import { env } from '@/config/env';
 import { useAuth } from '@/lib/auth';
-import { createPost, errText, initial, tint, uploadPhoto } from '@/lib/community';
+import { createPost, errText, initial, similarQuestions, tint, uploadPhoto } from '@/lib/community';
 import { brand, font, START, INPUT_START } from '@/theme/tokens';
 
 type Kind = 'question' | 'tip' | 'photo';
@@ -56,6 +56,13 @@ export default function Ask() {
     if (r.uris[0]) { setPhoto(r.uris[0]); if (kind === 'question' && !text) setKind('photo'); }
   };
 
+  // أسئلة مشابهة مجاوبة: يمكن يلقى جوابه بدون ما ينتظر
+  const [similar, setSimilar] = useState<{ id: number; text: string; answers: number }[]>([]);
+  useEffect(() => {
+    if (kind !== 'question' || text.trim().length < 10) { setSimilar([]); return; }
+    const t = setTimeout(() => { similarQuestions(text, city).then(setSimilar); }, 700);
+    return () => clearTimeout(t);
+  }, [text, city, kind]);
   const ready = text.trim().length >= 8 && (kind !== 'photo' || !!photo) && !busy;
   const submit = async () => {
     if (!ready) return;
@@ -101,6 +108,18 @@ export default function Ask() {
           <TextInput value={text} onChangeText={setText} placeholder={hint} placeholderTextColor={brand.faint} multiline maxLength={1500} autoFocus={kind !== 'photo'}
             style={st.input} />
           <AppText variant="tiny" muted style={{ textAlign: 'left' }}>{text.length}/1500</AppText>
+          {similar.length ? (
+            <View style={st.similar}>
+              <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>يمكن جوابك موجود</AppText>
+              {similar.map((q) => (
+                <Pressable key={q.id} onPress={() => router.push(`/question/${q.id}`)} style={st.simRow}>
+                  <Icon name="chat" color={brand.purple} size={16} />
+                  <AppText variant="small" style={{ flex: 1 }} numberOfLines={2}>{q.text}</AppText>
+                  <AppText variant="tiny" muted>{q.answers === 1 ? 'إجابة' : `${q.answers} إجابات`}</AppText>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
 
           {photo ? (
             <View style={st.photoWrap}>
@@ -143,6 +162,8 @@ export default function Ask() {
 }
 
 const st = StyleSheet.create({
+  similar: { marginTop: 12, backgroundColor: brand.softPurple, borderRadius: 16, padding: 12, gap: 8 },
+  simRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 12, padding: 10 },
   rej: { marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: brand.pinkDeep + '55', backgroundColor: brand.pinkDeep + '12' },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   post: { backgroundColor: brand.orange, borderRadius: 14, paddingHorizontal: 20, height: 42, justifyContent: 'center', minWidth: 76, alignItems: 'center' },

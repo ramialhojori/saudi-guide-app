@@ -12,7 +12,7 @@ import { Empty, Loading } from '@/components/State';
 import { Avatar, BackButton, Badge, Button, Pill, RoundButton } from '@/components/ui';
 import { cityName, getPlace, nearby } from '@/lib/content';
 import { useAuth } from '@/lib/auth';
-import { ago, answerFact, initial, nAnswers, placeFacts, tint, type CPost, type Fact } from '@/lib/community';
+import { ago, answerFact, initial, nAnswers, placeFacts, placeSummary, tint, type CPost, type Fact } from '@/lib/community';
 import { useFeatures } from '@/lib/features';
 import { track } from '@/lib/track';
 import { checkIn, placePosts, placeSocial, type PlaceSocial } from '@/lib/passport';
@@ -49,6 +49,9 @@ export default function PlaceScreen() {
   const [factMsg, setFactMsg] = useState('');
   const F = useFeatures();
   useEffect(() => { if (id) track('place', Number(id)); }, [id]);
+  // «خلاصة الزوار»: Claude يلخص التقييمات وإجابات المجتمع عن المكان
+  const [summary, setSummary] = useState<{ text: string; count: number } | null>(null);
+  useEffect(() => { if (id) placeSummary(Number(id)).then(setSummary); }, [id]);
   useFocusEffect(useCallback(() => {
     placeSocial(Number(id)).then(setSocial).catch(() => {});
     placePosts(Number(id)).then(setQs).catch(() => {});
@@ -157,6 +160,16 @@ export default function PlaceScreen() {
               <Pressable onPress={() => setMore((v) => !v)}><AppText style={{ fontFamily: font.bold, marginTop: 6 }} color={brand.purple}>{more ? 'أقل' : 'اقرأ أكثر'}</AppText></Pressable>
             </View>
           ) : p.summary ? <AppText style={{ marginTop: 16 }}>{p.summary}</AppText> : null}
+
+          {summary ? (
+            <View style={st.summary}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Icon name="spark" color={brand.purple} size={16} />
+                <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>خلاصة الزوار · من {summary.count} تجربة</AppText>
+              </View>
+              <AppText variant="small" style={{ lineHeight: 22 }}>{summary.text}</AppText>
+            </View>
+          ) : null}
 
           {/* نصيحة من أهل الديرة: أكثر نصيحة انشكرت عن هذا المكان */}
           {social?.tip ? (
@@ -277,6 +290,14 @@ export default function PlaceScreen() {
           <AppText muted style={{ flex: 1 }}>عندك سؤال عن المكان؟</AppText>
           <AppText style={{ fontFamily: font.bold }} color={brand.purple}>اسأل</AppText>
         </Pressable>
+        {/* أسئلة جاهزة بضغطة: تروح لأهل المدينة */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10 }}>
+          {['فيه مواقف قريبة؟', 'زحمة هالأيام؟', 'مناسب للأطفال؟', 'وش أحسن وقت للزيارة؟', 'الأسعار غالية؟'].map((t) => (
+            <Pressable key={t} style={st.quickQ} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city, text: t } })}>
+              <AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{t}</AppText>
+            </Pressable>
+          ))}
+        </ScrollView>
 
         {/* التقييمات وصور الزوار */}
         {F.reviews ? (<>
@@ -394,6 +415,8 @@ function Contact({ icon, label, on }: { icon: IconName; label: string; on: () =>
 }
 
 const st = StyleSheet.create({
+  summary: { marginTop: 4, backgroundColor: brand.softPurple, borderRadius: 18, padding: 14, gap: 6 },
+  quickQ: { borderRadius: 999, borderWidth: 1.5, borderColor: brand.softPurple, backgroundColor: brand.card, paddingHorizontal: 14, paddingVertical: 8 },
   stampCard: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 20, padding: 12, borderWidth: 1.5, borderColor: brand.line },
   stampBtn: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 18, height: 38, justifyContent: 'center', minWidth: 64, alignItems: 'center' },
   thumbs: { position: 'absolute', bottom: 46, left: 16, flexDirection: 'row', gap: 8 },

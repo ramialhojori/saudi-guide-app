@@ -77,6 +77,7 @@ export default function Question() {
       const r = await answer(post.id, t);
       if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا ننشر إجابتك لأنها تخالف قواعد المجتمع.'); return; }
       setText('');
+      if (r.status === 'visible' && r.points === 10) Alert.alert('نقاط مضاعفة', 'أول إجابة على سؤال انتظر يوم كامل، فخذ 10 نقاط بدل 5. شكراً لأنك ساعدت!');
       if (r.status === 'pending') Alert.alert('وصلت إجابتك', r.message || 'بتظهر بعد مراجعة سريعة من فريق الدليل.');
       await load();
     } catch (e) { setErr(errText(e)); } finally { setSending(false); }
@@ -169,7 +170,7 @@ export default function Question() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                       <AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{a.author.name}</AppText>
-                      {a.author.badge ? <Pill label={a.author.badge} bg={brand.purple} fg="#fff" /> : null}
+                      {a.expert ? <Pill label={a.expert} bg={brand.orangeDeep} fg="#fff" /> : a.author.badge ? <Pill label={a.author.badge} bg={brand.purple} fg="#fff" /> : null}
                     </View>
                     <AppText variant="tiny" muted>{[a.author.city ? 'من ' + cityName(a.author.city) : '', ago(a.created)].filter(Boolean).join(' · ')}</AppText>
                   </View>
@@ -189,7 +190,7 @@ export default function Question() {
             );
           })}
           {!answers.length ? (
-            <View style={st.none}><AppText style={{ fontFamily: font.bold }} center>{post.mine ? 'بنعلمك أول ما أحد يجاوب' : 'كن أول من يجاوب'}</AppText><AppText variant="small" muted center>{post.mine ? 'شارك السؤال مع أحد يعرف المدينة عشان يوصلك الجواب أسرع.' : 'جوابك يفيد ناس كثير يزورون المكان.'}</AppText></View>
+            <View style={st.none}><AppText style={{ fontFamily: font.bold }} center>{post.mine ? 'بنعلمك أول ما أحد يجاوب' : 'كن أول من يجاوب'}</AppText><AppText variant="small" muted center>{post.mine ? 'شارك السؤال مع أحد يعرف المدينة عشان يوصلك الجواب أسرع.' : (post.double ? 'السؤال صار له يوم بدون رد: أول إجابة تاخذ 10 نقاط بدل 5.' : 'جوابك يفيد ناس كثير يزورون المكان.')}</AppText></View>
           ) : null}
         </View>
       </ScrollView>

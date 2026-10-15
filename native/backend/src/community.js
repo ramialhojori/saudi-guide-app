@@ -27,10 +27,22 @@ function badgeOf(role, points) {
 }
 const author = (r) => ({ id: r.user_id, name: r.u_name || 'مستخدم الدليل', city: r.u_city || '', badge: badgeOf(r.u_role, r.u_points || 0), points: r.u_points || 0 });
 
+/* «خبير المدينة»: 10 إجابات أو أكثر عن نفس المدينة */
+const EXPERT_AT = 10;
+async function cityExperts(env, city) {
+  if (!city) return new Set();
+  const { results } = await env.DB.prepare(`SELECT a.user_id u FROM answers a JOIN posts p ON p.id=a.post_id
+    WHERE p.city=? AND a.status='visible' GROUP BY a.user_id HAVING COUNT(*)>=?`).bind(city, EXPERT_AT).all();
+  return new Set(results.map((x) => x.u));
+}
+/* سؤال صار له يوم بدون رد → أول إجابة عليه نقاطها مضاعفة */
+const DOUBLE_AFTER = 86400;
+const isDouble = (r) => r.kind === 'question' && !r.answers && r.created < now() - DOUBLE_AFTER;
+
 function postRow(r, me) {
   return {
     id: r.id, kind: r.kind, city: r.city || '', placeId: r.place_id || null, text: r.text, photo: r.photo || '',
-    answers: r.answers, thanks: r.thanks, best: r.best_answer || null, created: r.created,
+    answers: r.answers, thanks: r.thanks, best: r.best_answer || null, created: r.created, double: isDouble(r),
     author: author(r), mine: !!me && me.id === r.user_id, thanked: !!r.my_thanks,
     bestAnswer: r.b_text ? { text: r.b_text, name: r.b_name || 'مستخدم الدليل', badge: badgeOf(r.b_role, r.b_points || 0) } : null,
     // صاحب المشاركة يشوف حالتها لو ما انتشرت (تنتظر المراجعة أو انرفضت) — غيره ما يوصلها أصلاً
@@ -97,6 +109,21 @@ export async function communityRoute(p, request, env, J, q) {
   }
 
   /* ——— القائمة ——— */
+  /* أسئلة مشابهة مجاوبة (تطلع وهو يكتب سؤاله، عشان يلقى الجواب بدون ما ينتظر) */
+  if (p === '/v1/community/similar' && M === 'GET') {
+    const STOP = new Set(['في', 'من', 'على', 'عن', 'الى', 'إلى', 'هل', 'وش', 'ايش', 'وين', 'فيه', 'أحد', 'احد', 'اللي', 'مع', 'او', 'أو', 'ممكن', 'كيف', 'متى', 'كم', 'افضل', 'أفضل']);
+    const words = String(q.get('q') || '').replace(/[؟?!.,،]/g, ' ').split(/\s+/).map((w) => w.replace(/^ال/, '')).filter((w) => w.length >= 3 && !STOP.has(w)).slice(0, 6);
+    if (!words.length) return J({ posts: [] });
+    const city = q.get('city');
+    // نرتب حسب عدد الكلمات المتطابقة، وما نعرض إلا المجاوب
+    const score = words.map(() => '(CASE WHEN p.text LIKE ? THEN 1 ELSE 0 END)').join('+');
+    const args = [...words.map((w) => `%${w}%`)];
+    let sql = `SELECT p.id, p.text, p.city, p.answers, (${score}) sc FROM posts p WHERE p.status='visible' AND p.kind='question' AND p.answers>0`;
+    if (city) { sql += ' AND p.city=?'; args.push(city); }
+    const { results } = await env.DB.prepare(`SELECT * FROM (${sql}) WHERE sc>=? ORDER BY sc DESC, answers DESC LIMIT 4`).bind(...args, Math.min(2, words.length)).all();
+    return J({ posts: results.map((x) => ({ id: x.id, text: x.text, city: x.city || '', answers: x.answers })) });
+  }
+
   /* المدن ونشاطها: عدد المشاركات آخر 90 يوم وعدد الأسئلة اللي تنتظر رد */
   if (p === '/v1/community/cities' && M === 'GET') {
     const { results } = await env.DB.prepare(`SELECT p.city, COUNT(*) n,
@@ -121,6 +148,9 @@ export async function communityRoute(p, request, env, J, q) {
     if (KINDS.includes(kind)) { sql += ' AND p.kind=?'; args.push(kind); }
     if (mine && uid) { sql += ' AND p.user_id=?'; args.push(uid); }
     // «تحتاج إجابة»: أسئلة ما لها رد للحين (لأهل المدينة اللي يبون يساعدون)
+    // بحث: كل كلمة لازم تكون في النص (أو في إجابة الأفضل)
+    const words = String(q.get('q') || '').trim().split(/\s+/).filter((w) => w.length >= 2).slice(0, 5);
+    for (const w of words) { sql += ' AND (p.text LIKE ? OR a.text LIKE ?)'; args.push(`%${w}%`, `%${w}%`); }
     if (q.get('open') === '1') sql += " AND p.kind='question' AND NOT EXISTS (SELECT 1 FROM answers x WHERE x.post_id=p.id AND x.status='visible')";
     if (before) { sql += ' AND p.id<?'; args.push(before); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY p.id DESC LIMIT 20').bind(...args).all();
@@ -179,7 +209,7 @@ export async function communityRoute(p, request, env, J, q) {
     if (mod.status === 'visible') await addPoints(env, uid, 2).run();
     if (mod.status === 'visible' && kind === 'question') await notifyLocals(env, r.meta.last_row_id).catch(() => {});
     const message = mod.status === 'rejected' ? await afterReject(env, uid, mod.reason) : modMessage(mod.status, mod.reason);
-    return J({ id: r.meta.last_row_id, status: mod.status, message });
+    return J({ id: r.meta.last_row_id, status: mod.status, message, points: mod.status === 'visible' && post.user_id !== uid ? (isDouble(post) ? 10 : 5) : 0 });
   }
 
   /* ——— سؤال واحد مع إجاباته ——— */
@@ -195,7 +225,13 @@ export async function communityRoute(p, request, env, J, q) {
       FROM answers a JOIN users u ON u.id=a.user_id WHERE a.post_id=? AND a.status='visible' AND u.deleted=0`;
     if (uid) { sql += ' AND a.user_id NOT IN (SELECT blocked_id FROM blocks WHERE user_id=?)'; args.push(uid); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY (a.id=?) DESC, a.thanks DESC, a.id ASC LIMIT 200').bind(...args, r.best_answer || 0).all();
-    return J({ post: postRow(r, me), answers: results.map((a) => answerRow(a, me)) });
+    // إجابات «خبير المدينة» تطلع بعد الأفضل مباشرة
+    const ex = await cityExperts(env, r.city);
+    const cityLabel = CITIES.find((c) => c[0] === r.city)?.[1] || '';
+    const rows = results.map((a) => ({ ...answerRow(a, me), expert: ex.has(a.user_id) ? `خبير ${cityLabel}` : '' }));
+    const best = rows.filter((a) => a.id === r.best_answer), rest = rows.filter((a) => a.id !== r.best_answer);
+    const sorted = [...best, ...rest.filter((a) => a.expert), ...rest.filter((a) => !a.expert)];
+    return J({ post: postRow(r, me), answers: sorted });
   }
 
   /* ——— إخفاء مشاركتي (الحذف = إخفاء) ——— */
@@ -228,7 +264,7 @@ export async function communityRoute(p, request, env, J, q) {
     if (mod.status === 'visible') {
       await env.DB.batch([
         env.DB.prepare('UPDATE posts SET answers=answers+1 WHERE id=?').bind(post.id),
-        ...(post.user_id !== uid ? [addPoints(env, uid, 5)] : []),
+        ...(post.user_id !== uid ? [addPoints(env, uid, isDouble(post) ? 10 : 5)] : []),
         notify(env, post.user_id, 'answer', uid, post.id, text),
       ].filter(Boolean));
     }

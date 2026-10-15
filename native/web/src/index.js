@@ -82,6 +82,7 @@ async function pageMeta(env, path, site) {
     '/': [`${SITE_NAME} | أماكن سياحية ومطاعم وفعاليات المواسم`, DEFAULT_DESC],
     '/events': [`فعاليات السعودية ومواسمها | ${SITE_NAME}`, 'كل فعاليات المواسم والحفلات والمعارض في السعودية بمواعيدها وأماكنها، مع تذكير قبلها.'],
     '/explore': [`استكشف مدن السعودية | ${SITE_NAME}`, 'تصفح مدن ومناطق المملكة وأماكنها السياحية على القائمة والخريطة.'],
+    '/news': [`أخبار السعودية والمشاريع | ${SITE_NAME}`, 'آخر أخبار مشاريع السعودية والسياحة والفعاليات ورؤية 2030.'],
     '/community': [`اسأل أهل المدينة | ${SITE_NAME}`, 'اسأل أهل الديرة عن أي مكان في السعودية وخذ نصايحهم من تجربتهم.'],
     '/coupons': [`كوبونات وعروض | ${SITE_NAME}`, 'خصومات وعروض من مطاعم ومقاهي ومحلات المدن السعودية.'],
   };
@@ -117,7 +118,7 @@ async function sitemap(env, site) {
   const d = await api(env, '/v1/web/sitemap');
   const day = (t) => (t ? new Date(t * 1000).toISOString().slice(0, 10) : '');
   const u = (loc, last, pr) => `<url><loc>${site}${loc}</loc>${last ? `<lastmod>${last}</lastmod>` : ''}<priority>${pr}</priority></url>`;
-  const rows = [u('/', '', '1.0'), u('/events', '', '0.9'), u('/explore', '', '0.8'), u('/community', '', '0.7'), u('/coupons', '', '0.6')];
+  const rows = [u('/', '', '1.0'), u('/events', '', '0.9'), u('/explore', '', '0.8'), u('/community', '', '0.7'), u('/news', '', '0.7'), u('/coupons', '', '0.6')];
   (d?.cities || []).forEach((c) => rows.push(u(`/city/${c}`, '', '0.8')));
   (d?.places || []).forEach((p) => rows.push(u(`/place/${p.id}`, day(p.updated), '0.7')));
   (d?.events || []).forEach((e) => rows.push(u(`/event/${e.id}`, day(e.updated), '0.7')));

@@ -35,6 +35,7 @@ export const FEATURES = {
   ai_planner: '«خطط لي رحلة» الذكي (دليل+)',
   alerts: 'إشعارات المحتوى: جديد في مدينتك، بداية المواسم، تذكير الفعاليات',
   locals: 'تنبيه أهل المدينة بالأسئلة الجديدة عن مدينتهم',
+  ai_summary: '«خلاصة الزوار» الذكية أعلى صفحة المكان',
 };
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();

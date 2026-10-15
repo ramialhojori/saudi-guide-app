@@ -16,22 +16,30 @@ export type CPost = {
   id: number; kind: 'question' | 'tip' | 'photo'; city: string; placeId: number | null; text: string; photo: string;
   answers: number; thanks: number; best: number | null; created: number; author: Author; mine: boolean; thanked: boolean;
   bestAnswer: { text: string; name: string; badge: string } | null;
+  /** سؤال له يوم بدون رد: أول إجابة نقاطها مضاعفة */
+  double?: boolean;
   /** يجي بس لصاحب المشاركة لو ما انتشرت */
   status?: 'pending' | 'rejected'; modReason?: string;
 };
-export type CAnswer = { id: number; text: string; thanks: number; created: number; author: Author; mine: boolean; thanked: boolean };
+export type CAnswer = { id: number; text: string; thanks: number; created: number; author: Author; mine: boolean; thanked: boolean; expert?: string };
 
 const tok = () => session().token;
 
-export const feed = (o: { city?: string | null; kind?: string; before?: number; mine?: boolean; open?: boolean } = {}) => {
+export const feed = (o: { city?: string | null; kind?: string; before?: number; mine?: boolean; open?: boolean; q?: string } = {}) => {
   const q = new URLSearchParams();
   if (o.city) q.set('city', o.city);
   if (o.kind) q.set('kind', o.kind);
   if (o.before) q.set('before', String(o.before));
   if (o.mine) q.set('mine', '1');
   if (o.open) q.set('open', '1');
+  if (o.q?.trim()) q.set('q', o.q.trim());
   return api<{ posts: CPost[] }>(`/v1/community?${q}`, { token: tok() }).then((r) => r.posts);
 };
+/** أسئلة مشابهة مجاوبة (وهو يكتب سؤاله) */
+export const similarQuestions = (text: string, city?: string | null) =>
+  api<{ posts: { id: number; text: string; city: string; answers: number }[] }>(`/v1/community/similar?q=${encodeURIComponent(text)}${city ? `&city=${city}` : ''}`).then((r) => r.posts).catch(() => []);
+/** «خلاصة الزوار» الذكية للمكان */
+export const placeSummary = (id: number) => api<{ summary: { text: string; count: number } | null }>(`/v1/places/${id}/summary`).then((r) => r.summary).catch(() => null);
 export type CityActivity = { id: string; posts: number; open: number };
 /** نشاط المدن في المجتمع (آخر 90 يوم) */
 export const communityCities = () => api<{ cities: CityActivity[] }>('/v1/community/cities').then((r) => r.cities).catch(() => [] as CityActivity[]);
@@ -42,7 +50,7 @@ export const topHelpers = (city?: string | null) =>
 export const createPost = (b: { kind: string; city?: string | null; text: string; photo?: string; placeId?: number }) =>
   api<{ id: number; status?: 'visible' | 'pending' | 'rejected'; message?: string }>('/v1/community', { method: 'POST', body: b, token: tok() });
 export const answer = (postId: number, text: string) =>
-  api<{ id: number; status?: 'visible' | 'pending' | 'rejected'; message?: string }>(`/v1/community/${postId}/answers`, { method: 'POST', body: { text }, token: tok() });
+  api<{ id: number; status?: 'visible' | 'pending' | 'rejected'; message?: string; points?: number }>(`/v1/community/${postId}/answers`, { method: 'POST', body: { text }, token: tok() });
 export const thank = (target: 'p' | 'a', id: number) =>
   api<{ thanked: boolean; thanks: number }>(`/v1/community/${target === 'a' ? 'answers/' : ''}${id}/thanks`, { method: 'POST', token: tok() });
 export const markBest = (postId: number, answerId: number | null) =>

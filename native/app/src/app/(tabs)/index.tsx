@@ -171,7 +171,7 @@ export default function Home() {
       {/* آخر الأخبار */}
       {data?.articles?.length ? (
         <>
-          <Section title="آخر الأخبار" />
+          <Section title="آخر الأخبار" action="كل الأخبار" onAction={() => router.push('/news')} />
           <View style={{ gap: 10, paddingHorizontal: 16 }}>
             {data.articles.slice(0, 3).map((a) => (
               <Pressable key={a.id} onPress={() => router.push(`/article/${a.id}`)} style={st.near}>

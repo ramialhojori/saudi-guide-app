@@ -14,8 +14,8 @@ type Item = { icon: IconName; label: string; color: string; on: () => void; soon
 const ITEMS: Item[] = [
   { icon: 'spark', label: 'اسأل الدليل (مساعد ذكي)', color: brand.purple, on: () => router.push('/ask-ai') },
   { icon: 'route', label: 'خطط لي رحلتي', color: brand.orange, on: () => router.push('/planner') },
-  { icon: 'news', label: 'الأخبار', color: brand.sky, on: () => {}, soon: true },
-  { icon: 'chat', label: 'اسأل أهل المدينة', color: brand.pink, on: () => {}, soon: true },
+  { icon: 'news', label: 'الأخبار', color: brand.sky, on: () => router.push('/news') },
+  { icon: 'chat', label: 'اسأل أهل المدينة', color: brand.pink, on: () => router.push('/community') },
   { icon: 'ticket', label: 'العروض والكوبونات', color: brand.orange, on: () => {}, soon: true },
   { icon: 'share', label: 'تابعنا على إكس', color: brand.purple, on: () => Linking.openURL('https://x.com/SAUDIA_GUIDE') },
   { icon: 'phone', label: 'تواصل معنا', color: '#3E8E5A', on: () => router.push('/contact') },
