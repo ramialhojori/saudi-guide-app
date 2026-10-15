@@ -32,6 +32,8 @@ async function tryApi<T>(path: string, fallback: () => T): Promise<T> {
 }
 
 export const kinds: Kind[] = SNAP.kinds;
+/** كل مدن الدليل بالترتيب المعتمد (المجتمع، الإعدادات، النشر) */
+export const ALL_CITY_IDS = ['medina', 'makkah-region', 'riyadh', 'jeddah', 'alula', 'taif', 'abha', 'asir-region', 'diriyah', 'yanbu', 'umluj', 'eastern-region', 'tabuk-region', 'hail', 'qassim-region', 'albaha', 'jizan', 'najran', 'aljawf-region', 'northern-border', 'riyadh-region'];
 export const cityName = (id: string) => SNAP.cities.find((c) => c.id === id)?.name ?? '';
 export const allCities = SNAP.cities;
 

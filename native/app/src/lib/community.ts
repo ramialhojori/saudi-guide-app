@@ -23,14 +23,18 @@ export type CAnswer = { id: number; text: string; thanks: number; created: numbe
 
 const tok = () => session().token;
 
-export const feed = (o: { city?: string | null; kind?: string; before?: number; mine?: boolean } = {}) => {
+export const feed = (o: { city?: string | null; kind?: string; before?: number; mine?: boolean; open?: boolean } = {}) => {
   const q = new URLSearchParams();
   if (o.city) q.set('city', o.city);
   if (o.kind) q.set('kind', o.kind);
   if (o.before) q.set('before', String(o.before));
   if (o.mine) q.set('mine', '1');
+  if (o.open) q.set('open', '1');
   return api<{ posts: CPost[] }>(`/v1/community?${q}`, { token: tok() }).then((r) => r.posts);
 };
+export type CityActivity = { id: string; posts: number; open: number };
+/** نشاط المدن في المجتمع (آخر 90 يوم) */
+export const communityCities = () => api<{ cities: CityActivity[] }>('/v1/community/cities').then((r) => r.cities).catch(() => [] as CityActivity[]);
 export const getPost = (id: number) => api<{ post: CPost; answers: CAnswer[] }>(`/v1/community/${id}`, { token: tok() });
 export const topHelpers = (city?: string | null) =>
   api<{ top: { id: string; name: string; answers: number; badge: string }[] }>(`/v1/community/top${city ? `?city=${city}` : ''}`).then((r) => r.top);

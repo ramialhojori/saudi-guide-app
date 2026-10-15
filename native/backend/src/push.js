@@ -12,6 +12,7 @@ function prefKey(n) {
   if (n.type === 'answer' || n.type === 'thanks' || n.type === 'best') return 'community';
   const l = String(n.link || '');
   if (l.startsWith('/coupons')) return 'offers';
+  if (l.startsWith('/question')) return 'community';
   if (l.startsWith('/event') || l.startsWith('/season')) return 'events';
   if (l.startsWith('/city/') || l.startsWith('/place/')) return 'places';
   return null; // إشعارات الحساب (مراجعة، تواصل، نقاط) تنرسل دايماً

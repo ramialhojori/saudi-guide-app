@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,21 +8,31 @@ import { Icon } from '@/components/Icon';
 import { BellButton } from '@/components/BellButton';
 import { Avatar, Chip, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { ago, cityHeroes, feed, initial, nAnswers, thank, tint, type CPost, type Hero } from '@/lib/community';
+import { ago, cityHeroes, communityCities, feed, type CityActivity, initial, nAnswers, thank, tint, type CPost, type Hero } from '@/lib/community';
 import { useFeatures } from '@/lib/features';
-import { cityName } from '@/lib/content';
+import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { posts as samples, type Post } from '@/lib/mock';
 import { api } from '@/lib/api';
 import { brand, font, photos } from '@/theme/tokens';
 
 const daysLeft = (end: string) => { const d = Math.ceil((new Date(end).getTime() - Date.now()) / 86400e3); return d <= 0 ? 'آخر يوم' : d === 1 ? 'باقي يوم' : d === 2 ? 'باقي يومين' : `باقي ${d} أيام`; };
-const CITIES: [string | null, string][] = [[null, 'كل المدن'], ['medina', 'المدينة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة'], ['alula', 'العلا'], ['abha', 'أبها'], ['eastern-region', 'الشرقية']];
 
 /** المجتمع — محتوى تجريبي لين يجهز سيرفر المجتمع (المرحلة 2) */
 export default function Community() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [city, setCity] = useState<string | null>(null);
+  const [open, setOpen] = useState(false); // «تحتاج إجابة»
+  const openRef = useRef(false);
+  const [act, setAct] = useState<CityActivity[]>([]);
+  useEffect(() => { communityCities().then(setAct); }, []);
+  // كل المدن: مدينتي أول، بعدها الأنشط، وبعدها الباقي بالترتيب المعتاد
+  const cities = useMemo(() => {
+    const n = (id: string) => act.find((a) => a.id === id)?.posts ?? 0;
+    const rest = ALL_CITY_IDS.filter((c) => c !== user?.city).sort((a, b) => n(b) - n(a));
+    return [...(user?.city && ALL_CITY_IDS.includes(user.city) ? [user.city] : []), ...rest];
+  }, [act, user?.city]);
+  const openIn = (id: string | null) => (id ? act.find((a) => a.id === id)?.open ?? 0 : act.reduce((x, a) => x + a.open, 0));
   const [list, setList] = useState<CPost[] | null>(null);
   const [top, setTop] = useState<Hero[]>([]);
   const [month, setMonth] = useState('');
@@ -36,7 +46,7 @@ export default function Community() {
   const load = useCallback(async (c: string | null) => {
     setBusy(true); setErr(false);
     try {
-      const [p, t] = await Promise.all([feed({ city: c }), cityHeroes(c).catch(() => ({ month: '', heroes: [] as Hero[] }))]);
+      const [p, t] = await Promise.all([feed({ city: c, open: openRef.current }), cityHeroes(c).catch(() => ({ month: '', heroes: [] as Hero[] }))]);
       setList(p); setTop(t.heroes); setMonth(t.month); setMore(p.length >= 20);
       api<{ challenge: Ch | null }>('/v1/community/challenge').then((r) => setCh(r.challenge)).catch(() => {});
     } catch { setErr(true); setList((l) => l ?? []); } finally { setBusy(false); }
@@ -46,10 +56,10 @@ export default function Community() {
   const loadMore = async () => {
     if (!list?.length || !more || busy) return;
     setBusy(true);
-    try { const p = await feed({ city, before: list[list.length - 1].id }); setList([...list, ...p]); setMore(p.length >= 20); } catch {} finally { setBusy(false); }
+    try { const p = await feed({ city, open, before: list[list.length - 1].id }); setList([...list, ...p]); setMore(p.length >= 20); } catch {} finally { setBusy(false); }
   };
   const ask = () => router.push(user ? '/ask' : '/login');
-  const cityLabel = CITIES.find((c) => c[0] === city)?.[1] ?? '';
+  const cityLabel = city ? cityName(city) : '';
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}
@@ -76,8 +86,13 @@ export default function Community() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
-        {CITIES.map(([id, n]) => <Chip key={n} label={n} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
+        <Chip label="كل المدن" on={!city} color={brand.ink} onPress={() => { setCity(null); setList(null); }} />
+        {cities.map((id) => <Chip key={id} label={`${id === user?.city ? 'مدينتي · ' : ''}${cityName(id)}`} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
       </ScrollView>
+      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: -6 }}>
+        <Chip label="كل المشاركات" on={!open} color={brand.purple} onPress={() => { openRef.current = false; setOpen(false); setList(null); load(city); }} />
+        <Chip label={`تحتاج إجابة${openIn(city) ? ` (${openIn(city)})` : ''}`} on={open} color={brand.pinkDeep} onPress={() => { openRef.current = true; setOpen(true); setList(null); load(city); }} />
+      </View>
 
       {/* تحدي الأسبوع: يديره رامي من اللوحة */}
       {F.challenge && ch ? (

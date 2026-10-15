@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { Image } from 'expo-image';
 import { pickPhotos } from '@/lib/photos';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -19,7 +20,7 @@ const KINDS: [Kind, string, IconName, string][] = [
   ['tip', 'نصيحة', 'star', 'شارك شي تعرفه: وقت زحمة، مكان مخفي، تجربة تفيد غيرك…'],
   ['photo', 'صورة', 'cam', 'اكتب كلمتين عن الصورة: وين صوّرتها ووش يميز المكان؟'],
 ];
-const CITIES: [string, string][] = [['medina', 'المدينة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة'], ['alula', 'العلا'], ['abha', 'أبها'], ['taif', 'الطائف'], ['eastern-region', 'الشرقية'], ['tabuk-region', 'تبوك'], ['hail', 'حائل']];
+const CITIES: [string, string][] = ALL_CITY_IDS.map((c) => [c, cityName(c)]);
 
 /** النشر في المجتمع: سؤال أو نصيحة أو صورة */
 export default function Ask() {

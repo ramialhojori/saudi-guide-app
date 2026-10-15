@@ -97,6 +97,14 @@ export async function communityRoute(p, request, env, J, q) {
   }
 
   /* ——— القائمة ——— */
+  /* المدن ونشاطها: عدد المشاركات آخر 90 يوم وعدد الأسئلة اللي تنتظر رد */
+  if (p === '/v1/community/cities' && M === 'GET') {
+    const { results } = await env.DB.prepare(`SELECT p.city, COUNT(*) n,
+        SUM(CASE WHEN p.kind='question' AND NOT EXISTS (SELECT 1 FROM answers x WHERE x.post_id=p.id AND x.status='visible') THEN 1 ELSE 0 END) open
+      FROM posts p WHERE p.status='visible' AND p.city IS NOT NULL AND p.created>? GROUP BY p.city`).bind(now() - 90 * 86400).all();
+    return J({ cities: results.map((r) => ({ id: r.city, posts: r.n, open: r.open || 0 })) }, 200, 120);
+  }
+
   if (p === '/v1/community' && M === 'GET') {
     const args = [uid];
     let sql = `SELECT p.*, u.name u_name, u.city u_city, u.role u_role, u.points u_points,
@@ -112,6 +120,8 @@ export async function communityRoute(p, request, env, J, q) {
     if (city) { sql += ' AND p.city=?'; args.push(city); }
     if (KINDS.includes(kind)) { sql += ' AND p.kind=?'; args.push(kind); }
     if (mine && uid) { sql += ' AND p.user_id=?'; args.push(uid); }
+    // «تحتاج إجابة»: أسئلة ما لها رد للحين (لأهل المدينة اللي يبون يساعدون)
+    if (q.get('open') === '1') sql += " AND p.kind='question' AND NOT EXISTS (SELECT 1 FROM answers x WHERE x.post_id=p.id AND x.status='visible')";
     if (before) { sql += ' AND p.id<?'; args.push(before); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY p.id DESC LIMIT 20').bind(...args).all();
     return J({ posts: results.map((r) => postRow(r, me)) });
@@ -167,6 +177,7 @@ export async function communityRoute(p, request, env, J, q) {
     const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
       .bind(uid, kind, b.city || null, +b.placeId || null, text, photo || null, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
     if (mod.status === 'visible') await addPoints(env, uid, 2).run();
+    if (mod.status === 'visible' && kind === 'question') await notifyLocals(env, r.meta.last_row_id).catch(() => {});
     const message = mod.status === 'rejected' ? await afterReject(env, uid, mod.reason) : modMessage(mod.status, mod.reason);
     return J({ id: r.meta.last_row_id, status: mod.status, message });
   }
@@ -387,7 +398,7 @@ export async function communityAdmin(p, request, env, J) {
         const post = await env.DB.prepare('SELECT * FROM posts WHERE id=?').bind(row.post_id).first();
         ops.push(recount(env, row.post_id));
         if (post && post.user_id !== row.user_id) ops.push(addPoints(env, row.user_id, 5), notify(env, post.user_id, 'answer', row.user_id, post.id, row.text));
-      } else ops.push(addPoints(env, row.user_id, 2));
+      } else { ops.push(addPoints(env, row.user_id, 2)); if (row.kind === 'question') await notifyLocals(env, row.id).catch(() => {}); }
       ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,post_id,text,created) VALUES (?,'system',?,?,?)").bind(row.user_id, t === 'answers' ? row.post_id : row.id, 'انتشرت مشاركتك في «اسأل أهل المدينة» بعد المراجعة. شكراً لك!', now()));
     }
     await env.DB.batch(ops.filter(Boolean));
@@ -571,4 +582,27 @@ export async function guideAdmin(p, request, env, J) {
     return J({ ok: true });
   }
   return null;
+}
+
+
+/* ═════════ «اسأل أهل المدينة» فعلاً ═════════
+   سؤال جديد عن مدينة → يوصل إشعار لأهلها (مدينتهم في الحساب) اللي دخلوا التطبيق آخر 60 يوم
+   - حد أقصى 25 شخص للسؤال، وكل شخص ما يوصله أكثر من 2 من هالإشعارات باليوم (ما نزعجهم)
+   - نبدأ بالأكثر مساعدة (نقاط أعلى) عشان يجي الرد بسرعة
+   - تقفلها من اللوحة: الميزات ← «تنبيه أهل المدينة» */
+export async function notifyLocals(env, postId) {
+  if (!(await getFeatures(env)).locals) return 0;
+  const post = await env.DB.prepare("SELECT id, user_id, city, text FROM posts WHERE id=? AND status='visible' AND kind='question'").bind(postId).first();
+  if (!post || !post.city) return 0;
+  const name = CITIES.find((c) => c[0] === post.city)?.[1] || '';
+  const tag = `سؤال عن ${name}`;
+  const { results } = await env.DB.prepare(`SELECT u.id FROM users u WHERE u.deleted=0 AND u.city=? AND u.id<>? AND u.seen>?
+      AND (SELECT COUNT(*) FROM notifications n WHERE n.user_id=u.id AND n.created>? AND n.text LIKE 'سؤال عن %') < 2
+      AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE user_id=?) AND u.id NOT IN (SELECT user_id FROM blocks WHERE blocked_id=?)
+    ORDER BY u.points DESC LIMIT 25`).bind(post.city, post.user_id, now() - 60 * 86400, now() - 86400, post.user_id, post.user_id).all();
+  if (!results.length) return 0;
+  const text = `${tag} يحتاج خبرتك: «${String(post.text).replace(/\s+/g, ' ').slice(0, 80)}»`;
+  await env.DB.batch(results.map((u) => env.DB.prepare("INSERT INTO notifications (user_id,type,post_id,text,link,created) VALUES (?,'system',?,?,?,?)")
+    .bind(u.id, post.id, text.slice(0, 140), `/question/${post.id}`, now())));
+  return results.length;
 }

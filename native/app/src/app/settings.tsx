@@ -10,7 +10,7 @@ import { AppText } from '@/components/AppText';
 import { Avatar, BackButton, Chip } from '@/components/ui';
 import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { cityName } from '@/lib/content';
+import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { tint } from '@/lib/community';
 import { brand, font, isDark, START, INPUT_START } from '@/theme/tokens';
 import { env } from '@/config/env';
@@ -143,7 +143,7 @@ function setScheme(c: 'light' | 'dark') {
   setTimeout(() => DevSettings.reload(), 150);
 }
 
-const CITY_IDS = ['medina', 'makkah-region', 'riyadh', 'jeddah', 'alula', 'taif', 'abha', 'asir-region', 'diriyah', 'yanbu', 'umluj', 'eastern-region', 'tabuk-region', 'hail', 'qassim-region', 'albaha', 'jizan', 'najran', 'aljawf-region', 'northern-border', 'riyadh-region'];
+const CITY_IDS = ALL_CITY_IDS;
 
 const st = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12 },
