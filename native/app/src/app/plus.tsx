@@ -13,9 +13,11 @@ import { brand, font, photos } from '@/theme/tokens';
  * الأسعار هنا للعرض فقط. لما نربط اشتراكات آبل (RevenueCat) تنقرأ الأسعار من المتجر نفسه بعملة الجهاز.
  */
 type PlanId = 'yearly' | 'monthly';
+/** منتجات آبل الموجودة أصلاً في App Store Connect (مجموعة «Subscriptions» لتطبيق 1595843013): com.yearly و com.monthly، وفيها تجربة 3 أيام */
+export const PRODUCT_IDS: Record<PlanId, string> = { yearly: 'com.yearly', monthly: 'com.monthly' };
 const PLANS: { id: PlanId; title: string; price: string; per: string; note: string; tag?: string }[] = [
-  { id: 'yearly', title: 'سنوي', price: '99.99', per: 'ر.س / سنة', note: 'يعني 8.33 ر.س بالشهر · أول 7 أيام مجاناً', tag: 'وفّر 44%' },
-  { id: 'monthly', title: 'شهري', price: '14.99', per: 'ر.س / شهر', note: 'تقدر تلغيه بأي وقت' },
+  { id: 'yearly', title: 'سنوي', price: '99.99', per: 'ر.س / سنة', note: 'يعني 8.33 ر.س بالشهر · أول 3 أيام مجاناً', tag: 'وفّر 44%' },
+  { id: 'monthly', title: 'شهري', price: '14.99', per: 'ر.س / شهر', note: 'أول 3 أيام مجاناً · تقدر تلغيه بأي وقت' },
 ];
 
 const PERKS: { icon: IconName; title: string; sub: string; c: string; bg: string }[] = [
@@ -105,9 +107,9 @@ export default function Plus() {
       {/* زر الاشتراك ثابت تحت */}
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Pressable onPress={buy} style={st.cta} accessibilityRole="button">
-          <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>{plan === 'yearly' ? 'جرّب 7 أيام مجاناً' : 'اشترك الحين'}</AppText>
+          <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>جرّب 3 أيام مجاناً</AppText>
         </Pressable>
-        <AppText variant="tiny" muted center>{plan === 'yearly' ? `بعدها ${cur.price} ${cur.per}، وتقدر تلغي قبل ما ينتهي التجريبي` : `${cur.price} ${cur.per}`}</AppText>
+        <AppText variant="tiny" muted center>{`بعدها ${cur.price} ${cur.per}، وتقدر تلغي قبل ما تنتهي التجربة`}</AppText>
       </View>
     </View>
   );
