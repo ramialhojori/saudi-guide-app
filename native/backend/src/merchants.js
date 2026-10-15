@@ -94,7 +94,7 @@ async function alertCity(env, c) {
   const mm = await env.DB.prepare('SELECT name, city FROM merchants WHERE id=?').bind(c.merchant_id).first();
   if (!mm) return;
   const text = `عرض جديد في ${cityLabel(mm.city)}: «${c.title}» من ${mm.name}. افتح الكوبونات وشوفه.`;
-  await env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) SELECT user_id,'system',?,'/coupons',? FROM coupon_alerts WHERE city=? AND user_id!=?").bind(text, now(), mm.city, c.m_user || '').run();
+  await env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created,pushed) SELECT user_id,'system',?,'/coupons',?,1 FROM coupon_alerts WHERE city=? AND user_id!=?").bind(text, now(), mm.city, c.m_user || '').run();
   const h = (new Date().getUTCHours() + 3) % 24;
   if (h >= 8 && h < 23) {
     const t = await env.DB.prepare('SELECT d.token FROM devices d JOIN coupon_alerts a ON a.user_id=d.user_id WHERE a.city=? LIMIT 2000').bind(mm.city).all();

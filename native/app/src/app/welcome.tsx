@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { registerPush } from '@/lib/push';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
@@ -24,7 +25,7 @@ export default function Welcome() {
   const [step, setStep] = useState(0);
   const [kinds, setKinds] = useState<string[]>(['sights', 'heritage', 'nature', 'food', 'cafe']);
   const [cities, setCities] = useState<string[]>(['العلا', 'أبها']);
-  const finish = async () => { await prefs.setInterests(kinds, cities); await prefs.setOnboarded(); router.replace('/'); };
+  const finish = async () => { await prefs.setInterests(kinds, cities); await prefs.setOnboarded(); router.replace('/'); setTimeout(() => { registerPush(true).catch(() => {}); }, 800); };
   const dots = <View style={{ flexDirection: 'row', gap: 6 }}>{[0, 1, 2].map((i) => <View key={i} style={{ width: i === step ? 26 : 7, height: 7, borderRadius: 4, backgroundColor: i === step ? brand.orange : step === 0 ? 'rgba(255,255,255,0.4)' : '#E2DAEC' }} />)}</View>;
 
   if (step === 0) return (

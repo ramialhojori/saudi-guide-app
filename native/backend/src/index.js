@@ -21,6 +21,7 @@ import { contactRoute, contactAdmin } from './contact.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
+import { pushPending } from './push.js';
 import { mcpRoute } from './mcp.js';
 import { trackRoute, dashboard } from './track.js';
 import { PANEL_HTML } from './panel.js';
@@ -30,7 +31,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.18.0';
+const VERSION = '0.19.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -224,9 +225,13 @@ async function route(request, env, ctx) {
     if (!b.token || !/^ExponentPushToken\[.+\]$/.test(b.token)) return J({ error: 'bad_token' }, 400);
     const now = Math.floor(Date.now() / 1000);
     const cs = (Array.isArray(b.cities) ? b.cities : []).filter((c) => CITIES.some((x) => x[0] === c)).slice(0, 21);
+    const me = await sessionUser(env, request);
+    const prefs = {};
+    for (const k of ['community', 'offers', 'events', 'trip']) if (b.prefs && typeof b.prefs[k] === 'boolean') prefs[k] = b.prefs[k];
+    // الجهاز يرتبط بالحساب المسجّل فيه (ولو سجّل خروج: b.logout يفك الربط)
     await env.DB.prepare(
-      'INSERT INTO devices (token,platform,cities,created,seen) VALUES (?,?,?,?,?) ON CONFLICT(token) DO UPDATE SET platform=excluded.platform, cities=excluded.cities, seen=excluded.seen',
-    ).bind(b.token, String(b.platform || '').slice(0, 10), JSON.stringify(cs), now, now).run();
+      'INSERT INTO devices (token,platform,cities,user_id,prefs,created,seen) VALUES (?,?,?,?,?,?,?) ON CONFLICT(token) DO UPDATE SET platform=excluded.platform, cities=excluded.cities, user_id=excluded.user_id, prefs=excluded.prefs, seen=excluded.seen',
+    ).bind(b.token, String(b.platform || '').slice(0, 10), JSON.stringify(cs), me && !b.logout ? me.id : null, JSON.stringify(prefs), now, now).run();
     return J({ ok: true });
   }
   if (request.method !== 'GET') return J({ error: 'method_not_allowed' }, 405);
@@ -343,7 +348,10 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
     try {
       await ensureSchema(env);
-      return await route(request, env, ctx);
+      const res = await route(request, env, ctx);
+      // أي طلب كتابة ممكن يكون أضاف إشعار لمستخدم → نرسله للجوال بالخلفية
+      if (request.method === 'POST' || request.method === 'PUT') ctx.waitUntil(pushPending(env).catch((e) => console.log('push', e && e.message)));
+      return res;
     } catch (e) {
       console.log('error', e && e.stack);
       return J({ error: 'server_error' }, 500);
@@ -351,7 +359,9 @@ export default {
   },
   async scheduled(event, env, ctx) {
     await ensureSchema(env);
-    ctx.waitUntil(runSync(env, 'cron').catch((e) => console.log('sync', e && e.message)));
+    // المزامنة من قودبابر متوقفة (قرار 0007) إلا لو SYNC_ENABLED=1؛ الكرون يشغّل الرسائل المجدولة وإشعارات الجوال
+    if (env.SYNC_ENABLED === '1') ctx.waitUntil(runSync(env, 'cron').catch((e) => console.log('sync', e && e.message)));
+    ctx.waitUntil(pushPending(env).catch((e) => console.log('push', e && e.message)));
     ctx.waitUntil(runQueue(env).catch((e) => console.log('queue', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));

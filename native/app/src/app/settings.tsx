@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { PREFS_KEY, registerPush } from '@/lib/push';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
-import { Alert, Appearance, DevSettings, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, Appearance, DevSettings, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Avatar, BackButton, Chip } from '@/components/ui';
@@ -26,9 +27,15 @@ export default function Settings() {
   const [follow, setFollow] = useState<string[]>([]);
   const [open, setOpen] = useState<'' | 'home' | 'follow'>('');
   useEffect(() => { if (user) { setHome(user.city || ''); setBio(user.bio || ''); setName(user.name || ''); } }, [user?.id, user?.city, user?.bio]);
-  // تفضيلات الإشعارات تنحفظ في الجوال، وتتفعّل مع إشعارات الجوال في النسخة الجاية
-  useEffect(() => { AsyncStorage.getItem('sg_notif_prefs_v1').then((v) => { if (v) try { setN(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
-  const setPref = (k: keyof typeof n, v: boolean) => { const x = { ...n, [k]: v }; setN(x); AsyncStorage.setItem('sg_notif_prefs_v1', JSON.stringify(x)).catch(() => {}); };
+  // تفضيلات الإشعارات تنحفظ في الجوال وتوصل للسيرفر مع تسجيل الجهاز (lib/push.ts)
+  useEffect(() => { AsyncStorage.getItem(PREFS_KEY).then((v) => { if (v) try { setN(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  const setPref = (k: keyof typeof n, v: boolean) => {
+    const x = { ...n, [k]: v }; setN(x);
+    // نحفظ ونحدّث الجهاز عند السيرفر (ولو فعّل إشعار وما عنده إذن، نطلبه)
+    AsyncStorage.setItem(PREFS_KEY, JSON.stringify(x)).then(() => registerPush(v)).then((ok) => {
+      if (v && ok === false && Platform.OS !== 'web') Alert.alert('الإشعارات مقفلة', 'فعّل إشعارات دليل السعودية من إعدادات الجوال عشان توصلك.', [{ text: 'لاحقاً', style: 'cancel' }, { text: 'الإعدادات', onPress: () => Linking.openSettings() }]);
+    }).catch(() => {});
+  };
   useEffect(() => { if (user) api<{ cities: string[] }>('/v1/me/cities', { token: session().token }).then((r) => setFollow(r.cities)).catch(() => {}); }, [user?.id]);
   const saveFollow = async (next: string[]) => { setFollow(next); await api('/v1/me/cities', { method: 'PUT', body: { cities: next }, token: session().token }).catch(() => {}); };
   const saveHome = async (c: string) => { setHome(c); setOpen(''); await updateMe({ city: c }).catch(() => {}); };
@@ -95,7 +102,7 @@ export default function Settings() {
       </Group>
       {user ? (
         <Group title="الحساب">
-          <Row label="تسجيل الخروج" onPress={() => signOut()} color={brand.purple} />
+          <Row label="تسجيل الخروج" onPress={() => { registerPush(false, true).catch(() => {}); signOut(); }} color={brand.purple} />
           <Row label="حذف الحساب" onPress={confirmDelete} color={brand.pinkDeep} />
         </Group>
       ) : null}

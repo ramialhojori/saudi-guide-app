@@ -90,6 +90,9 @@ const ALTERS = [
   'ALTER TABLE places ADD COLUMN added_by TEXT', // المستخدم اللي اقترح المكان (يطلع اسمه في صفحة المكان)
   'ALTER TABLE users ADD COLUMN plus_until INTEGER', // اشتراك دليل+ (أو منحة من المشرف) لين هالوقت
   'ALTER TABLE users ADD COLUMN community_ban_until INTEGER',
+  'ALTER TABLE notifications ADD COLUMN pushed INTEGER NOT NULL DEFAULT 0', // انرسل كإشعار جوال؟ (push.js)
+  'CREATE INDEX IF NOT EXISTS notif_push ON notifications(pushed, created)',
+  'ALTER TABLE devices ADD COLUMN prefs TEXT', // تفضيلات إشعارات الجهاز {community, offers, events, trip}
   'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
   // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)
   'UPDATE users SET plus_grant_until=plus_until WHERE plus_grant_until IS NULL AND plus_until IS NOT NULL AND id NOT IN (SELECT user_id FROM iap_subs)', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات

@@ -71,7 +71,7 @@ async function deliver(env, m) {
   let inapp = m.sent_inapp, push = m.sent_push, errors = m.push_errors;
   if (m.inapp && !m.sent_inapp) {
     const u = audienceSql(a);
-    const r = await env.DB.prepare(`INSERT INTO notifications (user_id,type,text,link,created) SELECT u.id,'system',?,?,? FROM users u WHERE ${u.where}`)
+    const r = await env.DB.prepare(`INSERT INTO notifications (user_id,type,text,link,created,pushed) SELECT u.id,'system',?,?,?,1 FROM users u WHERE ${u.where}`)
       .bind([m.title, m.text].filter(Boolean).join(' — ').slice(0, 140), m.link || null, now(), ...u.args).run();
     inapp = r.meta.changes || 0;
   }

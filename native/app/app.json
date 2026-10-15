@@ -105,14 +105,23 @@
           "microphonePermission": false
         }
       ],
-      "expo-iap"
+      "expo-iap",
+      [
+        "expo-notifications",
+        {
+          "color": "#604C87"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "supportsRTL": true,
-      "forcesRTL": true
+      "forcesRTL": true,
+      "eas": {
+        "projectId": "0b12b8b0-edf6-42bb-8bfd-31c7b0b72ae7"
+      }
     },
     "owner": "carizma-tech"
   }

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { startIap } from '@/lib/iap';
+import { registerPush, startPush } from '@/lib/push';
 import { Appearance, DevSettings, I18nManager, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router } from 'expo-router';
@@ -59,6 +60,9 @@ export default function RootLayout() {
   // دليل+: نستقبل عمليات آبل اللي ما انقفلت (تجديد، انقطاع نت) أول ما يكون فيه حساب
   const uid = useAuth().user?.id;
   useEffect(() => { if (uid && Platform.OS === 'ios') startIap().catch(() => {}); }, [uid]);
+  // إشعارات الجوال: تجهيز فتح الروابط مرة وحدة، وربط الجهاز بالحساب كل ما تغيّر
+  useEffect(() => { startPush(); }, []);
+  useEffect(() => { if (uid) registerPush(false).catch(() => {}); }, [uid]);
   if (!loaded && !error) return null;
 
   return (
