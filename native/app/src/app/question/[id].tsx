@@ -73,7 +73,13 @@ export default function Question() {
     const t = text.trim();
     if (t.length < 2 || sending) return;
     setSending(true); setErr('');
-    try { await answer(post.id, t); setText(''); await load(); } catch (e) { setErr(errText(e)); } finally { setSending(false); }
+    try {
+      const r = await answer(post.id, t);
+      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا ننشر إجابتك لأنها تخالف قواعد المجتمع.'); return; }
+      setText('');
+      if (r.status === 'pending') Alert.alert('وصلت إجابتك', r.message || 'بتظهر بعد مراجعة سريعة من فريق الدليل.');
+      await load();
+    } catch (e) { setErr(errText(e)); } finally { setSending(false); }
   };
 
   /** قائمة الخيارات: حذف لمشاركتي، وإبلاغ/حظر لمشاركات غيري */

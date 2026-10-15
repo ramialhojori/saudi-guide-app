@@ -77,6 +77,11 @@ const ALTERS = [
   'ALTER TABLE merchants ADD COLUMN terms_at INTEGER',
   'ALTER TABLE coupons ADD COLUMN license TEXT', // رقم ترخيص التخفيضات من وزارة التجارة
   'ALTER TABLE coupons ADD COLUMN declared_at INTEGER', // وقت إقرار التاجر بالترخيص والمسؤولية
+  // المراجعة الذكية لـ«اسأل أهل المدينة»: مين قرر (filter|ai|off|error|admin_ok|admin_no) والسبب
+  'ALTER TABLE posts ADD COLUMN mod TEXT',
+  'ALTER TABLE posts ADD COLUMN mod_reason TEXT',
+  'ALTER TABLE answers ADD COLUMN mod TEXT',
+  'ALTER TABLE answers ADD COLUMN mod_reason TEXT',
 ];
 
 let ready = false;

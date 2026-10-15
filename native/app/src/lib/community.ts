@@ -32,9 +32,9 @@ export const topHelpers = (city?: string | null) =>
   api<{ top: { id: string; name: string; answers: number; badge: string }[] }>(`/v1/community/top${city ? `?city=${city}` : ''}`).then((r) => r.top);
 
 export const createPost = (b: { kind: string; city?: string | null; text: string; photo?: string; placeId?: number }) =>
-  api<{ id: number }>('/v1/community', { method: 'POST', body: b, token: tok() });
+  api<{ id: number; status?: 'visible' | 'pending' | 'rejected'; message?: string }>('/v1/community', { method: 'POST', body: b, token: tok() });
 export const answer = (postId: number, text: string) =>
-  api<{ id: number }>(`/v1/community/${postId}/answers`, { method: 'POST', body: { text }, token: tok() });
+  api<{ id: number; status?: 'visible' | 'pending' | 'rejected'; message?: string }>(`/v1/community/${postId}/answers`, { method: 'POST', body: { text }, token: tok() });
 export const thank = (target: 'p' | 'a', id: number) =>
   api<{ thanked: boolean; thanks: number }>(`/v1/community/${target === 'a' ? 'answers/' : ''}${id}/thanks`, { method: 'POST', token: tok() });
 export const markBest = (postId: number, answerId: number | null) =>

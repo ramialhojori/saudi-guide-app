@@ -2,3 +2,6 @@ node_modules/
 .wrangler/
 wrangler.toml
 .dev.vars
+مفاتيح-سرية.txt
+*.tmp
+سجل-الاعداد.txt

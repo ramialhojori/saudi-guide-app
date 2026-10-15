@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -63,6 +63,9 @@ export default function Ask() {
     try {
       const url = photo ? await uploadPhoto(photo) : undefined;
       const r = await createPost({ kind, city, text: text.trim(), photo: url, placeId: prm.placeId ? Number(prm.placeId) : undefined });
+      // المراجعة الذكية: مرفوضة → نبين السبب ويعدّل نصه، تنتظر مراجعة → نبلغه ونرجع
+      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.'); return; }
+      if (r.status === 'pending') { Alert.alert('وصلت مشاركتك', r.message || 'بتظهر بعد مراجعة سريعة من فريق الدليل.'); router.back(); return; }
       router.replace(`/question/${r.id}`);
     } catch (e) { setErr(errText(e)); } finally { setBusy(false); }
   };

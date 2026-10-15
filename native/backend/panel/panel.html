@@ -182,7 +182,7 @@ async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep, merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
+  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
@@ -215,7 +215,7 @@ async function homeView() {
   const KPI = (n, l, sub, color, go) => `<div class="kpi" ${go ? `data-go="${go}"` : ''}><div class="l">${l}</div><div class="n" style="color:${color}">${Number(n).toLocaleString('en')}</div><div class="s">${sub || '&nbsp;'}</div></div>`;
   const tasks = [
     [k.eventDrafts, 'فعالية مسودة تنتظر النشر', 'events', 'var(--orangeDeep)'], [k.placeDrafts, 'مكان مسودة ينتظر النشر', 'drafts', 'var(--orangeDeep)'],
-    [k.reported, 'بلاغ في المجتمع', 'community', 'var(--pinkDeep)'], [k.creports, 'بلاغ عميل على كوبون', 'merchants', 'var(--pinkDeep)'],
+    [k.communityPending, 'مشاركة تنتظر مراجعتك', 'community', 'var(--orange)'], [k.reported, 'بلاغ في المجتمع', 'community', 'var(--pinkDeep)'], [k.creports, 'بلاغ عميل على كوبون', 'merchants', 'var(--pinkDeep)'],
     [k.merchantsPending, 'طلب تاجر جديد', 'merchants', 'var(--purple)'], [k.couponsPending, 'كوبون ينتظر الموافقة', 'merchants', 'var(--purple)'],
     [k.photosPending, 'صورة زوار تنتظر', 'photos', 'var(--skyDeep)'], [k.suggPending, 'اقتراح من الزوار', 'suggest', 'var(--skyDeep)'],
     [k.guidesPending, 'طلب «مرشد موثّق»', 'users', 'var(--green)'], [k.unanswered, 'سؤال بدون إجابة', 'community', 'var(--lilac)'],
@@ -633,8 +633,8 @@ function editArticle(a) {
 let CTAB = 'reported';
 async function communityView() {
   const m = $('#main');
-  m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع البلاغات وكل المشاركات، وأدر تحدي الأسبوع.</p></div><div class="row"><button class="btn" id="chBtn">تحدي الأسبوع</button><button class="btn o" id="msgBtn">رسالة للمستخدمين ←</button></div></div>
-    <div class="tabs">${[['reported', 'البلاغات'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.innerHTML = `<div class="row"><div class="grow"><h1>المجتمع</h1><p class="sub">راجع اللي حوّلته المراجعة الذكية لك، والبلاغات وكل المشاركات، وأدر تحدي الأسبوع.</p></div><div class="row"><button class="btn" id="chBtn">تحدي الأسبوع</button><button class="btn o" id="msgBtn">رسالة للمستخدمين ←</button></div></div>
+    <div class="tabs">${[['pending', 'تنتظر مراجعتك' + (SUMMARY?.counts?.communityPending ? ` (${SUMMARY.counts.communityPending})` : '')], ['reported', 'البلاغات'], ['rejected', 'رفضتها المراجعة'], ['all', 'كل المشاركات']].map(([k, t]) => `<button data-c="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => { CTAB = b.dataset.c; communityView(); }));
   $('#msgBtn').onclick = () => { VIEW = 'messages'; render(); };
   $('#chBtn').onclick = async () => {
@@ -653,6 +653,21 @@ async function communityView() {
     $('#stop', d) && ($('#stop', d).onclick = async () => { await api('/admin/challenge', { method: 'POST', body: { clear: true } }); toast('وقف التحدي'); closeDrawer(); });
   };
   const why = { reports: 'انخفت بالبلاغات', owner: 'صاحبها حذفها', admin: 'أنت أخفيتها', account: 'الحساب انحذف' };
+  if (CTAB === 'pending' || CTAB === 'rejected') {
+    const d = await api('/admin/community/pending?status=' + CTAB);
+    const BY = { filter: 'الفلتر التلقائي', ai: 'المراجعة الذكية', admin_no: 'أنت رفضتها' };
+    const list = [...d.posts.map((x) => ({ ...x, t: 'p' })), ...d.answers.map((x) => ({ ...x, t: 'a' }))].sort((a, b) => b.created - a.created);
+    $('#res').innerHTML = list.map((x) => `<div class="post"><div class="row"><span class="tag">${x.t === 'p' ? 'مشاركة' : 'إجابة'} #${x.id}</span><b style="font-size:13px">${h(x.name || '')}</b><span class="muted" style="font-size:13px">${dAr(x.created)}${x.mod ? ' · ' + (BY[x.mod] || x.mod) : ''}</span></div>
+      ${x.question ? `<div class="muted" style="font-size:13px">على سؤال: ${h(x.question.slice(0, 140))}</div>` : ''}${x.photo ? `<img src="${h(x.photo)}" style="max-width:260px;border-radius:14px">` : ''}<div>${h(x.text)}</div>
+      ${x.mod_reason ? `<div class="muted" style="font-size:13px">السبب: ${h(x.mod_reason)}</div>` : ''}
+      <div class="row"><button class="btn g" data-rv="approve" data-t="${x.t}" data-id="${x.id}">اعتمد وانشر</button>${CTAB === 'pending' ? `<button class="btn p" data-rv="reject" data-t="${x.t}" data-id="${x.id}">ارفض</button>` : ''}</div></div>`).join('') || `<div class="empty">${CTAB === 'pending' ? 'ما فيه شي ينتظر مراجعتك' : 'ما فيه مشاركات مرفوضة'}</div>`;
+    m.querySelectorAll('[data-rv]').forEach((b) => (b.onclick = async () => {
+      const note = b.dataset.rv === 'reject' ? (prompt('سبب الرفض يوصل للمستخدم (اختياري)') || '') : '';
+      await api('/admin/community/review', { method: 'POST', body: { target: b.dataset.t, id: +b.dataset.id, decision: b.dataset.rv, note } });
+      toast(b.dataset.rv === 'approve' ? 'انتشرت' : 'انرفضت'); SUMMARY = null; communityView();
+    }));
+    return;
+  }
   let rows;
   if (CTAB === 'reported') {
     const d = await api('/admin/community/reported');

@@ -53,6 +53,7 @@ export async function dashboard(env) {
       (SELECT COUNT(*) FROM posts p WHERE p.status='visible' AND p.kind='question' AND p.answers=0) unanswered,
       (SELECT COUNT(*) FROM reviews WHERE created>=?1) reviews7, (SELECT COUNT(*) FROM visits WHERE created>=?1) visits7, (SELECT COUNT(*) FROM redemptions WHERE created>=?1) redeems7,
       (SELECT COUNT(*) FROM posts WHERE reports>0 AND hidden_by IS NOT 'admin') + (SELECT COUNT(*) FROM answers WHERE reports>0 AND hidden_by IS NOT 'admin') reported,
+      (SELECT COUNT(*) FROM posts WHERE status='pending') + (SELECT COUNT(*) FROM answers WHERE status='pending') communityPending,
       (SELECT COUNT(*) FROM merchants WHERE status='pending') merchantsPending, (SELECT COUNT(*) FROM coupons WHERE status='pending') couponsPending,
       (SELECT COUNT(*) FROM coupon_reports WHERE status='pending') creports, (SELECT COUNT(*) FROM place_photos WHERE status='pending') photosPending,
       (SELECT COUNT(*) FROM suggestions WHERE status='pending') suggPending, (SELECT COUNT(*) FROM guide_requests WHERE status='pending') guidesPending,

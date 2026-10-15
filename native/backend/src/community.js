@@ -7,7 +7,8 @@
 
 import { sessionUser } from './auth.js';
 import { CITIES, km } from './normalize.js';
-import { impactOf } from './contrib.js';
+import { impactOf, getFeatures } from './contrib.js';
+import { moderate, modMessage } from './moderation.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const KINDS = ['question', 'tip', 'photo'];
@@ -128,10 +129,11 @@ export async function communityRoute(p, request, env, J, q) {
     if (photo && !photo.includes('/media/c/')) return J({ error: 'bad_photo' }, 400);
     const n = await env.DB.prepare('SELECT COUNT(*) n FROM posts WHERE user_id=? AND created>?').bind(uid, now() - 86400).first();
     if (n.n >= DAILY_POSTS) return J({ error: 'rate_limited' }, 429);
-    const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created) VALUES (?,?,?,?,?,?,?)')
-      .bind(uid, kind, b.city || null, +b.placeId || null, text, photo || null, now()).run();
-    await addPoints(env, uid, 2).run();
-    return J({ id: r.meta.last_row_id });
+    const mod = await moderate(env, 'post', text, { city: b.city }, (await getFeatures(env)).ai_moderation);
+    const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+      .bind(uid, kind, b.city || null, +b.placeId || null, text, photo || null, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
+    if (mod.status === 'visible') await addPoints(env, uid, 2).run();
+    return J({ id: r.meta.last_row_id, status: mod.status, message: modMessage(mod.status, mod.reason) });
   }
 
   /* ——— سؤال واحد مع إجاباته ——— */
@@ -172,13 +174,17 @@ export async function communityRoute(p, request, env, J, q) {
     if (text.length < 2) return J({ error: 'too_short' }, 400);
     const n = await env.DB.prepare('SELECT COUNT(*) n FROM answers WHERE user_id=? AND created>?').bind(uid, now() - 86400).first();
     if (n.n >= DAILY_ANSWERS) return J({ error: 'rate_limited' }, 429);
-    const r = await env.DB.prepare('INSERT INTO answers (post_id,user_id,text,created) VALUES (?,?,?,?)').bind(post.id, uid, text, now()).run();
-    await env.DB.batch([
-      env.DB.prepare('UPDATE posts SET answers=answers+1 WHERE id=?').bind(post.id),
-      ...(post.user_id !== uid ? [addPoints(env, uid, 5)] : []),
-      notify(env, post.user_id, 'answer', uid, post.id, text),
-    ].filter(Boolean));
-    return J({ id: r.meta.last_row_id });
+    const mod = await moderate(env, 'answer', text, { city: post.city, question: post.text }, (await getFeatures(env)).ai_moderation);
+    const r = await env.DB.prepare('INSERT INTO answers (post_id,user_id,text,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?)')
+      .bind(post.id, uid, text, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
+    if (mod.status === 'visible') {
+      await env.DB.batch([
+        env.DB.prepare('UPDATE posts SET answers=answers+1 WHERE id=?').bind(post.id),
+        ...(post.user_id !== uid ? [addPoints(env, uid, 5)] : []),
+        notify(env, post.user_id, 'answer', uid, post.id, text),
+      ].filter(Boolean));
+    }
+    return J({ id: r.meta.last_row_id, status: mod.status, message: modMessage(mod.status, mod.reason) });
   }
 
   /* ——— شكر (يتبدّل: مرة يشكر ومرة يلغي) ——— */
@@ -279,7 +285,7 @@ export async function communityAdmin(p, request, env, J) {
     const where = ['1=1'], args = [];
     if (q.get('city')) { where.push('p.city=?'); args.push(q.get('city')); }
     if (q.get('kind')) { where.push('p.kind=?'); args.push(q.get('kind')); }
-    if (q.get('status') === 'hidden') where.push("p.status='hidden'"); else if (q.get('status') !== 'all') where.push("p.status='visible'");
+    if (['hidden', 'pending', 'rejected'].includes(q.get('status'))) { where.push('p.status=?'); args.push(q.get('status')); } else if (q.get('status') !== 'all') where.push("p.status='visible'");
     if (q.get('unanswered') === '1' || q.get('unanswered') === 'true') where.push('p.answers=0');
     if (q.get('q')) { where.push('p.text LIKE ?'); args.push(`%${q.get('q')}%`); }
     const { results } = await env.DB.prepare(`SELECT p.id,p.kind,p.city,p.place_id,p.text,p.photo,p.answers,p.thanks,p.best_answer,p.reports,p.status,p.created,u.name,u.role
@@ -323,6 +329,34 @@ export async function communityAdmin(p, request, env, J) {
     if (a && a.id !== post.best_answer && a.user_id !== team) ops.push(addPoints(env, a.user_id, 15), notify(env, a.user_id, 'best', team, post.id, a.text));
     await env.DB.batch(ops.filter(Boolean));
     return J({ ok: true });
+  }
+  /* ——— طابور المراجعة: اللي حوّلتها المراجعة الذكية لك، واللي رفضتها (تقدر ترجعها) ——— */
+  if (p === '/admin/community/pending' && request.method === 'GET') {
+    const st = q.get('status') === 'rejected' ? 'rejected' : 'pending';
+    const posts = await env.DB.prepare("SELECT p.id,p.kind,p.city,p.text,p.photo,p.mod,p.mod_reason,p.created,u.name,u.id user_id FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status=? ORDER BY p.id DESC LIMIT 100").bind(st).all();
+    const answers = await env.DB.prepare("SELECT a.id,a.post_id,a.text,a.mod,a.mod_reason,a.created,u.name,u.id user_id,(SELECT text FROM posts WHERE id=a.post_id) question FROM answers a JOIN users u ON u.id=a.user_id WHERE a.status=? ORDER BY a.id DESC LIMIT 100").bind(st).all();
+    return J({ status: st, posts: posts.results, answers: answers.results });
+  }
+  if (p === '/admin/community/review' && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const t = b.target === 'a' ? 'answers' : 'posts';
+    const row = await env.DB.prepare(`SELECT * FROM ${t} WHERE id=?`).bind(+b.id).first();
+    if (!row || !['pending', 'rejected'].includes(row.status)) return J({ error: 'not_found' }, 404);
+    const ok = b.decision === 'approve';
+    const ops = [env.DB.prepare(`UPDATE ${t} SET status=?, hidden_by=?, mod=? WHERE id=?`).bind(ok ? 'visible' : 'rejected', ok ? null : 'moderation', ok ? 'admin_ok' : 'admin_no', row.id)];
+    if (ok) {
+      if (t === 'answers') {
+        const post = await env.DB.prepare('SELECT * FROM posts WHERE id=?').bind(row.post_id).first();
+        ops.push(recount(env, row.post_id));
+        if (post && post.user_id !== row.user_id) ops.push(addPoints(env, row.user_id, 5), notify(env, post.user_id, 'answer', row.user_id, post.id, row.text));
+      } else ops.push(addPoints(env, row.user_id, 2));
+      ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,post_id,text,created) VALUES (?,'system',?,?,?)").bind(row.user_id, t === 'answers' ? row.post_id : row.id, 'انتشرت مشاركتك في «اسأل أهل المدينة» بعد المراجعة. شكراً لك!', now()));
+    } else if (row.status === 'pending') {
+      const note = clean(b.note, 160);
+      ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(row.user_id, `ما قدرنا ننشر مشاركتك في «اسأل أهل المدينة»${note ? ': ' + note : ' لأنها تخالف قواعد المجتمع'}.`, now()));
+    }
+    await env.DB.batch(ops.filter(Boolean));
+    return J({ ok: true, status: ok ? 'visible' : 'rejected' });
   }
   if (p === '/admin/community/role' && request.method === 'POST') {
     const b = await request.json().catch(() => ({}));

@@ -29,6 +29,7 @@ export const FEATURES = {
   suggest: 'اقتراح تعديل وإضافة مكان',
   heroes: 'أبطال الشهر',
   challenge: 'تحدي الأسبوع',
+  ai_moderation: 'المراجعة الذكية لـ«اسأل أهل المدينة» قبل النشر',
 };
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();
