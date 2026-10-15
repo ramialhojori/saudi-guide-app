@@ -2,7 +2,7 @@
    1) «اسأل الدليل»: مساعد يجاوب من محتوى الدليل فقط (الأماكن والفعاليات وإجابات أهل المدينة والأخبار)
       Claude يبحث بنفسه في قاعدة البيانات بأدوات، ويرجع جواب + بطاقات أماكن وفعاليات
    2) «خطط لي رحلة الذكية»: خطة يوم بيوم من أماكن الدليل وفعالياته في تواريخ الرحلة، مع سبب كل اختيار
-   - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد. الخطة الذكية افتراضياً لمشتركين دليل+ فقط (plan=0)
+   - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد. الخطة الذكية: خطة مجانية وحدة بالشهر افتراضياً (plan=1 شهرياً)
    - مفتاح Claude في السيرفر فقط (ANTHROPIC_API_KEY) */
 
 import { sessionUser } from './auth.js';
@@ -12,6 +12,8 @@ import { getFeatures } from './contrib.js';
 const now = () => Math.floor(Date.now() / 1000);
 const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
 const dayKey = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
+/** الأسئلة حدها يومي، والخطة الذكية حدها شهري (بتوقيت مكة) */
+const periodKey = (kind) => (kind === 'plan' ? dayKey().slice(0, 7) : dayKey());
 const cityName = (id) => (CITIES.find((c) => c[0] === id) || [])[1] || id || '';
 const KIND_AR = { sights: 'معالم', heritage: 'تراث', islamic: 'معالم إسلامية', nature: 'طبيعة', food: 'مطاعم', cafe: 'مقاهي', shopping: 'تسوق', fun: 'ترفيه' };
 
@@ -25,16 +27,16 @@ async function ensure(env) { if (!ready) { await env.DB.batch(SCHEMA.map((s) => 
 export async function aiLimits(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='ai_limits'").first();
   const v = parse(r?.v, {});
-  return { chat: Number.isFinite(+v.chat) ? +v.chat : 5, plan: Number.isFinite(+v.plan) ? +v.plan : 0 };
+  return { chat: Number.isFinite(+v.chat) ? +v.chat : 5, plan: Number.isFinite(+v.plan) ? +v.plan : 1 };
 }
 async function quota(env, u, kind) {
   const plus = u.plus_until && u.plus_until > now();
   const lim = (await aiLimits(env))[kind];
-  const row = await env.DB.prepare('SELECT n FROM ai_usage WHERE user_id=? AND day=? AND kind=?').bind(u.id, dayKey(), kind).first();
+  const row = await env.DB.prepare('SELECT n FROM ai_usage WHERE user_id=? AND day=? AND kind=?').bind(u.id, periodKey(kind), kind).first();
   const used = row?.n || 0;
   return { plus: !!plus, limit: plus ? null : lim, used, left: plus ? null : Math.max(0, lim - used) };
 }
-const useOne = (env, uid, kind) => env.DB.prepare('INSERT INTO ai_usage (user_id,day,kind,n) VALUES (?,?,?,1) ON CONFLICT(user_id,day,kind) DO UPDATE SET n=n+1').bind(uid, dayKey(), kind).run();
+const useOne = (env, uid, kind) => env.DB.prepare('INSERT INTO ai_usage (user_id,day,kind,n) VALUES (?,?,?,1) ON CONFLICT(user_id,day,kind) DO UPDATE SET n=n+1').bind(uid, periodKey(kind), kind).run();
 
 /* ═════════ أدوات البحث اللي يستخدمها Claude ═════════ */
 const placeRow = (r) => ({ id: r.id, title: r.title, city: cityName(r.city), kinds: parse(r.kinds).map((k) => KIND_AR[k] || k), cats: parse(r.cats).slice(0, 3), summary: (r.summary || '').slice(0, 200), address: r.address || '', lat: r.lat, lng: r.lng, hasPhoto: !!(r.thumb) });
@@ -183,7 +185,7 @@ export async function aiRoute(p, request, env, J) {
   if (p === '/v1/ai/plan') {
     if (!f.ai_planner) return J({ error: 'feature_off' }, 403);
     const q = await quota(env, uu, 'plan');
-    if (!q.plus && q.left <= 0) return J({ error: q.limit ? 'quota' : 'plus_required', quota: q }, q.limit ? 429 : 402);
+    if (!q.plus && q.left <= 0) return J({ error: q.limit ? 'plan_quota' : 'plus_required', quota: q }, q.limit ? 429 : 402);
     if (!CITIES.some((c) => c[0] === b.city)) return J({ error: 'bad_city' }, 400);
     const o = { city: b.city, days: Math.max(1, Math.min(5, Math.round(+b.days || 1))), start: /^\d{4}-\d{2}-\d{2}$/.test(b.start || '') ? b.start : '', party: String(b.party || '').slice(0, 40), budget: String(b.budget || '').slice(0, 30), pace: String(b.pace || '').slice(0, 20), interests: (Array.isArray(b.interests) ? b.interests : []).filter((k) => KIND_AR[k]), notes: String(b.notes || '').slice(0, 300) };
     try {

@@ -55,7 +55,7 @@ export default function Planner() {
       setAi(p); setDay(0);
     } catch (e) {
       const c = (e as { code?: string })?.code;
-      if (c === 'plus_required' || c === 'quota') Alert.alert('خطة ذكية مع دليل+', aiErr(e), [{ text: 'لاحقاً', style: 'cancel' }, { text: 'اعرف أكثر', onPress: () => router.push('/plus') }]);
+      if (c === 'plus_required' || c === 'quota' || c === 'plan_quota') Alert.alert('خطة ذكية مع دليل+', aiErr(e), [{ text: 'لاحقاً', style: 'cancel' }, { text: 'جرّب دليل+', onPress: () => router.push('/plus') }]);
       else Alert.alert('ما قدرنا نجهز الخطة الذكية', aiErr(e));
     } finally { setBusy(false); }
   };
@@ -114,6 +114,16 @@ export default function Planner() {
               {ai.tips.map((t) => <AppText key={t} variant="small" style={{ lineHeight: 22 }}>• {t}</AppText>)}
             </View>
           ) : null}
+          {!ai.quota?.plus ? (
+            <Pressable onPress={() => router.push('/plus')} style={st.upsell}>
+              <Icon name="spark" color="#fff" size={20} />
+              <View style={{ flex: 1 }}>
+                <AppText color="#fff" style={{ fontFamily: font.bold }}>عجبتك؟</AppText>
+                <AppText variant="small" color="#E9E0FF" style={{ lineHeight: 20 }}>هذي خطتك المجانية لهالشهر. مع دليل+ تخطط كل رحلاتك بدون حد، وجرّبه 3 أيام مجاناً.</AppText>
+              </View>
+              <Icon name="chevron" color="#fff" size={18} />
+            </Pressable>
+          ) : null}
           <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>الخطة من أماكن الدليل وفعالياته، والأوقات تقريبية. تأكد من الدوام قبل ما تروح.</AppText>
         </ScrollView>
         <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -170,7 +180,7 @@ export default function Planner() {
         <AppText muted style={{ paddingHorizontal: 20, marginTop: 6 }}>قل لنا وين وكم يوم ووش تحب، ونرتبها لك يوم بيوم.</AppText>
         {F.ai_planner ? (
           <View style={st.seg}>
-            {([[true, 'خطة ذكية', 'تراعي تواريخك والفعاليات ومين معك'], [false, 'خطة سريعة', 'ترتيب تلقائي مجاني']] as const).map(([v, t, d]) => (
+            {([[true, 'خطة ذكية', 'تراعي تواريخك ومين معك، ووحدة مجانية كل شهر'], [false, 'خطة سريعة', 'ترتيب تلقائي مجاني']] as const).map(([v, t, d]) => (
               <Pressable key={t} onPress={() => setSmart(v)} style={[st.segItem, smart === v && { backgroundColor: v ? brand.purple : brand.ink }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>{v ? <Icon name="spark" size={14} color={smart === v ? '#fff' : brand.purple} /> : null}<AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={smart === v ? '#fff' : brand.text}>{t}</AppText>{v ? <View style={st.plusTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>دليل+</AppText></View> : null}</View>
                 <AppText variant="tiny" color={smart === v ? '#E2DAEE' : brand.muted} center>{d}</AppText>
@@ -246,6 +256,7 @@ export default function Planner() {
 }
 
 const st = StyleSheet.create({
+  upsell: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.purple, borderRadius: 20, padding: 14, marginHorizontal: 16, marginTop: 14 },
   seg: { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 14 },
   segItem: { flex: 1, backgroundColor: brand.card, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center', gap: 2 },
   plusTag: { backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 6 },
