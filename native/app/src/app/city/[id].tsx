@@ -143,6 +143,7 @@ const MAP_INK = '#2B2745';
 /** نسبة صورة الغلاف لأصحابها: الصور الصحفية والمجانية (صور شوترستوك المشتراة ما تحتاج) */
 const CREDIT: Record<string, string> = {
   umluj: 'البحر الأحمر الدولية',
+  riyadh: 'Hala AlGhanim عبر Unsplash',
   alula: 'SALEH عبر Unsplash',
   abha: 'Dr Muhammad Amer عبر Unsplash',
   medina: 'Yasir Gürbüz عبر Pexels',
