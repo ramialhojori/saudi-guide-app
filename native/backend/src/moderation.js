@@ -32,6 +32,7 @@ const RULES = `أنت مشرف محتوى لميزة "اسأل أهل المدي
 - سؤالاً أو جواباً أو نصيحة حقيقية مفيدة عن السياحة أو الحياة اليومية أو الخدمات في مدينة سعودية، حتى لو كان بسيطاً أو بلهجة عامية أو فيه أخطاء إملائية.
 - الجواب يرد فعلاً على السؤال أو يضيف معلومة مفيدة له.
 - ذكر اسم مطعم أو محل أو فندق كتوصية عادية مقبول (هذا هو الهدف من الميزة).
+- السؤال القصير عن مكان محدد (مثل "فيه مواقف؟" أو "مناسب للأطفال؟") مقبول، لأن المستخدم كتبه من صفحة المكان نفسه.
 
 ارفض (reject) إذا كان فيه أي من:
 - إعلان أو ترويج تجاري واضح، أو طلب تواصل خارج التطبيق، أو أرقام جوال أو روابط أو حسابات تواصل.
@@ -76,7 +77,7 @@ export async function moderate(env, kind, text, ctx = {}, aiOn = true) {
   if (bad) return { status: 'rejected', reason: bad, by: 'filter' };
   if (!aiOn || !env.ANTHROPIC_API_KEY) return { status: 'visible', reason: '', by: 'off' };
   try {
-    const context = kind === 'answer' ? `السؤال الأصلي${ctx.city ? ` (${ctx.city})` : ''}: ${ctx.question || ''}` : ctx.city ? `المدينة: ${ctx.city}` : '';
+    const context = kind === 'answer' ? `السؤال الأصلي${ctx.city ? ` (${ctx.city})` : ''}: ${ctx.question || ''}` : [ctx.city ? `المدينة: ${ctx.city}` : '', ctx.place ? `المشاركة مكتوبة في صفحة مكان: ${ctx.place}` : ''].filter(Boolean).join('\n');
     const label = kind === 'answer' ? 'الجواب المطلوب مراجعته:' : 'المشاركة المطلوب مراجعتها (سؤال أو نصيحة):';
     const res = await askClaude(env, label, text, context);
     const status = res.decision === 'approve' ? 'visible' : res.decision === 'reject' ? 'rejected' : 'pending';

@@ -161,7 +161,9 @@ export async function communityRoute(p, request, env, J, q) {
     if (n.n >= DAILY_POSTS) return J({ error: 'rate_limited' }, 429);
     const ban = await banState(env, uid);
     if (ban) return J({ id: null, status: 'rejected', message: banMessage(ban) });
-    const mod = await moderate(env, 'post', text, { city: b.city }, (await getFeatures(env)).ai_moderation);
+    // اسم المكان يروح لـ Claude عشان سؤال قصير مثل «فيه مواقف؟» يكون مفهوم
+    const pl = +b.placeId ? await env.DB.prepare('SELECT title FROM places WHERE id=?').bind(+b.placeId).first() : null;
+    const mod = await moderate(env, 'post', text, { city: b.city, place: pl?.title || '' }, (await getFeatures(env)).ai_moderation);
     const r = await env.DB.prepare('INSERT INTO posts (user_id,kind,city,place_id,text,photo,created,status,hidden_by,mod,mod_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
       .bind(uid, kind, b.city || null, +b.placeId || null, text, photo || null, now(), mod.status, mod.status === 'visible' ? null : 'moderation', mod.by, mod.reason || null).run();
     if (mod.status === 'visible') await addPoints(env, uid, 2).run();
