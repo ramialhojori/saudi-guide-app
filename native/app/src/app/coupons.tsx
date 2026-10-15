@@ -9,7 +9,7 @@ import { Chip } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { allCities, cityName } from '@/lib/content';
 import { useFeatures } from '@/lib/features';
-import { BIZ_KINDS, OFFER_KINDS, cityCouponsMe, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
+import { BIZ_KINDS, OFFER_KINDS, cityCoupons, cityCouponsMe, couponAlert, setCouponAlert, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 
 /** كوبونات المدينة: عروض حقيقية من التجار بعد موافقة الإدارة، والمحفظة (المحفوظة) */
@@ -27,6 +27,8 @@ export default function Coupons() {
   const [wallet, setWallet] = useState<Coupon[]>([]);
   const [err, setErr] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [others, setOthers] = useState<Coupon[]>([]);
+  const [alertOn, setAlertOn] = useState(false);
   const F = useFeatures();
 
   const load = useCallback(async () => {
@@ -34,6 +36,11 @@ export default function Coupons() {
     try {
       const [a, w] = await Promise.all([cityCouponsMe(city), user ? myCoupons().catch(() => []) : Promise.resolve([])]);
       setList(a.coupons); setMe(a.me); setWallet(w);
+      // مدينته ما فيها عروض؟ نجيب عروض المدن الثانية، ونشوف هل طلب تنبيه
+      if (!a.coupons.length) {
+        cityCoupons(null).then((all) => setOthers(all.filter((c) => c.biz?.city !== city))).catch(() => setOthers([]));
+        if (user) couponAlert(city).then(setAlertOn).catch(() => {});
+      } else setOthers([]);
     } catch (e) { setErr(couponErr(e)); setList([]); }
   }, [city, user?.id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -50,6 +57,16 @@ export default function Coupons() {
     const src = tab === 'wallet' ? wallet : tab === 'points' ? (list ?? []).filter((c) => c.points || c.minLevel) : list ?? [];
     return src.filter((c) => (!kind || c.biz?.kind === kind) && (!offer || c.kind === offer));
   }, [tab, wallet, list, kind, offer]);
+  const toggleAlert = async () => {
+    if (!user) return router.push('/login');
+    const on = !alertOn; setAlertOn(on);
+    try { await setCouponAlert(city, on); } catch { setAlertOn(!on); }
+  };
+  const otherCities = useMemo(() => {
+    const m = new Map<string, number>();
+    others.forEach((c) => c.biz?.city && m.set(c.biz.city, (m.get(c.biz.city) || 0) + 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [others]);
   const kinds = BIZ_KINDS.filter(([k]) => (list ?? []).some((c) => c.biz?.kind === k));
 
   return (
@@ -111,8 +128,23 @@ export default function Coupons() {
           <View style={st.empty}>
             <Icon name="ticket" color={brand.pinkDeep} size={34} />
             <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{tab === 'wallet' ? 'محفظتك فاضية' : tab === 'points' ? 'ما فيه عروض بالنقاط للحين' : `ما فيه عروض في ${cityName(city)} للحين`}</AppText>
-            <AppText variant="small" muted center>{tab === 'wallet' ? 'اضغط القلب على أي كوبون عشان ينحفظ هنا.' : tab === 'points' ? 'أول ما تضيف المحلات عروض تتبادل بالنقاط بتلقاها هنا. خلك تجمع نقاطك.' : 'المحلات تقدر تضيف عروضها من «سجّل نشاطك». جرّب مدينة ثانية.'}</AppText>
+            <AppText variant="small" muted center>{tab === 'wallet' ? 'اضغط القلب على أي كوبون عشان ينحفظ هنا.' : tab === 'points' ? 'أول ما تضيف المحلات عروض تتبادل بالنقاط بتلقاها هنا. خلك تجمع نقاطك.' : 'أول ما يضيف محل عرض هنا نبلغك، وتقدر تشوف عروض المدن الثانية تحت.'}</AppText>
+            {tab === 'all' ? (
+              <Pressable onPress={toggleAlert} style={[st.alertBtn, alertOn && { backgroundColor: brand.green }]}>
+                <Icon name={alertOn ? 'check' : 'bell'} color="#fff" size={16} />
+                <AppText color="#fff" style={{ fontFamily: font.bold }}>{alertOn ? `بنبلغك أول ما ينضاف عرض في ${cityName(city)}` : `نبهني لما ينضاف عرض في ${cityName(city)}`}</AppText>
+              </Pressable>
+            ) : null}
           </View>
+        ) : null}
+        {tab === 'all' && list !== null && !list.length && others.length ? (
+          <>
+            <AppText variant="section" style={{ marginTop: 10 }}>عروض في مدن ثانية</AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {otherCities.map(([c, n]) => <Chip key={c} label={`${cityName(c)} · ${n}`} color={brand.pinkDeep} onPress={() => { setCity(c); setList(null); }} />)}
+            </ScrollView>
+            {others.slice(0, 6).map((c) => <CouponCard key={c.id} c={c} bizName={c.biz ? `${c.biz.name} · ${cityName(c.biz.city)}` : undefined} onPress={() => router.push(`/coupon/${c.id}`)} onSave={() => save(c)} />)}
+          </>
         ) : null}
       </View>
 
@@ -138,6 +170,7 @@ const st = StyleSheet.create({
   tabOn: { backgroundColor: brand.pinkDeep },
   bal: { marginHorizontal: 16, marginBottom: 6, backgroundColor: brand.purple, borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   empty: { alignItems: 'center', gap: 8, backgroundColor: brand.white, borderRadius: 22, padding: 24, marginTop: 6 },
+  alertBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand.pinkDeep, borderRadius: 16, paddingHorizontal: 16, height: 46, marginTop: 8 },
   biz: { margin: 16, marginTop: 22, backgroundColor: brand.ink, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
 });

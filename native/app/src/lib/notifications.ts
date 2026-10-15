@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { api } from './api';
 import { session } from './auth';
 
-export type Note = { id: number; type: 'answer' | 'thanks' | 'best' | 'system'; postId: number | null; actor: string; text: string; post: string; read: boolean; created: number };
+export type Note = { id: number; type: 'answer' | 'thanks' | 'best' | 'system'; postId: number | null; actor: string; text: string; link?: string; post: string; read: boolean; created: number };
 
 let unread = 0;
 const subs = new Set<() => void>();

@@ -33,6 +33,8 @@ export const placeCoupons = (placeId: number) => api<{ coupons: Coupon[] }>(`/v1
 export const getCoupon = (id: number) => api<{ coupon: Coupon }>(`/v1/coupons/${id}`, { token: tok() }).then((r) => r.coupon);
 export const getCouponMe = (id: number) => api<{ coupon: Coupon; me: Me }>(`/v1/coupons/${id}`, { token: tok() });
 export const toggleSave = (id: number) => api<{ saved: boolean }>(`/v1/coupons/${id}/save`, { method: 'POST', token: tok() }).then((r) => r.saved);
+export const couponAlert = (city: string) => api<{ on: boolean }>(`/v1/coupons/alert?city=${city}`, { token: tok() }).then((r) => r.on);
+export const setCouponAlert = (city: string, on: boolean) => api<{ on: boolean }>('/v1/coupons/alert', { method: 'POST', body: { city, on }, token: tok() }).then((r) => r.on);
 export const myCoupons = () => api<{ coupons: Coupon[] }>('/v1/me/coupons', { token: tok() }).then((r) => r.coupons);
 export const couponCode = (id: number, since: number) =>
   api<{ code?: string; left?: number; redeemed: boolean; at?: number }>(`/v1/coupons/${id}/code?since=${since}`, { token: tok(), timeoutMs: 8000 });

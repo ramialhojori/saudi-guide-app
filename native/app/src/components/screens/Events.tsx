@@ -84,7 +84,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
         </View>
         <View style={st.whenRow}>
           {(['الكل', 'اليوم', 'بكرة', 'الويكند'] as const).map((l, i) => (
-            <Pressable key={l} onPress={() => setWhen(i)} style={[st.when, when === i && st.whenOn]}>
+            <Pressable key={l} onPress={() => setWhen(i)} style={[st.when, when === i && st.whenOn, !counts[i] && when !== i && { opacity: 0.55 }]}>
               <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color={when === i ? brand.purple : '#fff'} center>{l}</AppText>
               <AppText variant="tiny" color={when === i ? brand.orangeDeep : '#E2DAEE'} center>{counts[i]}</AppText>
             </Pressable>
@@ -138,7 +138,24 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
       </View>
 
       {loading && !data ? <Loading /> : null}
-      {!loading && !shown.length && !ongoing.length ? <Empty title="ما فيه فعاليات هنا" sub="جرّب يوم ثاني أو نوع ثاني" /> : null}
+      {!loading && !shown.length && when > 0 && dated.length ? (() => {
+        // ما فيه شي في اليوم المختار: نعرض أقرب فعالية بعده بدل صفحة فاضية
+        const next = dated.find((e) => new Date(e.end || e.start).getTime() >= now);
+        const days = next ? Math.max(0, Math.round((new Date(next.start).getTime() - now) / DAY)) : 0;
+        return (
+          <View style={st.noDay}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{`ما فيه فعاليات ${['', 'اليوم', 'بكرة', 'هالويكند'][when]}${city ? ' في ' + cityName(city) : ''}`}</AppText>
+            {next ? (
+              <>
+                <AppText variant="small" muted center>{days <= 0 ? 'لكن فيه فعالية شغالة الحين:' : `أقرب فعالية بعد ${days === 1 ? 'يوم' : days === 2 ? 'يومين' : days + ' أيام'}:`}</AppText>
+                <View style={{ alignSelf: 'stretch' }}><Row e={next} /></View>
+              </>
+            ) : null}
+            <Pressable onPress={() => setWhen(0)} style={st.allBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>شوف كل الفعاليات ({counts[0]})</AppText></Pressable>
+          </View>
+        );
+      })() : null}
+      {!loading && !shown.length && !ongoing.length && !(when > 0 && dated.length) ? <Empty title="ما فيه فعاليات هنا" sub="جرّب نوع ثاني أو مدينة ثانية" /> : null}
 
       {top ? (
         <Pressable style={st.top} onPress={() => router.push(`/event/${top.id}`)}>
@@ -227,6 +244,8 @@ function TypeChip({ t, icon, fg, bg, on, onPress }: { t: string; icon: IconName;
 }
 
 const st = StyleSheet.create({
+  noDay: { margin: 16, backgroundColor: brand.card, borderRadius: 24, padding: 18, alignItems: 'center', gap: 10 },
+  allBtn: { backgroundColor: brand.purple, borderRadius: 16, paddingHorizontal: 18, height: 44, justifyContent: 'center', marginTop: 4 },
   head: { backgroundColor: brand.purple, paddingHorizontal: 16, paddingBottom: 18, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, overflow: 'hidden' },
   blob1: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(235,131,155,0.25)', top: -70, left: -60 },
   blob2: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(248,151,67,0.25)', bottom: -50, right: 30 },

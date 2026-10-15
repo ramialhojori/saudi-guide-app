@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, V
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { BackButton, Badge, Chip } from '@/components/ui';
-import type { IconName } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import { useAuth } from '@/lib/auth';
 import { ago } from '@/lib/community';
 import { fetchNotes, markAllRead, type Note } from '@/lib/notifications';
@@ -17,12 +17,31 @@ const LOOK: Record<Note['type'], { icon: IconName; bg: string; fg: string }> = {
   best: { icon: 'crown', bg: brand.softGreen, fg: brand.green },
   system: { icon: 'bell', bg: brand.softOrange, fg: brand.orangeDeep },
 };
-const title = (n: Note) => ({
+/** رسائل النظام: نعرف نوعها من رابطها ونصها، ونعطيها عنوان وأيقونة ولون ووجهة تناسبها */
+type SysKind = { title: string; icon: IconName; bg: string; fg: string; go?: string };
+function sysKind(n: Note): SysKind {
+  const t = n.text || '', l = n.link || '';
+  if (l.startsWith('/merchant') || /نشاطك|التاجر|متجرك/.test(t)) return { title: 'نشاطك التجاري', icon: 'shop', bg: brand.softPurple, fg: brand.purple, go: '/merchant' };
+  if (/وقفنا|مخالف|ما قدرنا ننشر|رفض/.test(t)) return { title: 'بخصوص مشاركتك', icon: 'info', bg: brand.softOrange, fg: brand.orangeInk, go: '/community' };
+  if (/اقتراح/.test(t)) return { title: /ما قدرنا/.test(t) ? 'بخصوص اقتراحك' : 'اقتراحك وصل للدليل', icon: 'pin', bg: brand.softGreen, fg: brand.green, go: l || '/profile' };
+  if (/صورت|صورة/.test(t)) return { title: 'صورتك', icon: 'cam', bg: brand.softSky, fg: brand.skyDeep, go: l || undefined };
+  if (/كوبون|خصم|العرض|عرض /.test(t)) return { title: 'كوبونات وعروض', icon: 'ticket', bg: brand.softPink, fg: brand.pinkDeep, go: l || '/coupons' };
+  if (/مبروك|أبطال|وسام|مرشد|تكريم/.test(t)) return { title: 'مبروك!', icon: 'crown', bg: brand.softOrange, fg: brand.orangeDeep, go: l || '/profile' };
+  if (/انتشرت|مشاركتك|سؤالك|المجتمع/.test(t)) return { title: 'مشاركتك في المجتمع', icon: 'chat', bg: brand.softPurple, fg: brand.lilac, go: n.postId ? `/question/${n.postId}` : '/community' };
+  if (/تأثيرك|نقاط|نقطة/.test(t)) return { title: 'نقاطك وتأثيرك', icon: 'star', bg: brand.softOrange, fg: brand.orangeDeep, go: l || '/profile' };
+  if (/فعالي|موسم/.test(t)) return { title: 'فعاليات', icon: 'cal', bg: brand.softPink, fg: brand.pinkDeep, go: l || '/events' };
+  return { title: 'من فريق الدليل', icon: 'bell', bg: brand.softOrange, fg: brand.orangeDeep, go: l || undefined };
+}
+const title = (n: Note) => n.type === 'system' ? sysKind(n).title : ({
   answer: `${n.actor} جاوب على سؤالك`,
   thanks: `${n.actor} شكرك على مشاركتك`,
   best: `${n.actor} اختار جوابك أفضل إجابة · +15 نقطة`,
-  system: 'رسالة من فريق الدليل',
-})[n.type];
+} as Record<string, string>)[n.type];
+const open = (n: Note) => {
+  if (n.type !== 'system') return n.postId && router.push(`/question/${n.postId}`);
+  const go = sysKind(n).go;
+  if (go) router.push(go as never);
+};
 
 /** الإشعارات: إجابات وشكر وأفضل إجابة — من السيرفر */
 export default function Inbox() {
@@ -86,17 +105,21 @@ export default function Inbox() {
               <AppText variant="small" muted style={{ fontFamily: font.bold, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 }}>{t}</AppText>
               <View style={{ paddingHorizontal: 10, gap: 4 }}>
                 {g.map((n) => {
-                  const lk = LOOK[n.type] || LOOK.system;
+                  const lk = n.type === 'system' ? sysKind(n) : (LOOK[n.type] || LOOK.system);
+                  const canOpen = n.type !== 'system' ? !!n.postId : !!sysKind(n).go;
                   return (
-                    <Pressable key={n.id} style={[st.row, !n.read && { backgroundColor: brand.card }]} onPress={() => n.postId && router.push(`/question/${n.postId}`)}>
+                    <Pressable key={n.id} style={[st.row, !n.read && { backgroundColor: brand.card }]} onPress={() => open(n)} disabled={!canOpen}>
                       <Badge icon={lk.icon} bg={lk.bg} fg={lk.fg} size={44} r={15} />
                       <View style={{ flex: 1 }}>
                         <AppText style={{ fontFamily: n.read ? font.semibold : font.bold, fontSize: 14.5 }}>{title(n)}</AppText>
-                        {n.text ? <AppText variant="small" muted numberOfLines={2}>«{n.text}»</AppText> : null}
+                        {n.text ? <AppText variant="small" muted numberOfLines={3} style={{ lineHeight: 20 }}>{n.type === 'system' ? n.text : `«${n.text}»`}</AppText> : null}
                         {n.post && n.type !== 'system' ? <AppText variant="tiny" color={brand.skyDeep} numberOfLines={1}>على: {n.post}</AppText> : null}
                         <AppText variant="tiny" color={brand.faint}>{ago(n.created)}</AppText>
                       </View>
-                      <View style={[st.dot, { backgroundColor: n.read ? 'transparent' : brand.orange }]} />
+                      <View style={{ alignItems: 'center', gap: 10 }}>
+                        <View style={[st.dot, { backgroundColor: n.read ? 'transparent' : brand.orange }]} />
+                        {canOpen ? <Icon name="chevron" size={14} color={brand.faint} /> : null}
+                      </View>
                     </Pressable>
                   );
                 })}

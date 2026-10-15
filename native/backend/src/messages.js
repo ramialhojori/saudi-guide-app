@@ -47,7 +47,7 @@ export async function estimate(env, a) {
   return { users: users.n, devices: dev.n };
 }
 
-async function sendPush(env, tokens, m) {
+export async function sendPush(env, tokens, m) {
   let ok = 0, bad = 0;
   for (let i = 0; i < tokens.length; i += 100) {
     const batch = tokens.slice(i, i + 100).map((to) => ({ to, title: m.title || 'دليل السعودية', body: m.text, sound: 'default', data: m.link ? { link: m.link } : {} }));

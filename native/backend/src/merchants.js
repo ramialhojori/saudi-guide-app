@@ -7,6 +7,7 @@
 
 import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
+import { sendPush } from './messages.js';
 import { LEVELS } from './community.js';
 import { MERCHANT_TERMS, MERCHANT_TERMS_DATE, MERCHANT_TERMS_VERSION } from './terms.js';
 
@@ -19,6 +20,7 @@ const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { ret
 const str = (v, max = 300) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const num = (v) => (v === '' || v == null || isNaN(+v) ? null : +v);
 const cityOk = (c) => CITIES.some((x) => x[0] === c);
+const cityLabel = (c) => (CITIES.find((x) => x[0] === c) || [])[1] || c;
 const KINDS = ['restaurant', 'cafe', 'sweets', 'juice', 'dates', 'perfume', 'gifts', 'clothing', 'shop', 'mall', 'hotel', 'resort', 'experience', 'tours', 'fun', 'car', 'umrah', 'salon', 'other'];
 const CKINDS = ['percent', 'amount', 'bogo', 'gift'];
 const SLOT = 30; // ثانية
@@ -88,6 +90,17 @@ function couponFields(b) {
     license: str(b.license, 40),
   };
 }
+async function alertCity(env, c) {
+  const mm = await env.DB.prepare('SELECT name, city FROM merchants WHERE id=?').bind(c.merchant_id).first();
+  if (!mm) return;
+  const text = `عرض جديد في ${cityLabel(mm.city)}: «${c.title}» من ${mm.name}. افتح الكوبونات وشوفه.`;
+  await env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) SELECT user_id,'system',?,'/coupons',? FROM coupon_alerts WHERE city=? AND user_id!=?").bind(text, now(), mm.city, c.m_user || '').run();
+  const h = (new Date().getUTCHours() + 3) % 24;
+  if (h >= 8 && h < 23) {
+    const t = await env.DB.prepare('SELECT d.token FROM devices d JOIN coupon_alerts a ON a.user_id=d.user_id WHERE a.city=? LIMIT 2000').bind(mm.city).all();
+    if (t.results.length) await sendPush(env, t.results.map((x) => x.token), { title: 'عرض جديد في مدينتك', text, link: '/coupons' });
+  }
+}
 const notify = (env, userId, text) =>
   env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(userId, String(text).slice(0, 140), now());
 
@@ -97,6 +110,21 @@ export async function merchantRoute(p, request, env, J, q) {
   const me = await sessionUser(env, request);
   const uid = me ? me.id : '';
   let m;
+
+  /* ——— «نبهني لما ينضاف عرض في مدينتي» ——— */
+  if (p === '/v1/coupons/alert') {
+    if (!me) return J({ error: 'login_required' }, 401);
+    const city = String((M === 'GET' ? q.get('city') : (await request.clone().json().catch(() => ({}))).city) || '').slice(0, 40);
+    if (!city) return J({ error: 'bad_request' }, 400);
+    if (M === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      if (b.on) await env.DB.prepare('INSERT OR IGNORE INTO coupon_alerts (user_id,city,created) VALUES (?,?,?)').bind(me.id, city, now()).run();
+      else await env.DB.prepare('DELETE FROM coupon_alerts WHERE user_id=? AND city=?').bind(me.id, city).run();
+      return J({ on: !!b.on });
+    }
+    const r = await env.DB.prepare('SELECT 1 FROM coupon_alerts WHERE user_id=? AND city=?').bind(me.id, city).first();
+    return J({ on: !!r });
+  }
 
   /* ——— كوبونات المدينة (عام) ——— */
   if (p === '/v1/coupons' && M === 'GET') {
@@ -396,6 +424,8 @@ export async function merchantAdmin(p, request, env, J, q) {
     if (status !== c.status && (status === 'active' || status === 'rejected') && c.status === 'pending') {
       await notify(env, c.m_user, status === 'active' ? `كوبون «${c.title}» صار فعّال ويظهر للزوار${c.m_status !== 'approved' ? ' بعد اعتماد نشاطك' : ''}.` : `كوبون «${c.title}» يحتاج تعديل${note ? ': ' + note : ''}.`).run();
     }
+    // اللي طلبوا «نبهني» في مدينة التاجر: نبلغهم أول ما يصير العرض متاح
+    if (status === 'active' && c.status !== 'active' && c.m_status === 'approved') await alertCity(env, c).catch(() => {});
     return J({ ok: true });
   }
   return null;
