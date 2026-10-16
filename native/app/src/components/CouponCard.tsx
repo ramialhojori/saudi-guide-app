@@ -4,9 +4,10 @@ import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { couponColor, leftText, type Coupon } from '@/lib/coupons';
 import { font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 /** بطاقة الكوبون: نفس شكل التصميم (صورة المحل + الخصم + خط مقطّع + «استخدمه») */
-export function CouponCard({ c, onPress, onSave, cta = 'استخدمه', bizName }: { c: Coupon; onPress?: () => void; onSave?: () => void; cta?: string; bizName?: string }) {
+export function CouponCard({ c, onPress, onSave, cta = t('استخدمه'), bizName }: { c: Coupon; onPress?: () => void; onSave?: () => void; cta?: string; bizName?: string }) {
   const bg = couponColor(c.biz?.kind);
   const used = !!c.usedByMe && c.perUser;
   return (
@@ -20,13 +21,13 @@ export function CouponCard({ c, onPress, onSave, cta = 'استخدمه', bizName
         </View>
 
         <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-          {c.points || c.minLevel ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{[c.points ? `${c.points} نقطة` : '', c.minLevel ? `مستوى ${c.minLevel}+` : ''].filter(Boolean).join(' · ')}</AppText></View> : null}
-          <AppText variant="tiny" color="#fff" numberOfLines={1} style={{ flexShrink: 1 }}>{used ? 'استخدمته ✓' : leftText(c)}</AppText>
+          {c.points || c.minLevel ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{[c.points ? t('{n} نقطة', { n: c.points }) : '', c.minLevel ? t('مستوى {n}+', { n: c.minLevel }) : ''].filter(Boolean).join(' · ')}</AppText></View> : null}
+          <AppText variant="tiny" color="#fff" numberOfLines={1} style={{ flexShrink: 1 }}>{used ? t('استخدمته ✓') : leftText(c)}</AppText>
         </View>
       </View>
       <View style={st.stub}>
         {onSave ? (
-          <Pressable onPress={onSave} hitSlop={10} accessibilityLabel={c.saved ? 'شيل من المحفظة' : 'احفظ في المحفظة'}><Icon name={c.saved ? 'heartFill' : 'heart'} color="#fff" size={22} /></Pressable>
+          <Pressable onPress={onSave} hitSlop={10} accessibilityLabel={c.saved ? t('شيل من المحفظة') : t('احفظ في المحفظة')}><Icon name={c.saved ? 'heartFill' : 'heart'} color="#fff" size={22} /></Pressable>
         ) : null}
         <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff" center>{cta}</AppText>
       </View>

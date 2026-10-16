@@ -4,9 +4,10 @@ import { AppText } from '@/components/AppText';
 import { Input } from '@/components/Form';
 import { couponErr, reportCoupon } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 const REASONS: [string, string][] = [
-  ['refused', 'المحل رفض الكوبون'], ['different', 'العرض مختلف عن المكتوب'], ['conditions', 'حطوا شروط ما كانت مكتوبة'], ['closed', 'المحل مقفل أو ما لقيته'], ['other', 'مشكلة ثانية'],
+  ['refused', t('المحل رفض الكوبون')], ['different', t('العرض مختلف عن المكتوب')], ['conditions', t('حطوا شروط ما كانت مكتوبة')], ['closed', t('المحل مقفل أو ما لقيته')], ['other', t('مشكلة ثانية')],
 ];
 
 /** «بلّغ عن مشكلة في الكوبون» — حماية المستخدم من تلاعب التجار */
@@ -28,25 +29,25 @@ export function ReportCoupon({ id, visible, onClose, initial }: { id: number; vi
         <View style={st.sheet}>
           {done !== null ? (
             <>
-              <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>وصلنا بلاغك، شكراً</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>{t('وصلنا بلاغك، شكراً')}</AppText>
               <AppText variant="small" muted center style={{ lineHeight: 22, marginTop: 6 }}>
-                {done ? 'وصلت بلاغات كثيرة على هالكوبون، فأوقفناه مؤقتاً لين نراجعه.' : 'نراجعه مع المحل، ولو ثبت تاخذ 20 نقطة اعتذار ونتخذ إجراء مع المحل.'}
+                {done ? t('وصلت بلاغات كثيرة على هالكوبون، فأوقفناه مؤقتاً لين نراجعه.') : t('نراجعه مع المحل، ولو ثبت تاخذ 20 نقطة اعتذار ونتخذ إجراء مع المحل.')}
               </AppText>
-              <Pressable style={st.btn} onPress={close}><AppText style={{ fontFamily: font.bold }} color="#fff">تمام</AppText></Pressable>
+              <Pressable style={st.btn} onPress={close}><AppText style={{ fontFamily: font.bold }} color="#fff">{t('تمام')}</AppText></Pressable>
             </>
           ) : (
             <>
-              <AppText style={{ fontFamily: font.bold, fontSize: 18 }}>وش صار؟</AppText>
-              <AppText variant="small" muted style={{ marginBottom: 10 }}>بلاغك يحمي غيرك. المحل اللي يتكرر عليه البلاغ نوقفه.</AppText>
-              {REASONS.map(([k, t]) => (
+              <AppText style={{ fontFamily: font.bold, fontSize: 18 }}>{t('وش صار؟')}</AppText>
+              <AppText variant="small" muted style={{ marginBottom: 10 }}>{t('بلاغك يحمي غيرك. المحل اللي يتكرر عليه البلاغ نوقفه.')}</AppText>
+              {REASONS.map(([k, label]) => (
                 <Pressable key={k} style={[st.opt, reason === k && st.optOn]} onPress={() => setReason(k)}>
                   <View style={[st.radio, reason === k && { borderColor: brand.pinkDeep }]}>{reason === k ? <View style={st.dot} /> : null}</View>
-                  <AppText style={{ fontFamily: font.semibold, fontSize: 14 }}>{t}</AppText>
+                  <AppText style={{ fontFamily: font.semibold, fontSize: 14 }}>{label}</AppText>
                 </Pressable>
               ))}
-              <Input value={note} onChangeText={setNote} multiline maxLength={500} placeholder="تفاصيل تساعدنا (اختياري): وش قالوا لك؟ متى؟" style={{ marginTop: 8, minHeight: 80 }} />
+              <Input value={note} onChangeText={setNote} multiline maxLength={500} placeholder={t('تفاصيل تساعدنا (اختياري): وش قالوا لك؟ متى؟')} style={{ marginTop: 8, minHeight: 80 }} />
               {err ? <AppText variant="small" color={brand.pinkDeep} style={{ marginTop: 6 }}>{err}</AppText> : null}
-              <Pressable style={[st.btn, { backgroundColor: brand.pinkDeep }]} onPress={send} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold }} color="#fff">أرسل البلاغ</AppText>}</Pressable>
+              <Pressable style={[st.btn, { backgroundColor: brand.pinkDeep }]} onPress={send} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold }} color="#fff">{t('أرسل البلاغ')}</AppText>}</Pressable>
             </>
           )}
         </View>

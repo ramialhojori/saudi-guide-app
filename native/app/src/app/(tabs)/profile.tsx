@@ -44,8 +44,8 @@ export default function Profile() {
     points: stats?.points ?? user.points, level: stats?.level ?? 1, nextLevelPts: stats?.nextAt ?? Math.max(user.points, 1), nextLevel: stats?.nextName ?? '',
     levelName: stats?.levelName ?? '', levelAt: stats?.levelAt ?? 0,
     stats: [
-      { v: String(stats?.counts.answers ?? 0), l: t('إجابة') }, { v: String(stats?.counts.questions ?? 0), l: t('سؤال') },
-      { v: String(stats?.counts.photos ?? 0), l: t('صورة') }, { v: String(stats?.counts.thanks ?? 0), l: t('شكر') },
+      { v: String(stats?.counts.answers ?? 0), l: tr('إجابة', 'Answers') }, { v: String(stats?.counts.questions ?? 0), l: tr('سؤال', 'Questions') },
+      { v: String(stats?.counts.photos ?? 0), l: tr('صورة', 'Photos') }, { v: String(stats?.counts.thanks ?? 0), l: t('شكر') },
     ],
   } : { ...demo, levelName: t('سفير الدليل'), levelAt: 0 };
   const pct = Math.min(1, Math.max(0, (me.points - me.levelAt) / Math.max(1, me.nextLevelPts - me.levelAt)));

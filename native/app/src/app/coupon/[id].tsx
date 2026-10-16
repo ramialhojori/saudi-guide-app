@@ -38,7 +38,7 @@ export default function CouponDetail() {
     [t('الاستخدام'), c.perUser ? t('مرة وحدة لكل شخص') : t('تقدر تستخدمه أكثر من مرة')],
     ...(c.hours ? [[t('الأوقات'), c.hours] as [string, string]] : []),
     [t('المدة'), c.start || c.end ? `${c.start ? t('من {d}', { d: dayLabel(c.start) }) + ' ' : ''}${c.end ? t('حتى {d}', { d: dayLabel(c.end) }) : ''}` : t('مستمر')],
-    ...(c.left != null ? [[t('المتبقي'), t('{left} من {qty}', { left: c.left, qty: c.qty ?? '' })] as [string, string]] : []),
+    ...(c.left != null ? [[t('المتبقي'), t('{left} من {qty}', { left: c.left, qty: String(c.qty) })] as [string, string]] : []),
   ];
   const save = async () => { if (!user) return router.push('/login'); const s = await toggleSave(c.id).catch(() => c.saved); setC({ ...c, saved: s }); };
 

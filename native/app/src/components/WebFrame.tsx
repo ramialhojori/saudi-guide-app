@@ -4,6 +4,7 @@ import { Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } f
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 import { brand, font } from '@/theme/tokens';
+import { t, tr } from '@/lib/i18n';
 
 const IOS_URL = 'https://apps.apple.com/app/id1595843013';
 const ANDROID_URL = 'https://play.google.com/store/apps/details?id=carizmaapps.saudiguide';
@@ -28,13 +29,13 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
       <View style={{ flex: 1 }}>
         {banner ? (
           <View style={st.banner}>
-            <Pressable onPress={() => { setBanner(false); try { sessionStorage.setItem('sg_banner_off', '1'); } catch { /* */ } }} hitSlop={10} accessibilityLabel="إغلاق"><Icon name="x" size={16} color={brand.muted} /></Pressable>
+            <Pressable onPress={() => { setBanner(false); try { sessionStorage.setItem('sg_banner_off', '1'); } catch { /* */ } }} hitSlop={10} accessibilityLabel={t('إغلاق')}><Icon name="x" size={16} color={brand.muted} /></Pressable>
             <Image source={require('../../assets/brand/mark.png')} style={{ width: 36, height: 36, borderRadius: 9 }} contentFit="contain" />
             <View style={{ flex: 1 }}>
-              <AppText style={{ fontFamily: font.bold, fontSize: 13 }}>تطبيق دليل السعودية</AppText>
-              <AppText variant="tiny" muted>أسرع، ومعه الإشعارات والجواز</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{t('تطبيق دليل السعودية')}</AppText>
+              <AppText variant="tiny" muted>{t('أسرع، ومعه الإشعارات والجواز')}</AppText>
             </View>
-            <Pressable onPress={() => Linking.openURL(ANDROID_URL)} style={st.get}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>حمّل</AppText></Pressable>
+            <Pressable onPress={() => Linking.openURL(ANDROID_URL)} style={st.get}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('حمّل')}</AppText></Pressable>
           </View>
         ) : null}
         <View style={{ flex: 1 }}>{children}</View>
@@ -48,12 +49,12 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
       <View style={st.row}>
         <View style={st.side}>
           <Image source={require('../../assets/brand/logo-white.png')} style={{ width: 260, height: 68 }} contentFit="contain" />
-          <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 34, lineHeight: 52, marginTop: 26 }}>دليلك لكل مدن{'\n'}السعودية</AppText>
-          <AppText color="#E9E0FF" style={{ fontSize: 17, lineHeight: 30, marginTop: 10 }}>أماكن ومطاعم وفعاليات المواسم، ونصايح أهل المدن، وخطط رحلات ذكية. كل هذا في جيبك.</AppText>
+          <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 34, lineHeight: 52, marginTop: 26 }}>{tr('دليلك لكل مدن\nالسعودية', 'Your guide to every\ncity in Saudi')}</AppText>
+          <AppText color="#E9E0FF" style={{ fontSize: 17, lineHeight: 30, marginTop: 10 }}>{t('أماكن ومطاعم وفعاليات المواسم، ونصايح أهل المدن، وخطط رحلات ذكية. كل هذا في جيبك.')}</AppText>
           <View style={st.qrRow}>
             <View style={st.qr}><Image source={require('../../assets/web/qr-app.png')} style={{ width: 132, height: 132 }} contentFit="contain" /></View>
             <View style={{ gap: 10, flex: 1 }}>
-              <AppText color="#fff" style={{ fontFamily: font.bold }}>صوّر الرمز بكاميرا جوالك وحمّل التطبيق</AppText>
+              <AppText color="#fff" style={{ fontFamily: font.bold }}>{t('صوّر الرمز بكاميرا جوالك وحمّل التطبيق')}</AppText>
               <Pressable style={st.store} onPress={() => Linking.openURL(IOS_URL)}><Icon name="apple" color="#fff" fill="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold }}>App Store</AppText></Pressable>
               <Pressable style={st.store} onPress={() => Linking.openURL(ANDROID_URL)}><Icon name="up" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold }}>Google Play</AppText></Pressable>
             </View>
