@@ -11,6 +11,21 @@ import { brand, type PhotoKey } from '@/theme/tokens';
 import { isEn, t } from './i18n';
 
 export const SEASON_RE = /^(موسم|لحظات) /;
+
+/* أغلفة المواسم: صور المدن المرخّصة نفسها (شوترستوك/Unsplash في مجلد «صور-المدن») حسب مدينة كل موسم
+   - الغلاف المرفوع من اللوحة يغلب هذي
+   - رالي حائل بدون صورة لين ننزل صورة حائل المرخّصة (يطلع بلون الموسم بس) */
+const CITY_IMG = 'https://saudi-guide-web.saudi-guide2030.workers.dev/cities/';
+const SEASON_COVER: Record<string, string> = {
+  'موسم الرياض': 'riyadh', 'مهرجان الرياض للكوميديا': 'riyadh', 'مدل بيست': 'riyadh-region', 'موسم جدة': 'jeddah', 'موسم الدرعية': 'diriyah',
+  'لحظات العلا': 'alula', 'شتاء طنطورة': 'alula', 'موسم عسير': 'asir-region', 'موسم الخبر': 'eastern-region', 'مهرجان صيف تبوك': 'tabuk-region',
+};
+const COVER_CITIES = new Set(['jeddah', 'riyadh', 'diriyah', 'asir-region', 'qassim-region', 'eastern-region', 'taif', 'jizan', 'riyadh-region', 'albaha', 'najran', 'alula', 'abha', 'medina', 'makkah-region', 'tabuk-region', 'umluj']);
+/** الغلاف الافتراضي للموسم: من القائمة، أو صورة مدينته لو عندنا لها صورة مرخّصة */
+export const seasonCover = (name: string, city?: string) => {
+  const id = SEASON_COVER[name] || (city && COVER_CITIES.has(city) ? city : '');
+  return id ? `${CITY_IMG}${id}.jpg?v=1` : '';
+};
 const LOOK: Record<string, { color: string; photo: PhotoKey; line: string }> = {
   'موسم الرياض': { color: brand.purple, photo: 'riyadh', line: 'حفلات ومسرح ورياضة وتجارب في قلب العاصمة' },
   'موسم جدة': { color: brand.skyDeep, photo: 'water', line: 'البحر والبلد والتجارب على الكورنيش' },
@@ -80,7 +95,7 @@ export function seasonsFrom(events: EventItem[], now = Date.now(), meta: SeasonM
     return {
       name, ...look, line: (isEn && LINE_EN[name]) || md?.line || look.line, start, end, events: ev,
       zones: [...z.entries()].map(([n, c]) => ({ name: n, n: c })).sort((a, b) => b.n - a.n).slice(0, 8),
-      live: active && start <= now, returning: !active && !!md?.returning, cover: md?.cover || '', link: md?.link || '', when: md?.when || '',
+      live: active && start <= now, returning: !active && !!md?.returning, cover: md?.cover || seasonCover(name, md?.city), link: md?.link || '', when: md?.when || '',
     };
   });
   return out.filter((s) => s.returning || (!isNaN(s.end) && s.end >= now))

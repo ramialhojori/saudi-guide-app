@@ -3,7 +3,7 @@ import { api } from './api';
 import { session } from './auth';
 import { isEn, t } from './i18n';
 
-export type Biz = { id: number; name: string; kind: string; city: string; area: string; photo: string; verified: boolean; placeId: number | null; lat: number | null; lng: number | null; trust?: { n: number; ok: number; pct: number | null } };
+export type Biz = { id: number; name: string; kind: string; city: string; area: string; photo: string; verified: boolean; featured?: boolean; placeId: number | null; lat: number | null; lng: number | null; trust?: { n: number; ok: number; pct: number | null } };
 export type Coupon = {
   id: number; kind: 'percent' | 'amount' | 'bogo' | 'gift'; value: string; off: string; title: string; terms: string; minOrder: number | null;
   perUser: boolean; qty: number | null; used: number; left: number | null; views: number; hours: string; start: string; end: string;
@@ -14,6 +14,7 @@ export type Merchant = {
   id: number; name: string; name_en: string; kind: string; city: string; area: string; lat: number | null; lng: number | null; placeId: number | null;
   photos: string[]; hours: string; phone: string; cr: string; verified: boolean; maxCoupons: number; status: 'pending' | 'approved' | 'rejected' | 'hidden'; note: string;
   termsVersion: string; termsAt: number | null; termsOk: boolean;
+  plan?: 'free' | 'plus' | 'pro'; planName?: string; planUntil?: number | null;
 };
 export type MStats = { used: number; saves: number; views: number; week: number[]; today: number };
 
@@ -61,7 +62,7 @@ export function leftText(c: Coupon) {
 export function couponErr(e: unknown) {
   const c = (e as { code?: string })?.code;
   return ({
-    login_required: t('سجّل دخولك أول.'), limit: t('باقتك تسمح بكوبون فعّال واحد. أوقف الحالي أو تواصل معنا.'), title_required: t('اكتب عنوان الكوبون.'),
+    login_required: t('سجّل دخولك أول.'), limit: t('وصلت حد باقتك من الكوبونات الفعّالة. أوقف واحد أو شوف الباقات.'), too_many: t('سجّلت اهتمامك أكثر من مرة اليوم. بنتواصل معك قريب.'), bad_request: t('اكتب الاسم ووسيلة التواصل.'), title_required: t('اكتب عنوان الكوبون.'),
     value_required: t('حدد قيمة الخصم.'), bad_dates: t('تاريخ النهاية قبل البداية.'), name_required: t('اكتب اسم النشاط.'), bad_city: t('اختر المدينة.'),
     merchant_not_active: t('نشاطك ما انعتمد للحين.'), wrong_code: t('الرمز غلط أو انتهى. خل العميل يحدّث الكوبون.'), already_used: t('العميل استخدم هالكوبون قبل.'),
     sold_out: t('خلصت الكوبونات.'), need_points: t('نقاطك ما تكفي لهالكوبون.'), need_level: t('هالكوبون حصري لمستوى أعلى من مستواك.'),
@@ -71,3 +72,9 @@ export function couponErr(e: unknown) {
     under_review: t('تقييمك السابق تحت المراجعة.'), not_found: t('المكان ما عاد موجود.'), unauthorized: t('انتهت جلستك، سجّل دخولك من جديد.'),
   } as Record<string, string>)[c || ''] || `${t('صار خطأ، جرّب بعد شوي.')}${c ? ` (${c})` : ''}`;
 }
+
+/* ——— دليل السعودية للأعمال: الباقات و«سجّل اهتمامك» ——— */
+export type Plan = { id: 'free' | 'plus' | 'pro'; name: string; coupons: number; featured: boolean; features: string[]; available: boolean };
+export const getPlans = () => api<{ onSale: boolean; plans: Plan[] }>('/v1/business');
+export const sendInterest = (b: { name: string; contact: string; city?: string; kind?: string; plan: string; note?: string }) =>
+  api<{ ok: boolean }>('/v1/business/interest', { method: 'POST', body: b, token: tok() });

@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
 import { BackButton, Chip } from '@/components/ui';
+import { DateStrip, nextDays } from '@/components/DateStrip';
 import { kinds } from '@/lib/content';
 import { makePlan, PACE, type Pace, type PlanStop } from '@/lib/planner';
-import { trip } from '@/lib/trip';
+import { trip, tripDayDate } from '@/lib/trip';
 import { aiErr, aiPlan, type AiPlan } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { useFeatures } from '@/lib/features';
@@ -35,7 +36,9 @@ export default function Planner() {
   const F = useFeatures();
   const { user } = useAuth();
   const [smart, setSmart] = useState(true);
-  const [when, setWhen] = useState<'' | 'today' | 'tomorrow' | 'weekend'>('');
+  const [when, setWhen] = useState<'' | 'today' | 'tomorrow' | 'weekend' | 'date'>('');
+  const [pick, setPick] = useState(''); // «تاريخ معيّن»: اليوم المختار من الشريط
+  const formScroll = useRef<ScrollView>(null);
   const [party, setParty] = useState('');
   const [budget, setBudget] = useState('متوسطة');
   const [notes, setNotes] = useState('');
@@ -46,6 +49,7 @@ export default function Planner() {
     const d = new Date(Date.now() + 3 * 3600e3);
     if (when === 'tomorrow') d.setUTCDate(d.getUTCDate() + 1);
     if (when === 'weekend') d.setUTCDate(d.getUTCDate() + ((4 - d.getUTCDay() + 7) % 7 || 7));
+    if (when === 'date') return pick;
     return when ? d.toISOString().slice(0, 10) : '';
   };
   const goSmart = async () => {
@@ -63,7 +67,7 @@ export default function Planner() {
   const saveAi = () => {
     if (!ai) return;
     const pd = ai.days.map((d) => d.stops.filter((s) => s.type === 'place').map((s) => s.id)).filter((d) => d.length);
-    const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); router.replace('/trip'); };
+    const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); if (mode === 'replace' || !trip.start()) trip.setStart(startDate()); router.replace('/trip'); };
     if (!trip.all().length) return apply('replace');
     Alert.alert(t('عندك أماكن في رحلتي'), t('تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟'), [
       { text: t('إلغاء'), style: 'cancel' }, { text: t('أضفها'), onPress: () => apply('add') }, { text: t('استبدل'), style: 'destructive', onPress: () => apply('replace') },
@@ -77,7 +81,7 @@ export default function Planner() {
   const save = () => {
     if (!plan) return;
     const pd = plan.map((d) => d.map((p) => p.id));
-    const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); router.replace('/trip'); };
+    const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); if (mode === 'replace' || !trip.start()) trip.setStart(startDate()); router.replace('/trip'); };
     if (!trip.all().length) return apply('replace');
     Alert.alert(t('عندك أماكن في رحلتي'), t('تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟'), [
       { text: t('إلغاء'), style: 'cancel' }, { text: t('أضفها'), onPress: () => apply('add') }, { text: t('استبدل'), style: 'destructive', onPress: () => apply('replace') },
@@ -175,8 +179,8 @@ export default function Planner() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: brand.bg }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: brand.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView ref={formScroll} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
         <View style={st.top}><BackButton /><AppText variant="title">{t('خطط لي رحلة')}</AppText></View>
         <AppText muted style={{ paddingHorizontal: 20, marginTop: 6 }}>{t('قل لنا وين وكم يوم ووش تحب، ونرتبها لك يوم بيوم.')}</AppText>
         {F.ai_planner ? (
@@ -228,12 +232,15 @@ export default function Planner() {
           ))}
         </View>
 
+        <AppText variant="section" style={st.h}>{t('متى؟')}</AppText>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+          {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي'], ['date', 'تاريخ معيّن']] as const).map(([k, lb]) => <Chip key={k} label={k === 'date' && pick && when === 'date' ? tripDayDate(pick, 0, isEn) : t(lb)} on={when === k} color={brand.purple} onPress={() => { setWhen(k); if (k === 'date' && !pick) setPick(nextDays(1)[0]); }} />)}
+        </ScrollView>
+        {when === 'date' ? <DateStrip value={pick} onChange={setPick} /> : null}
+        {startDate() ? <AppText variant="small" muted style={{ paddingHorizontal: 20, marginTop: 8 }}>{days === 1 ? tripDayDate(startDate(), 0, isEn) : t('من {a} إلى {b}', { a: tripDayDate(startDate(), 0, isEn), b: tripDayDate(startDate(), days - 1, isEn) })}</AppText> : null}
+
         {useSmart ? (
           <>
-            <AppText variant="section" style={st.h}>{t('متى؟')}</AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-              {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي']] as const).map(([k, lb]) => <Chip key={k} label={t(lb)} on={when === k} color={brand.purple} onPress={() => setWhen(k)} />)}
-            </ScrollView>
             <AppText variant="section" style={st.h}>{t('مين معك؟')}</AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
               {['عائلة مع أطفال', 'عائلة', 'زوجين', 'شباب', 'بنات', 'لحالي'].map((p) => <Chip key={p} label={t(p)} on={party === p} color={brand.purple} onPress={() => setParty(party === p ? '' : p)} />)}
@@ -243,7 +250,7 @@ export default function Planner() {
               {['اقتصادية', 'متوسطة', 'فاخرة'].map((b) => <Chip key={b} label={t(b)} on={budget === b} color={brand.purple} onPress={() => setBudget(b)} />)}
             </View>
             <AppText variant="section" style={st.h}>{t('شي تبي نراعيه؟')}</AppText>
-            <TextInput value={notes} onChangeText={setNotes} placeholder={t('مثلاً: نبي نصلي في المسجد النبوي كل فرض، وما نحب المشي الكثير')} placeholderTextColor={brand.faint} style={st.notes} multiline maxLength={300} />
+            <TextInput value={notes} onChangeText={setNotes} placeholder={t('مثلاً: نبي نصلي في المسجد النبوي كل فرض، وما نحب المشي الكثير')} placeholderTextColor={brand.faint} style={st.notes} multiline maxLength={300} onFocus={() => setTimeout(() => formScroll.current?.scrollToEnd({ animated: true }), 300)} />
           </>
         ) : null}
       </ScrollView>
@@ -252,7 +259,7 @@ export default function Planner() {
           {busy ? <ActivityIndicator color="#fff" /> : <><Icon name="spark" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{useSmart ? t('خطط لي بذكاء') : t('رتّب لي الرحلة')}</AppText></>}
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

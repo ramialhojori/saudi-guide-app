@@ -3,6 +3,7 @@
       يوصل متابعين المدينة إشعار واحد يجمع الجديد (ما نزعجهم بإشعار لكل مكان لو نشرت 30 مكان مرة وحدة)
    2) بداية موسم: يوم بداية الموسم (من بيانات المواسم) الساعة 10 الصبح لمتابعين مدينته
    3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم
+   4) «بكرة في مدينتك»: الساعة 7 المغرب، متابعين كل مدينة فيها فعاليات تبدأ بكرة يوصلهم إشعار واحد يجمعها
    المتابع = مدينته في الحساب أو المدن اللي يتابعها، والجوالات بدون حساب حسب المدن اللي اختارتها
    الإشعار ينحفظ في صندوق الإشعارات، وإشعار الجوال يطلع من push.js حسب تفضيلات المستخدم */
 import { arTitle } from './titles.js';
@@ -104,10 +105,28 @@ async function goingReminders(env) {
   }
 }
 
+/** «بكرة في مدينتك»: فعاليات تبدأ بكرة، إشعار واحد لكل مدينة (7 المغرب) */
+async function tomorrowInCity(env) {
+  const mk = makkah();
+  if (mk.getUTCHours() !== 19 || !(await onceToday(env, 'alerts_tomorrow_day'))) return;
+  const tomorrow = new Date(mk.getTime() + 86400e3).toISOString().slice(0, 10);
+  const { results } = await env.DB.prepare(`SELECT id, title, city FROM events WHERE deleted=0 AND city<>'' AND substr(start,1,10)=? ORDER BY id LIMIT 500`).bind(tomorrow).all();
+  const byCity = {};
+  for (const e of results) (byCity[e.city] ??= []).push(e);
+  for (const [city, evs] of Object.entries(byCity)) {
+    const name = cityName(city);
+    if (!name) continue;
+    const titles = evs.map((e) => arTitle(e.title).slice(0, 50));
+    const text = evs.length === 1 ? `بكرة في ${name}: ${titles[0]}` : `بكرة في ${name} ${count(evs.length, 'فعاليتين', 'فعاليات', 'فعالية')}: ${list(titles)}`;
+    await toFollowers(env, city, text, evs.length === 1 ? `/event/${evs[0].id}` : '/events', 'events');
+  }
+}
+
 /** الكرون كل 10 دقايق */
 export async function runAlerts(env) {
   if (!(await getFeatures(env)).alerts) return;
   await cityDigest(env);
   await seasonStarts(env);
   await goingReminders(env);
+  await tomorrowInCity(env);
 }

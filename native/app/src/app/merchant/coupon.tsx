@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { alert } from '@/lib/alert';
 import { AppText } from '@/components/AppText';
 import { Field, formSt, Input, Row, Toggle } from '@/components/Form';
 import { Icon } from '@/components/Icon';
@@ -10,7 +11,7 @@ import { Chip } from '@/components/ui';
 import { cityName } from '@/lib/content';
 import { couponColor, couponErr, createCoupon, dayLabel, editCoupon, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { t } from '@/lib/i18n';
-import { brand, font } from '@/theme/tokens';
+import { brand, font, webCol } from '@/theme/tokens';
 
 type K = Coupon['kind'];
 const KINDS: [K, string, string][] = [['percent', '%', t('خصم بالنسبة')], ['amount', t('ر.س'), t('خصم بمبلغ')], ['bogo', '1+1', t('اشتر واحد والثاني مجاناً')], ['gift', t('هدية'), t('صنف مجاني مع الطلب')]];
@@ -79,7 +80,7 @@ export default function MerchantCoupon() {
     const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end, points, minLevel, license: license.trim(), declare };
     try {
       if (editId) await editCoupon(editId, body); else await createCoupon(body);
-      Alert.alert(t('انرسل للمراجعة'), t('نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.'), [{ text: t('تمام'), onPress: () => router.replace('/merchant') }]);
+      alert(t('انرسل للمراجعة'), t('نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.'), [{ text: t('تمام'), onPress: () => router.replace('/merchant') }]);
     } catch (e) {
       if ((e as { code?: string })?.code === 'terms_required') { router.push('/merchant/terms?accept=1'); setErr(t('حدّثنا الشروط والأحكام. وافق عليها وارجع أرسل الكوبون.')); }
       else setErr(couponErr(e));
@@ -88,7 +89,7 @@ export default function MerchantCoupon() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: brand.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 150 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[{ paddingBottom: 150 }, webCol]} keyboardShouldPersistTaps="handled">
         <View style={[st.head, { paddingTop: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable style={st.glass} onPress={() => (prm.first ? router.replace('/merchant') : router.back())} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>

@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { alert } from '@/lib/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -10,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { cityName } from '@/lib/content';
 import { bizKind, couponErr, dayLabel, editCoupon, myMerchant, redeem, type Coupon, type Merchant, type MStats } from '@/lib/coupons';
 import { isEn, t } from '@/lib/i18n';
-import { brand, font } from '@/theme/tokens';
+import { brand, font, webCol } from '@/theme/tokens';
 
 const DAYS = isEn ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س']; // الأحد = 0
 const FULL = isEn ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -22,6 +23,10 @@ const CST: Record<string, [string, string, string]> = {
 /** لوحة التاجر: حالة الطلب، الكوبونات، تأكيد الاستخدام عند الكاشير، وأرقام الأسبوع */
 export default function MerchantHome() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  // الكمبيوتر: عمودين (الكاشير والأرقام | الكوبونات) بعرض أقصى 1100
+  const wide = Platform.OS === 'web' && width >= 1000;
+  const side = wide ? Math.max(24, (width - 1100) / 2) : 20;
   const { user } = useAuth();
   const [m, setM] = useState<Merchant | null | undefined>(undefined);
   const [cs, setCs] = useState<Coupon[]>([]);
@@ -42,7 +47,7 @@ export default function MerchantHome() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}>
+      <View style={[{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }, webCol]}>
         <BackButton />
         <Intro onGo={() => router.push('/login')} cta={t('سجّل دخولك أول')} />
       </View>
@@ -51,7 +56,7 @@ export default function MerchantHome() {
   if (m === undefined) return <View style={{ flex: 1, backgroundColor: brand.bg, justifyContent: 'center' }}><ActivityIndicator color={brand.purple} /></View>;
   if (m === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}>
+      <View style={[{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }, webCol]}>
         <BackButton />
         <Intro onGo={() => router.push('/merchant/join')} cta={t('سجّل نشاطك')} />
       </View>
@@ -65,8 +70,8 @@ export default function MerchantHome() {
     catch (e) { setResult({ ok: false, text: couponErr(e) }); } finally { setChecking(false); }
   };
   const act = (c: Coupon, action: 'pause' | 'resume' | 'remove') => {
-    const go = async () => { try { await editCoupon(c.id, { action }); load(); } catch (e) { Alert.alert(t('ما تم'), couponErr(e)); } };
-    if (action === 'remove') Alert.alert(t('تشيل الكوبون؟'), t('يختفي من التطبيق، وتقدر تضيف كوبون جديد مكانه.'), [{ text: t('إلغاء'), style: 'cancel' }, { text: t('شيله'), style: 'destructive', onPress: go }]);
+    const go = async () => { try { await editCoupon(c.id, { action }); load(); } catch (e) { alert(t('ما تم'), couponErr(e)); } };
+    if (action === 'remove') alert(t('تشيل الكوبون؟'), t('يختفي من التطبيق، وتقدر تضيف كوبون جديد مكانه.'), [{ text: t('إلغاء'), style: 'cancel' }, { text: t('شيله'), style: 'destructive', onPress: go }]);
     else go();
   };
 
@@ -82,7 +87,7 @@ export default function MerchantHome() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 60 }} keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
-      <View style={[st.head, { paddingTop: insets.top + 10 }]}>
+      <View style={[st.head, { paddingTop: insets.top + 10, paddingHorizontal: side }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>
           {m.photos[0] ? <Image source={m.photos[0]} style={st.logo} contentFit="cover" /> : <View style={[st.logo, st.logoNo]}><Icon name="shop" color="#fff" size={24} /></View>}
@@ -91,7 +96,7 @@ export default function MerchantHome() {
             <AppText variant="title" color="#fff" numberOfLines={1}>{m.name}</AppText>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
               {m.verified ? <View style={st.ver}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.semibold }}>{t('موثّق')}</AppText></View> : null}
-              <AppText variant="tiny" color="#CFC6DE">{cityName(m.city)} · {m.maxCoupons > 1 ? t('باقة مميزة') : t('الباقة المجانية')}</AppText>
+              <AppText variant="tiny" color="#CFC6DE">{cityName(m.city)} · {m.plan && m.plan !== 'free' ? t(m.plan === 'pro' ? 'باقة الشريك' : 'الباقة المميزة') + (m.planUntil ? ' · ' + t('لين {d}', { d: new Date(m.planUntil * 1000).toLocaleDateString(isEn ? 'en-GB' : 'ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short' }) }) : '') : t('الباقة المجانية')}</AppText>
             </View>
           </View>
           <Pressable style={st.glass} onPress={() => router.push('/merchant/join')} accessibilityLabel={t('تعديل بيانات النشاط')}><Icon name="edit" color="#fff" size={18} /></Pressable>
@@ -105,7 +110,8 @@ export default function MerchantHome() {
         ) : null}
       </View>
 
-      <View style={{ paddingHorizontal: 16 }}>
+      <View style={wide ? [st.cols, { paddingHorizontal: side }] : { paddingHorizontal: 16 }}>
+        <View style={wide ? st.colA : null}>
         {/* الشروط تحدثت: لازم يوافق قبل أي كوبون جديد */}
         {!m.termsOk ? (
           <Pressable style={[st.card, { borderWidth: 2, borderColor: brand.orange }]} onPress={() => router.push('/merchant/terms?accept=1')}>
@@ -177,6 +183,8 @@ export default function MerchantHome() {
           </View>
         ) : null}
 
+        </View>
+        <View style={wide ? st.colB : null}>
         {/* الكوبونات */}
         <View style={st.secRow}>
           <AppText variant="section">{t('كوبوناتي')}</AppText>
@@ -215,10 +223,12 @@ export default function MerchantHome() {
         ) : null}
         {!canAdd && cs.length ? <AppText variant="tiny" muted center style={{ marginTop: 10 }}>{m.maxCoupons === 1 ? t('باقتك تسمح بكوبون فعّال واحد. شيل واحد عشان تضيف غيره.') : t('باقتك تسمح بـ{n} كوبونات فعّالة. شيل واحد عشان تضيف غيره.', { n: m.maxCoupons })}</AppText> : null}
 
-        <View style={st.premium}>
+        {m.plan && m.plan !== 'free' ? null : <View style={st.premium}>
           <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>{t('الباقة المميزة · قريباً')}</AppText>
           <AppText style={{ fontFamily: font.bold, fontSize: 17, marginTop: 2 }} color="#fff">{t('اظهر أول في {city}', { city: cityName(m.city) })}</AppText>
           <AppText variant="small" color="#E2DAEE" style={{ lineHeight: 21, marginTop: 4 }}>{t('ظهور في الرئيسية، 3 كوبونات فعّالة، إشعار للمهتمين بنشاطك في مدينتك، وتقرير شهري.')}</AppText>
+          <Pressable onPress={() => router.push('/business')} style={{ marginTop: 10 }}><AppText variant="small" color="#F9A158" style={{ fontFamily: font.bold }}>{t('شوف الباقات وسجّل اهتمامك')}</AppText></Pressable>
+        </View>}
         </View>
       </View>
     </ScrollView>
@@ -251,11 +261,15 @@ function Intro({ onGo, cta }: { onGo: () => void; cta: string }) {
       ))}
       <Button label={cta} style={{ marginTop: 20 }} onPress={onGo} />
       <AppText variant="tiny" muted center style={{ marginTop: 8 }}>{t('مجاني الحين · نراجع كل طلب خلال 24 ساعة')}</AppText>
+      <Pressable onPress={() => router.push('/business')} style={{ marginTop: 14, alignSelf: 'center' }}><AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }}>{t('اعرف أكثر عن دليل السعودية للأعمال والباقات')}</AppText></Pressable>
     </View>
   );
 }
 
 const st = StyleSheet.create({
+  cols: { flexDirection: 'row', gap: 20, alignItems: 'flex-start' },
+  colA: { flex: 1 },
+  colB: { flex: 1.15 },
   head: { backgroundColor: '#2B2745', paddingHorizontal: 20, paddingBottom: 22, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
   glass: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   logo: { width: 54, height: 54, borderRadius: 16, borderWidth: 2, borderColor: brand.orange },

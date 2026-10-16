@@ -15,7 +15,7 @@ export function CouponCard({ c, onPress, onSave, cta = t('استخدمه'), bizN
       {c.biz?.photo ? <Image source={c.biz.photo} style={{ width: 92, height: 120 }} contentFit="cover" /> : <View style={st.noImg}><Icon name="ticket" color="#fff" size={30} /></View>}
       <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
         <View>
-          <AppText variant="tiny" color="#fff" numberOfLines={1}>{bizName ?? c.biz?.name}{c.biz?.area ? ` · ${c.biz.area}` : ''}{c.biz?.verified ? ' ✓' : ''}</AppText>
+          <AppText variant="tiny" color="#fff" numberOfLines={1}>{bizName ?? c.biz?.name}{c.biz?.area ? ` · ${c.biz.area}` : ''}{c.biz?.verified ? ' ✓' : ''}{c.biz?.featured ? ` · ${t('مميّز')}` : ''}</AppText>
           <AppText style={{ fontFamily: font.bold, fontSize: 21, lineHeight: 30 }} color="#fff" numberOfLines={1}>{c.off}</AppText>
           <AppText variant="small" color="#fff" numberOfLines={1}>{c.title}</AppText>
         </View>

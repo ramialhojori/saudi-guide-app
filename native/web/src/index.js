@@ -139,7 +139,7 @@ export default {
 
     // ملفات آبل وأندرويد: الروابط تفتح التطبيق مباشرة لو كان منزّل
     if (path === '/.well-known/apple-app-site-association' || path === '/apple-app-site-association') {
-      const paths = ['/place/*', '/event/*', '/article/*', '/city/*', '/question/*', '/coupon/*', '/season/*', '/*/i/*'];
+      const paths = ['/place/*', '/event/*', '/article/*', '/city/*', '/question/*', '/coupon/*', '/season/*', '/plan/*', '/*/i/*'];
       return Response.json({ applinks: { apps: [], details: [{ appIDs: [IOS_APP_ID], appID: IOS_APP_ID, paths, components: paths.map((p) => ({ '/': p })) }] }, webcredentials: { apps: [IOS_APP_ID] } });
     }
     if (path === '/.well-known/assetlinks.json') {

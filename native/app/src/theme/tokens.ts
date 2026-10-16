@@ -135,6 +135,8 @@ export type PhotoKey = keyof typeof photos;
  */
 import { I18nManager, Platform } from 'react-native';
 import { isRtl } from '@/lib/i18n';
+/** عمود بالوسط بعرض مريح في الويب على الكمبيوتر (صفحات التجار والأعمال) */
+export const webCol = Platform.OS === 'web' ? ({ width: '100%', maxWidth: 760, alignSelf: 'center' } as const) : null;
 export const START: 'left' | 'right' = Platform.OS !== 'web' ? 'left' : isRtl ? 'right' : 'left';
 /** حقول الكتابة (TextInput) ما تنقلب مع اتجاه التطبيق على الآيفون — نحطها يمين دايماً */
 export const INPUT_START: 'left' | 'right' = isRtl ? 'right' : 'left';

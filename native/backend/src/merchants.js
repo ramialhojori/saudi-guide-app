@@ -9,6 +9,7 @@ import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
 import { sendPush } from './messages.js';
 import { LEVELS } from './community.js';
+import { FEATURED_SQL, PLANS, planOf } from './business.js';
 import { MERCHANT_TERMS, MERCHANT_TERMS_DATE, MERCHANT_TERMS_VERSION } from './terms.js';
 
 /** المستوى من مجموع النقاط اللي جمعها (الصرف ما ينزّل المستوى) */
@@ -48,6 +49,7 @@ const merchantOut = (m) => ({
   placeId: m.place_id || null, photos: parse(m.photos), hours: m.hours || '', phone: m.phone || '', cr: m.cr || '',
   verified: !!m.verified, maxCoupons: m.max_coupons, status: m.status, note: m.note || '', created: m.created, updated: m.updated,
   termsVersion: m.terms_version || '', termsAt: m.terms_at || null, termsOk: m.terms_version === MERCHANT_TERMS_VERSION,
+  plan: planOf(m), planName: PLANS[planOf(m)].name, planUntil: planOf(m) !== 'free' ? m.plan_until || null : null,
 });
 const couponOut = (c, extra = {}) => ({
   id: c.id, kind: c.kind, value: c.value || '', off: offText(c), title: c.title, terms: c.terms || '', minOrder: c.min_order || null,
@@ -59,10 +61,10 @@ const couponOut = (c, extra = {}) => ({
 /** كوبون عام مع بيانات المحل (للتطبيق) */
 export const publicCoupon = (r, saved) => couponOut(r, {
   saved: !!saved,
-  biz: { id: r.merchant_id, name: r.m_name, kind: r.m_kind, city: r.m_city, area: r.m_area || '', photo: parse(r.m_photos)[0] || '', verified: !!r.m_verified, placeId: r.m_place || null, lat: r.m_lat, lng: r.m_lng,
+  biz: { id: r.merchant_id, name: r.m_name, kind: r.m_kind, city: r.m_city, area: r.m_area || '', photo: parse(r.m_photos)[0] || '', verified: !!r.m_verified, featured: !!r.m_featured, placeId: r.m_place || null, lat: r.m_lat, lng: r.m_lng,
     trust: { n: r.m_fb || 0, ok: r.m_ok || 0, pct: r.m_fb ? Math.round((100 * r.m_ok) / r.m_fb) : null } },
 });
-export const PUBLIC_SQL = `SELECT c.*, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id) m_fb, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id AND f.ok=1) m_ok, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng
+export const PUBLIC_SQL = `SELECT c.*, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id) m_fb, (SELECT COUNT(*) FROM coupon_feedback f WHERE f.merchant_id=m.id AND f.ok=1) m_ok, m.name m_name, m.kind m_kind, m.city m_city, m.area m_area, m.photos m_photos, m.verified m_verified, m.place_id m_place, m.lat m_lat, m.lng m_lng, ${FEATURED_SQL} m_featured
   FROM coupons c JOIN merchants m ON m.id=c.merchant_id
   WHERE c.status='active' AND m.status='approved' AND (c.start IS NULL OR c.start='' OR c.start<=?1) AND (c."end" IS NULL OR c."end"='' OR c."end">=?1)
     AND (c.qty IS NULL OR c.used<c.qty)`;
@@ -134,7 +136,7 @@ export async function merchantRoute(p, request, env, J, q) {
     if (+q.get('place')) { sql += ` AND m.place_id=?${args.length + 1}`; args.push(+q.get('place')); }
     if (+q.get('merchant')) { sql += ` AND m.id=?${args.length + 1}`; args.push(+q.get('merchant')); }
     if (q.get('rewards')) sql += ' AND (c.points>0 OR c.min_level>1)';
-    const { results } = await env.DB.prepare(sql + ' ORDER BY m.verified DESC, c.used DESC, c.id DESC LIMIT 100').bind(...args).all();
+    const { results } = await env.DB.prepare(sql + ' ORDER BY m_featured DESC, m.verified DESC, c.used DESC, c.id DESC LIMIT 100').bind(...args).all();
     let saved = new Set();
     if (uid && results.length) {
       const s = await env.DB.prepare('SELECT coupon_id FROM coupon_saves WHERE user_id=?').bind(uid).all();
@@ -293,7 +295,12 @@ export async function merchantRoute(p, request, env, J, q) {
     if (!c || c.status === 'hidden') return J({ error: 'not_found' }, 404);
     const b = await request.json().catch(() => ({}));
     if (b.action === 'pause' && c.status === 'active') { await env.DB.prepare("UPDATE coupons SET status='paused',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'paused' }); }
-    if (b.action === 'resume' && c.status === 'paused') { await env.DB.prepare("UPDATE coupons SET status='active',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'active' }); }
+    if (b.action === 'resume' && c.status === 'paused') {
+      // التشغيل ضمن حد الباقة (بعد انتهاء باقة مميزة تكون فيه كوبونات موقوفة زيادة)
+      const on = await env.DB.prepare("SELECT COUNT(*) n FROM coupons WHERE merchant_id=? AND status IN ('pending','active')").bind(mine.id).first();
+      if (on.n >= mine.max_coupons) return J({ error: 'limit', max: mine.max_coupons }, 409);
+      await env.DB.prepare("UPDATE coupons SET status='active',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'active' });
+    }
     if (b.action === 'remove') { await env.DB.prepare("UPDATE coupons SET status='hidden',updated=? WHERE id=?").bind(now(), c.id).run(); return J({ status: 'hidden' }); }
     // تعديل كامل → يرجع للمراجعة
     if (mine.terms_version !== MERCHANT_TERMS_VERSION) return J({ error: 'terms_required', version: MERCHANT_TERMS_VERSION }, 403);
@@ -369,12 +376,23 @@ export async function merchantAdmin(p, request, env, J, q) {
     const b = await request.json().catch(() => ({}));
     const status = ['pending', 'approved', 'rejected', 'hidden'].includes(b.status) ? b.status : r.status;
     const verified = b.verified == null ? r.verified : b.verified ? 1 : 0;
-    const maxc = b.maxCoupons == null ? r.max_coupons : Math.max(0, Math.min(20, +b.maxCoupons || 0));
+    // الباقة: المشرف يعطيها يدوياً (planDays = كم يوم، 0 = بدون نهاية). تغيير الباقة يضبط عدد الكوبونات تلقائياً
+    let plan = r.plan || 'free', planUntil = r.plan_until ?? null;
+    if (b.plan !== undefined && PLANS[b.plan]) {
+      plan = b.plan;
+      planUntil = plan === 'free' ? null : +b.planDays > 0 ? now() + Math.min(730, +b.planDays) * 86400 : null;
+    }
+    const planChanged = plan !== (r.plan || 'free') || planUntil !== (r.plan_until ?? null);
+    const maxc = b.maxCoupons != null ? Math.max(0, Math.min(20, +b.maxCoupons || 0)) : planChanged ? PLANS[plan].coupons : r.max_coupons;
     const place = b.placeId === undefined ? r.place_id : num(b.placeId);
     const note = b.note === undefined ? r.note : str(b.note, 300);
     const lat = b.lat === undefined ? r.lat : num(b.lat), lng = b.lng === undefined ? r.lng : num(b.lng);
-    await env.DB.prepare('UPDATE merchants SET status=?,verified=?,max_coupons=?,place_id=?,note=?,lat=?,lng=?,updated=? WHERE id=?')
-      .bind(status, verified, maxc, place, note, lat, lng, now(), r.id).run();
+    await env.DB.prepare('UPDATE merchants SET status=?,verified=?,max_coupons=?,place_id=?,note=?,lat=?,lng=?,plan=?,plan_until=?,plan_warned=?,updated=? WHERE id=?')
+      .bind(status, verified, maxc, place, note, lat, lng, plan, planUntil, planChanged ? 0 : r.plan_warned || 0, now(), r.id).run();
+    if (planChanged && plan !== 'free') {
+      const until = planUntil ? new Date((planUntil + 3 * 3600) * 1000).toISOString().slice(0, 10) : '';
+      await notify(env, r.user_id, `هدية من دليل السعودية: «${r.name}» صار على ${PLANS[plan].name}${until ? ` لين ${until}` : ''}. تقدر تضيف لين ${maxc} كوبونات، وعروضك تطلع قبل غيرها.`).run();
+    }
     if (status !== r.status && (status === 'approved' || status === 'rejected')) {
       await notify(env, r.user_id, status === 'approved' ? `تمت الموافقة على «${r.name}» في دليل السعودية للأعمال. أضف كوبونك الأول!` : `ما قدرنا نعتمد «${r.name}»${note ? ': ' + note : ''}. تقدر تعدّل الطلب وترسله مرة ثانية.`).run();
     }

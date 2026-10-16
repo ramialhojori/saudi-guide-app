@@ -182,7 +182,7 @@ async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
+  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.leadsNew || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
@@ -776,7 +776,7 @@ const dAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-
 async function merchantsView() {
   const m = $('#main');
   m.innerHTML = `<h1>التجار والكوبونات</h1><p class="sub">أصحاب المحلات يسجّلون من التطبيق (الملف الشخصي ← «سجّل نشاطك»). ما يظهر شي للزوار لين توافق هنا.</p>
-    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['reports', `بلاغات العملاء${SUMMARY?.counts?.creportsPending ? ' (' + SUMMARY.counts.creportsPending + ')' : ''}`], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف']].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['reports', `بلاغات العملاء${SUMMARY?.counts?.creportsPending ? ' (' + SUMMARY.counts.creportsPending + ')' : ''}`], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف'], ['leads', `مهتمين بالباقات${SUMMARY?.counts?.leadsNew ? ' (' + SUMMARY.counts.leadsNew + ')' : ''}`]].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-m]').forEach((b) => (b.onclick = () => { MTAB = b.dataset.m; merchantsView(); }));
   if (MTAB === 'reports') {
     const RS = { refused: 'المحل رفض الكوبون', different: 'العرض مختلف عن المكتوب', conditions: 'شروط ما كانت مكتوبة', closed: 'المحل مقفل', other: 'مشكلة ثانية' };
@@ -787,6 +787,20 @@ async function merchantsView() {
     m.querySelectorAll('[data-rp]').forEach((b) => (b.onclick = async () => {
       if (b.dataset.s === 'confirmed' && !confirm('تثبت البلاغ؟ العميل ياخذ 20 نقطة والتاجر تنسجل عليه مخالفة.')) return;
       await api('/admin/coupon-reports/' + b.dataset.rp, { method: 'POST', body: { status: b.dataset.s } }); toast('تم ووصلهم إشعار'); SUMMARY = null; merchantsView();
+    }));
+    return;
+  }
+  if (MTAB === 'leads') {
+    const LS = { new: ['جديد', 'b-draft'], contacted: ['تواصلت معه', 'b-live'], done: ['انتهى', 'b-hidden'] };
+    const d = await api('/admin/business/leads?status=all');
+    $('#res').innerHTML = `<div class="hint" style="margin-bottom:10px">تجار سجّلوا اهتمامهم من صفحة «دليل السعودية للأعمال». الباقات المدفوعة ${d.onSale ? 'مفتوحة للبيع' : 'مقفلة للبيع لين يطلع السجل التجاري'}، وتقدر تعطي أي تاجر معتمد باقة هدية من بطاقته في «التجار المعتمدين».</div>` + (d.leads.map((l) => `<div class="post"><div class="row"><span class="badge ${(LS[l.status] || LS.new)[1]}">${(LS[l.status] || LS.new)[0]}</span><b class="grow">${h(l.name)}</b><span class="muted" style="font-size:13px">${[l.planName, l.cityName, MK[l.kind] || l.kind, dAr(l.created)].filter(Boolean).join(' · ')}</span></div>
+      <div style="font-weight:600;direction:ltr;text-align:right">${h(l.contact)}</div>${l.note ? `<div>«${h(l.note)}»</div>` : ''}
+      <div class="muted" style="font-size:13px">${l.merchant ? `عنده نشاط في الدليل: ${h(l.merchant.name)} (${(MST[l.merchant.status] || [l.merchant.status])[0]})` : l.registered ? 'عنده حساب في الدليل وما سجّل نشاط للحين' : 'زائر بدون حساب'}${l.adminNote ? ' · ملاحظتك: ' + h(l.adminNote) : ''}</div>
+      <div class="row">${l.status !== 'contacted' ? `<button class="btn g" data-ld="${l.id}" data-s="contacted">تواصلت معه</button>` : ''}${l.status !== 'done' ? `<button class="btn ghost" data-ld="${l.id}" data-s="done">انتهى</button>` : ''}<button class="btn ghost" data-ld="${l.id}" data-s="${l.status}" data-n="1">ملاحظة</button><button class="btn ghost" data-ld="${l.id}" data-s="hidden">إخفاء</button></div></div>`).join('') || '<div class="empty">ما سجّل أحد اهتمامه للحين</div>');
+    m.querySelectorAll('[data-ld]').forEach((b) => (b.onclick = async () => {
+      let note;
+      if (b.dataset.n) { note = prompt('ملاحظتك (لك بس، ما توصل للتاجر)'); if (note === null) return; }
+      await api('/admin/business/leads/' + b.dataset.ld, { method: 'POST', body: { status: b.dataset.s, note } }); toast('تم'); SUMMARY = null; merchantsView();
     }));
     return;
   }
@@ -808,7 +822,7 @@ async function merchantsView() {
   let list = (await api('/admin/merchants?status=' + st)).merchants;
   if (MTAB === 'rejected') list = list.filter((x) => x.status === 'rejected' || x.status === 'hidden');
   $('#res').innerHTML = list.map((x) => `<div class="item" data-id="${x.id}">${x.photos[0] ? `<img src="${h(x.photos[0])}">` : '<div class="ph">بدون صورة</div>'}
-    <div class="grow"><div class="t">${h(x.name)} ${x.verified ? '<span class="badge b-live">موثّق</span>' : ''}</div><div class="m">${MK[x.kind] || x.kind} · ${cityName(x.city)}${x.area ? ' · ' + h(x.area) : ''} · ${h(x.owner || 'بدون اسم')} · ${dAr(x.updated)}</div>
+    <div class="grow"><div class="t">${h(x.name)} ${x.verified ? '<span class="badge b-live">موثّق</span>' : ''} ${x.plan !== 'free' ? `<span class="badge b-draft">${h(x.planName)}${x.planUntil ? ' لين ' + new Date(x.planUntil * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh' }) : ''}</span>` : ''}</div><div class="m">${MK[x.kind] || x.kind} · ${cityName(x.city)}${x.area ? ' · ' + h(x.area) : ''} · ${h(x.owner || 'بدون اسم')} · ${dAr(x.updated)}</div>
     <div class="m">${x.coupons} كوبون · ${x.used} استخدام${x.placeTitle ? ' · مربوط بـ«' + h(x.placeTitle) + '»' : ''}</div></div>${stB(x.status)}</div>`).join('') || `<div class="empty">${MTAB === 'pending' ? 'ما فيه طلبات جديدة' : 'ما فيه أحد هنا'}</div>`;
   m.querySelectorAll('.item[data-id]').forEach((el) => (el.onclick = () => editMerchant(list.find((x) => x.id === +el.dataset.id))));
 }
@@ -820,12 +834,15 @@ function editMerchant(x) {
     <div class="two"><div class="f"><label>ساعات العمل</label><div>${h(x.hours || '—')}</div></div><div class="f"><label>السجل التجاري / معروف</label><div>${h(x.cr || '—')}</div><small>تحقق منه قبل «موثّق»</small></div></div>
     <div class="${x.termsOk ? 'hint' : 'warn'}" style="margin-top:12px">${x.termsVersion ? `وافق على الشروط والأحكام (نسخة ${h(x.termsVersion)}) بتاريخ ${x.termsAt ? new Date(x.termsAt * 1000).toLocaleString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh' }) : '—'}${x.agreeIp ? ' · الجهاز ' + h(x.agreeIp) : ''}${x.termsOk ? '' : ' · <b>يحتاج يوافق على النسخة الجديدة</b>'}` : 'ما وافق على الشروط والأحكام للحين'}</div>
     <div class="f"><label><input type="checkbox" id="ver" ${x.verified ? 'checked' : ''}> موثّق (تطلع علامة «موثّق» جنب الاسم)</label></div>
-    <div class="two"><div class="f"><label>عدد الكوبونات الفعّالة المسموحة</label><input class="in" id="max" type="number" min="0" max="20" value="${x.maxCoupons}"><small>الباقة المجانية = 1</small></div>
+    <div class="two"><div class="f"><label>الباقة</label><select class="in" id="plan">${[['free', 'المجانية (كوبون واحد)'], ['plus', 'المميزة (3 كوبونات + تطلع أول)'], ['pro', 'الشريك (10 كوبونات + أعلى أولوية)']].map(([k, t]) => `<option value="${k}" ${x.plan === k ? 'selected' : ''}>${t}</option>`).join('')}</select><small>${x.plan !== 'free' ? (x.planUntil ? 'تنتهي ' + new Date(x.planUntil * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh' }) + ' وترجع مجانية تلقائياً' : 'بدون تاريخ انتهاء') : 'ما فيه دفع حالياً: الباقة هدية منك'}</small></div>
+    <div class="f"><label>مدة الباقة (يوم)</label><input class="in" id="pdays" type="number" min="0" max="730" placeholder="مثلاً 30 · فاضي = بدون نهاية"><small>تنحسب من اليوم لما تغيّر الباقة أو تكتب مدة جديدة. يوصله إشعار بالهدية، وتنبيه قبل الانتهاء بـ3 أيام</small></div></div>
+    <div class="two"><div class="f"><label>عدد الكوبونات الفعّالة المسموحة</label><input class="in" id="max" type="number" min="0" max="20" value="${x.maxCoupons}"><small>يتعدّل تلقائياً حسب الباقة، وتقدر تغيّره يدوياً</small></div>
     <div class="f"><label>ربطه بمكان في الدليل</label><input class="in" id="pq" placeholder="ابحث باسم المكان" value="${h(x.placeTitle)}"><input type="hidden" id="pid" value="${x.placeId || ''}"><div id="psug" class="list" style="margin-top:6px"></div><small>الكوبون يطلع في صفحة هذا المكان</small></div></div>
     <div class="f"><label>الموقع على الخريطة</label><div id="geoBox"></div></div>
     <div class="f"><label>ملاحظة للتاجر (تنرسل مع الرفض)</label><input class="in" id="note" value="${h(x.note)}" placeholder="مثلاً: الصور مو واضحة، ارفع صورة للواجهة"></div>
     <div class="bar"><button class="btn g" data-s="approved">${x.status === 'approved' ? 'حفظ' : 'اعتمد'}</button>${x.status === 'pending' ? '<button class="btn p" data-s="rejected">رفض</button>' : ''}${x.status === 'approved' ? '<button class="btn ghost" data-s="hidden" style="color:var(--pinkDeep)">إيقاف النشاط</button>' : ''}${x.status !== 'pending' && x.status !== 'approved' ? '<button class="btn ghost" data-s="pending">رجّعه للمراجعة</button>' : ''}</div>`);
   $('#x', d).onclick = closeDrawer;
+  $('#plan', d).onchange = (e) => { $('#max', d).value = { free: 1, plus: 3, pro: 10 }[e.target.value]; };
   let geo = { lat: x.lat, lng: x.lng };
   geoWidget($('#geoBox', d), x.lat, x.lng, () => x.city, null, (la, ln) => { geo = { lat: la, lng: ln }; });
   let t; $('#pq', d).oninput = (e) => {
@@ -841,7 +858,9 @@ function editMerchant(x) {
     if (s === 'rejected' && !$('#note', d).value.trim() && !confirm('ترفض بدون ملاحظة؟')) return;
     if (s === 'hidden' && !confirm('توقف النشاط؟ كوبوناته تختفي من التطبيق.')) return;
     try {
-      await api('/admin/merchants/' + x.id, { method: 'POST', body: { status: s, verified: $('#ver', d).checked, maxCoupons: +$('#max', d).value, placeId: $('#pid', d).value || null, note: $('#note', d).value, lat: geo.lat, lng: geo.lng } });
+      const plan = $('#plan', d).value, pdays = $('#pdays', d).value.trim();
+      const planBody = plan !== x.plan || pdays ? { plan, planDays: +pdays || 0 } : {};
+      await api('/admin/merchants/' + x.id, { method: 'POST', body: { status: s, verified: $('#ver', d).checked, maxCoupons: +$('#max', d).value, placeId: $('#pid', d).value || null, note: $('#note', d).value, lat: geo.lat, lng: geo.lng, ...planBody } });
       toast(s === 'approved' ? 'انعتمد ووصله إشعار' : s === 'rejected' ? 'انرفض ووصلته الملاحظة' : 'تم'); closeDrawer(); SUMMARY = null; merchantsView();
     } catch (e) { toast(errMsg(e)); }
   }));

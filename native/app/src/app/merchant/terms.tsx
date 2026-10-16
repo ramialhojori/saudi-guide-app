@@ -7,7 +7,7 @@ import { Icon } from '@/components/Icon';
 import { BackButton } from '@/components/ui';
 import { acceptMerchantTerms, couponErr, dayLabel, merchantTerms } from '@/lib/coupons';
 import { t, tr } from '@/lib/i18n';
-import { brand, font } from '@/theme/tokens';
+import { brand, font, webCol } from '@/theme/tokens';
 
 /** الشروط والأحكام لبوابة التجار. مع ?accept=1 يطلع زر «أوافق» (لما تتحدث النسخة) */
 export default function MerchantTerms() {
@@ -25,7 +25,7 @@ export default function MerchantTerms() {
   };
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: prm.accept ? 170 : 40 }}>
+      <ScrollView contentContainerStyle={[{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: prm.accept ? 170 : 40 }, webCol]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <BackButton />
           <View style={{ flex: 1 }}>

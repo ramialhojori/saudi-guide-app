@@ -132,6 +132,8 @@ const TOOLS = [
   ['create_article_draft', 'يضيف خبر كمسودة.', S({ title: str(''), author: str(''), summary: str(''), body: str(''), images: { type: 'array', items: { type: 'string' } }, cats: { type: 'array', items: { type: 'string' } } }, ['title']), (a) => ['POST', '/admin/articles', { ...a }]],
   ['upload_image_from_url', 'ينزّل صورة من رابط (jpg/png/webp حتى 10MB) ويرفعها لتخزين الدليل، ويرجع الرابط الجديد. استخدم بس صور مسموح استخدامها (رسمية أو من صاحب المكان).', S({ url: str('رابط الصورة') }, ['url']), null, 'upload'],
   ['list_suggestions', 'اقتراحات الزوار (pending|approved|rejected) مع صورهم وفرز المراجعة الذكية (ai: decision, summary, body, kind, cats).', S({ status: str('') }), (a) => ['GET', '/admin/suggestions?' + qs(a)]],
+  ['list_business_leads', 'التجار اللي سجّلوا اهتمامهم بالباقات من صفحة «للأعمال». status: new|contacted|done|all (الافتراضي new).', S({ status: str('') }), (a) => ['GET', `/admin/business/leads?status=${a.status || 'new'}`]],
+  ['update_business_lead', 'يحدّث طلب اهتمام: status (new|contacted|done|hidden)، note (ملاحظة داخلية). ما يوصل التاجر شي.', S({ id: num(''), status: str(''), note: str('') }, ['id']), (a) => ['POST', `/admin/business/leads/${+a.id}`, a]],
   ['list_merchants', 'طلبات التجار (pending|approved|rejected|hidden|all).', S({ status: str('') }), (a) => ['GET', '/admin/merchants?' + qs(a)]],
   ['list_coupons', 'الكوبونات (pending|active|paused|all).', S({ status: str('') }), (a) => ['GET', '/admin/coupons?' + qs(a)]],
   ['list_photos', 'صور الزوار (pending|approved|rejected).', S({ status: str('') }), (a) => ['GET', '/admin/photos?' + qs(a)]],
@@ -172,7 +174,7 @@ const TOOLS = [
   ['set_review_status', 'يخفي أو يُظهر تقييم.', S({ id: num(''), status: str('visible|hidden') }, ['id', 'status']), (a) => ['POST', `/admin/reviews/${+a.id}`, { status: a.status }]],
 
   /* —— التجار والكوبونات —— */
-  ['decide_merchant', 'يحدّث طلب تاجر: status (pending|approved|rejected|hidden)، verified، maxCoupons (0-20)، placeId (ربط بمكان)، note. القبول/الرفض يوصل التاجر إشعار. ⚠️ القبول لرامي.', S({ id: num(''), status: str(''), verified: { type: 'boolean' }, maxCoupons: num(''), placeId: num(''), note: str(''), lat: num(''), lng: num('') }, ['id']), (a) => ['POST', `/admin/merchants/${+a.id}`, a]],
+  ['decide_merchant', 'يحدّث طلب تاجر: status (pending|approved|rejected|hidden)، verified، maxCoupons (0-20)، placeId (ربط بمكان)، note، plan (free|plus|pro) مع planDays (0 = بدون نهاية) — الباقة هدية بدون دفع ويوصله إشعار. القبول/الرفض يوصل التاجر إشعار. ⚠️ القبول والباقات لرامي.', S({ id: num(''), status: str(''), verified: { type: 'boolean' }, maxCoupons: num(''), placeId: num(''), note: str(''), lat: num(''), lng: num(''), plan: str(''), planDays: num('') }, ['id']), (a) => ['POST', `/admin/merchants/${+a.id}`, a]],
   ['decide_coupon', 'يحدّث كوبون: status (pending|active|paused|rejected|hidden)، note. ⚠️ التفعيل لرامي.', S({ id: num(''), status: str(''), note: str('') }, ['id']), (a) => ['POST', `/admin/coupons/${+a.id}`, a]],
   ['list_coupon_reports', 'بلاغات العملاء على الكوبونات (pending|confirmed|dismissed).', S({ status: str('') }), (a) => ['GET', '/admin/coupon-reports?' + qs(a)]],
   ['decide_coupon_report', 'يأكد البلاغ (confirmed: إنذار للتاجر +20 نقطة للمبلّغ، 3 إنذارات = إيقاف) أو يرفضه (dismissed). ⚠️ القرار لرامي.', S({ id: num(''), status: str('confirmed|dismissed') }, ['id', 'status']), (a) => ['POST', `/admin/coupon-reports/${+a.id}`, a]],

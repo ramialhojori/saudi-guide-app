@@ -48,7 +48,7 @@ export default function SeasonScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 60 }}>
       <View style={[st.hero, { backgroundColor: s.color }]}>
-        <Image source={s.cover ? { uri: s.cover } : photos[s.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={s.cover ? { uri: s.cover } : s.name === 'رالي حائل' ? undefined : photos[s.photo]} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['rgba(0,0,0,0.05)', s.color + 'F2']} locations={[0.2, 0.95]} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />

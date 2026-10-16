@@ -8,6 +8,7 @@ import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
 import { Icon } from '@/components/Icon';
 import { Loading } from '@/components/State';
+import { OfflineCard } from '@/components/OfflineCard';
 import { BackButton, Chip, ImageRow } from '@/components/ui';
 import { cityKinds, getCities, getCityPlaces } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
@@ -71,7 +72,7 @@ export default function CityScreen() {
           <AppText variant="hero" color="#fff" style={{ fontSize: 40, lineHeight: 52 }}>{city?.name ?? ''}</AppText>
           <AppText variant="small" color="#E2DAEE">{(isEn ? TAGLINE_EN[id] : TAGLINE[id]) ?? t('اكتشف أماكنها ومطاعمها ومعالمها')}</AppText>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            {[t('{n} مكان', { n: city?.count ?? all.length }), t('31° الحين'), t('أفضل وقت: أكتوبر – مارس')].map((s) => (
+            {[t('{n} مكان', { n: city?.count ?? all.length })].map((s) => (
               <View key={s} style={st.glassPill}><AppText variant="tiny" color="#fff">{s}</AppText></View>
             ))}
           </View>
@@ -84,6 +85,8 @@ export default function CityScreen() {
         <TextInput value={q} onChangeText={setQ} placeholder={t('ابحث في {city}', { city: city?.name ?? '' })} placeholderTextColor={brand.faint} style={st.input} />
         <AppText variant="small" style={{ fontFamily: font.semibold }}>{t('الأقرب')}</AppText>
       </View>
+
+      {!q ? <OfflineCard city={id} name={city?.name ?? ''} /> : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 14 }}>
         <Chip label={`${t('الكل')} ${city?.count ?? ''}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />

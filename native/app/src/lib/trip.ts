@@ -7,7 +7,9 @@ import { useSyncExternalStore } from 'react';
 
 const KEY = 'sg_trip_v1';        // القديم: قائمة مسطّحة
 const KEY_DAYS = 'sg_trip_days_v2'; // الجديد: أيام
+const KEY_START = 'sg_trip_start'; // تاريخ أول يوم (YYYY-MM-DD) لو حدده المستخدم
 let days: number[][] = [[]];
+let start = '';
 let ids: number[] = [];
 let loaded = false;
 const subs = new Set<() => void>();
@@ -26,6 +28,7 @@ const chunk = (a: number[], n: number) => { const o: number[][] = []; for (let i
       days = chunk(old, 3);
     }
   } catch { days = [[]]; }
+  try { start = (await AsyncStorage.getItem(KEY_START)) || ''; } catch { /* */ }
   ids = flat(); loaded = true; emit();
 })();
 
@@ -37,6 +40,13 @@ const commit = (next: number[][], notify = true) => {
   emit();
   if (notify) listeners.forEach((f) => f(ids, days));
 };
+function setStart(d: string) {
+  start = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
+  AsyncStorage.setItem(KEY_START, start).catch(() => {});
+  emit();
+  // تذكير قبل الرحلة بيوم (push.ts يحمّل مكتبة الإشعارات بس في الجوال)
+  try { require('./push').tripReminder(start); } catch { /* */ }
+}
 const without = (id: number) => days.map((d) => d.filter((x) => x !== id));
 
 export const trip = {
@@ -63,7 +73,10 @@ export const trip = {
   },
   addDay() { commit([...days.map((x) => [...x]), []]); return days.length - 1; },
   removeDay(day: number) { const d = days.map((x) => [...x]); const [gone] = d.splice(day, 1); if (d.length && gone?.length) d[Math.max(0, day - 1)].push(...gone); commit(d.length ? d : [[]]); },
-  clear() { commit([[]]); },
+  clear() { setStart(''); commit([[]]); },
+  /** تاريخ بداية الرحلة (فاضي = ما حدد) */
+  start: () => start,
+  setStart: (d: string) => setStart(d),
   /** خطة كاملة بالأيام (من مخطط الرحلات) */
   setDays(next: number[][]) { commit(next); },
   set(next: number[]) { commit(chunk([...new Set(next)], 3)); },
@@ -76,7 +89,24 @@ export const trip = {
 };
 
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
-export function useTrip(): { ids: number[]; days: number[][]; loaded: boolean } {
+export function useTrip(): { ids: number[]; days: number[][]; loaded: boolean; start: string } {
   const d = useSyncExternalStore(subscribe, () => days);
-  return { ids: ids, days: d, loaded };
+  const s = useSyncExternalStore(subscribe, () => start);
+  return { ids: ids, days: d, loaded, start: s };
 }
+
+/** تاريخ يوم معيّن من الرحلة (i من صفر) بصيغة قصيرة، أو فاضي لو ما فيه تاريخ بداية */
+export function tripDayDate(startDate: string, i: number, en: boolean, withWeekday = true): string {
+  if (!startDate) return '';
+  const d = new Date(startDate + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + i);
+  return d.toLocaleDateString(en ? 'en-GB' : 'ar-SA-u-ca-gregory-nu-latn', { timeZone: 'UTC', day: 'numeric', month: 'short', ...(withWeekday ? { weekday: 'short' } : {}) });
+}
+
+/* ——— مشاركة الرحلة برابط ———
+   الرحلة كلها داخل الرابط نفسه (بدون سيرفر): أرقام الأماكن بنظام 36 ويفصلها «.»، والأيام يفصلها «_»
+   مثال: https://www.saudi-guide.com/plan/a3.b7_cc  ← يومين: (370، 403) ثم (444)
+   الرابط يفتح التطبيق مباشرة لو منزّل (applinks)، وإلا يفتح نسخة الويب */
+export const encodeTrip = (d: number[][]) => d.filter((x) => x.length).map((x) => x.map((id) => id.toString(36)).join('.')).join('_');
+export const decodeTrip = (code: string): number[][] =>
+  String(code || '').slice(0, 1500).split('_').map((x) => x.split('.').map((s) => parseInt(s, 36)).filter((n) => Number.isFinite(n) && n > 0).slice(0, 30)).filter((x) => x.length).slice(0, 14);

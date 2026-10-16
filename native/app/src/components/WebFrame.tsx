@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
+import { usePathname } from 'expo-router';
 import { Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
@@ -18,6 +19,7 @@ const inApp = () => typeof navigator !== 'undefined' && /wv\)|; wv|FBAN|Instagra
  */
 export function WebFrame({ children }: { children: React.ReactNode }) {
   const { width } = useWindowDimensions();
+  const path = usePathname() || '';
   const [banner, setBanner] = useState(false);
   useEffect(() => {
     try { setBanner(isAndroid() && !inApp() && sessionStorage.getItem('sg_banner_off') !== '1'); } catch { setBanner(isAndroid()); }
@@ -38,6 +40,19 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
             <Pressable onPress={() => Linking.openURL(ANDROID_URL)} style={st.get}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('حمّل')}</AppText></Pressable>
           </View>
         ) : null}
+        <View style={{ flex: 1 }}>{children}</View>
+      </View>
+    );
+  }
+
+  // صفحات التجار والأعمال: بعرض الشاشة كامل (التاجر يشتغل من الكمبيوتر) مع شريط علوي بسيط
+  if (/^(\/en)?\/(merchant|business)(\/|$)/.test(path)) {
+    return (
+      <View style={{ flex: 1, backgroundColor: brand.bg }}>
+        <View style={st.bizBar}>
+          <Image source={require('../../assets/brand/logo-white.png')} style={{ width: 150, height: 40 }} contentFit="contain" />
+          <AppText color="#F9A158" style={{ fontFamily: font.bold }}>{t('دليل السعودية للأعمال')}</AppText>
+        </View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>
     );
@@ -69,6 +84,7 @@ export function WebFrame({ children }: { children: React.ReactNode }) {
 const st = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: brand.card, borderBottomWidth: 1, borderBottomColor: brand.line, zIndex: 10 },
   get: { backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 16, height: 32, justifyContent: 'center' },
+  bizBar: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, backgroundColor: brand.purple },
   desk: { flex: 1, backgroundColor: brand.purple, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   blobA: { position: 'absolute', width: 620, height: 620, borderRadius: 310, backgroundColor: 'rgba(248,151,67,0.16)', top: -220, right: -160 },
   blobB: { position: 'absolute', width: 520, height: 520, borderRadius: 260, backgroundColor: 'rgba(235,131,155,0.16)', bottom: -220, left: -120 },

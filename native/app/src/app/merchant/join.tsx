@@ -14,7 +14,7 @@ import { uploadPhoto } from '@/lib/community';
 import { allCities } from '@/lib/content';
 import { BIZ_KINDS, couponErr, myMerchant, saveMerchant, type Merchant } from '@/lib/coupons';
 import { t } from '@/lib/i18n';
-import { brand, font } from '@/theme/tokens';
+import { brand, font, webCol } from '@/theme/tokens';
 
 type Ph = { uri: string; url?: string };
 
@@ -85,7 +85,7 @@ export default function MerchantJoin() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: brand.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 150 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[{ paddingBottom: 150 }, webCol]} keyboardShouldPersistTaps="handled">
         <View style={[st.head, { paddingTop: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>

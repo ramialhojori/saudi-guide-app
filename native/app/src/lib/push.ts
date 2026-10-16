@@ -59,3 +59,24 @@ export function startPush() {
   N.getLastNotificationResponseAsync?.().then(open).catch(() => {});
   registerPush(false).catch(() => {});
 }
+
+/** تذكير محلي قبل الرحلة بيوم (6 المغرب بتوقيت مكة) لما يحدد المستخدم تاريخها. تغيير التاريخ يلغي القديم */
+const TRIP_REMINDER = 'sg_trip_reminder_id';
+export async function tripReminder(start: string) {
+  if (!mods()) return;
+  try {
+    const old = await AsyncStorage.getItem(TRIP_REMINDER);
+    if (old) { await N.cancelScheduledNotificationAsync(old).catch(() => {}); await AsyncStorage.removeItem(TRIP_REMINDER); }
+    if (!start || !(await pushPrefs()).trip) return;
+    const at = new Date(start + 'T15:00:00Z'); // 6 المغرب بتوقيت مكة
+    at.setUTCDate(at.getUTCDate() - 1);
+    if (at.getTime() < Date.now() + 10 * 60e3) return;
+    const { status } = await N.getPermissionsAsync();
+    if (status !== 'granted') return;
+    const id = await N.scheduleNotificationAsync({
+      content: { title: tr('رحلتك بكرة', 'Your trip is tomorrow'), body: tr('جهّز نفسك! خطتك يوم بيوم جاهزة في «رحلتي».', 'Get ready! Your day-by-day plan is waiting in My Trip.'), data: { link: '/trip' } },
+      trigger: { type: N.SchedulableTriggerInputTypes?.DATE ?? 'date', date: at },
+    });
+    await AsyncStorage.setItem(TRIP_REMINDER, id);
+  } catch { /* */ }
+}

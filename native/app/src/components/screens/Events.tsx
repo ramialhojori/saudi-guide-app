@@ -106,7 +106,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {seasonList.map((x) => (
               <Pressable key={x.name} onPress={() => router.push(`/season/${slug(x.name)}`)} style={[st.seasonCard, { backgroundColor: x.color }]}>
-                <Image source={x.cover ? { uri: x.cover } : photos[x.photo]} style={[StyleSheet.absoluteFill, x.returning && { opacity: 0.55 }]} contentFit="cover" />
+                <Image source={x.cover ? { uri: x.cover } : x.name === 'رالي حائل' ? undefined : photos[x.photo]} style={[StyleSheet.absoluteFill, x.returning && { opacity: 0.55 }]} contentFit="cover" />
                 <LinearGradient colors={['rgba(0,0,0,0)', x.color + 'F0']} locations={[0.15, 0.9]} style={StyleSheet.absoluteFill} />
                 <View style={st.seasonLive}><View style={[st.liveDot, { backgroundColor: x.live ? '#7CFC9A' : x.returning ? '#C9C2DA' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(x, now)}</AppText></View>
                 <View style={{ position: 'absolute', right: 14, left: 14, bottom: 12 }}>

@@ -21,6 +21,7 @@ import { seasonsRoute, seasonsAdmin } from './seasons.js';
 import { aiRoute, aiAdmin } from './ai.js';
 import { searchRoute } from './search.js';
 import { contactRoute, contactAdmin } from './contact.js';
+import { businessRoute, businessAdmin, planExpiry } from './business.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
@@ -149,7 +150,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -169,6 +170,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/iap/')) { const r = await iapRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/web/')) { const r = await webApiRoute(p, env, J); if (r) return r; }
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
+  if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }
 
   /* ——— المساهمة: المميزات، الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */
@@ -274,6 +276,16 @@ async function route(request, env, ctx) {
       `SELECT * FROM places WHERE ${where.join(' AND ')} ORDER BY (thumb IS NULL OR thumb='') ASC, updated DESC, id DESC LIMIT ? OFFSET ?`,
     ).bind(...args, per, (page - 1) * per).all();
     return J({ total: total.n, page, places: results.map((r) => placeLite(r)) }, 200, 300);
+  }
+
+  /* تحميل المدينة للاستخدام بدون نت: كل أماكنها بالتفاصيل + فعالياتها الجاية (التطبيق يحفظها ويحمّل صورها) */
+  if ((m = p.match(/^\/v1\/cities\/([a-z0-9-]+)\/offline$/))) {
+    const now = new Date().toISOString();
+    const [pl, ev] = await Promise.all([
+      env.DB.prepare('SELECT * FROM places WHERE city=? AND deleted=0 ORDER BY (thumb IS NULL OR thumb=\'\') ASC, updated DESC LIMIT 600').bind(m[1]).all(),
+      env.DB.prepare("SELECT * FROM events WHERE city=? AND deleted=0 AND COALESCE(NULLIF(\"end\",''),start) >= ? ORDER BY start LIMIT 100").bind(m[1], now).all(),
+    ]);
+    return J({ city: m[1], at: Math.floor(Date.now() / 1000), places: pl.results.map((r) => placeFull(r)), events: ev.results.map((r) => eventRow(r, true)) }, 200, 600);
   }
 
   if ((m = p.match(/^\/v1\/places\/(\d+)$/))) {
@@ -384,5 +396,6 @@ export default {
     ctx.waitUntil(runTranslate(env).catch((e) => console.log('translate', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
+    ctx.waitUntil(planExpiry(env).catch((e) => console.log('plans', e && e.message)));
   },
 };

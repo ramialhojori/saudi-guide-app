@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui';
 import { cityName, getPlacesByIds } from '@/lib/content';
-import { trip, useTrip } from '@/lib/trip';
+import { encodeTrip, trip, tripDayDate, useTrip } from '@/lib/trip';
+import { DateStrip } from '@/components/DateStrip';
+import { env } from '@/config/env';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
-import { t, tr } from '@/lib/i18n';
+import { isEn, t, tr } from '@/lib/i18n';
 
 type Stop = { id?: number; time: string; title: string; sub: string; img: ImageSource | string; drive?: string };
 const SLOT = [t('9:00 ص · الصباح'), t('1:00 م · الظهر'), t('4:30 م · العصر'), t('7:30 م · المساء')];
@@ -30,7 +32,8 @@ const DEMO: Stop[][] = [
 
 export default function TripScreen() {
   const insets = useSafeAreaInsets();
-  const { ids, days: tripDays } = useTrip();
+  const { ids, days: tripDays, start } = useTrip();
+  const [dateOpen, setDateOpen] = useState(false);
   const { data: places } = useAsync(() => getPlacesByIds(ids), [ids.join(',')]);
   const byId = new Map((places ?? []).map((p) => [p.id, p]));
   const [day, setDay] = useState(0);
@@ -61,12 +64,17 @@ export default function TripScreen() {
         <LinearGradient colors={['rgba(32,22,54,0.15)', 'rgba(32,22,54,0.9)']} style={StyleSheet.absoluteFill} />
         <View style={[st.heroTop, { top: insets.top + 10 }]}>
           <View style={st.glassPill}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">{t('رحلاتي · {n}', { n: real ? 1 : 3 })}</AppText></View>
-          <Pressable style={st.glassPill} onPress={() => Share.share({ message: t('رحلتي إلى {city} على دليل السعودية', { city }) }).catch(() => {})}>
+          <Pressable style={st.glassPill} onPress={() => { const msg = t('رحلتي إلى {city} على دليل السعودية', { city }); const url = real ? `${env.siteUrl}/plan/${encodeTrip(tripDays)}${start ? '?s=' + start : ''}` : ''; Share.share(url ? { message: `${msg}\n${url}`, url } : { message: msg }).catch(() => {}); }}>
             <Icon name="share" color="#fff" size={16} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">{t('شارك مع الشلة')}</AppText>
           </Pressable>
         </View>
         <View style={st.heroTx}>
-          <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{real ? t('رحلتك الجاية') : t('بعد 9 أيام · 22–24 أكتوبر')}</AppText>
+          {real ? (
+            <Pressable onPress={() => setDateOpen(true)} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}>
+              <Icon name="calendar" color="#F9A158" size={15} />
+              <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{start ? (days.length > 1 ? `${tripDayDate(start, 0, isEn, false)} – ${tripDayDate(start, days.length - 1, isEn, false)}` : tripDayDate(start, 0, isEn)) : t('حدد تاريخ الرحلة')}</AppText>
+            </Pressable>
+          ) : <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{t('بعد 9 أيام · 22–24 أكتوبر')}</AppText>}
           <AppText variant="hero" color="#fff">{real ? t('رحلتي إلى {city}', { city }) : t('ويكند العلا')}</AppText>
           <AppText variant="small" color="#E2DAEE">{t('{n} أيام', { n: days.length })}   ·   {t('{n} مكان', { n: total })}{real ? '' : `   ·   ${t('24° نهاراً')}`}</AppText>
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
@@ -83,7 +91,7 @@ export default function TripScreen() {
         {days.map((_, i) => (
           <Pressable key={i} onPress={() => setDay(i)} onLongPress={() => real && days.length > 1 && Alert.alert(t('اليوم {n}', { n: i + 1 }), t('تشيل هاليوم؟ أماكنه تنتقل لليوم اللي قبله.'), [{ text: t('إلغاء'), style: 'cancel' }, { text: t('شيل اليوم'), style: 'destructive', onPress: () => { trip.removeDay(i); setDay(Math.max(0, i - 1)); } }])} style={[st.day, i === day && st.dayOn]}>
             <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.text} center>{t('اليوم {n}', { n: i + 1 })}</AppText>
-            <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? t('{n} أماكن', { n: days[i].length }) : [t('الخميس 22'), t('الجمعة 23'), t('السبت 24')][i]}</AppText>
+            <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? (start ? tripDayDate(start, i, isEn) : t('{n} أماكن', { n: days[i].length })) : [t('الخميس 22'), t('الجمعة 23'), t('السبت 24')][i]}</AppText>
           </Pressable>
         ))}
       {real && days.length < 7 ? (
@@ -126,6 +134,17 @@ export default function TripScreen() {
           <Pressable style={st.tipBtn} onPress={() => router.push({ pathname: '/planner', params: real ? { city: places![0].city } : {} })}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{t('خطط لي')}</AppText></Pressable>
         </View>
       </View>
+
+      {/* تاريخ الرحلة: أول يوم، والباقي ينحسب منه */}
+      <Modal visible={dateOpen} transparent animationType="slide" onRequestClose={() => setDateOpen(false)}>
+        <Pressable style={st.sheetBg} onPress={() => setDateOpen(false)} />
+        <View style={[st.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 18, paddingHorizontal: 20 }}>{t('متى أول يوم في رحلتك؟')}</AppText>
+          <AppText variant="small" muted style={{ paddingHorizontal: 20, marginTop: 2 }}>{t('نكتب تاريخ كل يوم، ونذكرك قبل الرحلة بيوم.')}</AppText>
+          <DateStrip value={start} onChange={(d) => { trip.setStart(d); setDateOpen(false); }} />
+          {start ? <Pressable onPress={() => { trip.setStart(''); setDateOpen(false); }} style={{ alignSelf: 'center', marginTop: 14 }}><AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.semibold }}>{t('شيل التاريخ')}</AppText></Pressable> : null}
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -137,6 +156,8 @@ function chunk<T>(a: T[], n: number): T[][] {
 }
 
 const st = StyleSheet.create({
+  sheetBg: { flex: 1, backgroundColor: 'rgba(20,16,36,0.45)' },
+  sheet: { backgroundColor: brand.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 20 },
   hero: { height: 330, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, overflow: 'hidden', backgroundColor: brand.ink },
   heroTop: { position: 'absolute', right: 16, left: 16, flexDirection: 'row', justifyContent: 'space-between' },
   glassPill: { flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },

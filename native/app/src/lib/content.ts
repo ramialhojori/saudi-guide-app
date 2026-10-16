@@ -10,6 +10,7 @@ import type { Article, City, EventItem, Home, Kind, Place, PlaceFull } from './t
 import snapshot from '@/data/snapshot.json';
 import weekly from '@/data/weekly_pool.json';
 import { isEn } from './i18n';
+import { offlineCity, offlinePlace } from './offline';
 
 type SnapPlace = { id: number; c: string; t: string; k: string[]; cat: string; th: string; img: string; s: string; lat: number | null; lng: number | null };
 const SNAP = snapshot as unknown as {
@@ -24,7 +25,7 @@ const BY_ID = new Map(PLACES.map((p) => [p.id, p]));
 const KEYS = new Map(PLACES.map((p) => [p.id, searchKey(p.title + ' ' + p.cat)]));
 const withImageFirst = (a: Place[]) => [...a.filter((p) => p.thumb), ...a.filter((p) => !p.thumb)];
 
-async function tryApi<T>(path: string, fallback: () => T): Promise<T> {
+async function tryApi<T>(path: string, fallback: () => T | Promise<T>): Promise<T> {
   try {
     return await api<T>(path);
   } catch {
@@ -106,9 +107,12 @@ export const getCities = () => tryApi<{ cities: City[] }>('/v1/cities', () => ({
 
 export function getCityPlaces(city: string, kind?: string, q?: string) {
   const qs = new URLSearchParams({ per: '100', ...(kind ? { kind } : {}), ...(q ? { q } : {}) });
-  return tryApi<{ total: number; places: Place[] }>(`/v1/cities/${city}/places?${qs}`, () => {
+  return tryApi<{ total: number; places: Place[] }>(`/v1/cities/${city}/places?${qs}`, async () => {
     const k = q ? searchKey(q) : '';
-    const list = withImageFirst(PLACES.filter((p) => p.city === city && (!kind || p.kinds.includes(kind)) && (!k || KEYS.get(p.id)!.includes(k))));
+    // بدون نت: المدينة المحمّلة أول (أحدث وفيها التفاصيل)، وإلا النسخة المدمجة
+    const off = await offlineCity(city);
+    const src: Place[] = off ? off.places : PLACES.filter((p) => p.city === city);
+    const list = withImageFirst(src.filter((p) => (!kind || p.kinds.includes(kind)) && (!k || searchKey(p.title + ' ' + p.cat).includes(k))));
     return { total: list.length, places: list };
   });
 }
@@ -121,7 +125,9 @@ export function cityKinds(city: string): (Kind & { n: number })[] {
 }
 
 export const getPlace = (id: number) =>
-  tryApi<{ place: PlaceFull }>(`/v1/places/${id}`, () => {
+  tryApi<{ place: PlaceFull }>(`/v1/places/${id}`, async () => {
+    const off = await offlinePlace(id);
+    if (off) return { place: off };
     const p = BY_ID.get(id);
     if (!p) throw new Error('not_found');
     return { place: { ...p, title_en: '', cats: [p.cat], body: '', images: p.image ? [p.image] : [], address: '', phone: '', website: '', email: '', url: '' } };

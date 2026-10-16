@@ -67,6 +67,11 @@
               "scheme": "https",
               "host": "www.saudi-guide.com",
               "pathPrefix": "/season"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/plan"
             }
           ],
           "category": [

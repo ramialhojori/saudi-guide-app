@@ -1,6 +1,5 @@
 /* مولّد تلقائياً من schema.sql — لا تعدّله يدوياً (شغّل: python3 scripts/build_schema.py) */
 const STATEMENTS = [
-  "CREATE TABLE IF NOT EXISTS tr ( kind TEXT NOT NULL, id INTEGER NOT NULL, lang TEXT NOT NULL, t TEXT, s TEXT, b TEXT, a TEXT, src TEXT, updated INTEGER NOT NULL, PRIMARY KEY (kind, id, lang) )",
   "CREATE TABLE IF NOT EXISTS cities ( id TEXT PRIMARY KEY, name TEXT NOT NULL, gb_section INTEGER NOT NULL, color TEXT, lat REAL, lng REAL, kind TEXT NOT NULL DEFAULT 'city', cover TEXT, sort INTEGER NOT NULL DEFAULT 0 )",
   "CREATE TABLE IF NOT EXISTS places ( id INTEGER PRIMARY KEY, city TEXT NOT NULL, title TEXT NOT NULL, title_en TEXT, slug TEXT, cats TEXT NOT NULL DEFAULT '[]', kinds TEXT NOT NULL DEFAULT '[]', summary TEXT, body TEXT, images TEXT NOT NULL DEFAULT '[]', thumb TEXT, lat REAL, lng REAL, address TEXT, phone TEXT, website TEXT, email TEXT, url TEXT, comments INTEGER NOT NULL DEFAULT 1, premium INTEGER NOT NULL DEFAULT 0, search TEXT, sig TEXT, updated INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0 )",
   "CREATE INDEX IF NOT EXISTS places_city ON places(city, deleted)",
@@ -10,12 +9,6 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS events_start ON events(start)",
   "CREATE TABLE IF NOT EXISTS articles ( id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT, date TEXT, summary TEXT, body TEXT, images TEXT NOT NULL DEFAULT '[]', thumb TEXT, cats TEXT NOT NULL DEFAULT '[]', section TEXT, url TEXT, sig TEXT, updated INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0 )",
   "CREATE INDEX IF NOT EXISTS articles_date ON articles(date)",
-  "CREATE TABLE IF NOT EXISTS place_summary ( place_id INTEGER PRIMARY KEY, text TEXT NOT NULL, n INTEGER NOT NULL, updated INTEGER NOT NULL )",
-  "CREATE TABLE IF NOT EXISTS content_live ( kind TEXT NOT NULL, item_id INTEGER NOT NULL, city TEXT, title TEXT, at INTEGER NOT NULL, sent INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (kind, item_id) )",
-  "CREATE TABLE IF NOT EXISTS iap_subs ( orig_tx TEXT PRIMARY KEY, user_id TEXT NOT NULL, product TEXT NOT NULL, expires INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0, env TEXT, last_tx TEXT, updated INTEGER NOT NULL )",
-  "CREATE INDEX IF NOT EXISTS iap_subs_user ON iap_subs(user_id)",
-  "CREATE TABLE IF NOT EXISTS coupon_alerts ( user_id TEXT NOT NULL, city TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, city) )",
-  "CREATE TABLE IF NOT EXISTS contact_msgs ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, kind TEXT NOT NULL, text TEXT NOT NULL, reply_to TEXT, city TEXT, app TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'new', reply TEXT, replied INTEGER, created INTEGER NOT NULL )",
   "CREATE TABLE IF NOT EXISTS devices ( token TEXT PRIMARY KEY, platform TEXT, cities TEXT NOT NULL DEFAULT '[]', user_id TEXT, created INTEGER NOT NULL, seen INTEGER NOT NULL )",
   "CREATE TABLE IF NOT EXISTS sync_log ( id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, source TEXT NOT NULL, added INTEGER NOT NULL DEFAULT 0, changed INTEGER NOT NULL DEFAULT 0, removed INTEGER NOT NULL DEFAULT 0, note TEXT )",
   "CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)",
@@ -96,6 +89,9 @@ const ALTERS = [
   'ALTER TABLE notifications ADD COLUMN pushed INTEGER NOT NULL DEFAULT 0', // انرسل كإشعار جوال؟ (push.js)
   'CREATE INDEX IF NOT EXISTS notif_push ON notifications(pushed, created)',
   'ALTER TABLE devices ADD COLUMN prefs TEXT', // تفضيلات إشعارات الجهاز {community, offers, events, trip}
+  "ALTER TABLE merchants ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'", // باقة التاجر (business.js): free | plus | pro
+  'ALTER TABLE merchants ADD COLUMN plan_until INTEGER', // نهاية الباقة (فاضي = بدون نهاية)
+  'ALTER TABLE merchants ADD COLUMN plan_warned INTEGER NOT NULL DEFAULT 0', // انرسل تنبيه قرب الانتهاء
   'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
   // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)
   'UPDATE users SET plus_grant_until=plus_until WHERE plus_grant_until IS NULL AND plus_until IS NOT NULL AND id NOT IN (SELECT user_id FROM iap_subs)', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
