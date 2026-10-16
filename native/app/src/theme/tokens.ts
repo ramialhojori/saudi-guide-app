@@ -134,6 +134,7 @@ export type PhotoKey = keyof typeof photos;
  * على الويب ما فيه قلب، فنستخدم right مباشرة.
  */
 import { I18nManager, Platform } from 'react-native';
-export const START: 'left' | 'right' = Platform.OS !== 'web' ? 'left' : I18nManager.isRTL || (typeof document !== 'undefined' && document.documentElement.dir === 'rtl') ? 'right' : 'left';
+import { isRtl } from '@/lib/i18n';
+export const START: 'left' | 'right' = Platform.OS !== 'web' ? 'left' : isRtl ? 'right' : 'left';
 /** حقول الكتابة (TextInput) ما تنقلب مع اتجاه التطبيق على الآيفون — نحطها يمين دايماً */
-export const INPUT_START: 'left' | 'right' = I18nManager.isRTL || (Platform.OS === 'web' && typeof document !== 'undefined' && document.documentElement.dir === 'rtl') ? 'right' : 'left';
+export const INPUT_START: 'left' | 'right' = isRtl ? 'right' : 'left';

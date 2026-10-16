@@ -182,8 +182,10 @@ export const getEvent = (id: number) =>
 export const getArticles = () =>
   tryApi<{ articles: Article[] }>('/v1/articles', () => ({ articles: [...SNAP.articles].sort((a, b) => b.date.localeCompare(a.date)) })).then((r) => r.articles);
 /** صفحة الأخبار: 20 خبر بالصفحة */
-export const getArticlesPage = (page: number) =>
-  tryApi<{ articles: Article[] }>(`/v1/articles?page=${page}`, () => ({ articles: page === 1 ? [...SNAP.articles].sort((a, b) => b.date.localeCompare(a.date)) : [] })).then((r) => r.articles);
+export const getArticlesPage = (page: number, cat?: string | null) =>
+  tryApi<{ articles: Article[] }>(`/v1/articles?page=${page}${cat ? `&cat=${encodeURIComponent(cat)}` : ''}`, () => ({
+    articles: page === 1 ? [...SNAP.articles].filter((a) => !cat || (a.cats || []).includes(cat)).sort((a, b) => b.date.localeCompare(a.date)) : [],
+  })).then((r) => r.articles);
 export const getArticle = (id: number) =>
   tryApi<{ article: Article }>(`/v1/articles/${id}`, () => {
     const a = SNAP.articles.find((x) => x.id === id);

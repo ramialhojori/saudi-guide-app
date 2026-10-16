@@ -18,7 +18,7 @@ export type EventItem = {
   address: string; tickets: string; link?: string; cats: string[]; city: string | null; lat?: number | null; lng?: number | null; body?: string; images?: string[]; url?: string;
 };
 export type Article = {
-  id: number; title: string; author: string; date: string; summary: string; thumb: string; section: string;
+  id: number; title: string; author: string; date: string; summary: string; thumb: string; section: string; cats?: string[];
   body?: string; images?: string[]; url?: string;
 };
 export type Home = { cities: City[]; picks: Place[]; events: EventItem[]; articles: Article[] };

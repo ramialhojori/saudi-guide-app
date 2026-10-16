@@ -1,5 +1,8 @@
 /** قاموس إنجليزي — مجموعة core (المفتاح = النص العربي كما هو في الكود) */
 export default {
+  'أخبار المشاريع': 'Project News',
+  'سياحة وفعاليات': 'Tourism & Events',
+  'مشاريع رؤية السعودية 2030': 'Vision 2030 Projects',
   'صار خطأ، جرّب بعد شوي.': 'Something went wrong, try again shortly.',
   'ما انختم': 'Not stamped',
   'مختوم من قبل': 'Already stamped',

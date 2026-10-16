@@ -340,7 +340,10 @@ async function route(request, env, ctx) {
 
   if (p === '/v1/articles') {
     const page = Math.max(1, +q.get('page') || 1);
-    const { results } = await env.DB.prepare('SELECT * FROM articles WHERE deleted=0 ORDER BY date DESC LIMIT 20 OFFSET ?').bind((page - 1) * 20).all();
+    // ?cat= تصنيف الخبر (نفس تصنيفات قودبابر: أخبار المشاريع، سياحة وفعاليات، مشاريع رؤية السعودية 2030)
+    const cat = q.get('cat');
+    const { results } = await env.DB.prepare(`SELECT * FROM articles WHERE deleted=0 ${cat ? 'AND cats LIKE ?' : ''} ORDER BY date DESC LIMIT 20 OFFSET ?`)
+      .bind(...(cat ? [`%"${cat.replace(/["%_]/g, '')}"%`] : []), (page - 1) * 20).all();
     return J({ page, articles: results.map((r) => articleRow(r)) }, 200, 300);
   }
   if ((m = p.match(/^\/v1\/articles\/(\d+)$/))) {
