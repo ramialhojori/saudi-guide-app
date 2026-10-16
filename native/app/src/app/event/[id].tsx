@@ -3,7 +3,8 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { usePullUpClose } from '@/components/PullUpClose';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { RichText } from '@/components/RichText';
@@ -25,6 +26,7 @@ const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأح
 
 /** صفحة الفعالية — مثل التصميم: عدّاد تنازلي، الموعد، المكان، التذاكر، رايحين */
 export default function EventScreen() {
+  const pull = usePullUpClose();
   const { id } = useLocalSearchParams<{ id: string }>();
   useEffect(() => { if (id) track('event', Number(id)); }, [id]);
   const insets = useSafeAreaInsets();
@@ -50,8 +52,8 @@ export default function EventScreen() {
   const ticket = extLink(e.tickets?.startsWith('http') ? e.tickets : '') || extLink(e.link);
 
   return (
-    <View style={{ flex: 1, backgroundColor: brand.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+    <Animated.View style={[{ flex: 1, backgroundColor: brand.bg }, pull.style]}>
+      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={{ height: 420, backgroundColor: brand.ink }}>
           <Image source={e.image || e.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient colors={['rgba(32,22,54,0.2)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
@@ -104,6 +106,7 @@ export default function EventScreen() {
             </Pressable>
           </View>
         </View>
+        {pull.footer}
       </ScrollView>
 
       {ticket ? (
@@ -112,7 +115,7 @@ export default function EventScreen() {
             onPress={() => { WebBrowser.openBrowserAsync(ticket).catch(() => {}); }} />
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

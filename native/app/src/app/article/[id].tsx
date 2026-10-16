@@ -20,7 +20,7 @@ export default function ArticleScreen() {
   if (loading && !a) return <Screen showBack><Loading /></Screen>;
   if (!a) return <Screen showBack><Empty /></Screen>;
   return (
-    <Screen showBack title={a.section || t('الأخبار')} pad={false}>
+    <Screen showBack title={a.section || t('الأخبار')} pad={false} pullClose>
       <Image source={a.images?.[0] || a.thumb} style={styles.img} contentFit="cover" />
       <View style={styles.body}>
         <AppText variant="small" muted>{riyadhDate(a.date, false)} · {a.author}</AppText>
@@ -32,6 +32,6 @@ export default function ArticleScreen() {
 }
 const styles = StyleSheet.create({
   img: { width: '100%', height: 240, backgroundColor: '#E8E3EE' },
-  body: { padding: space.lg, gap: space.md, paddingBottom: 120 },
+  body: { padding: space.lg, gap: space.md, paddingBottom: 12 },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.lg },
 });

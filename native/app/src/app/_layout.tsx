@@ -43,6 +43,8 @@ if (__DEV__ && Platform.OS !== 'web') {
   Appearance.addChangeListener(({ colorScheme }) => { if ((colorScheme === 'dark') !== isDark) DevSettings.reload(); });
 }
 
+const BOTTOM = { animation: 'slide_from_bottom', gestureDirection: 'vertical' } as const;
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     IBMPlexSansArabic_400Regular,
@@ -75,9 +77,11 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="city/[id]" />
-        <Stack.Screen name="place/[id]" />
-        <Stack.Screen name="event/[id]" />
-        <Stack.Screen name="article/[id]" />
+        {/* صفحات المحتوى تطلع من تحت (مثل «Content appears from the bottom» في قودبابر): تنقفل بالسحب لتحت من أعلى الشاشة،
+            أو بالسحب لفوق بعد آخر الصفحة (PullUpClose) */}
+        <Stack.Screen name="place/[id]" options={BOTTOM} />
+        <Stack.Screen name="event/[id]" options={BOTTOM} />
+        <Stack.Screen name="article/[id]" options={BOTTOM} />
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="plus" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="coupon/use" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

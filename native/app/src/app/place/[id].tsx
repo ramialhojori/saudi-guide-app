@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Alert, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { usePullUpClose } from '@/components/PullUpClose';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
@@ -31,6 +32,7 @@ const W = Dimensions.get('window').width;
 
 /** صفحة المكان — مثل التصميم: صورة كبيرة، بطاقة المعلومات، نصيحة من أهل الديرة، الخريطة، الأسئلة، القريب منه */
 export default function PlaceScreen() {
+  const pull = usePullUpClose();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { data: p, loading, error } = useAsync(() => getPlace(Number(id)), [id]);
@@ -96,8 +98,8 @@ export default function PlaceScreen() {
   const others = (near ?? []).filter((x) => x.id !== p.id && x.thumb).slice(0, 6);
 
   return (
-    <View style={{ flex: 1, backgroundColor: brand.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+    <Animated.View style={[{ flex: 1, backgroundColor: brand.bg }, pull.style]}>
+      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         {/* الصور */}
         {images.length ? (
           <View style={{ height: 440, backgroundColor: brand.ink }}>
@@ -385,6 +387,7 @@ export default function PlaceScreen() {
             </ScrollView>
           </>
         ) : null}
+        {pull.footer}
       </ScrollView>
 
       <Modal visible={!!shot} transparent animationType="fade" onRequestClose={() => setShot(null)}>
@@ -397,7 +400,7 @@ export default function PlaceScreen() {
         <Button label={saved ? t('✓ في رحلتي') : t('أضف لرحلتي')} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
         <Button label={t('الاتجاهات')} bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

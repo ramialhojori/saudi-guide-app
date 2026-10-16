@@ -362,4 +362,6 @@ export default {
   "من التطبيق": "In the app",
   "نضيف عروض جديدة كل كم يوم، ارجع لنا قريب.": "We add new offers every few days, check back soon.",
   "ينتهي بكرة": "Ends tomorrow",
+  "اسحب لفوق للرجوع": "Pull up to go back",
+  "اترك للرجوع": "Release to go back",
 } as Record<string, string>;
