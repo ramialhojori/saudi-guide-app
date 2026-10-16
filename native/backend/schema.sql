@@ -449,3 +449,11 @@ CREATE TABLE IF NOT EXISTS article_comments ( id INTEGER PRIMARY KEY AUTOINCREME
 CREATE INDEX IF NOT EXISTS acomments_article ON article_comments(article_id, status, id);
 CREATE INDEX IF NOT EXISTS acomments_status ON article_comments(status, id);
 CREATE TABLE IF NOT EXISTS comment_reports ( comment_id INTEGER NOT NULL, user_id TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id) );
+
+-- الصحف السعودية (papers.js): المصادر، الأخبار (عنوان وصورة وسطرين ورابط بس)، ومتابعات الحسابات
+CREATE TABLE IF NOT EXISTS news_sources ( id TEXT PRIMARY KEY, name TEXT NOT NULL, site TEXT, feed TEXT NOT NULL, lang TEXT NOT NULL DEFAULT 'ar', logo TEXT, status TEXT NOT NULL DEFAULT 'active', sort INTEGER NOT NULL DEFAULT 50, last_fetch INTEGER, last_ok INTEGER, last_error TEXT, fails INTEGER NOT NULL DEFAULT 0, items INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL );
+CREATE TABLE IF NOT EXISTS news_items ( id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL, guid TEXT NOT NULL, title TEXT NOT NULL, link TEXT NOT NULL, image TEXT, snippet TEXT, published INTEGER NOT NULL, fetched INTEGER NOT NULL, opens INTEGER NOT NULL DEFAULT 0, UNIQUE(source, guid) );
+CREATE INDEX IF NOT EXISTS news_items_pub ON news_items(published DESC);
+CREATE INDEX IF NOT EXISTS news_items_src ON news_items(source, published DESC);
+CREATE INDEX IF NOT EXISTS news_items_fetched ON news_items(fetched);
+CREATE TABLE IF NOT EXISTS news_follows ( user_id TEXT NOT NULL, source TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, source) );

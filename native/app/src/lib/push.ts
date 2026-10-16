@@ -20,9 +20,9 @@ function mods() {
   try { N ??= require('expo-notifications'); Device ??= require('expo-device'); return true; } catch { return false; }
 }
 
-export type PushPrefs = { trip: boolean; community: boolean; offers: boolean; events: boolean; places: boolean };
+export type PushPrefs = { trip: boolean; community: boolean; offers: boolean; events: boolean; places: boolean; papers: boolean };
 export const PREFS_KEY = 'sg_notif_prefs_v1';
-const DEFAULT: PushPrefs = { trip: true, community: true, offers: false, events: true, places: true };
+const DEFAULT: PushPrefs = { trip: true, community: true, offers: false, events: true, places: true, papers: true };
 export async function pushPrefs(): Promise<PushPrefs> {
   try { return { ...DEFAULT, ...JSON.parse((await AsyncStorage.getItem(PREFS_KEY)) || '{}') }; } catch { return DEFAULT; }
 }
@@ -41,7 +41,9 @@ export async function registerPush(ask = false, logout = false): Promise<boolean
   const raw = await AsyncStorage.getItem('sg_interests_v1').catch(() => null);
   let cities: string[] = [];
   try { cities = (JSON.parse(raw || '{}') as { cities?: string[] }).cities || []; } catch { /* */ }
-  await api('/v1/devices', { method: 'POST', body: { token, platform: Platform.OS, cities, prefs: await pushPrefs(), logout }, token: logout ? undefined : session().token || undefined }).catch(() => {});
+  let papers: string[] = [];
+  try { papers = JSON.parse((await AsyncStorage.getItem('sg_papers_v1')) || '[]'); } catch { /* */ }
+  await api('/v1/devices', { method: 'POST', body: { token, platform: Platform.OS, cities, papers, prefs: await pushPrefs(), logout }, token: logout ? undefined : session().token || undefined }).catch(() => {});
   return true;
 }
 

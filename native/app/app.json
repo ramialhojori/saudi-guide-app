@@ -110,6 +110,15 @@
         {
           "color": "#604C87"
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "iosAppId": "ca-app-pub-5413358932647152~6606911075",
+          "androidAppId": "ca-app-pub-5413358932647152~3928776847",
+          "delayAppMeasurementInit": true,
+          "userTrackingUsageDescription": "نستخدم هذا لعرض إعلانات تناسب اهتماماتك. تقدر ترفض وتظهر لك إعلانات عامة."
+        }
       ]
     ],
     "experiments": {

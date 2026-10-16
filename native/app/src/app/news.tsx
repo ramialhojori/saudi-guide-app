@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { NativeAdCard } from '@/components/Ads';
+import { PapersFeed } from '@/components/Papers';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -17,7 +20,7 @@ import { t } from '@/lib/i18n';
 const NEWS_CATS = ['أخبار المشاريع', 'سياحة وفعاليات', 'مشاريع رؤية السعودية 2030'];
 const catOf = (a: Article) => (a.cats || []).find((c) => NEWS_CATS.includes(c)) || '';
 
-export default function News() {
+function GuideNews() {
   const insets = useSafeAreaInsets();
   const [list, setList] = useState<Article[] | null>(null);
   const [page, setPage] = useState(1);
@@ -40,7 +43,7 @@ export default function News() {
   const [top, ...rest] = shown;
 
   return (
-    <View style={{ flex: 1, backgroundColor: brand.bg }}>
+    <View style={{ flex: 1 }}>
       <FlatList
         data={rest}
         keyExtractor={(a) => String(a.id)}
@@ -48,11 +51,7 @@ export default function News() {
         onEndReachedThreshold={0.4}
         onEndReached={() => { if (more && !busy && list) load(page + 1); }}
         ListHeaderComponent={
-          <View style={{ paddingTop: insets.top + 10, gap: 12 }}>
-            <View style={st.head}>
-              <BackButton />
-              <AppText variant="title" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
-            </View>
+          <View style={{ paddingTop: 4, gap: 12 }}>
             <FlatList horizontal data={[null, ...NEWS_CATS]} keyExtractor={(x) => x || 'all'} showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
               renderItem={({ item }) => <Chip label={item ? t(item) : t('الكل')} on={sec === item} color={brand.ink} onPress={() => { setSec(item); setList(null); load(1, item); }} />} />
@@ -71,7 +70,9 @@ export default function News() {
             ) : null}
           </View>
         }
-        renderItem={({ item: a }) => (
+        renderItem={({ item: a, index }) => (
+          <>
+          {index > 0 && index % 8 === 0 ? <NativeAdCard style={{ marginHorizontal: 16, marginBottom: 10 }} /> : null}
           <Pressable style={st.row} onPress={() => { setBrowse('article', shown.map((x) => x.id)); router.push(`/article/${a.id}`); }}>
             <Image source={a.thumb} style={st.rowImg} contentFit="cover" />
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
@@ -80,9 +81,38 @@ export default function News() {
               <AppText variant="tiny" muted>{riyadhDate(a.date, false)}</AppText>
             </View>
           </Pressable>
+          </>
         )}
         ListFooterComponent={busy && list ? <ActivityIndicator color={brand.purple} style={{ marginTop: 10 }} /> : null}
       />
+    </View>
+  );
+}
+
+type Tab = 'guide' | 'papers' | 'mine';
+/** الأخبار: «أخبار الدليل» (اللي نكتبها) | «الصحف» (آخر أخبار الصحف السعودية) | «أخباري» (الصحف اللي أتابعها) */
+export default function News() {
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<Tab>(params.tab === 'mine' || params.tab === 'papers' ? params.tab : 'guide');
+  useEffect(() => { if (params.tab === 'mine' || params.tab === 'papers') setTab(params.tab); }, [params.tab]);
+  const tabs: [Tab, string][] = [['guide', t('أخبار الدليل')], ['papers', t('الصحف')], ['mine', t('أخباري')]];
+  return (
+    <View style={{ flex: 1, backgroundColor: brand.bg }}>
+      <View style={{ paddingTop: insets.top + 10, gap: 12, paddingBottom: 10 }}>
+        <View style={st.head}>
+          <BackButton />
+          <AppText variant="title" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
+        </View>
+        <View style={st.tabs}>
+          {tabs.map(([k, label]) => (
+            <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)} accessibilityRole="tab" accessibilityState={{ selected: tab === k }}>
+              <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }} color={tab === k ? '#fff' : brand.text}>{label}</AppText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      {tab === 'guide' ? <GuideNews /> : <PapersFeed key={tab} mine={tab === 'mine'} onBrowse={() => setTab('papers')} />}
     </View>
   );
 }
@@ -93,4 +123,7 @@ const st = StyleSheet.create({
   heroImg: { width: '100%', height: 190, backgroundColor: brand.chip },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 18, padding: 10 },
   rowImg: { width: 92, height: 76, borderRadius: 12, backgroundColor: brand.chip },
+  tabs: { flexDirection: 'row', marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 14, padding: 4, gap: 4 },
+  tab: { flex: 1, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  tabOn: { backgroundColor: brand.ink },
 });

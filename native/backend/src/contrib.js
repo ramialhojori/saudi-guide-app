@@ -39,6 +39,8 @@ export const FEATURES = {
   alerts: 'إشعارات المحتوى: جديد في مدينتك، بداية المواسم، تذكير الفعاليات',
   locals: 'تنبيه أهل المدينة بالأسئلة الجديدة عن مدينتهم',
   ai_summary: '«خلاصة الزوار» الذكية أعلى صفحة المكان',
+  ads: 'الإعلانات (AdMob) لغير مشتركي دليل+',
+  papers: 'الصحف السعودية («أخباري» ومتابعة الصحف)',
 };
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();

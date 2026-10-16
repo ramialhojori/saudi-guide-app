@@ -25,6 +25,7 @@ import { businessRoute, businessAdmin, planExpiry } from './business.js';
 import { weatherRoute } from './weather.js';
 import { offersRoute, offersAdmin } from './offers.js';
 import { commentsRoute, commentsAdmin } from './comments.js';
+import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
@@ -153,7 +154,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -175,6 +176,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
+  if (p.startsWith('/v1/papers')) { const r = await papersRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/offers')) { const r = await offersRoute(p, request, env, J, q); if (r) return r; }
   if (/^\/v1\/articles\/\d+\/comments$/.test(p) || /^\/v1\/comments\/\d+\/report$/.test(p)) { const r = await commentsRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }
@@ -243,11 +245,12 @@ async function route(request, env, ctx) {
     const cs = (Array.isArray(b.cities) ? b.cities : []).filter((c) => CITIES.some((x) => x[0] === c)).slice(0, 21);
     const me = await sessionUser(env, request);
     const prefs = {};
-    for (const k of ['community', 'offers', 'events', 'trip', 'places']) if (b.prefs && typeof b.prefs[k] === 'boolean') prefs[k] = b.prefs[k];
+    for (const k of ['community', 'offers', 'events', 'trip', 'places', 'papers']) if (b.prefs && typeof b.prefs[k] === 'boolean') prefs[k] = b.prefs[k];
     // الجهاز يرتبط بالحساب المسجّل فيه (ولو سجّل خروج: b.logout يفك الربط)
     await env.DB.prepare(
       'INSERT INTO devices (token,platform,cities,user_id,prefs,created,seen) VALUES (?,?,?,?,?,?,?) ON CONFLICT(token) DO UPDATE SET platform=excluded.platform, cities=excluded.cities, user_id=excluded.user_id, prefs=excluded.prefs, seen=excluded.seen',
     ).bind(b.token, String(b.platform || '').slice(0, 10), JSON.stringify(cs), me && !b.logout ? me.id : null, JSON.stringify(prefs), now, now).run();
+    if (Array.isArray(b.papers)) await saveDevicePapers(env, b.token, b.papers); // الصحف اللي يتابعها (للإشعار المجمّع)
     return J({ ok: true });
   }
   if (request.method !== 'GET') return J({ error: 'method_not_allowed' }, 405);
@@ -406,6 +409,7 @@ export default {
     ctx.waitUntil(runTranslate(env).catch((e) => console.log('translate', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
+    ctx.waitUntil(runPapers(env).catch((e) => console.log('papers', e && e.message)));
     ctx.waitUntil(planExpiry(env).catch((e) => console.log('plans', e && e.message)));
   },
 };

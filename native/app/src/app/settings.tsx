@@ -22,7 +22,7 @@ export default function Settings() {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
-  const [n, setN] = useState({ trip: true, community: true, offers: false, events: true, places: true });
+  const [n, setN] = useState({ trip: true, community: true, offers: false, events: true, places: true, papers: true });
   const [bio, setBio] = useState(user?.bio ?? '');
   const [home, setHome] = useState(user?.city ?? '');
   const [follow, setFollow] = useState<string[]>([]);
@@ -96,6 +96,7 @@ export default function Settings() {
         <Row label={t('العروض والكوبونات')}><Switch value={n.offers} onValueChange={(v) => setPref('offers', v)} trackColor={{ true: brand.green }} /></Row>
         <Row label={t('فعاليات ومواسم مدني')}><Switch value={n.events} onValueChange={(v) => setPref('events', v)} trackColor={{ true: brand.green }} /></Row>
         <Row label={t('أماكن جديدة في مدني')}><Switch value={n.places} onValueChange={(v) => setPref('places', v)} trackColor={{ true: brand.green }} /></Row>
+        <Row label={t('أخبار الصحف اللي أتابعها')}><Switch value={n.papers} onValueChange={(v) => setPref('papers', v)} trackColor={{ true: brand.green }} /></Row>
       </Group>
       <Group title={t('عن الدليل')}>
         <Row label={t('تواصل معنا')} value={isEn ? '›' : '‹'} onPress={() => router.push('/contact')} />

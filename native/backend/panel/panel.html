@@ -177,7 +177,7 @@ function loginView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
 async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
@@ -188,7 +188,7 @@ async function render() {
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -787,6 +787,30 @@ async function commentsView() {
     <div class="muted" style="font-size:13px">على خبر: ${h(c.article.title)}${c.reason ? ' · السبب: ' + h(c.reason) : ''}</div>
     <div class="row">${c.status !== 'visible' ? `<button class="btn g" data-cm="${c.id}" data-s="visible">انشره</button>` : ''}${c.status !== 'hidden' ? `<button class="btn ghost" data-cm="${c.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه شي هنا</div>';
   m.querySelectorAll('[data-cm]').forEach((b) => (b.onclick = async () => { await api('/admin/comments/' + b.dataset.cm, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); SUMMARY = null; commentsView(); }));
+}
+async function papersView() {
+  const m = $('#main');
+  const ST = { active: ['شغالة', 'b-live'], paused: ['موقوفة', 'b-hidden'], error: ['الرابط ما يشتغل', 'b-draft'] };
+  m.innerHTML = `<h1>الصحف</h1><p class="sub">قسم «الصحف» و«أخباري» في التطبيق: نسحب العناوين والصور من RSS كل 15 دقيقة، والخبر يفتح في موقع الصحيفة. الصحيفة اللي رابطها ما يشتغل تختفي من التطبيق لحالها لين يرجع.</p>
+    <div class="row" style="margin-bottom:12px"><button class="btn" id="pfetch">اسحب الأخبار الحين</button></div>
+    <div class="post"><b>أضف صحيفة</b><div class="row" style="flex-wrap:wrap;gap:8px">
+      <input class="in" id="pn" placeholder="الاسم (مثلاً: سبق)" style="flex:1;min-width:140px"><input class="in" id="pf" placeholder="رابط RSS" dir="ltr" style="flex:2;min-width:220px">
+      <select class="in" id="pl" style="width:auto"><option value="ar">عربي</option><option value="en">إنجليزي</option></select><button class="btn g" id="padd">أضف وجرّب</button></div></div>
+    <div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  $('#pfetch').onclick = async () => { toast('جاري السحب...'); const r = await api('/admin/papers/fetch', { method: 'POST', body: {} }); const n = Object.values(r.results || {}).reduce((a, x) => a + (x.added || 0), 0); toast(n + ' خبر جديد'); papersView(); };
+  $('#padd').onclick = async () => {
+    const r = await api('/admin/papers', { method: 'POST', body: { name: $('#pn').value, feed: $('#pf').value, lang: $('#pl').value } });
+    if (r.error) return toast(r.error);
+    toast(r.test?.error ? 'انضافت، بس الرابط: ' + r.test.error : 'انضافت · ' + (r.test?.found || 0) + ' خبر'); papersView();
+  };
+  const d = await api('/admin/papers');
+  $('#res').innerHTML = d.sources.map((s) => `<div class="post"><div class="row"><b class="grow">${h(s.name)} <span class="muted" style="font-size:13px">${h(s.site || '')}${s.lang === 'en' ? ' · إنجليزي' : ''}</span></b><span class="badge ${(ST[s.status] || ['', 'b-hidden'])[1]}">${(ST[s.status] || [s.status])[0]}</span></div>
+    <div class="muted" style="font-size:13px">${s.items} خبر · ${s.followers + s.devices} متابع · ${s.opens} فتح${s.last_ok ? ' · آخر سحب ناجح ' + dAr(s.last_ok) : ' · ما انسحب للحين'}${s.last_error ? ' · <span style="color:var(--pinkDeep)">' + h(s.last_error) + '</span>' : ''}</div>
+    <div class="muted" dir="ltr" style="font-size:12px;text-align:left">${h(s.feed)}</div>
+    <div class="row"><button class="btn ghost" data-pt="${s.id}">جرّب الرابط</button><button class="btn ghost" data-pe="${s.id}">غيّر الرابط</button>${s.status === 'paused' ? `<button class="btn g" data-ps="${s.id}" data-s="active">شغّلها</button>` : `<button class="btn ghost" data-ps="${s.id}" data-s="paused" style="color:var(--pinkDeep)">أوقفها</button>`}</div></div>`).join('') || '<div class="empty">ما فيه صحف</div>';
+  m.querySelectorAll('[data-pt]').forEach((b) => (b.onclick = async () => { const r = await api('/admin/papers/' + b.dataset.pt + '/test', { method: 'POST', body: {} }); toast(r.error ? 'ما اشتغل: ' + r.error : 'شغال · ' + r.found + ' خبر (' + r.added + ' جديد)'); papersView(); }));
+  m.querySelectorAll('[data-ps]').forEach((b) => (b.onclick = async () => { await api('/admin/papers/' + b.dataset.ps, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); papersView(); }));
+  m.querySelectorAll('[data-pe]').forEach((b) => (b.onclick = async () => { const f = prompt('رابط RSS الجديد'); if (!f) return; await api('/admin/papers/' + b.dataset.pe, { method: 'POST', body: { feed: f } }); const r = await api('/admin/papers/' + b.dataset.pe + '/test', { method: 'POST', body: {} }); toast(r.error ? 'ما اشتغل: ' + r.error : 'شغال · ' + r.found + ' خبر'); papersView(); }));
 }
 async function merchantsView() {
   const m = $('#main');

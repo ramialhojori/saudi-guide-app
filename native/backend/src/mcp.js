@@ -18,6 +18,7 @@ import { contactAdmin } from './contact.js';
 import { businessAdmin } from './business.js';
 import { offersAdmin } from './offers.js';
 import { commentsAdmin } from './comments.js';
+import { papersAdmin } from './papers.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const enc = new TextEncoder();
@@ -144,6 +145,10 @@ const TOOLS = [
   ['decide_offer', 'يحدّث عرض رسمي: status (pending|active|paused|rejected|hidden)، note، fields (تعديل أي حقل من حقول create_coupons). ⚠️ التفعيل لرامي.', S({ id: num(''), status: str(''), note: str(''), fields: { type: 'object' } }, ['id']), (a) => ['POST', `/admin/offers/${+a.id}`, a]],
   ['list_comments', 'تعليقات الأخبار. status: pending (تنتظر مراجعة، الافتراضي) | reported (عليها بلاغات) | visible | rejected | hidden.', S({ status: str('') }), (a) => ['GET', `/admin/comments?status=${a.status || 'pending'}`]],
   ['moderate_comment', 'قرار على تعليق خبر: status visible (نشر) | hidden (إخفاء) | rejected (رفض). ما نحذف شي.', S({ id: num(''), status: str('') }, ['id', 'status']), (a) => ['POST', `/admin/comments/${+a.id}`, { status: a.status }]],
+  ['list_papers', 'الصحف السعودية في قسم «الصحف»: الحالة (active|paused|error)، رابط RSS، عدد الأخبار، آخر سحب ناجح، آخر خطأ، المتابعين.', S({}), () => ['GET', '/admin/papers']],
+  ['add_paper', 'يضيف صحيفة (أو يحدّث رابطها لو موجودة) ويجرب الرابط فوراً: name، feed (رابط RSS)، site، id (حروف إنجليزية)، lang (ar|en)، sort.', S({ name: str(''), feed: str(''), site: str(''), id: str(''), lang: str(''), sort: num('') }, ['name', 'feed']), (a) => ['POST', '/admin/papers', a]],
+  ['update_paper', 'يوقف صحيفة أو يرجعها أو يعدّلها: status (active|paused|hidden)، name، feed، sort، lang. ما نحذف شي.', S({ id: str(''), status: str(''), name: str(''), feed: str(''), sort: num(''), lang: str('') }, ['id']), (a) => ['POST', `/admin/papers/${encodeURIComponent(a.id)}`, a]],
+  ['fetch_papers', 'يسحب أخبار كل الصحف الحين ويرجع كم خبر جديد أو الخطأ لكل صحيفة. id اختياري: يجرب صحيفة وحدة.', S({ id: str('') }), (a) => ['POST', a.id ? `/admin/papers/${encodeURIComponent(a.id)}/test` : '/admin/papers/fetch', {}]],
   ['list_coupons', 'الكوبونات (pending|active|paused|all).', S({ status: str('') }), (a) => ['GET', '/admin/coupons?' + qs(a)]],
   ['list_photos', 'صور الزوار (pending|approved|rejected).', S({ status: str('') }), (a) => ['GET', '/admin/photos?' + qs(a)]],
 
@@ -216,7 +221,7 @@ async function adminCall(env, origin, method, path, body) {
     return { sync: last.results };
   }
   // نفس سلسلة مسارات الإدارة في index.js (أي مسار إدارة جديد لازم ينضاف هنا كمان عشان أدوات اللوحة توصله)
-  const r = (await contactAdmin(req, env, p, q, J)) || (await businessAdmin(p, req, env, J, q)) || (await offersAdmin(p, req, env, J, q)) || (await commentsAdmin(p, req, env, J, q)) || (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
+  const r = (await contactAdmin(req, env, p, q, J)) || (await businessAdmin(p, req, env, J, q)) || (await offersAdmin(p, req, env, J, q)) || (await commentsAdmin(p, req, env, J, q)) || (await papersAdmin(p, req, env, J)) || (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
     || (await guideAdmin(p, req, env, J)) || (p.startsWith('/admin/community/') ? await communityAdmin(p, req, env, J) : null);
   if (!r) throw new Error('not_found');
   if (r.__s >= 400) throw new Error(r.d?.error || 'error_' + r.__s);

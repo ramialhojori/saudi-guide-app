@@ -7,6 +7,7 @@ import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { usePullUpClose } from '@/components/PullUpClose';
 import { RichText } from '@/components/RichText';
+import { BannerSlot, NativeAdCard } from '@/components/Ads';
 import { Empty, Loading } from '@/components/State';
 import { env } from '@/config/env';
 import { getComments, useFontScale } from '@/lib/comments';
@@ -39,6 +40,8 @@ export default function ArticleScreen() {
 
   const share = () => { track('share_article', a.id); Share.share({ message: `${a.title}\n${env.siteUrl}/article/${a.id}`, url: `${env.siteUrl}/article/${a.id}` }).catch(() => {}); };
   const img = a.images?.[0] || a.thumb;
+  // إعلان مدمج في نص الخبر (بعد نصه تقريباً) لو الخبر طويل
+  const parts = splitBody(a.body || '');
 
   return (
     <Animated.View style={[st.root, pull.style]}>
@@ -49,9 +52,11 @@ export default function ArticleScreen() {
           <AppText style={{ fontFamily: font.bold, fontSize: 22 * scale, lineHeight: 34 * scale }}>{a.title}</AppText>
           <AppText variant="small" muted>{riyadhDate(a.date, false)}{a.author ? ` · ${a.author}` : ''}</AppText>
           <View style={st.card}>
-            {a.body ? <RichText html={a.body} scale={scale} /> : <AppText style={{ fontSize: 15 * scale, lineHeight: 26 * scale }}>{a.summary}</AppText>}
+            {a.body ? <RichText html={parts[0]} scale={scale} /> : <AppText style={{ fontSize: 15 * scale, lineHeight: 26 * scale }}>{a.summary}</AppText>}
+            {parts[1] ? <><NativeAdCard style={{ marginVertical: 12, backgroundColor: brand.bg }} /><RichText html={parts[1]} scale={scale} /></> : null}
           </View>
         </View>
+        <BannerSlot />
         {pull.footer}
       </ScrollView>
 
@@ -94,3 +99,13 @@ const st = StyleSheet.create({
   sep: { width: 1, height: 22, backgroundColor: brand.line },
   barBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 14, height: 44 },
 });
+
+/** يقسم الخبر نصين عند نهاية فقرة في المنتصف (الأخبار القصيرة تبقى كاملة) */
+function splitBody(html: string): [string, string] {
+  const ends: number[] = [];
+  const re = /<\/p>/gi; let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) ends.push(m.index + m[0].length);
+  if (ends.length < 6) return [html, ''];
+  const cut = ends[Math.floor(ends.length / 2) - 1];
+  return [html.slice(0, cut), html.slice(cut)];
+}

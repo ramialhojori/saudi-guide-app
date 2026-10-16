@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { BannerSlot } from '@/components/Ads';
 import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { usePullUpClose } from '@/components/PullUpClose';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -387,6 +388,7 @@ export default function PlaceScreen() {
             </ScrollView>
           </>
         ) : null}
+        <BannerSlot style={{ marginTop: 16 }} />
         {pull.footer}
       </ScrollView>
 

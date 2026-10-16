@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import { NativeAdCard } from '@/components/Ads';
 import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { setList } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -134,10 +135,11 @@ export default function CityScreen() {
         ListFooterComponent={addCard}
         contentContainerStyle={{ paddingBottom: 120 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <ImageRow img={item.thumb || undefined} cat={item.cat} catColor={kindStyle[item.kinds[0]]?.fg ?? brand.purple} title={item.title}
               sub={item.summary || ''} right={<HeartButton id={item.id} />} onPress={() => { setList('place', all.map((x) => x.id)); router.push(`/place/${item.id}`); }} />
+            {index % 8 === 5 ? <NativeAdCard style={{ marginTop: 10 }} /> : null}
           </View>
         )}
       />
