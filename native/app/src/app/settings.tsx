@@ -109,7 +109,8 @@ export default function Settings() {
           <Row label={t('حذف الحساب')} onPress={confirmDelete} color={brand.pinkDeep} />
         </Group>
       ) : null}
-      <AppText variant="tiny" muted center style={{ marginTop: 20 }}>{t('دليل السعودية · الإصدار {v}', { v: Constants.expoConfig?.version ?? '4.0.0' })}</AppText>
+      <AppText variant="tiny" muted center style={{ marginTop: 20 }}>{t('بيانات الطقس: معهد الأرصاد النرويجي MET Norway')}</AppText>
+      <AppText variant="tiny" muted center style={{ marginTop: 4 }}>{t('دليل السعودية · الإصدار {v}', { v: Constants.expoConfig?.version ?? '4.0.0' })}</AppText>
     </ScrollView>
   );
 }

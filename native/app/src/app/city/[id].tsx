@@ -88,7 +88,7 @@ export default function CityScreen() {
               <View key={s} style={st.glassPill}><AppText variant="tiny" color="#fff">{s}</AppText></View>
             ))}
           </View>
-          {CREDIT[id] || temp != null ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{[CREDIT[id] ? `${t('الصورة:')} ${isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}` : '', temp != null ? t('الحرارة من MET Norway') : ''].filter(Boolean).join(' · ')}</AppText> : null}
+          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{t('الصورة:')} {isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}</AppText> : null}
         </View>
       </View>
 

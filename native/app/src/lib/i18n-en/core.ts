@@ -92,7 +92,7 @@ export default {
   '{n} مكان': '{n} places',
   '{n}° الحين': '{n}° now',
   'أفضل وقت: {m}': 'Best time: {m}',
-  'الحرارة من MET Norway': 'Weather: MET Norway',
+  'بيانات الطقس: معهد الأرصاد النرويجي MET Norway': 'Weather data: MET Norway (Norwegian Meteorological Institute)',
   'الصورة:': 'Photo:',
   'ابحث في {city}': 'Search {city}',
   'الأقرب': 'Nearest',
