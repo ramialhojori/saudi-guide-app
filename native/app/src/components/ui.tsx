@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import { brand, font, radius } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { Icon, type IconName } from './Icon';
+import { t } from '@/lib/i18n';
 
 /** شارة أيقونة ملونة (مربع بزوايا ناعمة) */
 export function Badge({ icon, bg, fg, size = 40, r = 14 }: { icon: IconName; bg: string; fg: string; size?: number; r?: number }) {
@@ -36,7 +37,7 @@ export function RoundButton({ icon, onPress, label, light = true, size = 44, col
 }
 
 export const BackButton = ({ light }: { light?: boolean }) => (
-  <RoundButton icon="back" label="رجوع" light={light} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+  <RoundButton icon="back" label={t('رجوع')} light={light} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
 );
 
 /** الزر الرئيسي العريض */

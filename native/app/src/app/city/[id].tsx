@@ -15,13 +15,22 @@ import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
 import { track } from '@/lib/track';
 import { useFeatures } from '@/lib/features';
+import { isEn, t, tr } from '@/lib/i18n';
 
-const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
+const SHORT: Record<string, string> = isEn
+  ? { food: 'Restaurants', cafe: 'Cafes', sights: 'Sights', heritage: 'Heritage', nature: 'Nature', islamic: 'Islamic', fun: 'Fun', shopping: 'Shopping' }
+  : { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 const TAGLINE: Record<string, string> = {
   riyadh: 'قلب المملكة، من الدرعية التاريخية إلى بوليفارد الحديث',
   jeddah: 'عروس البحر الأحمر، من البلد التاريخية إلى الكورنيش',
   medina: 'طيبة الطيبة، المسجد النبوي ومعالم السيرة',
   alula: 'متحف مفتوح بين الصخور والواحات',
+};
+const TAGLINE_EN: Record<string, string> = {
+  riyadh: 'Heart of the Kingdom, from historic Diriyah to the modern Boulevard',
+  jeddah: 'Bride of the Red Sea, from historic Al-Balad to the Corniche',
+  medina: 'Taiba the Good: the Prophet\'s Mosque and landmarks of the Seerah',
+  alula: 'An open-air museum among rocks and oases',
 };
 
 /** دليل المدينة — مثل التصميم: صورة المدينة، أرقام سريعة، أنواع، «لا تفوّتها»، وكل الأماكن */
@@ -43,8 +52,8 @@ export default function CityScreen() {
     <Pressable style={st.addCard} onPress={() => router.push({ pathname: '/suggest', params: { city: id } })}>
       <View style={st.addIcon}><Icon name="plus" color="#fff" size={20} /></View>
       <View style={{ flex: 1 }}>
-        <AppText style={{ fontFamily: font.bold }}>تعرف مكان في {city?.name ?? 'المدينة'} ما هو هنا؟</AppText>
-        <AppText variant="small" muted>أضفه مع صوره، وينضاف للدليل باسمك (+15 نقطة)</AppText>
+        <AppText style={{ fontFamily: font.bold }}>{t('تعرف مكان في {city} ما هو هنا؟', { city: city?.name ?? t('المدينة') })}</AppText>
+        <AppText variant="small" muted>{t('أضفه مع صوره، وينضاف للدليل باسمك (+15 نقطة)')}</AppText>
       </View>
     </Pressable>
   ) : null;
@@ -55,29 +64,29 @@ export default function CityScreen() {
         <LinearGradient colors={['rgba(32,22,54,0.1)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />
-          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={MAP_INK} size={18} /><AppText color={MAP_INK} style={{ fontFamily: font.semibold, fontSize: 13 }}>الخريطة</AppText></Pressable>
+          <Pressable style={st.mapBtn} onPress={() => router.push('/map')}><Icon name="map" color={MAP_INK} size={18} /><AppText color={MAP_INK} style={{ fontFamily: font.semibold, fontSize: 13 }}>{t('الخريطة')}</AppText></Pressable>
         </View>
         <View style={st.heroTx}>
-          <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>دليل</AppText>
+          <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>{t('دليل')}</AppText>
           <AppText variant="hero" color="#fff" style={{ fontSize: 40, lineHeight: 52 }}>{city?.name ?? ''}</AppText>
-          <AppText variant="small" color="#E2DAEE">{TAGLINE[id] ?? 'اكتشف أماكنها ومطاعمها ومعالمها'}</AppText>
+          <AppText variant="small" color="#E2DAEE">{(isEn ? TAGLINE_EN[id] : TAGLINE[id]) ?? t('اكتشف أماكنها ومطاعمها ومعالمها')}</AppText>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            {[`${city?.count ?? all.length} مكان`, '31° الحين', 'أفضل وقت: أكتوبر – مارس'].map((t) => (
-              <View key={t} style={st.glassPill}><AppText variant="tiny" color="#fff">{t}</AppText></View>
+            {[t('{n} مكان', { n: city?.count ?? all.length }), t('31° الحين'), t('أفضل وقت: أكتوبر – مارس')].map((s) => (
+              <View key={s} style={st.glassPill}><AppText variant="tiny" color="#fff">{s}</AppText></View>
             ))}
           </View>
-          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>الصورة: {CREDIT[id]}</AppText> : null}
+          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{t('الصورة:')} {isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}</AppText> : null}
         </View>
       </View>
 
       <View style={st.search}>
         <Icon name="search" color={brand.purple} size={20} />
-        <TextInput value={q} onChangeText={setQ} placeholder={`ابحث في ${city?.name ?? ''}`} placeholderTextColor={brand.faint} style={st.input} />
-        <AppText variant="small" style={{ fontFamily: font.semibold }}>الأقرب</AppText>
+        <TextInput value={q} onChangeText={setQ} placeholder={t('ابحث في {city}', { city: city?.name ?? '' })} placeholderTextColor={brand.faint} style={st.input} />
+        <AppText variant="small" style={{ fontFamily: font.semibold }}>{t('الأقرب')}</AppText>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 14 }}>
-        <Chip label={`الكل ${city?.count ?? ''}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />
+        <Chip label={`${t('الكل')} ${city?.count ?? ''}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />
         {kinds.map((k) => (
           <Pressable key={k.id} onPress={() => setKind(k.id)} style={[st.kchip, { backgroundColor: kind === k.id ? kindStyle[k.id]?.fg : kindStyle[k.id]?.bg }]}>
             <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={kind === k.id ? '#fff' : kindStyle[k.id]?.fg}>{SHORT[k.id] ?? k.name} {k.n}</AppText>
@@ -87,7 +96,7 @@ export default function CityScreen() {
 
       {!kind && !q && featured.length >= 2 ? (
         <>
-          <View style={st.secRow}><AppText variant="section">لا تفوّتها في {city?.name}</AppText><AppText variant="tiny" muted>اختيار المحررين</AppText></View>
+          <View style={st.secRow}><AppText variant="section">{t('لا تفوّتها في {city}', { city: city?.name ?? '' })}</AppText><AppText variant="tiny" muted>{t('اختيار المحررين')}</AppText></View>
           <View style={st.grid}>
             <Feature p={featured[0]} tall />
             <View style={{ flex: 1, gap: 10 }}>
@@ -96,7 +105,7 @@ export default function CityScreen() {
           </View>
         </>
       ) : null}
-      <View style={st.secRow}><AppText variant="section">كل الأماكن</AppText></View>
+      <View style={st.secRow}><AppText variant="section">{t('كل الأماكن')}</AppText></View>
       {loading && !data ? <Loading /> : null}
     </View>
   );
@@ -118,7 +127,7 @@ export default function CityScreen() {
         )}
       />
       <Pressable style={[st.float, { bottom: Math.max(insets.bottom, 12) + 10 }]} onPress={() => router.push('/map')}>
-        <Icon name="map" color="#fff" size={18} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color="#fff">اعرضها على الخريطة</AppText>
+        <Icon name="map" color="#fff" size={18} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color="#fff">{t('اعرضها على الخريطة')}</AppText>
       </Pressable>
     </View>
   );

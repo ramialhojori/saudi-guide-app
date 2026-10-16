@@ -9,6 +9,7 @@ import { getArticlesPage } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import type { Article } from '@/lib/types';
 import { brand, font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 /** كل الأخبار: تصنيفات (أخبار المشاريع، سياحة وفعاليات، رؤية 2030...) وتحميل المزيد لما ينزل لتحت */
 export default function News() {
@@ -46,15 +47,15 @@ export default function News() {
           <View style={{ paddingTop: insets.top + 10, gap: 12 }}>
             <View style={st.head}>
               <BackButton />
-              <AppText variant="title" style={{ fontSize: 24 }}>الأخبار</AppText>
+              <AppText variant="title" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
             </View>
             {sections.length > 1 ? (
               <FlatList horizontal data={[null, ...sections]} keyExtractor={(x) => x || 'all'} showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-                renderItem={({ item }) => <Chip label={item || 'الكل'} on={sec === item} color={brand.ink} onPress={() => setSec(item)} />} />
+                renderItem={({ item }) => <Chip label={item || t('الكل')} on={sec === item} color={brand.ink} onPress={() => setSec(item)} />} />
             ) : null}
             {list === null ? <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} /> : null}
-            {list && !shown.length ? <AppText center muted style={{ marginTop: 30 }}>ما فيه أخبار هنا للحين.</AppText> : null}
+            {list && !shown.length ? <AppText center muted style={{ marginTop: 30 }}>{t('ما فيه أخبار هنا للحين.')}</AppText> : null}
             {top ? (
               <Pressable style={st.hero} onPress={() => router.push(`/article/${top.id}`)}>
                 <Image source={top.thumb} style={st.heroImg} contentFit="cover" />

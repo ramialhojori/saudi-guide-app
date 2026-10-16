@@ -5,6 +5,7 @@ import type { Place } from '@/lib/types';
 import { colors, kindColor, radius, space } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { HeartButton } from './HeartButton';
+import { t } from '@/lib/i18n';
 
 /** سطر مكان في القوائم: صورة + اسم + تصنيف + حفظ */
 export function PlaceRow({ place, right, sub }: { place: Place; right?: React.ReactNode; sub?: string }) {
@@ -18,7 +19,7 @@ export function PlaceRow({ place, right, sub }: { place: Place; right?: React.Re
       )}
       <View style={styles.tx}>
         <AppText variant="heading" numberOfLines={1}>{place.title}</AppText>
-        <AppText variant="small" muted numberOfLines={1}>{sub ?? place.cat}{place.km != null ? ` · ${place.km} كم` : ''}</AppText>
+        <AppText variant="small" muted numberOfLines={1}>{sub ?? place.cat}{place.km != null ? ` · ${t('{n} كم', { n: place.km })}` : ''}</AppText>
       </View>
       {right ?? <HeartButton id={place.id} />}
     </Pressable>

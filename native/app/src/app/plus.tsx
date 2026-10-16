@@ -9,6 +9,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { isPlus, useAuth } from '@/lib/auth';
 import { buyPlus, iapMessage, loadPrices, manageSubscriptions, restorePlus, type PlanPrice } from '@/lib/iap';
 import { brand, font, photos } from '@/theme/tokens';
+import { t, isEn } from '@/lib/i18n';
 
 /**
  * صفحة اشتراك «دليل+».
@@ -19,15 +20,15 @@ type PlanId = 'yearly' | 'monthly';
 /** منتجات آبل الموجودة أصلاً في App Store Connect (مجموعة «Subscriptions» لتطبيق 1595843013): com.yearly و com.monthly، وفيها تجربة 3 أيام */
 export const PRODUCT_IDS: Record<PlanId, string> = { yearly: 'com.yearly', monthly: 'com.monthly' };
 const PLANS: { id: PlanId; title: string; price: string; per: string; note: string; tag?: string }[] = [
-  { id: 'yearly', title: 'سنوي', price: '99.99', per: 'ر.س / سنة', note: 'يعني 8.33 ر.س بالشهر · أول 3 أيام مجاناً', tag: 'وفّر 44%' },
-  { id: 'monthly', title: 'شهري', price: '14.99', per: 'ر.س / شهر', note: 'أول 3 أيام مجاناً · تقدر تلغيه بأي وقت' },
+  { id: 'yearly', title: t('سنوي'), price: '99.99', per: t('ر.س / سنة'), note: t('يعني 8.33 ر.س بالشهر · أول 3 أيام مجاناً'), tag: t('وفّر 44%') },
+  { id: 'monthly', title: t('شهري'), price: '14.99', per: t('ر.س / شهر'), note: t('أول 3 أيام مجاناً · تقدر تلغيه بأي وقت') },
 ];
 
 const PERKS: { icon: IconName; title: string; sub: string; c: string; bg: string }[] = [
-  { icon: 'spark', title: 'اسأل الدليل بدون حد', sub: 'مساعدك الذكي يجاوبك من أماكن الدليل وفعالياته ونصايح أهل المدن', c: brand.purple, bg: brand.softPurple },
-  { icon: 'route', title: 'خطط رحلتك بذكاء', sub: 'خطة يوم بيوم حسب تواريخك ومين معك وميزانيتك، وتنحفظ في رحلتك', c: brand.orangeDeep, bg: brand.softOrange },
-  { icon: 'x', title: 'بدون إعلانات', sub: 'تصفح الدليل كله بهدوء', c: brand.pinkDeep, bg: brand.softPink },
-  { icon: 'crown', title: 'وسام دليل+ في ملفك', sub: 'يطلع جنب اسمك في المجتمع وأجوبتك', c: brand.skyDeep, bg: brand.softSky },
+  { icon: 'spark', title: t('اسأل الدليل بدون حد'), sub: t('مساعدك الذكي يجاوبك من أماكن الدليل وفعالياته ونصايح أهل المدن'), c: brand.purple, bg: brand.softPurple },
+  { icon: 'route', title: t('خطط رحلتك بذكاء'), sub: t('خطة يوم بيوم حسب تواريخك ومين معك وميزانيتك، وتنحفظ في رحلتك'), c: brand.orangeDeep, bg: brand.softOrange },
+  { icon: 'x', title: t('بدون إعلانات'), sub: t('تصفح الدليل كله بهدوء'), c: brand.pinkDeep, bg: brand.softPink },
+  { icon: 'crown', title: t('وسام دليل+ في ملفك'), sub: t('يطلع جنب اسمك في المجتمع وأجوبتك'), c: brand.skyDeep, bg: brand.softSky },
 ];
 
 export default function Plus() {
@@ -42,30 +43,30 @@ export default function Plus() {
   useEffect(() => { if (Platform.OS === 'ios') loadPrices().then(setStore).catch(() => {}); }, []);
   const priceOf = (id: PlanId) => store?.find((x) => x.id === id)?.price;
   const curPrice = priceOf(plan) ?? `${cur.price} ${cur.per}`;
-  const until = user?.plusUntil ? new Date(user.plusUntil * 1000).toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const until = user?.plusUntil ? new Date(user.plusUntil * 1000).toLocaleDateString(isEn ? 'en-GB' : 'ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
-  const needLogin = () => Alert.alert('سجّل دخولك أول', 'عشان يرتبط اشتراكك بحسابك ويشتغل على كل أجهزتك.', [
-    { text: 'لاحقاً', style: 'cancel' }, { text: 'تسجيل الدخول', onPress: () => router.push('/login') },
+  const needLogin = () => Alert.alert(t('سجّل دخولك أول'), t('عشان يرتبط اشتراكك بحسابك ويشتغل على كل أجهزتك.'), [
+    { text: t('لاحقاً'), style: 'cancel' }, { text: t('تسجيل الدخول'), onPress: () => router.push('/login') },
   ]);
   const buy = async () => {
-    if (Platform.OS !== 'ios') return Alert.alert('دليل+', 'الاشتراك متوفر حالياً من تطبيق دليل السعودية على الآيفون، وقريباً على أندرويد.');
+    if (Platform.OS !== 'ios') return Alert.alert(t('دليل+'), t('الاشتراك متوفر حالياً من تطبيق دليل السعودية على الآيفون، وقريباً على أندرويد.'));
     if (!user) return needLogin();
     setBusy('buy');
     try {
       await buyPlus(plan);
-      Alert.alert('أهلاً بك في دليل+', 'اشتراكك فعّال الحين. اسأل الدليل وخطط رحلاتك بدون حدود.', [{ text: 'يلا', onPress: () => router.back() }]);
+      Alert.alert(t('أهلاً بك في دليل+'), t('اشتراكك فعّال الحين. اسأل الدليل وخطط رحلاتك بدون حدود.'), [{ text: t('يلا'), onPress: () => router.back() }]);
     } catch (e) {
-      if ((e as Error)?.message !== 'cancelled') Alert.alert('الاشتراك', iapMessage(e));
+      if ((e as Error)?.message !== 'cancelled') Alert.alert(t('الاشتراك'), iapMessage(e));
     } finally { setBusy(''); }
   };
   const restore = async () => {
-    if (Platform.OS !== 'ios') return Alert.alert('استعادة المشتريات', 'الاستعادة من تطبيق الآيفون.');
+    if (Platform.OS !== 'ios') return Alert.alert(t('استعادة المشتريات'), t('الاستعادة من تطبيق الآيفون.'));
     if (!user) return needLogin();
     setBusy('restore');
     try {
       const u = await restorePlus();
-      Alert.alert('استعادة المشتريات', u > Date.now() / 1000 ? 'رجع اشتراكك في دليل+ وصار فعّال.' : 'لقينا اشتراك سابق لكنه منتهي.');
-    } catch (e) { Alert.alert('استعادة المشتريات', iapMessage(e)); } finally { setBusy(''); }
+      Alert.alert(t('استعادة المشتريات'), u > Date.now() / 1000 ? t('رجع اشتراكك في دليل+ وصار فعّال.') : t('لقينا اشتراك سابق لكنه منتهي.'));
+    } catch (e) { Alert.alert(t('استعادة المشتريات'), iapMessage(e)); } finally { setBusy(''); }
   };
 
   return (
@@ -75,11 +76,11 @@ export default function Plus() {
         <View style={st.hero}>
           <Image source={photos.rock} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient colors={['rgba(43,39,69,0.35)', 'rgba(96,76,135,0.92)', '#604C87']} style={StyleSheet.absoluteFill} />
-          <Pressable onPress={() => router.back()} style={[st.close, { top: insets.top + 10 }]} accessibilityLabel="إغلاق"><Icon name="x" color="#fff" size={20} /></Pressable>
+          <Pressable onPress={() => router.back()} style={[st.close, { top: insets.top + 10 }]} accessibilityLabel={t('إغلاق')}><Icon name="x" color="#fff" size={20} /></Pressable>
           <View style={{ alignItems: 'center', gap: 10, paddingTop: insets.top + 70 }}>
-            <View style={st.badge}><Icon name="spark" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>دليل+</AppText></View>
-            <AppText variant="hero" color="#fff" center style={{ fontSize: 30, lineHeight: 42 }}>رحلتك أسهل{'\n'}مع دليلك الذكي</AppText>
-            <AppText color="#E9E0FF" center style={{ lineHeight: 24, paddingHorizontal: 30 }}>اسأل عن أي مكان، وخذ خطة رحلة كاملة جاهزة في ثواني.</AppText>
+            <View style={st.badge}><Icon name="spark" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>{t('دليل+')}</AppText></View>
+            <AppText variant="hero" color="#fff" center style={{ fontSize: 30, lineHeight: 42 }}>{t('رحلتك أسهل\nمع دليلك الذكي')}</AppText>
+            <AppText color="#E9E0FF" center style={{ lineHeight: 24, paddingHorizontal: 30 }}>{t('اسأل عن أي مكان، وخذ خطة رحلة كاملة جاهزة في ثواني.')}</AppText>
           </View>
         </View>
 
@@ -98,7 +99,7 @@ export default function Plus() {
 
         {/* الخطط */}
         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 6 }}>
-          <AppText variant="title">اختر خطتك</AppText>
+          <AppText variant="title">{t('اختر خطتك')}</AppText>
           {PLANS.map((p) => {
             const on = p.id === plan;
             return (
@@ -109,7 +110,7 @@ export default function Plus() {
                     <AppText style={{ fontFamily: font.bold, fontSize: 17 }}>{p.title}</AppText>
                     {p.tag ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{p.tag}</AppText></View> : null}
                   </View>
-                  <AppText variant="small" muted>{store ? (p.id === 'yearly' ? 'أول 3 أيام مجاناً · أوفر خيار' : 'أول 3 أيام مجاناً · تقدر تلغيه بأي وقت') : p.note}</AppText>
+                  <AppText variant="small" muted>{store ? (p.id === 'yearly' ? t('أول 3 أيام مجاناً · أوفر خيار') : t('أول 3 أيام مجاناً · تقدر تلغيه بأي وقت')) : p.note}</AppText>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   {priceOf(p.id) ? (
@@ -124,19 +125,19 @@ export default function Plus() {
           })}
           <View style={st.free}>
             <Icon name="info" color={brand.muted} size={16} />
-            <AppText variant="small" muted style={{ flex: 1, lineHeight: 20 }}>بدون اشتراك تقدر تسأل الدليل 5 مرات باليوم، وتسوي خطة ذكية وحدة كل شهر مجاناً.</AppText>
+            <AppText variant="small" muted style={{ flex: 1, lineHeight: 20 }}>{t('بدون اشتراك تقدر تسأل الدليل 5 مرات باليوم، وتسوي خطة ذكية وحدة كل شهر مجاناً.')}</AppText>
           </View>
         </View>
 
         {/* الشروط المطلوبة من آبل */}
         <View style={{ paddingHorizontal: 22, marginTop: 18, gap: 10 }}>
           <AppText variant="tiny" muted center style={{ lineHeight: 19 }}>
-            الاشتراك يتجدد تلقائياً بنفس السعر في نهاية كل فترة إلا إذا ألغيته قبلها بـ24 ساعة على الأقل. يُخصم المبلغ من حساب Apple ID، وتقدر تدير اشتراكك أو تلغيه من إعدادات حسابك في App Store.
+            {t('الاشتراك يتجدد تلقائياً بنفس السعر في نهاية كل فترة إلا إذا ألغيته قبلها بـ24 ساعة على الأقل. يُخصم المبلغ من حساب Apple ID، وتقدر تدير اشتراكك أو تلغيه من إعدادات حسابك في App Store.')}
           </AppText>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18 }}>
-            <Pressable onPress={restore} disabled={!!busy}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{busy === 'restore' ? 'جاري الاستعادة...' : 'استعادة المشتريات'}</AppText></Pressable>
-            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الشروط</AppText></Pressable>
-            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>الخصوصية</AppText></Pressable>
+            <Pressable onPress={restore} disabled={!!busy}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{busy === 'restore' ? t('جاري الاستعادة...') : t('استعادة المشتريات')}</AppText></Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{t('الشروط')}</AppText></Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{t('الخصوصية')}</AppText></Pressable>
           </View>
         </View>
       </ScrollView>
@@ -145,14 +146,14 @@ export default function Plus() {
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         {plus ? (<>
           <Pressable onPress={() => manageSubscriptions()} style={[st.cta, { backgroundColor: brand.purple }]} accessibilityRole="button">
-            <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>أنت مشترك في دليل+</AppText>
+            <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>{t('أنت مشترك في دليل+')}</AppText>
           </Pressable>
-          <AppText variant="tiny" muted center>{until ? `اشتراكك فعّال لين ${until} · إدارة الاشتراك من App Store` : 'إدارة الاشتراك من App Store'}</AppText>
+          <AppText variant="tiny" muted center>{until ? t('اشتراكك فعّال لين {date} · إدارة الاشتراك من App Store', { date: until }) : t('إدارة الاشتراك من App Store')}</AppText>
         </>) : (<>
           <Pressable onPress={buy} disabled={!!busy} style={[st.cta, busy ? { opacity: 0.7 } : null]} accessibilityRole="button">
-            {busy === 'buy' ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>جرّب 3 أيام مجاناً</AppText>}
+            {busy === 'buy' ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 17 }}>{t('جرّب 3 أيام مجاناً')}</AppText>}
           </Pressable>
-          <AppText variant="tiny" muted center>{`بعدها ${curPrice}، وتقدر تلغي قبل ما تنتهي التجربة`}</AppText>
+          <AppText variant="tiny" muted center>{t('بعدها {price}، وتقدر تلغي قبل ما تنتهي التجربة', { price: curPrice })}</AppText>
         </>)}
       </View>
     </View>

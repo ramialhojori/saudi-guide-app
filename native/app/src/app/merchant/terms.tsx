@@ -6,21 +6,22 @@ import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { BackButton } from '@/components/ui';
 import { acceptMerchantTerms, couponErr, dayLabel, merchantTerms } from '@/lib/coupons';
+import { t, tr } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
 /** الشروط والأحكام لبوابة التجار. مع ?accept=1 يطلع زر «أوافق» (لما تتحدث النسخة) */
 export default function MerchantTerms() {
   const insets = useSafeAreaInsets();
   const prm = useLocalSearchParams<{ accept?: string }>();
-  const [t, setT] = useState<{ version: string; date: string; sections: [string, string[]][] } | null>(null);
+  const [doc, setDoc] = useState<{ version: string; date: string; sections: [string, string[]][] } | null>(null);
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  useEffect(() => { merchantTerms().then(setT).catch(() => setErr('ما قدرنا نجيب الشروط، تأكد من النت.')); }, []);
+  useEffect(() => { merchantTerms().then(setDoc).catch(() => setErr(t('ما قدرنا نجيب الشروط، تأكد من النت.'))); }, []);
   const accept = async () => {
-    if (!t || !ok) return;
+    if (!doc || !ok) return;
     setBusy(true); setErr('');
-    try { await acceptMerchantTerms(t.version); router.back(); } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }
+    try { await acceptMerchantTerms(doc.version); router.back(); } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }
   };
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
@@ -28,14 +29,14 @@ export default function MerchantTerms() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <BackButton />
           <View style={{ flex: 1 }}>
-            <AppText variant="title">الشروط والأحكام للتجار</AppText>
-            {t ? <AppText variant="small" muted>النسخة {t.version} · آخر تحديث {dayLabel(t.date)} {t.date.slice(0, 4)}</AppText> : null}
+            <AppText variant="title">{t('الشروط والأحكام للتجار')}</AppText>
+            {doc ? <AppText variant="small" muted>{t('النسخة {v} · آخر تحديث {d}', { v: doc.version, d: `${dayLabel(doc.date)} ${doc.date.slice(0, 4)}` })}</AppText> : null}
           </View>
         </View>
-        {!t ? (err ? <AppText center muted style={{ marginTop: 30 }}>{err}</AppText> : <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} />) : (
+        {!doc ? (err ? <AppText center muted style={{ marginTop: 30 }}>{err}</AppText> : <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} />) : (
           <>
-            <View style={st.intro}><AppText variant="small" style={{ lineHeight: 22 }}>هذي الشروط اتفاق بينك وبين دليل السعودية. اقرأها كاملة: موافقتك عليها من حسابك تنحفظ بالتاريخ والوقت وتعتبر توقيع ملزم.</AppText></View>
-            {t.sections.map(([title, items], i) => (
+            <View style={st.intro}><AppText variant="small" style={{ lineHeight: 22 }}>{tr('هذي الشروط اتفاق بينك وبين دليل السعودية. اقرأها كاملة: موافقتك عليها من حسابك تنحفظ بالتاريخ والوقت وتعتبر توقيع ملزم.', 'These terms are an agreement between you and Saudi Guide. Please read them in full: your acceptance from your account is recorded with the date and time and counts as a binding signature.')}</AppText></View>
+            {doc.sections.map(([title, items], i) => (
               <View key={title} style={st.sec}>
                 <AppText style={{ fontFamily: font.bold, fontSize: 16 }}>{i + 1}. {title}</AppText>
                 {items.map((x, k) => (
@@ -49,15 +50,15 @@ export default function MerchantTerms() {
           </>
         )}
       </ScrollView>
-      {prm.accept && t ? (
+      {prm.accept && doc ? (
         <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
           <Pressable style={st.check} onPress={() => setOk(!ok)}>
             <View style={[st.box, ok && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{ok ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
-            <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>قرأت الشروط والأحكام (النسخة {t.version}) وأوافق عليها وألتزم بها.</AppText>
+            <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{tr(`قرأت الشروط والأحكام (النسخة ${doc.version}) وأوافق عليها وألتزم بها.`, `I have read the Terms and Conditions (version ${doc.version}), and I accept and agree to abide by them.`)}</AppText>
           </Pressable>
           {err ? <AppText variant="small" color={brand.pinkDeep}>{err}</AppText> : null}
           <Pressable style={[st.cta, !ok && { opacity: 0.5 }]} onPress={accept} disabled={!ok || busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">أوافق</AppText>}
+            {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{t('أوافق')}</AppText>}
           </Pressable>
         </View>
       ) : null}

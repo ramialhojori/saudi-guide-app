@@ -25,6 +25,7 @@ import { useAsync } from '@/lib/useAsync';
 import { extLink } from '@/lib/text';
 import { MapCanvas } from '@/components/MapCanvas';
 import { brand, font, kindStyle } from '@/theme/tokens';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const W = Dimensions.get('window').width;
 
@@ -62,19 +63,19 @@ export default function PlaceScreen() {
   const stamp = async () => {
     if (!user) return router.push('/login');
     setStamping(true);
-    const r = await checkIn(Number(id)).catch(() => ({ ok: false as const, msg: 'صار خطأ، جرّب بعد شوي.' }));
+    const r = await checkIn(Number(id)).catch(() => ({ ok: false as const, msg: t('صار خطأ، جرّب بعد شوي.') }));
     setStamping(false);
-    if (!r.ok) return Alert.alert('ما انختم', r.msg);
-    if (r.already) return Alert.alert('مختوم من قبل', 'هذا المكان موجود في جوازك.');
+    if (!r.ok) return Alert.alert(t('ما انختم'), r.msg);
+    if (r.already) return Alert.alert(t('مختوم من قبل'), t('هذا المكان موجود في جوازك.'));
     setSocial((x) => x && { ...x, been: true, visits: x.visits + 1 });
     // مثل قوقل: أول ما يختم نسأله عن تجربته وهو في المكان
-    Alert.alert(r.newCity ? 'ختم جديد في جوازك!' : 'انضافت الزيارة', `+${r.points} نقطة${r.newCity ? ' · مدينة جديدة في جواز السعودية' : ''}\n\nكيف المكان؟ قيّمه الحين وخذ +3`, [
-      { text: 'بعدين', style: 'cancel' },
-      ...(F.reviews ? [{ text: 'قيّم تجربتك', onPress: () => router.push({ pathname: '/review/[id]', params: { id: String(id) } }) }] : [{ text: 'افتح الجواز', onPress: () => router.push('/passport') }]),
+    Alert.alert(r.newCity ? t('ختم جديد في جوازك!') : t('انضافت الزيارة'), `${t('+{n} نقطة', { n: r.points })}${r.newCity ? ' · ' + t('مدينة جديدة في جواز السعودية') : ''}\n\n${t('كيف المكان؟ قيّمه الحين وخذ +3')}`, [
+      { text: t('بعدين'), style: 'cancel' },
+      ...(F.reviews ? [{ text: t('قيّم تجربتك'), onPress: () => router.push({ pathname: '/review/[id]', params: { id: String(id) } }) }] : [{ text: t('افتح الجواز'), onPress: () => router.push('/passport') }]),
     ]);
   };
 
-  if (!p) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title={error ? 'ما قدرنا نفتح المكان' : 'ما لقينا المكان'} />}</View>;
+  if (!p) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title={error ? t('ما قدرنا نفتح المكان') : t('ما لقينا المكان')} />}</View>;
 
   const vote = async (v: 0 | 1 | null) => {
     if (!ask) return;
@@ -83,7 +84,7 @@ export default function PlaceScreen() {
     if (v === null) { setFacts((f) => f.map((x) => (x.k === k ? { ...x, mine: 0 as const, skip: true } : x))); }
     else {
       setFacts((f) => f.map((x) => (x.k === k ? { ...x, mine: v, yes: x.yes + v, no: x.no + (1 - v) } : x)));
-      answerFact(Number(id), k, v).then((r) => { if (r.points) setFactMsg('+1 نقطة · شكراً!'); }).catch(() => {});
+      answerFact(Number(id), k, v).then((r) => { if (r.points) setFactMsg(t('+1 نقطة · شكراً!')); }).catch(() => {});
     }
     // السؤال الجاي
     setFacts((f) => { const next = f.filter((x) => x.mine === null && x.k !== k).sort((a, b) => a.yes + a.no - (b.yes + b.no))[0]; setAsk(next ? { k: next.k, q: next.q } : null); return f; });
@@ -113,10 +114,10 @@ export default function PlaceScreen() {
         ) : (
           <View style={[st.noPhoto, { backgroundColor: ks.bg }]}>
             <View style={st.noPhotoIcon}><Icon name={ks.icon as IconName} color={ks.fg} size={50} strokeWidth={1.8} /></View>
-            <AppText style={{ fontFamily: font.semibold, marginTop: 12 }} color={ks.fg} center>ما عندنا صورة لهالمكان للحين</AppText>
+            <AppText style={{ fontFamily: font.semibold, marginTop: 12 }} color={ks.fg} center>{t('ما عندنا صورة لهالمكان للحين')}</AppText>
             <View style={st.noPhotoBtns}>
-              <Pressable style={st.noPhotoBtn} onPress={() => openMaps(p.title, p.lat, p.lng)}><Icon name="map" color={brand.skyDeep} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>الصور في Google Maps</AppText></Pressable>
-              <Pressable style={[st.noPhotoBtn, { backgroundColor: brand.orangeDeep }]} onPress={() => router.push({ pathname: '/ask', params: { kind: 'photo', placeId: String(p.id), place: p.title, city: p.city } })}><Icon name="cam" color="#fff" size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">عندك صورة؟ أضفها</AppText></Pressable>
+              <Pressable style={st.noPhotoBtn} onPress={() => openMaps(p.title, p.lat, p.lng)}><Icon name="map" color={brand.skyDeep} size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }}>{t('الصور في Google Maps')}</AppText></Pressable>
+              <Pressable style={[st.noPhotoBtn, { backgroundColor: brand.orangeDeep }]} onPress={() => router.push({ pathname: '/ask', params: { kind: 'photo', placeId: String(p.id), place: p.title, city: p.city } })}><Icon name="cam" color="#fff" size={18} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">{t('عندك صورة؟ أضفها')}</AppText></Pressable>
             </View>
           </View>
         )}
@@ -124,7 +125,7 @@ export default function PlaceScreen() {
         <View style={[st.topBtns, { top: insets.top + 10 }]}>
           <BackButton light />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <RoundButton icon="share" label="مشاركة" onPress={() => { track('share', p.id); Share.share({ message: `${p.title} — في تطبيق دليل السعودية` }).catch(() => {}); }} />
+            <RoundButton icon="share" label={t('مشاركة')} onPress={() => { track('share', p.id); Share.share({ message: t('{title} — في تطبيق دليل السعودية', { title: p.title }) }).catch(() => {}); }} />
             <HeartButton id={p.id} size={44} light />
           </View>
         </View>
@@ -140,10 +141,10 @@ export default function PlaceScreen() {
 
           <View style={st.facts}>
             {[
-              { v: String(social?.visits ?? 0), l: 'زاروه بالدليل', c: brand.orangeDeep },
-              { v: String(social?.posts ?? 0), l: 'سؤال ونصيحة', c: brand.purple },
-              { v: String(images.length), l: images.length === 1 ? 'صورة' : 'صور', c: brand.skyDeep },
-              rv?.avg ? { v: '★ ' + rv.avg, l: `${rv.count} تقييم`, c: brand.orangeDeep } : { v: near?.length ? String(Math.max(0, near.length - 1)) : '—', l: 'مكان قريب', c: brand.green },
+              { v: String(social?.visits ?? 0), l: t('زاروه بالدليل'), c: brand.orangeDeep },
+              { v: String(social?.posts ?? 0), l: t('سؤال ونصيحة'), c: brand.purple },
+              { v: String(images.length), l: images.length === 1 ? t('صورة') : t('صور'), c: brand.skyDeep },
+              rv?.avg ? { v: '★ ' + rv.avg, l: t('{n} تقييم', { n: rv.count }), c: brand.orangeDeep } : { v: near?.length ? String(Math.max(0, near.length - 1)) : '—', l: t('مكان قريب'), c: brand.green },
             ].map((f) => (
               <View key={f.l} style={st.fact}>
                 <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={f.c} center>{f.v}</AppText>
@@ -157,7 +158,7 @@ export default function PlaceScreen() {
           {p.body ? (
             <View style={{ marginTop: 16 }}>
               <View style={!more ? { maxHeight: 130, overflow: 'hidden' } : undefined}><RichText html={p.body} /></View>
-              <Pressable onPress={() => setMore((v) => !v)}><AppText style={{ fontFamily: font.bold, marginTop: 6 }} color={brand.purple}>{more ? 'أقل' : 'اقرأ أكثر'}</AppText></Pressable>
+              <Pressable onPress={() => setMore((v) => !v)}><AppText style={{ fontFamily: font.bold, marginTop: 6 }} color={brand.purple}>{more ? t('أقل') : t('اقرأ أكثر')}</AppText></Pressable>
             </View>
           ) : p.summary ? <AppText style={{ marginTop: 16 }}>{p.summary}</AppText> : null}
 
@@ -165,7 +166,7 @@ export default function PlaceScreen() {
             <View style={st.summary}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Icon name="spark" color={brand.purple} size={16} />
-                <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>خلاصة الزوار · من {summary.count} تجربة</AppText>
+                <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{t('خلاصة الزوار · من {n} تجربة', { n: summary.count })}</AppText>
               </View>
               <AppText variant="small" style={{ lineHeight: 22 }}>{summary.text}</AppText>
             </View>
@@ -176,16 +177,16 @@ export default function PlaceScreen() {
             <Pressable style={st.tip} onPress={() => router.push(`/question/${social.tip!.id}`)}>
               <Avatar t={initial(social.tip.name)} c={brand.orange} size={40} />
               <View style={{ flex: 1 }}>
-                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>نصيحة من أهل الديرة · {social.tip.name}{social.tip.badge ? '، ' + social.tip.badge : ''}</AppText>
+                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>{t('نصيحة من أهل الديرة')} · {social.tip.name}{social.tip.badge ? (isEn ? ', ' : '، ') + social.tip.badge : ''}</AppText>
                 <AppText variant="small" color="#fff" style={{ lineHeight: 22 }} numberOfLines={4}>{social.tip.text}</AppText>
               </View>
             </Pressable>
           ) : (
             <Pressable style={st.tip} onPress={() => router.push({ pathname: '/ask', params: { kind: 'tip', placeId: String(p.id), place: p.title, city: p.city } })}>
-              <Avatar t="؟" c={brand.orange} size={40} />
+              <Avatar t={isEn ? '?' : '؟'} c={brand.orange} size={40} />
               <View style={{ flex: 1 }}>
-                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>زرته قبل؟</AppText>
-                <AppText variant="small" color="#fff" style={{ lineHeight: 22 }}>شارك نصيحة تفيد اللي بعدك، وتطلع هنا باسمك.</AppText>
+                <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.semibold }}>{t('زرته قبل؟')}</AppText>
+                <AppText variant="small" color="#fff" style={{ lineHeight: 22 }}>{t('شارك نصيحة تفيد اللي بعدك، وتطلع هنا باسمك.')}</AppText>
               </View>
             </Pressable>
           )}
@@ -195,7 +196,7 @@ export default function PlaceScreen() {
             <View style={st.facts2}>
               {known.length ? (
                 <>
-                  <AppText variant="small" style={{ fontFamily: font.bold }}>يقول الزوار</AppText>
+                  <AppText variant="small" style={{ fontFamily: font.bold }}>{t('يقول الزوار')}</AppText>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                     {known.map((f) => <Pill key={f.k} label={'✓ ' + f.q.replace('؟', '').replace(/^فيه /, '').replace(/^مناسب /, 'مناسب ')} bg={brand.softGreen} fg={brand.green} />)}
                   </View>
@@ -203,12 +204,12 @@ export default function PlaceScreen() {
               ) : null}
               {ask ? (
                 <View style={[known.length ? { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: brand.chip } : null]}>
-                  <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>سؤال سريع · +1 نقطة</AppText>
+                  <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{t('سؤال سريع · +1 نقطة')}</AppText>
                   <AppText style={{ fontFamily: font.bold, fontSize: 15, marginTop: 2 }}>{ask.q}</AppText>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                    <Pressable style={[st.fbtn, { backgroundColor: brand.softGreen }]} onPress={() => vote(1)}><AppText style={{ fontFamily: font.bold }} color={brand.green}>نعم</AppText></Pressable>
-                    <Pressable style={[st.fbtn, { backgroundColor: brand.softPink }]} onPress={() => vote(0)}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>لا</AppText></Pressable>
-                    <Pressable style={[st.fbtn, { backgroundColor: brand.chip }]} onPress={() => vote(null)}><AppText style={{ fontFamily: font.semibold }} muted>ما أدري</AppText></Pressable>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.softGreen }]} onPress={() => vote(1)}><AppText style={{ fontFamily: font.bold }} color={brand.green}>{t('نعم')}</AppText></Pressable>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.softPink }]} onPress={() => vote(0)}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>{t('لا')}</AppText></Pressable>
+                    <Pressable style={[st.fbtn, { backgroundColor: brand.chip }]} onPress={() => vote(null)}><AppText style={{ fontFamily: font.semibold }} muted>{t('ما أدري')}</AppText></Pressable>
                   </View>
                 </View>
               ) : null}
@@ -221,12 +222,12 @@ export default function PlaceScreen() {
             <View style={st.stampCard}>
               <Badge icon="flag" bg={social?.been ? brand.softGreen : brand.softOrange} fg={social?.been ? brand.green : brand.orangeDeep} size={44} r={14} />
               <View style={{ flex: 1 }}>
-                <AppText style={{ fontFamily: font.bold }}>{social?.been ? 'مختوم في جوازك ✓' : 'أنت هنا الحين؟'}</AppText>
-                <AppText variant="small" muted>{social?.been ? 'زيارتك محسوبة في جواز السعودية' : 'اختم جوازك واكسب نقاط'}</AppText>
+                <AppText style={{ fontFamily: font.bold }}>{social?.been ? t('مختوم في جوازك ✓') : t('أنت هنا الحين؟')}</AppText>
+                <AppText variant="small" muted>{social?.been ? t('زيارتك محسوبة في جواز السعودية') : t('اختم جوازك واكسب نقاط')}</AppText>
               </View>
               {!social?.been ? (
                 <Pressable style={st.stampBtn} onPress={stamp} disabled={stamping}>
-                  {stamping ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>اختم</AppText>}
+                  {stamping ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('اختم')}</AppText>}
                 </Pressable>
               ) : null}
             </View>
@@ -240,7 +241,7 @@ export default function PlaceScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}>
                 <AppText variant="small" style={{ flex: 1 }} numberOfLines={1}>{p.address || cityName(p.city)}</AppText>
-                <View style={st.dirBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>الاتجاهات</AppText></View>
+                <View style={st.dirBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{t('الاتجاهات')}</AppText></View>
               </View>
             </Pressable>
           ) : null}
@@ -248,7 +249,7 @@ export default function PlaceScreen() {
           {p.addedBy ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }}>
               <Icon name="star" color={brand.orangeDeep} size={16} />
-              <AppText variant="small" color={brand.orangeDeep} style={{ fontFamily: font.semibold }}>أضافه للدليل: {p.addedBy}</AppText>
+              <AppText variant="small" color={brand.orangeDeep} style={{ fontFamily: font.semibold }}>{t('أضافه للدليل:')} {p.addedBy}</AppText>
             </View>
           ) : null}
 
@@ -256,19 +257,19 @@ export default function PlaceScreen() {
           {F.suggest ? (
             <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }} onPress={() => (user ? router.push({ pathname: '/suggest', params: { place: String(p.id), title: p.title } }) : router.push('/login'))}>
               <Icon name="edit" color={brand.link} size={16} />
-              <AppText variant="small" color={brand.link} style={{ fontFamily: font.semibold }}>معلومة غلط أو المكان مقفل؟ اقترح تعديل</AppText>
+              <AppText variant="small" color={brand.link} style={{ fontFamily: font.semibold }}>{t('معلومة غلط أو المكان مقفل؟ اقترح تعديل')}</AppText>
             </Pressable>
           ) : null}
 
           {/* تواصل */}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-            {p.phone ? <Contact icon="phone" label="اتصال" on={() => Linking.openURL(`tel:${p.phone}`)} /> : null}
-            {extLink(p.website) ? <Contact icon="globe" label="الموقع" on={() => WebBrowser.openBrowserAsync(extLink(p.website))} /> : null}
+            {p.phone ? <Contact icon="phone" label={t('اتصال')} on={() => Linking.openURL(`tel:${p.phone}`)} /> : null}
+            {extLink(p.website) ? <Contact icon="globe" label={t('الموقع')} on={() => WebBrowser.openBrowserAsync(extLink(p.website))} /> : null}
           </View>
         </View>
 
         {/* الأسئلة */}
-        <View style={st.secRow}><AppText variant="section">أسأل اللي زاروه</AppText>{qs.length ? <AppText variant="small" muted>{qs.length} مشاركة</AppText> : null}</View>
+        <View style={st.secRow}><AppText variant="section">{t('أسأل اللي زاروه')}</AppText>{qs.length ? <AppText variant="small" muted>{t('{n} مشاركة', { n: qs.length })}</AppText> : null}</View>
         {qs.slice(0, 3).map((q) => (
           <Pressable key={q.id} style={st.qa} onPress={() => router.push(`/question/${q.id}`)}>
             <AppText style={{ fontFamily: font.bold }} numberOfLines={2}>{q.text}</AppText>
@@ -281,20 +282,20 @@ export default function PlaceScreen() {
                 </View>
               </View>
             ) : (
-              <AppText variant="tiny" muted style={{ marginTop: 6 }}>{q.author.name} · {ago(q.created)} · {q.answers ? nAnswers(q.answers) : 'بانتظار أول إجابة'}</AppText>
+              <AppText variant="tiny" muted style={{ marginTop: 6 }}>{q.author.name} · {ago(q.created)} · {q.answers ? nAnswers(q.answers) : t('بانتظار أول إجابة')}</AppText>
             )}
           </Pressable>
         ))}
-        {!qs.length ? <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingBottom: 4 }}>ما أحد سأل عن المكان للحين. كن أول واحد.</AppText> : null}
+        {!qs.length ? <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingBottom: 4 }}>{t('ما أحد سأل عن المكان للحين. كن أول واحد.')}</AppText> : null}
         <Pressable style={st.ask} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city } })}>
-          <AppText muted style={{ flex: 1 }}>عندك سؤال عن المكان؟</AppText>
-          <AppText style={{ fontFamily: font.bold }} color={brand.purple}>اسأل</AppText>
+          <AppText muted style={{ flex: 1 }}>{t('عندك سؤال عن المكان؟')}</AppText>
+          <AppText style={{ fontFamily: font.bold }} color={brand.purple}>{t('اسأل')}</AppText>
         </Pressable>
         {/* أسئلة جاهزة بضغطة: تروح لأهل المدينة */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10 }}>
-          {['فيه مواقف قريبة؟', 'زحمة هالأيام؟', 'مناسب للأطفال؟', 'وش أحسن وقت للزيارة؟', 'الأسعار غالية؟'].map((t) => (
-            <Pressable key={t} style={st.quickQ} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city, text: t } })}>
-              <AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{t}</AppText>
+          {['فيه مواقف قريبة؟', 'زحمة هالأيام؟', 'مناسب للأطفال؟', 'وش أحسن وقت للزيارة؟', 'الأسعار غالية؟'].map((q) => t(q)).map((q) => (
+            <Pressable key={q} style={st.quickQ} onPress={() => router.push({ pathname: '/ask', params: { kind: 'question', placeId: String(p.id), place: p.title, city: p.city, text: q } })}>
+              <AppText variant="small" color={brand.purple} style={{ fontFamily: font.semibold }}>{q}</AppText>
             </Pressable>
           ))}
         </ScrollView>
@@ -302,8 +303,8 @@ export default function PlaceScreen() {
         {/* التقييمات وصور الزوار */}
         {F.reviews ? (<>
         <View style={st.secRow}>
-          <AppText variant="section">التقييمات</AppText>
-          {rv?.count ? <AppText variant="small" muted>{rv.count} تقييم</AppText> : null}
+          <AppText variant="section">{t('التقييمات')}</AppText>
+          {rv?.count ? <AppText variant="small" muted>{t('{n} تقييم', { n: rv.count })}</AppText> : null}
         </View>
         {rv?.count ? (
           <View style={st.rvHead}>
@@ -323,7 +324,7 @@ export default function PlaceScreen() {
         ) : null}
         {rv?.tags.length ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, marginTop: 10 }}>
-            {rv.tags.map((t) => <Pill key={t.t} label={`${t.t} · ${t.n}`} bg={brand.softGreen} fg={brand.green} />)}
+            {rv.tags.map((g) => <Pill key={g.t} label={`${g.t} · ${g.n}`} bg={brand.softGreen} fg={brand.green} />)}
           </View>
         ) : null}
         {F.photos && rv?.photos.length ? (
@@ -341,7 +342,7 @@ export default function PlaceScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Avatar t={initial(r.author.name)} c={tint(r.author.id)} size={34} />
               <View style={{ flex: 1 }}>
-                <AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{r.author.name}{r.mine ? ' (أنت)' : ''}</AppText>
+                <AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{r.author.name}{r.mine ? t(' (أنت)') : ''}</AppText>
                 <AppText variant="tiny" muted>{ago(r.updated)}{r.author.city ? ` · ${cityName(r.author.city)}` : ''}</AppText>
               </View>
               <AppText color={brand.orange} style={{ fontSize: 14 }}>{'★'.repeat(r.stars)}<AppText color={brand.line} style={{ fontSize: 14 }}>{'★'.repeat(5 - r.stars)}</AppText></AppText>
@@ -354,31 +355,31 @@ export default function PlaceScreen() {
               </View>
             ) : null}
             {!r.mine && user ? (
-              <Pressable hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 6 }} onPress={() => Alert.alert('بلاغ عن التقييم', 'التقييم فيه إساءة أو كلام غير لائق؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'بلّغ', style: 'destructive', onPress: () => reportReview(r.id).then(() => Alert.alert('وصلنا البلاغ', 'نراجعه في أقرب وقت. شكراً لك.')).catch(() => {}) }])}>
-                <AppText variant="tiny" muted>بلاغ</AppText>
+              <Pressable hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 6 }} onPress={() => Alert.alert(t('بلاغ عن التقييم'), t('التقييم فيه إساءة أو كلام غير لائق؟'), [{ text: t('إلغاء'), style: 'cancel' }, { text: t('بلّغ'), style: 'destructive', onPress: () => reportReview(r.id).then(() => Alert.alert(t('وصلنا البلاغ'), t('نراجعه في أقرب وقت. شكراً لك.'))).catch(() => {}) }])}>
+                <AppText variant="tiny" muted>{t('بلاغ')}</AppText>
               </Pressable>
             ) : null}
           </View>
         ))}
-        {rv && !rv.count ? <AppText variant="small" muted style={{ paddingHorizontal: 20 }}>ما أحد قيّم المكان للحين. زرته؟ كن أول واحد.</AppText> : null}
-        {rv?.myPending ? <AppText variant="tiny" color={brand.orangeDeep} style={{ paddingHorizontal: 20, marginTop: 8 }}>عندك {rv.myPending === 1 ? 'صورة' : rv.myPending + ' صور'} تنراجع الحين، وتنزل هنا بعد الموافقة.</AppText> : null}
+        {rv && !rv.count ? <AppText variant="small" muted style={{ paddingHorizontal: 20 }}>{t('ما أحد قيّم المكان للحين. زرته؟ كن أول واحد.')}</AppText> : null}
+        {rv?.myPending ? <AppText variant="tiny" color={brand.orangeDeep} style={{ paddingHorizontal: 20, marginTop: 8 }}>{rv.myPending === 1 ? tr('عندك صورة تنراجع الحين، وتنزل هنا بعد الموافقة.', 'Your photo is being reviewed and will show here once approved.') : tr(`عندك ${rv.myPending} صور تنراجع الحين، وتنزل هنا بعد الموافقة.`, `Your ${rv.myPending} photos are being reviewed and will show here once approved.`)}</AppText> : null}
         <Pressable style={[st.ask, { borderColor: brand.orange }]} onPress={() => router.push({ pathname: '/review/[id]', params: { id: String(p.id) } })}>
           <Icon name="star" color={brand.orange} size={20} />
-          <AppText muted style={{ flex: 1, marginHorizontal: 8 }}>{rv?.mine ? `تقييمك: ${'★'.repeat(rv.mine.stars)}` : 'زرته؟ قيّم تجربتك وأضف صورك'}</AppText>
-          <AppText style={{ fontFamily: font.bold }} color={brand.orangeDeep}>{rv?.mine ? 'عدّل' : 'قيّم'}</AppText>
+          <AppText muted style={{ flex: 1, marginHorizontal: 8 }}>{rv?.mine ? `${t('تقييمك:')} ${'★'.repeat(rv.mine.stars)}` : t('زرته؟ قيّم تجربتك وأضف صورك')}</AppText>
+          <AppText style={{ fontFamily: font.bold }} color={brand.orangeDeep}>{rv?.mine ? t('عدّل') : t('قيّم')}</AppText>
         </Pressable>
         </>) : null}
 
         {/* قريب منه */}
         {others.length ? (
           <>
-            <View style={st.secRow}><AppText variant="section">قريب منه</AppText></View>
+            <View style={st.secRow}><AppText variant="section">{t('قريب منه')}</AppText></View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
               {others.map((o) => (
                 <Pressable key={o.id} style={{ width: 150 }} onPress={() => router.push(`/place/${o.id}`)}>
                   <Image source={o.thumb} style={{ width: 150, height: 110, borderRadius: 18 }} contentFit="cover" />
                   <AppText style={{ fontFamily: font.bold, fontSize: 14, marginTop: 6 }} numberOfLines={1}>{o.title}</AppText>
-                  <AppText variant="tiny" muted>{o.cat}{o.km != null ? ` · ${o.km < 1 ? Math.round(o.km * 1000) + ' م' : o.km + ' كم'}` : ''}</AppText>
+                  <AppText variant="tiny" muted>{o.cat}{o.km != null ? ` · ${o.km < 1 ? t('{n} م', { n: Math.round(o.km * 1000) }) : t('{n} كم', { n: o.km })}` : ''}</AppText>
                 </Pressable>
               ))}
             </ScrollView>
@@ -389,12 +390,12 @@ export default function PlaceScreen() {
       <Modal visible={!!shot} transparent animationType="fade" onRequestClose={() => setShot(null)}>
         <Pressable style={st.viewer} onPress={() => setShot(null)}>
           {shot ? <Image source={shot} style={{ width: '100%', height: '80%' }} contentFit="contain" /> : null}
-          <AppText variant="small" color="#fff" style={{ marginTop: 10 }}>اضغط للإغلاق</AppText>
+          <AppText variant="small" color="#fff" style={{ marginTop: 10 }}>{t('اضغط للإغلاق')}</AppText>
         </Pressable>
       </Modal>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Button label={saved ? '✓ في رحلتي' : 'أضف لرحلتي'} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
-        <Button label="الاتجاهات" bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
+        <Button label={saved ? t('✓ في رحلتي') : t('أضف لرحلتي')} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
+        <Button label={t('الاتجاهات')} bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
       </View>
     </View>
   );

@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { uploadPhoto } from '@/lib/community';
 import { allCities } from '@/lib/content';
 import { BIZ_KINDS, couponErr, myMerchant, saveMerchant, type Merchant } from '@/lib/coupons';
+import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
 type Ph = { uri: string; url?: string };
@@ -59,8 +60,8 @@ export default function MerchantJoin() {
     if (perm?.granted) {
       const pos = await Location.getCurrentPositionAsync({}).catch(() => null);
       if (pos) setGeo({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) });
-      else setErr('ما قدرنا نحدد موقعك. جرّب مرة ثانية.');
-    } else setErr('نحتاج إذن الموقع من الإعدادات.');
+      else setErr(t('ما قدرنا نحدد موقعك. جرّب مرة ثانية.'));
+    } else setErr(t('نحتاج إذن الموقع من الإعدادات.'));
     setLocating(false);
   };
   const addPhoto = async () => {
@@ -71,7 +72,7 @@ export default function MerchantJoin() {
 
   const ready = name.trim().length >= 2 && !!city && agreed && !busy;
   const submit = async () => {
-    if (!ready) { setErr(!agreed ? 'لازم توافق على الشروط والأحكام.' : !city ? 'اختر المدينة.' : 'اكتب اسم النشاط.'); return; }
+    if (!ready) { setErr(!agreed ? t('لازم توافق على الشروط والأحكام.') : !city ? t('اختر المدينة.') : t('اكتب اسم النشاط.')); return; }
     setBusy(true); setErr('');
     try {
       const urls: string[] = [];
@@ -87,79 +88,79 @@ export default function MerchantJoin() {
       <ScrollView contentContainerStyle={{ paddingBottom: 150 }} keyboardShouldPersistTaps="handled">
         <View style={[st.head, { paddingTop: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel="رجوع"><Icon name="back" color="#fff" size={20} /></Pressable>
+            <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>
             <View style={{ flex: 1 }}>
-              <AppText variant="small" color="#F9A158" style={{ fontFamily: font.semibold }}>دليل السعودية للأعمال</AppText>
-              <AppText variant="title" color="#fff">{m ? 'بيانات نشاطك' : 'سجّل نشاطك'}</AppText>
+              <AppText variant="small" color="#F9A158" style={{ fontFamily: font.semibold }}>{t('دليل السعودية للأعمال')}</AppText>
+              <AppText variant="title" color="#fff">{m ? t('بيانات نشاطك') : t('سجّل نشاطك')}</AppText>
             </View>
           </View>
           <AppText variant="small" color="#E2DAEE" style={{ marginTop: 10, lineHeight: 22 }}>
-            {m ? 'تعديل الاسم أو المدينة أو السجل يرجّع الطلب للمراجعة.' : 'مطعمك أو مقهاك يظهر لزوار مدينتك. التسجيل مجاني الحين، مقابل كوبون واحد لمستخدمي الدليل.'}
+            {m ? t('تعديل الاسم أو المدينة أو السجل يرجّع الطلب للمراجعة.') : t('مطعمك أو مقهاك يظهر لزوار مدينتك. التسجيل مجاني الحين، مقابل كوبون واحد لمستخدمي الدليل.')}
           </AppText>
           {!m ? <View style={st.steps}>{[1, 2, 3, 4].map((i) => <View key={i} style={[st.step, i <= 2 && { backgroundColor: brand.orange }]} />)}</View> : null}
         </View>
 
         {!loaded ? <ActivityIndicator style={{ marginTop: 40 }} color={brand.purple} /> : (
           <View style={{ paddingHorizontal: 16 }}>
-            <Field label="نوع النشاط">
-              <View style={st.wrap}>{BIZ_KINDS.map(([k, t]) => <Chip key={k} label={t} on={kind === k} color={brand.orangeDeep} onPress={() => setKind(k)} />)}</View>
+            <Field label={t('نوع النشاط')}>
+              <View style={st.wrap}>{BIZ_KINDS.map(([k, x]) => <Chip key={k} label={x} on={kind === k} color={brand.orangeDeep} onPress={() => setKind(k)} />)}</View>
             </Field>
-            <Field label="اسم النشاط" hint="عربي وإنجليزي">
+            <Field label={t('اسم النشاط')} hint={t('عربي وإنجليزي')}>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1 }}><Input value={name} onChangeText={setName} placeholder="بالعربي" maxLength={80} /></View>
+                <View style={{ flex: 1 }}><Input value={name} onChangeText={setName} placeholder={t('بالعربي')} maxLength={80} /></View>
                 <View style={{ flex: 1 }}><Input style={{ textAlign: 'left' }} value={nameEn} onChangeText={setNameEn} placeholder="English" maxLength={80} autoCapitalize="words" /></View>
               </View>
             </Field>
-            <Field label="المدينة">
+            <Field label={t('المدينة')}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                 {allCities.map((c) => <Chip key={c.id} label={c.name} on={city === c.id} color={brand.purple} onPress={() => setCity(c.id)} />)}
               </ScrollView>
             </Field>
-            <Field label="الحي">
-              <Input value={area} onChangeText={setArea} placeholder="مثلاً: قباء، العليا، البلد" maxLength={60} />
+            <Field label={t('الحي')}>
+              <Input value={area} onChangeText={setArea} placeholder={t('مثلاً: قباء، العليا، البلد')} maxLength={60} />
             </Field>
-            <Field label="الموقع" hint="سجّله وأنت في المحل">
+            <Field label={t('الموقع')} hint={t('سجّله وأنت في المحل')}>
               <Pressable style={st.loc} onPress={locate} disabled={locating}>
                 <View style={[st.locIcon, geo && { backgroundColor: brand.green }]}>{locating ? <ActivityIndicator color="#fff" /> : <Icon name={geo ? 'check' : 'pin'} color="#fff" size={20} />}</View>
                 <View style={{ flex: 1 }}>
-                  <AppText style={{ fontFamily: font.semibold, fontSize: 14 }}>{geo ? 'انحفظ الموقع' : 'استخدم موقعي الحالي'}</AppText>
-                  <AppText variant="tiny" muted>{geo ? `${geo.lat}, ${geo.lng} · اضغط للتحديث` : 'فريق الدليل يقدر يعدّله لك بعدين'}</AppText>
+                  <AppText style={{ fontFamily: font.semibold, fontSize: 14 }}>{geo ? t('انحفظ الموقع') : t('استخدم موقعي الحالي')}</AppText>
+                  <AppText variant="tiny" muted>{geo ? `${geo.lat}, ${geo.lng} · ${t('اضغط للتحديث')}` : t('فريق الدليل يقدر يعدّله لك بعدين')}</AppText>
                 </View>
               </Pressable>
             </Field>
-            <Field label="صور النشاط" hint="حتى 8 صور">
+            <Field label={t('صور النشاط')} hint={t('حتى 8 صور')}>
               <View style={st.wrap}>
                 {photos.map((p, i) => (
                   <View key={p.uri + i}>
                     <Image source={p.uri} style={st.ph} contentFit="cover" />
-                    <Pressable style={st.phX} onPress={() => setPhotos(photos.filter((_, k) => k !== i))} accessibilityLabel="شيل الصورة"><Icon name="x" color="#fff" size={14} /></Pressable>
+                    <Pressable style={st.phX} onPress={() => setPhotos(photos.filter((_, k) => k !== i))} accessibilityLabel={t('شيل الصورة')}><Icon name="x" color="#fff" size={14} /></Pressable>
                   </View>
                 ))}
-                {photos.length < 8 && Platform.OS !== 'web' ? <Pressable style={st.add} onPress={addPhoto}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>+ صورة</AppText></Pressable> : null}
+                {photos.length < 8 && Platform.OS !== 'web' ? <Pressable style={st.add} onPress={addPhoto}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{t('+ صورة')}</AppText></Pressable> : null}
               </View>
             </Field>
-            <Field label="ساعات العمل">
-              <Input value={hours} onChangeText={setHours} placeholder="يومياً 7 ص – 1 ص · الجمعة من 1 م" maxLength={120} />
+            <Field label={t('ساعات العمل')}>
+              <Input value={hours} onChangeText={setHours} placeholder={t('يومياً 7 ص – 1 ص · الجمعة من 1 م')} maxLength={120} />
             </Field>
-            <Field label="جوال التواصل" hint="للإدارة فقط، ما يظهر للناس">
+            <Field label={t('جوال التواصل')} hint={t('للإدارة فقط، ما يظهر للناس')}>
               <Input value={phone} onChangeText={setPhone} placeholder="05xxxxxxxx" keyboardType="phone-pad" maxLength={15} style={{ textAlign: 'left' }} />
             </Field>
-            <Field label="التوثيق" hint="تطلع علامة «موثّق»">
-              <Input value={cr} onChangeText={setCr} placeholder="رقم السجل التجاري أو معروف" keyboardType="number-pad" maxLength={15} style={{ textAlign: 'left' }} />
+            <Field label={t('التوثيق')} hint={t('تطلع علامة «موثّق»')}>
+              <Input value={cr} onChangeText={setCr} placeholder={t('رقم السجل التجاري أو معروف')} keyboardType="number-pad" maxLength={15} style={{ textAlign: 'left' }} />
             </Field>
             {!m ? (
               <View style={st.plan}>
                 <View style={st.planIcon}><Icon name="ticket" color="#fff" size={20} /></View>
                 <View style={{ flex: 1 }}>
-                  <AppText style={{ fontFamily: font.bold }} color="#fff">الباقة المجانية</AppText>
-                  <AppText variant="small" color="#CFC6DE">ظهور في كوبونات المدينة + كوبون واحد فعّال. الخطوة الجاية: كوبونك الأول.</AppText>
+                  <AppText style={{ fontFamily: font.bold }} color="#fff">{t('الباقة المجانية')}</AppText>
+                  <AppText variant="small" color="#CFC6DE">{t('ظهور في كوبونات المدينة + كوبون واحد فعّال. الخطوة الجاية: كوبونك الأول.')}</AppText>
                 </View>
               </View>
             ) : null}
             <Pressable style={st.agree} onPress={() => setAgreed(!agreed)}>
               <View style={[st.box, agreed && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{agreed ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
               <AppText variant="small" style={{ flex: 1, lineHeight: 22 }}>
-                قرأت <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>الشروط والأحكام للتجار</AppText> وأوافق عليها، وأقر بأن دليل السعودية منصة عرض فقط وأني المسؤول عن نشاطي وعروضي وتراخيصها.
+                {t('قرأت')} <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>{t('الشروط والأحكام للتجار')}</AppText> {t('وأوافق عليها، وأقر بأن دليل السعودية منصة عرض فقط وأني المسؤول عن نشاطي وعروضي وتراخيصها.')}
               </AppText>
             </Pressable>
             {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 14, fontFamily: font.semibold }}>{err}</AppText> : null}
@@ -168,9 +169,9 @@ export default function MerchantJoin() {
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Pressable style={[st.cta, !ready && { opacity: 0.5 }]} onPress={submit} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{m ? 'احفظ' : 'التالي: أضف كوبونك'}</AppText>}
+          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{m ? t('احفظ') : t('التالي: أضف كوبونك')}</AppText>}
         </Pressable>
-        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>نراجع الطلب خلال 24 ساعة قبل النشر</AppText>
+        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{t('نراجع الطلب خلال 24 ساعة قبل النشر')}</AppText>
       </View>
     </KeyboardAvoidingView>
   );

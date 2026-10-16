@@ -15,8 +15,9 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
+import { isEn, t, tr } from '@/lib/i18n';
 
-const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const ksaKey = (t: number) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
 
 /** صفحة الموسم: الصورة واللون، العداد، المناطق، الفعاليات بالأيام، والمستمرة، ومتابعة الموسم */
@@ -33,7 +34,7 @@ export default function SeasonScreen() {
 
   const s = seasonsFrom(data ?? [], Date.now(), meta ?? []).find((x) => x.name === title);
   if (!s && ml) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton /><Loading /></View>;
-  if (!s) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title="الموسم خلص أو ما لقيناه" />}</View>;
+  if (!s) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{loading ? <Loading /> : <Empty title={t('الموسم خلص أو ما لقيناه')} />}</View>;
 
   const list = zone ? s.events.filter((e) => (e.address || '').startsWith(zone)) : s.events;
   const long = (e: EventItem) => !!e.end && new Date(e.end).getTime() - new Date(e.start).getTime() > 14 * 86400e3;
@@ -51,7 +52,7 @@ export default function SeasonScreen() {
         <LinearGradient colors={['rgba(0,0,0,0.05)', s.color + 'F2']} locations={[0.2, 0.95]} style={StyleSheet.absoluteFill} />
         <View style={[st.top, { top: insets.top + 10 }]}>
           <BackButton light />
-          <RoundButton icon="share" label="مشاركة" onPress={() => Share.share({ message: `${s.name} على دليل السعودية` }).catch(() => {})} />
+          <RoundButton icon="share" label={t('مشاركة')} onPress={() => Share.share({ message: t('{name} على دليل السعودية', { name: s.name }) }).catch(() => {})} />
         </View>
         <View style={st.heroTx}>
           <View style={st.live}><View style={[st.liveDot, { backgroundColor: s.live ? '#7CFC9A' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(s, now)}</AppText></View>
@@ -64,32 +65,32 @@ export default function SeasonScreen() {
       {/* العداد + المتابعة */}
       <View style={st.panel}>
         {s.returning ? (
-          <AppText style={{ fontFamily: font.semibold, lineHeight: 26 }}>الموسم انتهى ويرجع كل سنة{s.when ? ` (عادة ${s.when})` : ''}. تابعه ونبلغك أول ما تنعلن مواعيده وفعالياته.</AppText>
+          <AppText style={{ fontFamily: font.semibold, lineHeight: 26 }}>{t('الموسم انتهى ويرجع كل سنة')}{s.when ? ` (${t('عادة')} ${s.when})` : ''}{t('. تابعه ونبلغك أول ما تنعلن مواعيده وفعالياته.')}</AppText>
         ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {[[cd.d, 'يوم'], [cd.h, 'ساعة'], [cd.m, 'دقيقة']].map(([v, l]) => (
+          {[[cd.d, t('يوم')], [cd.h, t('ساعة')], [cd.m, t('دقيقة')]].map(([v, l]) => (
             <View key={l} style={[st.cbox, { backgroundColor: s.color + '18' }]}>
               <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 28 }} color={s.color} center>{String(v).padStart(2, '0')}</AppText>
               <AppText variant="tiny" muted center>{l}</AppText>
             </View>
           ))}
-          <AppText variant="small" style={{ flex: 1, fontFamily: font.semibold }}>{s.live ? 'على الختام' : 'على الافتتاح'}</AppText>
+          <AppText variant="small" style={{ flex: 1, fontFamily: font.semibold }}>{s.live ? t('على الختام') : t('على الافتتاح')}</AppText>
         </View>
         )}
         <Pressable onPress={() => toggleFollow(s.name)} style={[st.follow, { backgroundColor: isFollowed ? brand.green : s.color }]}>
           <Icon name={isFollowed ? 'check' : 'bell'} color="#fff" size={18} />
-          <AppText style={{ fontFamily: font.bold }} color="#fff">{isFollowed ? 'تتابع الموسم' : 'تابع الموسم'}</AppText>
+          <AppText style={{ fontFamily: font.bold }} color="#fff">{isFollowed ? t('تتابع الموسم') : t('تابع الموسم')}</AppText>
         </Pressable>
-        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{isFollowed ? 'بنرسل لك الفعاليات الجديدة أول بأول' : 'توصلك فعالياته الجديدة أول ما تنضاف'}</AppText>
-        {s.link ? <Pressable onPress={() => WebBrowser.openBrowserAsync(s.link).catch(() => {})} style={{ marginTop: 10 }}><AppText center color={brand.link} style={{ fontFamily: font.bold }}>الموقع الرسمي للموسم ↗</AppText></Pressable> : null}
+        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{isFollowed ? t('بنرسل لك الفعاليات الجديدة أول بأول') : t('توصلك فعالياته الجديدة أول ما تنضاف')}</AppText>
+        {s.link ? <Pressable onPress={() => WebBrowser.openBrowserAsync(s.link).catch(() => {})} style={{ marginTop: 10 }}><AppText center color={brand.link} style={{ fontFamily: font.bold }}>{t('الموقع الرسمي للموسم ↗')}</AppText></Pressable> : null}
       </View>
 
       {/* المناطق */}
       {s.zones.length > 1 ? (
         <>
-          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>مناطق الموسم</AppText>
+          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>{t('مناطق الموسم')}</AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-            <Chip label={`الكل · ${s.events.length}`} on={!zone} color={s.color} onPress={() => setZone(null)} />
+            <Chip label={`${t('الكل')} · ${s.events.length}`} on={!zone} color={s.color} onPress={() => setZone(null)} />
             {s.zones.map((z) => <Chip key={z.name} label={`${z.name} · ${z.n}`} on={zone === z.name} color={s.color} onPress={() => setZone(zone === z.name ? null : z.name)} />)}
           </ScrollView>
         </>
@@ -121,13 +122,13 @@ export default function SeasonScreen() {
 
       {ongoing.length ? (
         <>
-          <View style={st.dayHead}><View style={[st.dot, { backgroundColor: brand.green }]} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={brand.green}>طول الموسم · تزورها أي يوم</AppText></View>
+          <View style={st.dayHead}><View style={[st.dot, { backgroundColor: brand.green }]} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={brand.green}>{t('طول الموسم · تزورها أي يوم')}</AppText></View>
           <View style={{ gap: 10, paddingHorizontal: 16 }}>
             {ongoing.map((e) => (
               <Pressable key={e.id} style={st.row} onPress={() => router.push(`/event/${e.id}`)}>
                 <Image source={e.thumb || e.image || photos.fest} style={st.rowImg} contentFit="cover" />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>حتى {riyadhDate(e.end, false)}</AppText>
+                  <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>{t('حتى')} {riyadhDate(e.end, false)}</AppText>
                   <AppText style={{ fontFamily: font.bold, fontSize: 15 }} numberOfLines={2}>{e.title}</AppText>
                 </View>
               </Pressable>

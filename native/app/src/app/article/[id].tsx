@@ -11,6 +11,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { colors, radius, space } from '@/theme/tokens';
 import { track } from '@/lib/track';
+import { t } from '@/lib/i18n';
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,7 +20,7 @@ export default function ArticleScreen() {
   if (loading && !a) return <Screen showBack><Loading /></Screen>;
   if (!a) return <Screen showBack><Empty /></Screen>;
   return (
-    <Screen showBack title={a.section || 'الأخبار'} pad={false}>
+    <Screen showBack title={a.section || t('الأخبار')} pad={false}>
       <Image source={a.images?.[0] || a.thumb} style={styles.img} contentFit="cover" />
       <View style={styles.body}>
         <AppText variant="small" muted>{riyadhDate(a.date, false)} · {a.author}</AppText>

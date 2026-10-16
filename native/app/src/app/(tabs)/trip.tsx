@@ -11,20 +11,21 @@ import { cityName, getPlacesByIds } from '@/lib/content';
 import { trip, useTrip } from '@/lib/trip';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
+import { t, tr } from '@/lib/i18n';
 
 type Stop = { id?: number; time: string; title: string; sub: string; img: ImageSource | string; drive?: string };
-const SLOT = ['9:00 ص · الصباح', '1:00 م · الظهر', '4:30 م · العصر', '7:30 م · المساء'];
+const SLOT = [t('9:00 ص · الصباح'), t('1:00 م · الظهر'), t('4:30 م · العصر'), t('7:30 م · المساء')];
 const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac];
 
 /** رحلة تجريبية (نفس التصميم) تظهر لين يحفظ المستخدم أماكنه */
 const DEMO: Stop[][] = [
   [
-    { time: '4:30 م · الغروب', title: 'صخرة الفيل', sub: 'معالم · ساعة ونص', img: photos.rock, drive: '12 دقيقة بالسيارة' },
-    { time: '7:00 م · عشاء', title: 'مطعم مرايا', sub: 'مطاعم · يحتاج حجز', img: photos.sea, drive: '20 دقيقة بالسيارة' },
-    { time: '9:30 م · فعالية', title: 'مشاهدة النجوم في غرابيلة', sub: 'تذكرة · 2 شخص', img: photos.fest },
+    { time: tr('4:30 م · الغروب', '4:30 PM · Sunset'), title: tr('صخرة الفيل', 'Elephant Rock'), sub: tr('معالم · ساعة ونص', 'Sights · 1.5 hours'), img: photos.rock, drive: tr('12 دقيقة بالسيارة', '12 min drive') },
+    { time: tr('7:00 م · عشاء', '7:00 PM · Dinner'), title: tr('مطعم مرايا', 'Maraya Restaurant'), sub: tr('مطاعم · يحتاج حجز', 'Restaurants · Booking needed'), img: photos.sea, drive: tr('20 دقيقة بالسيارة', '20 min drive') },
+    { time: tr('9:30 م · فعالية', '9:30 PM · Event'), title: tr('مشاهدة النجوم في غرابيلة', 'Stargazing at Gharameel'), sub: tr('تذكرة · 2 شخص', 'Ticket · 2 people'), img: photos.fest },
   ],
-  [{ time: '8:00 ص · الشروق', title: 'البلدة القديمة', sub: 'تراث · ساعتين', img: photos.heritage }],
-  [{ time: '10:00 ص', title: 'مزرعة فيرنا', sub: 'تجارب · فطور مزرعة', img: photos.land }],
+  [{ time: tr('8:00 ص · الشروق', '8:00 AM · Sunrise'), title: tr('البلدة القديمة', 'AlUla Old Town'), sub: tr('تراث · ساعتين', 'Heritage · 2 hours'), img: photos.heritage }],
+  [{ time: tr('10:00 ص', '10:00 AM'), title: tr('مزرعة فيرنا', 'Verna Farm'), sub: tr('تجارب · فطور مزرعة', 'Experiences · Farm breakfast'), img: photos.land }],
 ];
 
 export default function TripScreen() {
@@ -39,17 +40,17 @@ export default function TripScreen() {
   const days: Stop[][] = real
     ? tripDays.map((d) => d.map((id) => byId.get(id)).filter(Boolean).map((p, i) => ({ id: p!.id, time: SLOT[i % SLOT.length], title: p!.title, sub: p!.cat, img: p!.thumb || p!.image || photos.heritage })))
     : DEMO;
-  const city = real ? cityName(places![0].city) : 'العلا';
+  const city = real ? cityName(places![0].city) : tr('العلا', 'AlUla');
   const total = days.reduce((n, d) => n + d.length, 0);
   const cur = days[Math.min(day, days.length - 1)] ?? [];
   const stopMenu = (id: number, title: string) => {
     const d = Math.min(day, days.length - 1);
     Alert.alert(title, undefined, [
-      ...days.map((_, i) => i).filter((i) => i !== d).slice(0, 4).map((i) => ({ text: `انقله لليوم ${i + 1}`, onPress: () => trip.moveToDay(id, i) })),
-      { text: 'قدّمه', onPress: () => trip.move(id, -1) },
-      { text: 'أخّره', onPress: () => trip.move(id, 1) },
-      { text: 'شيله من الرحلة', style: 'destructive' as const, onPress: () => trip.remove(id) },
-      { text: 'إلغاء', style: 'cancel' as const },
+      ...days.map((_, i) => i).filter((i) => i !== d).slice(0, 4).map((i) => ({ text: t('انقله لليوم {n}', { n: i + 1 }), onPress: () => trip.moveToDay(id, i) })),
+      { text: t('قدّمه'), onPress: () => trip.move(id, -1) },
+      { text: t('أخّره'), onPress: () => trip.move(id, 1) },
+      { text: t('شيله من الرحلة'), style: 'destructive' as const, onPress: () => trip.remove(id) },
+      { text: t('إلغاء'), style: 'cancel' as const },
     ]);
   };
 
@@ -59,15 +60,15 @@ export default function TripScreen() {
         <Image source={real ? places![0].image || places![0].thumb : photos.land} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['rgba(32,22,54,0.15)', 'rgba(32,22,54,0.9)']} style={StyleSheet.absoluteFill} />
         <View style={[st.heroTop, { top: insets.top + 10 }]}>
-          <View style={st.glassPill}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">رحلاتي · {real ? 1 : 3}</AppText></View>
-          <Pressable style={st.glassPill} onPress={() => Share.share({ message: `رحلتي إلى ${city} على دليل السعودية` }).catch(() => {})}>
-            <Icon name="share" color="#fff" size={16} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">شارك مع الشلة</AppText>
+          <View style={st.glassPill}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">{t('رحلاتي · {n}', { n: real ? 1 : 3 })}</AppText></View>
+          <Pressable style={st.glassPill} onPress={() => Share.share({ message: t('رحلتي إلى {city} على دليل السعودية', { city }) }).catch(() => {})}>
+            <Icon name="share" color="#fff" size={16} /><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color="#fff">{t('شارك مع الشلة')}</AppText>
           </Pressable>
         </View>
         <View style={st.heroTx}>
-          <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{real ? 'رحلتك الجاية' : 'بعد 9 أيام · 22–24 أكتوبر'}</AppText>
-          <AppText variant="hero" color="#fff">{real ? `رحلتي إلى ${city}` : 'ويكند العلا'}</AppText>
-          <AppText variant="small" color="#E2DAEE">{days.length} أيام   ·   {total} مكان{real ? '' : '   ·   24° نهاراً'}</AppText>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color="#F9A158">{real ? t('رحلتك الجاية') : t('بعد 9 أيام · 22–24 أكتوبر')}</AppText>
+          <AppText variant="hero" color="#fff">{real ? t('رحلتي إلى {city}', { city }) : t('ويكند العلا')}</AppText>
+          <AppText variant="small" color="#E2DAEE">{t('{n} أيام', { n: days.length })}   ·   {t('{n} مكان', { n: total })}{real ? '' : `   ·   ${t('24° نهاراً')}`}</AppText>
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
             {(real ? [] : [['ر', brand.lilac], ['ع', brand.pink], ['م', brand.sky]]).map(([t, c], i) => <View key={t} style={{ marginRight: i ? -8 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
           </View>
@@ -75,20 +76,20 @@ export default function TripScreen() {
       </View>
 
       {!real ? (
-        <View style={st.demo}><Icon name="info" color={brand.purple} size={18} /><AppText variant="small" style={{ flex: 1 }} color={brand.purple}>هذي رحلة تجريبية. اضغط القلب على أي مكان، أو خلّ الدليل يرتب لك رحلة من «خطط لي» تحت.</AppText></View>
+        <View style={st.demo}><Icon name="info" color={brand.purple} size={18} /><AppText variant="small" style={{ flex: 1 }} color={brand.purple}>{t('هذي رحلة تجريبية. اضغط القلب على أي مكان، أو خلّ الدليل يرتب لك رحلة من «خطط لي» تحت.')}</AppText></View>
       ) : null}
 
       <View style={st.days}>
         {days.map((_, i) => (
-          <Pressable key={i} onPress={() => setDay(i)} onLongPress={() => real && days.length > 1 && Alert.alert(`اليوم ${i + 1}`, 'تشيل هاليوم؟ أماكنه تنتقل لليوم اللي قبله.', [{ text: 'إلغاء', style: 'cancel' }, { text: 'شيل اليوم', style: 'destructive', onPress: () => { trip.removeDay(i); setDay(Math.max(0, i - 1)); } }])} style={[st.day, i === day && st.dayOn]}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.text} center>اليوم {i + 1}</AppText>
-            <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? `${days[i].length} أماكن` : ['الخميس 22', 'الجمعة 23', 'السبت 24'][i]}</AppText>
+          <Pressable key={i} onPress={() => setDay(i)} onLongPress={() => real && days.length > 1 && Alert.alert(t('اليوم {n}', { n: i + 1 }), t('تشيل هاليوم؟ أماكنه تنتقل لليوم اللي قبله.'), [{ text: t('إلغاء'), style: 'cancel' }, { text: t('شيل اليوم'), style: 'destructive', onPress: () => { trip.removeDay(i); setDay(Math.max(0, i - 1)); } }])} style={[st.day, i === day && st.dayOn]}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color={i === day ? '#fff' : brand.text} center>{t('اليوم {n}', { n: i + 1 })}</AppText>
+            <AppText variant="tiny" color={i === day ? '#E2DAEE' : brand.muted} center>{real ? t('{n} أماكن', { n: days[i].length }) : [t('الخميس 22'), t('الجمعة 23'), t('السبت 24')][i]}</AppText>
           </Pressable>
         ))}
       {real && days.length < 7 ? (
-          <Pressable onPress={() => { const n = trip.addDay(); setDay(n); }} style={[st.day, st.dayAdd]} accessibilityLabel="أضف يوم">
+          <Pressable onPress={() => { const n = trip.addDay(); setDay(n); }} style={[st.day, st.dayAdd]} accessibilityLabel={t('أضف يوم')}>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color={brand.purple} center>+</AppText>
-            <AppText variant="tiny" color={brand.purple} center>يوم</AppText>
+            <AppText variant="tiny" color={brand.purple} center>{t('يوم')}</AppText>
           </Pressable>
         ) : null}
       </View>
@@ -105,24 +106,24 @@ export default function TripScreen() {
                   <AppText style={{ fontFamily: font.bold, fontSize: 16 }} numberOfLines={1}>{s.title}</AppText>
                   <AppText variant="small" muted numberOfLines={1}>{s.sub}</AppText>
                 </View>
-                {real && s.id ? <Pressable hitSlop={10} onPress={() => stopMenu(s.id!, s.title)} accessibilityLabel="خيارات"><AppText muted style={{ fontFamily: font.bold, fontSize: 18, paddingHorizontal: 4 }}>···</AppText></Pressable> : null}
+                {real && s.id ? <Pressable hitSlop={10} onPress={() => stopMenu(s.id!, s.title)} accessibilityLabel={t('خيارات')}><AppText muted style={{ fontFamily: font.bold, fontSize: 18, paddingHorizontal: 4 }}>···</AppText></Pressable> : null}
               </Pressable>
             </View>
             {i < cur.length - 1 ? (
-              <View style={st.drive}><View style={st.line} /><AppText variant="tiny" muted>{s.drive ?? 'بالسيارة'}</AppText></View>
+              <View style={st.drive}><View style={st.line} /><AppText variant="tiny" muted>{s.drive ?? t('بالسيارة')}</AppText></View>
             ) : null}
           </View>
         ))}
         <Pressable style={st.add} onPress={() => router.push({ pathname: '/search', params: { add: 'trip', day: String(Math.min(day, days.length - 1)), ...(real ? { city: places![0].city } : {}) } })}>
-          <AppText style={{ fontFamily: font.semibold }} color={brand.purple}>+ أضف مكان لليوم {['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][day] ?? day + 1}</AppText>
+          <AppText style={{ fontFamily: font.semibold }} color={brand.purple}>{tr(`+ أضف مكان لليوم ${['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'][day] ?? day + 1}`, `+ Add a place to day ${day + 1}`)}</AppText>
         </Pressable>
         <View style={st.tip}>
           <View style={st.tipIcon}><Icon name="spark" color="#fff" size={22} /></View>
           <View style={{ flex: 1 }}>
-            <AppText style={{ fontFamily: font.bold }} color="#fff">خلّ الدليل يرتبها لك</AppText>
-            <AppText variant="small" color="#CFC6DE">اختر المدينة وكم يوم ووش تحب، ونرتب لك الأماكن يوم بيوم</AppText>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">{t('خلّ الدليل يرتبها لك')}</AppText>
+            <AppText variant="small" color="#CFC6DE">{t('اختر المدينة وكم يوم ووش تحب، ونرتب لك الأماكن يوم بيوم')}</AppText>
           </View>
-          <Pressable style={st.tipBtn} onPress={() => router.push({ pathname: '/planner', params: real ? { city: places![0].city } : {} })}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>خطط لي</AppText></Pressable>
+          <Pressable style={st.tipBtn} onPress={() => router.push({ pathname: '/planner', params: real ? { city: places![0].city } : {} })}><AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{t('خطط لي')}</AppText></Pressable>
         </View>
       </View>
     </ScrollView>

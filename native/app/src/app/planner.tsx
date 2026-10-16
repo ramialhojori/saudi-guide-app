@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/auth';
 import { useFeatures } from '@/lib/features';
 import { INPUT_START } from '@/theme/tokens';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
+import { t, isEn } from '@/lib/i18n';
 
 const CITIES: [string, string][] = [['medina', 'المدينة المنورة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة المكرمة'], ['alula', 'العلا'], ['abha', 'أبها'], ['taif', 'الطائف'], ['diriyah', 'الدرعية'], ['yanbu', 'ينبع'], ['eastern-region', 'الشرقية'], ['tabuk-region', 'تبوك'], ['hail', 'حائل'], ['albaha', 'الباحة'], ['qassim-region', 'القصيم']];
 const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac, brand.green];
@@ -55,8 +56,8 @@ export default function Planner() {
       setAi(p); setDay(0);
     } catch (e) {
       const c = (e as { code?: string })?.code;
-      if (c === 'plus_required' || c === 'quota' || c === 'plan_quota') Alert.alert('خطة ذكية مع دليل+', aiErr(e), [{ text: 'لاحقاً', style: 'cancel' }, { text: 'جرّب دليل+', onPress: () => router.push('/plus') }]);
-      else Alert.alert('ما قدرنا نجهز الخطة الذكية', aiErr(e));
+      if (c === 'plus_required' || c === 'quota' || c === 'plan_quota') Alert.alert(t('خطة ذكية مع دليل+'), aiErr(e), [{ text: t('لاحقاً'), style: 'cancel' }, { text: t('جرّب دليل+'), onPress: () => router.push('/plus') }]);
+      else Alert.alert(t('ما قدرنا نجهز الخطة الذكية'), aiErr(e));
     } finally { setBusy(false); }
   };
   const saveAi = () => {
@@ -64,35 +65,35 @@ export default function Planner() {
     const pd = ai.days.map((d) => d.stops.filter((s) => s.type === 'place').map((s) => s.id)).filter((d) => d.length);
     const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); router.replace('/trip'); };
     if (!trip.all().length) return apply('replace');
-    Alert.alert('عندك أماكن في رحلتي', 'تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟', [
-      { text: 'إلغاء', style: 'cancel' }, { text: 'أضفها', onPress: () => apply('add') }, { text: 'استبدل', style: 'destructive', onPress: () => apply('replace') },
+    Alert.alert(t('عندك أماكن في رحلتي'), t('تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟'), [
+      { text: t('إلغاء'), style: 'cancel' }, { text: t('أضفها'), onPress: () => apply('add') }, { text: t('استبدل'), style: 'destructive', onPress: () => apply('replace') },
     ]);
   };
   const go = async () => {
     if (useSmart) return goSmart();
     setBusy(true);
-    try { const p = await makePlan(city, days, want, pace); setPlan(p); setDay(0); } catch { Alert.alert('ما قدرنا نجهز الخطة', 'تأكد من النت وجرّب مرة ثانية.'); } finally { setBusy(false); }
+    try { const p = await makePlan(city, days, want, pace); setPlan(p); setDay(0); } catch { Alert.alert(t('ما قدرنا نجهز الخطة'), t('تأكد من النت وجرّب مرة ثانية.')); } finally { setBusy(false); }
   };
   const save = () => {
     if (!plan) return;
     const pd = plan.map((d) => d.map((p) => p.id));
     const apply = (mode: 'replace' | 'add') => { trip.setDays(mode === 'replace' ? pd : [...trip.days().filter((d) => d.length), ...pd]); router.replace('/trip'); };
     if (!trip.all().length) return apply('replace');
-    Alert.alert('عندك أماكن في رحلتي', 'تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟', [
-      { text: 'إلغاء', style: 'cancel' }, { text: 'أضفها', onPress: () => apply('add') }, { text: 'استبدل', style: 'destructive', onPress: () => apply('replace') },
+    Alert.alert(t('عندك أماكن في رحلتي'), t('تبي تستبدلها بالخطة الجديدة ولا تضيفها عليها؟'), [
+      { text: t('إلغاء'), style: 'cancel' }, { text: t('أضفها'), onPress: () => apply('add') }, { text: t('استبدل'), style: 'destructive', onPress: () => apply('replace') },
     ]);
   };
-  const cityLabel = CITIES.find((c) => c[0] === city)?.[1] ?? '';
+  const cityLabel = t(CITIES.find((c) => c[0] === city)?.[1] ?? '');
 
   if (ai) {
     const cur = ai.days[Math.min(day, ai.days.length - 1)];
     return (
       <View style={{ flex: 1, backgroundColor: brand.bg }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-          <View style={st.top}><BackButton /><View style={{ flex: 1 }}><AppText variant="title" numberOfLines={2}>{ai.title || `${days} أيام في ${cityLabel}`}</AppText><AppText variant="small" muted>خطة ذكية · {ai.days.reduce((n, d) => n + d.stops.length, 0)} محطة</AppText></View>
-            <Pressable onPress={() => setAi(null)} style={st.edit}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>تعديل</AppText></Pressable></View>
+          <View style={st.top}><BackButton /><View style={{ flex: 1 }}><AppText variant="title" numberOfLines={2}>{ai.title || t('{n} أيام في {city}', { n: days, city: cityLabel })}</AppText><AppText variant="small" muted>{t('خطة ذكية · {n} محطة', { n: ai.days.reduce((n, d) => n + d.stops.length, 0) })}</AppText></View>
+            <Pressable onPress={() => setAi(null)} style={st.edit}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{t('تعديل')}</AppText></Pressable></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
-            {ai.days.map((_, i) => <Chip key={i} label={`اليوم ${i + 1}`} on={i === day} color={brand.ink} onPress={() => setDay(i)} />)}
+            {ai.days.map((_, i) => <Chip key={i} label={t('اليوم {n}', { n: i + 1 })} on={i === day} color={brand.ink} onPress={() => setDay(i)} />)}
           </ScrollView>
           {cur?.title ? <AppText variant="section" style={{ paddingHorizontal: 20, paddingBottom: 8 }}>{cur.title}</AppText> : null}
           <View style={{ paddingHorizontal: 16, gap: 10 }}>
@@ -101,7 +102,7 @@ export default function Planner() {
                 <View style={[st.num, { backgroundColor: STEP[i % STEP.length] }]}><AppText style={{ fontFamily: font.bold }} color="#fff">{i + 1}</AppText></View>
                 <Image source={sp.thumb || (sp.type === 'event' ? photos.fest : photos.heritage)} style={st.img} contentFit="cover" />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{sp.time}{sp.type === 'event' ? ' · فعالية' : ''}</AppText>
+                  <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{sp.time}{sp.type === 'event' ? ' · ' + t('فعالية') : ''}</AppText>
                   <AppText style={{ fontFamily: font.bold }} numberOfLines={2}>{sp.title}</AppText>
                   {sp.why ? <AppText variant="tiny" muted style={{ lineHeight: 18 }}>{sp.why}</AppText> : null}
                 </View>
@@ -110,25 +111,25 @@ export default function Planner() {
           </View>
           {ai.tips.length ? (
             <View style={[st.tips]}>
-              <AppText style={{ fontFamily: font.bold }}>نصايح لرحلتك</AppText>
-              {ai.tips.map((t) => <AppText key={t} variant="small" style={{ lineHeight: 22 }}>• {t}</AppText>)}
+              <AppText style={{ fontFamily: font.bold }}>{t('نصايح لرحلتك')}</AppText>
+              {ai.tips.map((tip) => <AppText key={tip} variant="small" style={{ lineHeight: 22 }}>• {tip}</AppText>)}
             </View>
           ) : null}
           {!ai.quota?.plus ? (
             <Pressable onPress={() => router.push('/plus')} style={st.upsell}>
               <Icon name="spark" color="#fff" size={20} />
               <View style={{ flex: 1 }}>
-                <AppText color="#fff" style={{ fontFamily: font.bold }}>عجبتك؟</AppText>
-                <AppText variant="small" color="#E9E0FF" style={{ lineHeight: 20 }}>هذي خطتك المجانية لهالشهر. مع دليل+ تخطط كل رحلاتك بدون حد، وجرّبه 3 أيام مجاناً.</AppText>
+                <AppText color="#fff" style={{ fontFamily: font.bold }}>{t('عجبتك؟')}</AppText>
+                <AppText variant="small" color="#E9E0FF" style={{ lineHeight: 20 }}>{t('هذي خطتك المجانية لهالشهر. مع دليل+ تخطط كل رحلاتك بدون حد، وجرّبه 3 أيام مجاناً.')}</AppText>
               </View>
               <Icon name="chevron" color="#fff" size={18} />
             </Pressable>
           ) : null}
-          <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>الخطة من أماكن الدليل وفعالياته، والأوقات تقريبية. تأكد من الدوام قبل ما تروح.</AppText>
+          <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>{t('الخطة من أماكن الدليل وفعالياته، والأوقات تقريبية. تأكد من الدوام قبل ما تروح.')}</AppText>
         </ScrollView>
         <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <Pressable style={[st.cta, { flex: 1.4 }]} onPress={saveAi}><AppText color="#fff" style={{ fontFamily: font.bold }}>احفظها في رحلتي</AppText></Pressable>
-          <Pressable style={[st.cta, { flex: 1, backgroundColor: brand.ink }]} onPress={goSmart} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold }}>خطة ثانية</AppText>}</Pressable>
+          <Pressable style={[st.cta, { flex: 1.4 }]} onPress={saveAi}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('احفظها في رحلتي')}</AppText></Pressable>
+          <Pressable style={[st.cta, { flex: 1, backgroundColor: brand.ink }]} onPress={goSmart} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold }}>{t('خطة ثانية')}</AppText>}</Pressable>
         </View>
       </View>
     );
@@ -139,17 +140,17 @@ export default function Planner() {
     return (
       <View style={{ flex: 1, backgroundColor: brand.bg }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-          <View style={st.top}><BackButton /><View style={{ flex: 1 }}><AppText variant="title">{days === 1 ? 'يوم' : `${days} أيام`} في {cityLabel}</AppText><AppText variant="small" muted>{plan.flat().length} مكان · رحلة {PACE[pace].label}</AppText></View>
-            <Pressable onPress={() => setPlan(null)} style={st.edit}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>تعديل</AppText></Pressable></View>
+          <View style={st.top}><BackButton /><View style={{ flex: 1 }}><AppText variant="title">{days === 1 ? t('يوم في {city}', { city: cityLabel }) : t('{n} أيام في {city}', { n: days, city: cityLabel })}</AppText><AppText variant="small" muted>{t('{n} مكان · رحلة {pace}', { n: plan.flat().length, pace: t(PACE[pace].label) })}</AppText></View>
+            <Pressable onPress={() => setPlan(null)} style={st.edit}><AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{t('تعديل')}</AppText></Pressable></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
-            {plan.map((_, i) => <Chip key={i} label={`اليوم ${i + 1}`} on={i === day} color={brand.ink} onPress={() => setDay(i)} />)}
+            {plan.map((_, i) => <Chip key={i} label={t('اليوم {n}', { n: i + 1 })} on={i === day} color={brand.ink} onPress={() => setDay(i)} />)}
           </ScrollView>
           <View style={{ paddingHorizontal: 16 }}>
             {cur.map((p, i) => {
               const ks = kindStyle[p.kinds[0]] ?? kindStyle.sights;
               return (
                 <View key={p.id}>
-                  {p.driveMin ? <View style={st.drive}><Icon name="route" size={14} color={brand.faint} /><AppText variant="tiny" muted>تقريباً {p.driveMin} دقيقة بالسيارة</AppText></View> : null}
+                  {p.driveMin ? <View style={st.drive}><Icon name="route" size={14} color={brand.faint} /><AppText variant="tiny" muted>{t('تقريباً {n} دقيقة بالسيارة', { n: p.driveMin })}</AppText></View> : null}
                   <Pressable style={st.stop} onPress={() => router.push(`/place/${p.id}`)}>
                     <View style={[st.num, { backgroundColor: STEP[i % STEP.length] }]}><AppText style={{ fontFamily: font.bold }} color="#fff">{i + 1}</AppText></View>
                     <Image source={p.thumb || p.image || photos.heritage} style={st.img} contentFit="cover" />
@@ -163,11 +164,11 @@ export default function Planner() {
               );
             })}
           </View>
-          <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>الأوقات تقريبية، وتأكد من أوقات الدوام قبل ما تروح.</AppText>
+          <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30 }}>{t('الأوقات تقريبية، وتأكد من أوقات الدوام قبل ما تروح.')}</AppText>
         </ScrollView>
         <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <Pressable style={[st.cta, { flex: 1.4 }]} onPress={save}><AppText color="#fff" style={{ fontFamily: font.bold }}>احفظها في رحلتي</AppText></Pressable>
-          <Pressable style={[st.cta, { flex: 1, backgroundColor: brand.ink }]} onPress={go}><AppText color="#fff" style={{ fontFamily: font.bold }}>خطة ثانية</AppText></Pressable>
+          <Pressable style={[st.cta, { flex: 1.4 }]} onPress={save}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('احفظها في رحلتي')}</AppText></Pressable>
+          <Pressable style={[st.cta, { flex: 1, backgroundColor: brand.ink }]} onPress={go}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('خطة ثانية')}</AppText></Pressable>
         </View>
       </View>
     );
@@ -176,35 +177,35 @@ export default function Planner() {
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-        <View style={st.top}><BackButton /><AppText variant="title">خطط لي رحلة</AppText></View>
-        <AppText muted style={{ paddingHorizontal: 20, marginTop: 6 }}>قل لنا وين وكم يوم ووش تحب، ونرتبها لك يوم بيوم.</AppText>
+        <View style={st.top}><BackButton /><AppText variant="title">{t('خطط لي رحلة')}</AppText></View>
+        <AppText muted style={{ paddingHorizontal: 20, marginTop: 6 }}>{t('قل لنا وين وكم يوم ووش تحب، ونرتبها لك يوم بيوم.')}</AppText>
         {F.ai_planner ? (
           <View style={st.seg}>
-            {([[true, 'خطة ذكية', 'تراعي تواريخك ومين معك، ووحدة مجانية كل شهر'], [false, 'خطة سريعة', 'ترتيب تلقائي مجاني']] as const).map(([v, t, d]) => (
-              <Pressable key={t} onPress={() => setSmart(v)} style={[st.segItem, smart === v && { backgroundColor: v ? brand.purple : brand.ink }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>{v ? <Icon name="spark" size={14} color={smart === v ? '#fff' : brand.purple} /> : null}<AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={smart === v ? '#fff' : brand.text}>{t}</AppText>{v ? <View style={st.plusTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>دليل+</AppText></View> : null}</View>
-                <AppText variant="tiny" color={smart === v ? '#E2DAEE' : brand.muted} center>{d}</AppText>
+            {([[true, 'خطة ذكية', 'تراعي تواريخك ومين معك، ووحدة مجانية كل شهر'], [false, 'خطة سريعة', 'ترتيب تلقائي مجاني']] as const).map(([v, lb, d]) => (
+              <Pressable key={lb} onPress={() => setSmart(v)} style={[st.segItem, smart === v && { backgroundColor: v ? brand.purple : brand.ink }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>{v ? <Icon name="spark" size={14} color={smart === v ? '#fff' : brand.purple} /> : null}<AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={smart === v ? '#fff' : brand.text}>{t(lb)}</AppText>{v ? <View style={st.plusTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('دليل+')}</AppText></View> : null}</View>
+                <AppText variant="tiny" color={smart === v ? '#E2DAEE' : brand.muted} center>{t(d)}</AppText>
               </Pressable>
             ))}
           </View>
         ) : null}
 
-        <AppText variant="section" style={st.h}>وين؟</AppText>
+        <AppText variant="section" style={st.h}>{t('وين؟')}</AppText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-          {CITIES.map(([id, n]) => <Chip key={id} label={n} on={city === id} color={brand.ink} onPress={() => setCity(id)} />)}
+          {CITIES.map(([id, n]) => <Chip key={id} label={t(n)} on={city === id} color={brand.ink} onPress={() => setCity(id)} />)}
         </ScrollView>
 
-        <AppText variant="section" style={st.h}>كم يوم؟</AppText>
+        <AppText variant="section" style={st.h}>{t('كم يوم؟')}</AppText>
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
           {[1, 2, 3, 4].map((n) => (
             <Pressable key={n} onPress={() => setDays(n)} style={[st.box, days === n && { backgroundColor: brand.purple }]}>
               <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color={days === n ? '#fff' : brand.text}>{n}</AppText>
-              <AppText variant="tiny" color={days === n ? '#E2DAEE' : brand.muted}>{n === 1 ? 'يوم' : n === 2 ? 'يومين' : 'أيام'}</AppText>
+              <AppText variant="tiny" color={days === n ? '#E2DAEE' : brand.muted}>{isEn ? (n === 1 ? 'day' : 'days') : n === 1 ? 'يوم' : n === 2 ? 'يومين' : 'أيام'}</AppText>
             </Pressable>
           ))}
         </View>
 
-        <AppText variant="section" style={st.h}>وش تحب؟</AppText>
+        <AppText variant="section" style={st.h}>{t('وش تحب؟')}</AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16 }}>
           {kinds.map((k) => {
             const on = want.includes(k.id), ks = kindStyle[k.id] ?? kindStyle.sights;
@@ -217,38 +218,38 @@ export default function Planner() {
           })}
         </View>
 
-        <AppText variant="section" style={st.h}>الرتم</AppText>
+        <AppText variant="section" style={st.h}>{t('الرتم')}</AppText>
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
           {(Object.keys(PACE) as Pace[]).map((k) => (
             <Pressable key={k} onPress={() => setPace(k)} style={[st.box, { flex: 1 }, pace === k && { backgroundColor: brand.purple }]}>
-              <AppText style={{ fontFamily: font.bold }} color={pace === k ? '#fff' : brand.text}>{PACE[k].label}</AppText>
-              <AppText variant="tiny" color={pace === k ? '#E2DAEE' : brand.muted}>{PACE[k].n} أماكن باليوم</AppText>
+              <AppText style={{ fontFamily: font.bold }} color={pace === k ? '#fff' : brand.text}>{t(PACE[k].label)}</AppText>
+              <AppText variant="tiny" color={pace === k ? '#E2DAEE' : brand.muted}>{t('{n} أماكن باليوم', { n: PACE[k].n })}</AppText>
             </Pressable>
           ))}
         </View>
 
         {useSmart ? (
           <>
-            <AppText variant="section" style={st.h}>متى؟</AppText>
+            <AppText variant="section" style={st.h}>{t('متى؟')}</AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-              {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي']] as const).map(([k, t]) => <Chip key={k} label={t} on={when === k} color={brand.purple} onPress={() => setWhen(k)} />)}
+              {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي']] as const).map(([k, lb]) => <Chip key={k} label={t(lb)} on={when === k} color={brand.purple} onPress={() => setWhen(k)} />)}
             </ScrollView>
-            <AppText variant="section" style={st.h}>مين معك؟</AppText>
+            <AppText variant="section" style={st.h}>{t('مين معك؟')}</AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-              {['عائلة مع أطفال', 'عائلة', 'زوجين', 'شباب', 'بنات', 'لحالي'].map((t) => <Chip key={t} label={t} on={party === t} color={brand.purple} onPress={() => setParty(party === t ? '' : t)} />)}
+              {['عائلة مع أطفال', 'عائلة', 'زوجين', 'شباب', 'بنات', 'لحالي'].map((p) => <Chip key={p} label={t(p)} on={party === p} color={brand.purple} onPress={() => setParty(party === p ? '' : p)} />)}
             </ScrollView>
-            <AppText variant="section" style={st.h}>الميزانية</AppText>
+            <AppText variant="section" style={st.h}>{t('الميزانية')}</AppText>
             <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
-              {['اقتصادية', 'متوسطة', 'فاخرة'].map((t) => <Chip key={t} label={t} on={budget === t} color={brand.purple} onPress={() => setBudget(t)} />)}
+              {['اقتصادية', 'متوسطة', 'فاخرة'].map((b) => <Chip key={b} label={t(b)} on={budget === b} color={brand.purple} onPress={() => setBudget(b)} />)}
             </View>
-            <AppText variant="section" style={st.h}>شي تبي نراعيه؟</AppText>
-            <TextInput value={notes} onChangeText={setNotes} placeholder="مثلاً: نبي نصلي في المسجد النبوي كل فرض، وما نحب المشي الكثير" placeholderTextColor={brand.faint} style={st.notes} multiline maxLength={300} />
+            <AppText variant="section" style={st.h}>{t('شي تبي نراعيه؟')}</AppText>
+            <TextInput value={notes} onChangeText={setNotes} placeholder={t('مثلاً: نبي نصلي في المسجد النبوي كل فرض، وما نحب المشي الكثير')} placeholderTextColor={brand.faint} style={st.notes} multiline maxLength={300} />
           </>
         ) : null}
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <Pressable style={[st.cta, { flex: 1, backgroundColor: brand.orange }]} onPress={go} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <><Icon name="spark" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{useSmart ? 'خطط لي بذكاء' : 'رتّب لي الرحلة'}</AppText></>}
+          {busy ? <ActivityIndicator color="#fff" /> : <><Icon name="spark" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{useSmart ? t('خطط لي بذكاء') : t('رتّب لي الرحلة')}</AppText></>}
         </Pressable>
       </View>
     </View>

@@ -1,6 +1,7 @@
 /** مخطط الرحلات: يرتب أماكن المدينة على أيام، كل يوم بترتيب قريب من بعض (بدون لف) */
 import { getCityPlaces } from './content';
 import { km } from './text';
+import { t } from './i18n';
 import type { Place } from './types';
 
 export type Pace = 'calm' | 'normal' | 'full';
@@ -9,11 +10,11 @@ export type PlanStop = Place & { slot: string; driveMin?: number };
 
 // كل فترة باليوم وش يناسبها
 const SLOTS: { t: string; kinds: string[] }[] = [
-  { t: '9:00 ص · الصباح', kinds: ['islamic', 'heritage', 'sights', 'nature'] },
-  { t: '11:30 ص · قبل الظهر', kinds: ['sights', 'heritage', 'nature', 'shopping'] },
-  { t: '1:30 م · الغداء', kinds: ['food'] },
-  { t: '4:30 م · العصر', kinds: ['fun', 'nature', 'sights', 'shopping'] },
-  { t: '7:30 م · المساء', kinds: ['cafe', 'food', 'fun'] },
+  { t: t('9:00 ص · الصباح'), kinds: ['islamic', 'heritage', 'sights', 'nature'] },
+  { t: t('11:30 ص · قبل الظهر'), kinds: ['sights', 'heritage', 'nature', 'shopping'] },
+  { t: t('1:30 م · الغداء'), kinds: ['food'] },
+  { t: t('4:30 م · العصر'), kinds: ['fun', 'nature', 'sights', 'shopping'] },
+  { t: t('7:30 م · المساء'), kinds: ['cafe', 'food', 'fun'] },
 ];
 const ORDER: Record<number, number[]> = { 3: [0, 2, 4], 4: [0, 2, 3, 4], 5: [0, 1, 2, 3, 4] };
 

@@ -14,8 +14,9 @@ import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { posts as samples, type Post } from '@/lib/mock';
 import { api } from '@/lib/api';
 import { brand, font, photos } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
-const daysLeft = (end: string) => { const d = Math.ceil((new Date(end).getTime() - Date.now()) / 86400e3); return d <= 0 ? 'آخر يوم' : d === 1 ? 'باقي يوم' : d === 2 ? 'باقي يومين' : `باقي ${d} أيام`; };
+const daysLeft = (end: string) => { const d = Math.ceil((new Date(end).getTime() - Date.now()) / 86400e3); return d <= 0 ? t('آخر يوم') : d === 1 ? t('باقي يوم') : d === 2 ? t('باقي يومين') : t('باقي {n} أيام', { n: d }); };
 
 /** المجتمع — محتوى تجريبي لين يجهز سيرفر المجتمع (المرحلة 2) */
 export default function Community() {
@@ -74,52 +75,52 @@ export default function Community() {
       <View style={[st.head, { paddingTop: insets.top + 14 }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View>
-            <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>مجتمع الدليل</AppText>
-            <AppText variant="small" color="#E2DAEE">اسأل أهل الديرة، وشارك اللي تعرفه</AppText>
+            <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>{t('مجتمع الدليل')}</AppText>
+            <AppText variant="small" color="#E2DAEE">{t('اسأل أهل الديرة، وشارك اللي تعرفه')}</AppText>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <BellButton style={st.glass} />
-            <Pressable style={st.glass} onPress={() => router.push('/profile')} accessibilityLabel="ملفي">
+            <Pressable style={st.glass} onPress={() => router.push('/profile')} accessibilityLabel={t('ملفي')}>
               {user ? <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={38} /> : <Icon name="user" color="#fff" />}
             </Pressable>
           </View>
         </View>
         <Pressable style={st.ask} onPress={ask}>
           <Avatar t={initial(user?.name || '؟')} c={brand.lilac} size={36} />
-          <AppText muted style={{ flex: 1 }}>وش تبي تعرف عن السعودية؟</AppText>
+          <AppText muted style={{ flex: 1 }}>{t('وش تبي تعرف عن السعودية؟')}</AppText>
           <View style={st.camBtn}><Icon name="cam" color={brand.pinkDeep} size={18} /></View>
         </Pressable>
       </View>
 
       <View style={st.search}>
         <Icon name="search" color={brand.muted} size={18} />
-        <TextInput value={q} onChangeText={onSearch} placeholder="ابحث في الأسئلة والنصايح: مواقف، فطور، عوائل…" placeholderTextColor={brand.muted} style={st.searchIn} returnKeyType="search" />
-        {q ? <Pressable onPress={() => onSearch('')} hitSlop={10} accessibilityLabel="مسح البحث"><Icon name="x" color={brand.muted} size={16} /></Pressable> : null}
+        <TextInput value={q} onChangeText={onSearch} placeholder={t('ابحث في الأسئلة والنصايح: مواقف، فطور، عوائل…')} placeholderTextColor={brand.muted} style={st.searchIn} returnKeyType="search" />
+        {q ? <Pressable onPress={() => onSearch('')} hitSlop={10} accessibilityLabel={t('مسح البحث')}><Icon name="x" color={brand.muted} size={16} /></Pressable> : null}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>
-        <Chip label="كل المدن" on={!city} color={brand.ink} onPress={() => { setCity(null); setList(null); }} />
-        {cities.map((id) => <Chip key={id} label={`${id === user?.city ? 'مدينتي · ' : ''}${cityName(id)}`} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
+        <Chip label={t('كل المدن')} on={!city} color={brand.ink} onPress={() => { setCity(null); setList(null); }} />
+        {cities.map((id) => <Chip key={id} label={`${id === user?.city ? `${t('مدينتي')} · ` : ''}${cityName(id)}`} on={id === city} color={brand.ink} onPress={() => { setCity(id); setList(null); }} />)}
       </ScrollView>
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: -6 }}>
-        <Chip label="كل المشاركات" on={!open} color={brand.purple} onPress={() => { openRef.current = false; setOpen(false); setList(null); load(city); }} />
-        <Chip label={`تحتاج إجابة${openIn(city) ? ` (${openIn(city)})` : ''}`} on={open} color={brand.pinkDeep} onPress={() => { openRef.current = true; setOpen(true); setList(null); load(city); }} />
+        <Chip label={t('كل المشاركات')} on={!open} color={brand.purple} onPress={() => { openRef.current = false; setOpen(false); setList(null); load(city); }} />
+        <Chip label={`${t('تحتاج إجابة')}${openIn(city) ? ` (${openIn(city)})` : ''}`} on={open} color={brand.pinkDeep} onPress={() => { openRef.current = true; setOpen(true); setList(null); load(city); }} />
       </View>
 
       {/* تحدي الأسبوع: يديره رامي من اللوحة */}
       {F.challenge && ch ? (
         <Pressable style={st.challenge} onPress={() => router.push(user ? { pathname: '/ask', params: { kind: 'photo', text: ch.tag ? `#${ch.tag} ` : '' } } : '/login')}>
           <View style={{ flex: 1, padding: 16, gap: 4 }}>
-            <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>تحدي الأسبوع</AppText></View>
+            <View style={st.chTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('تحدي الأسبوع')}</AppText></View>
             <AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 28 }} color="#fff">{ch.title}</AppText>
-            {ch.prize ? <AppText variant="small" color="#FFF1E4">الجائزة: {ch.prize}</AppText> : null}
-            <AppText variant="tiny" color="#FFE2C8">{[ch.end ? daysLeft(ch.end) : '', ch.count ? `${ch.count} مشاركة` : 'كن أول مشارك'].filter(Boolean).join(' · ')}</AppText>
+            {ch.prize ? <AppText variant="small" color="#FFF1E4">{t('الجائزة: {p}', { p: ch.prize })}</AppText> : null}
+            <AppText variant="tiny" color="#FFE2C8">{[ch.end ? daysLeft(ch.end) : '', ch.count ? t('{n} مشاركة', { n: ch.count }) : t('كن أول مشارك')].filter(Boolean).join(' · ')}</AppText>
           </View>
           {ch.photo ? <Image source={{ uri: ch.photo }} style={{ width: 130 }} contentFit="cover" /> : <Image source={photos.water} style={{ width: 130 }} contentFit="cover" />}
         </Pressable>
       ) : null}
 
       {list === null ? <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} /> : null}
-      {err ? <AppText center muted style={{ marginTop: 20 }}>ما قدرنا نجيب المشاركات. اسحب لتحت وجرّب مرة ثانية.</AppText> : null}
+      {err ? <AppText center muted style={{ marginTop: 20 }}>{t('ما قدرنا نجيب المشاركات. اسحب لتحت وجرّب مرة ثانية.')}</AppText> : null}
 
       {list && list.length ? (
         <View style={{ gap: 14, paddingHorizontal: 16, paddingTop: 16 }}>
@@ -132,11 +133,11 @@ export default function Community() {
         <>
           <Pressable style={st.empty} onPress={ask}>
             <View style={st.emptyIcon}><Icon name="chat" color={brand.purple} size={28} /></View>
-            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{q ? `ما لقينا شي عن «${q}»، اسأل وأهل الديرة يجاوبونك` : city ? `ما أحد سأل عن ${cityLabel} للحين` : 'المجتمع ينتظر أول سؤال'}</AppText>
-            <AppText variant="small" muted center>كن أول واحد يسأل أو يشارك نصيحة، وأهل الديرة يردّون عليك.</AppText>
-            <View style={st.emptyBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>{user ? 'اكتب سؤالك' : 'سجّل واسأل'}</AppText></View>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{q ? t('ما لقينا شي عن «{q}»، اسأل وأهل الديرة يجاوبونك', { q }) : city ? t('ما أحد سأل عن {city} للحين', { city: cityLabel }) : t('المجتمع ينتظر أول سؤال')}</AppText>
+            <AppText variant="small" muted center>{t('كن أول واحد يسأل أو يشارك نصيحة، وأهل الديرة يردّون عليك.')}</AppText>
+            <View style={st.emptyBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>{user ? t('اكتب سؤالك') : t('سجّل واسأل')}</AppText></View>
           </Pressable>
-          <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 4, fontFamily: font.bold }}>أمثلة لشكل المجتمع لما يمتلي</AppText>
+          <AppText variant="small" muted style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 4, fontFamily: font.bold }}>{t('أمثلة لشكل المجتمع لما يمتلي')}</AppText>
           <View style={{ gap: 14, paddingHorizontal: 16, paddingTop: 8, opacity: 0.75 }}>
             {samples.slice(0, 2).map((p) => <PostCard key={p.id} p={p} />)}
           </View>
@@ -147,8 +148,8 @@ export default function Community() {
       {F.heroes && top.length ? (
         <View style={st.champs}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">أبطال {city ? cityLabel : 'الدليل'} · {month}</AppText>
-            <AppText variant="small" color="#F9A158">يتجدد كل شهر</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">{city ? t('أبطال {city}', { city: cityLabel }) : t('أبطال الدليل')} · {month}</AppText>
+            <AppText variant="small" color="#F9A158">{t('يتجدد كل شهر')}</AppText>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginTop: 16 }}>
             {[top[1], top[0], top[2]].filter(Boolean).map((c) => {
@@ -157,12 +158,12 @@ export default function Community() {
                 <View key={c.id} style={{ alignItems: 'center', gap: 6 }}>
                   <View style={first ? st.ring1 : null}><Avatar t={initial(c.name)} c={tint(c.id)} size={first ? 64 : 50} /></View>
                   <AppText style={{ fontFamily: font.bold }} color="#fff">{c.name}</AppText>
-                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{c.score} نقطة{c.guide ? ' · مرشد' : ''}</AppText>
+                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{t('{n} نقطة', { n: c.score })}{c.guide ? ` · ${t('مرشد')}` : ''}</AppText>
                 </View>
               );
             })}
           </View>
-          <AppText variant="tiny" color="#CFC6DE" center style={{ marginTop: 12 }}>جاوب الأسئلة، قيّم الأماكن، واختم جوازك… وتكون منهم الشهر الجاي</AppText>
+          <AppText variant="tiny" color="#CFC6DE" center style={{ marginTop: 12 }}>{t('جاوب الأسئلة، قيّم الأماكن، واختم جوازك… وتكون منهم الشهر الجاي')}</AppText>
         </View>
       ) : null}
     </ScrollView>
@@ -178,7 +179,7 @@ export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => vo
     onChange({ ...p, thanked: !p.thanked, thanks: p.thanks + (p.thanked ? -1 : 1) });
     try { const r = await thank('p', p.id); onChange({ ...p, thanked: r.thanked, thanks: r.thanks }); } catch { onChange(p); }
   };
-  const where = [p.author.city ? 'من ' + cityName(p.author.city) : '', ago(p.created)].filter(Boolean).join(' · ');
+  const where = [p.author.city ? t('من {city}', { city: cityName(p.author.city) }) : '', ago(p.created)].filter(Boolean).join(' · ');
   return (
     <Pressable style={st.post} onPress={() => router.push(`/question/${p.id}`)}>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 14, paddingBottom: 8 }}>
@@ -186,7 +187,7 @@ export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => vo
         <View style={{ flex: 1 }}>
           <AppText style={{ fontFamily: font.bold, fontSize: 14.5 }}>{p.author.name} <AppText variant="small" muted>· {where}</AppText></AppText>
           <AppText variant="tiny" color={p.kind === 'question' ? brand.skyDeep : brand.orangeDeep}>
-            {p.kind === 'question' ? 'سؤال' : p.kind === 'tip' ? 'نصيحة' : 'صورة'}{p.city ? ' عن ' + cityName(p.city) : ''}
+            {p.kind === 'question' ? t('سؤال') : p.kind === 'tip' ? t('نصيحة') : t('صورة')}{p.city ? ' ' + t('عن {city}', { city: cityName(p.city) }) : ''}
           </AppText>
         </View>
         {p.author.badge ? <Pill label={p.author.badge} bg={brand.softPink} fg={brand.pinkDeep} /> : null}
@@ -198,7 +199,7 @@ export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => vo
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }}>{p.bestAnswer.name}</AppText>
             {p.bestAnswer.badge ? <Pill label={p.bestAnswer.badge} bg={brand.purple} fg="#fff" /> : null}
-            <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>· أفضل إجابة</AppText>
+            <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>· {t('أفضل إجابة')}</AppText>
           </View>
           <AppText variant="small" style={{ lineHeight: 22, marginTop: 4 }} numberOfLines={3}>{p.bestAnswer.text}</AppText>
         </View>
@@ -206,10 +207,10 @@ export function LivePost({ p, onChange }: { p: CPost; onChange: (p: CPost) => vo
       <View style={st.actions}>
         <Pressable onPress={toggle} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Icon name={p.thanked ? 'heartFill' : 'heart'} color={brand.pinkDeep} size={18} />
-          <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>شكراً{p.thanks ? ' · ' + p.thanks : ''}</AppText>
+          <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t('شكراً')}{p.thanks ? ' · ' + p.thanks : ''}</AppText>
         </Pressable>
-        <AppText variant="small" muted>{p.answers ? nAnswers(p.answers) : p.kind === 'question' ? 'كن أول من يجاوب' : 'علّق'}</AppText>
-        {p.double ? <Pill label="نقاط ×2" bg={brand.softOrange} fg={brand.orangeDeep} /> : null}
+        <AppText variant="small" muted>{p.answers ? nAnswers(p.answers) : p.kind === 'question' ? t('كن أول من يجاوب') : t('علّق')}</AppText>
+        {p.double ? <Pill label={t('نقاط ×2')} bg={brand.softOrange} fg={brand.orangeDeep} /> : null}
       </View>
     </Pressable>
   );
@@ -222,7 +223,7 @@ function PostCard({ p }: { p: Post }) {
         <Avatar t={p.av} c={p.c} size={40} />
         <View style={{ flex: 1 }}>
           <AppText style={{ fontFamily: font.bold, fontSize: 14.5 }}>{p.who} <AppText variant="small" muted>· {p.where}</AppText></AppText>
-          <AppText variant="tiny" color={brand.skyDeep}>{p.kind === 'question' ? 'سؤال عن المدينة المنورة' : p.when}</AppText>
+          <AppText variant="tiny" color={brand.skyDeep}>{p.kind === 'question' ? t('سؤال عن المدينة المنورة') : p.when}</AppText>
         </View>
         {p.badge ? <Pill label={p.badge} bg={brand.softPink} fg={brand.pinkDeep} /> : null}
       </View>
@@ -233,15 +234,15 @@ function PostCard({ p }: { p: Post }) {
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }}>{p.best.who}</AppText>
             <Pill label={p.best.badge} bg={brand.purple} fg="#fff" />
-            <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>· أفضل إجابة</AppText>
+            <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>· {t('أفضل إجابة')}</AppText>
           </View>
           <AppText variant="small" style={{ lineHeight: 22, marginTop: 4 }}>{p.best.text}</AppText>
         </View>
       ) : null}
       <View style={st.actions}>
-        {p.thanks ? <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>شكراً · {p.thanks}</AppText> : null}
-        {p.answers ? <AppText variant="small" muted>{p.answers} إجابات</AppText> : null}
-        <AppText variant="small" muted>حفظ</AppText>
+        {p.thanks ? <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t('شكراً')} · {p.thanks}</AppText> : null}
+        {p.answers ? <AppText variant="small" muted>{t('{n} إجابات', { n: p.answers })}</AppText> : null}
+        <AppText variant="small" muted>{t('حفظ')}</AppText>
       </View>
     </View>
   );

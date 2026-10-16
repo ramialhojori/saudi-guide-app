@@ -20,6 +20,7 @@ import { CouponCard } from '@/components/CouponCard';
 import { cityCoupons } from '@/lib/coupons';
 import { useFeatures } from '@/lib/features';
 import type { EventItem, Place } from '@/lib/types';
+import { t, tr } from '@/lib/i18n';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
 
 const W = Dimensions.get('window').width;
@@ -27,14 +28,14 @@ const CARD_W = Math.min(300, W - 90);
 const MADINAH = { lat: 24.4672, lng: 39.6112 };
 
 const KINDS: { id: string; label: string; icon: IconName }[] = [
-  { id: 'sights', label: 'معالم', icon: 'sights' },
-  { id: 'heritage', label: 'تراث', icon: 'heritage' },
-  { id: 'nature', label: 'طبيعة', icon: 'nature' },
-  { id: 'food', label: 'مطاعم', icon: 'food' },
-  { id: 'cafe', label: 'مقاهي', icon: 'cafe' },
+  { id: 'sights', label: t('معالم'), icon: 'sights' },
+  { id: 'heritage', label: t('تراث'), icon: 'heritage' },
+  { id: 'nature', label: t('طبيعة'), icon: 'nature' },
+  { id: 'food', label: t('مطاعم'), icon: 'food' },
+  { id: 'cafe', label: t('مقاهي'), icon: 'cafe' },
 ];
 
-const greeting = () => ((new Date().getUTCHours() + 3) % 24 < 12 ? 'صباح الخير' : 'مساء الخير');
+const greeting = () => ((new Date().getUTCHours() + 3) % 24 < 12 ? t('صباح الخير') : t('مساء الخير'));
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -55,16 +56,16 @@ export default function Home() {
           <Image source={require('../../../assets/brand/logo-white.png')} style={{ width: 150, height: 44 }} contentFit="contain" />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <BellButton style={st.glass} />
-            <Pressable accessibilityLabel="ملفي" onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || '؟') : 'د'} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
+            <Pressable accessibilityLabel={t('ملفي')} onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || '؟') : 'د'} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
           </View>
         </View>
         <View style={st.heroTx}>
           {weather ? <View style={st.weather}><AppText variant="small" color="#fff">{weather.city} · {weather.temp}°{weather.text ? ` · ${weather.text}` : ''}</AppText></View> : null}
-          <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()}{first ? ` يا ${first}` : ''}</AppText>
-          <AppText variant="hero" color="#fff" style={{ fontSize: 34, lineHeight: 46 }}>وين تبي تروح{'\n'}هالويكند؟</AppText>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 17 }} color="#F9A158">{greeting()}{first ? tr(` يا ${first}`, `, ${first}`) : ''}</AppText>
+          <AppText variant="hero" color="#fff" style={{ fontSize: 34, lineHeight: 46 }}>{t('وين تبي تروح\nهالويكند؟')}</AppText>
           <Pressable onPress={() => router.push('/search')} style={st.search} accessibilityRole="search">
             <Icon name="search" color={brand.purple} size={22} strokeWidth={2.2} />
-            <AppText muted style={{ flex: 1 }}>مكان، مدينة، مطعم، فعالية...</AppText>
+            <AppText muted style={{ flex: 1 }}>{t('مكان، مدينة، مطعم، فعالية...')}</AppText>
             <View style={st.count}><AppText style={{ fontFamily: font.bold, fontSize: 12.5 }} color={brand.purple}>1500+</AppText></View>
           </Pressable>
         </View>
@@ -89,15 +90,15 @@ export default function Home() {
           {feat.ai_chat ? (
             <Pressable style={[st.aiCard, { backgroundColor: brand.purple }]} onPress={() => router.push('/ask-ai')}>
               <Icon name="spark" color="#fff" size={22} />
-              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>اسأل الدليل</AppText>
-              <AppText variant="tiny" color="#E9E0FF">مساعدك الذكي يجاوبك فوراً</AppText>
+              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>{t('اسأل الدليل')}</AppText>
+              <AppText variant="tiny" color="#E9E0FF">{t('مساعدك الذكي يجاوبك فوراً')}</AppText>
             </Pressable>
           ) : null}
           {feat.ai_planner ? (
             <Pressable style={[st.aiCard, { backgroundColor: brand.orange }]} onPress={() => router.push('/planner')}>
               <Icon name="route" color="#fff" size={22} />
-              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>خطط لي رحلتي</AppText>
-              <AppText variant="tiny" color="#FFF1E4">خطة يوم بيوم بذكاء</AppText>
+              <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 15 }}>{t('خطط لي رحلتي')}</AppText>
+              <AppText variant="tiny" color="#FFF1E4">{t('خطة يوم بيوم بذكاء')}</AppText>
             </Pressable>
           ) : null}
         </View>
@@ -106,10 +107,10 @@ export default function Home() {
       {/* مختارات الأسبوع */}
       <View style={st.secHead}>
         <View>
-          <AppText variant="title">مختارات الأسبوع</AppText>
-          <AppText variant="small" muted>{weekLabel()} · تتجدد كل أحد</AppText>
+          <AppText variant="title">{t('مختارات الأسبوع')}</AppText>
+          <AppText variant="small" muted>{weekLabel()} · {t('تتجدد كل أحد')}</AppText>
         </View>
-        <Pressable onPress={() => router.push('/guide')}><AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color={brand.purple}>الكل</AppText></Pressable>
+        <Pressable onPress={() => router.push('/guide')}><AppText style={{ fontFamily: font.semibold, fontSize: 13.5 }} color={brand.purple}>{t('الكل')}</AppText></Pressable>
       </View>
       <FlatList
         data={data?.picks ?? []}
@@ -124,7 +125,7 @@ export default function Home() {
       />
 
       {/* قريب منك */}
-      <Section title="قريب منك الحين" action="على الخريطة" onAction={() => router.push('/map')} />
+      <Section title={t('قريب منك الحين')} action={t('على الخريطة')} onAction={() => router.push('/map')} />
       <View style={{ paddingHorizontal: 16, gap: 10 }}>
         {near.slice(0, 3).map((p) => <NearRow key={p.id} p={p} />)}
       </View>
@@ -138,7 +139,7 @@ export default function Home() {
       {/* وجهات المملكة */}
       {data?.cities?.length ? (
         <>
-          <Section title="وجهات المملكة" action="الدليل" onAction={() => router.push('/guide')} />
+          <Section title={t('وجهات المملكة')} action={t('الدليل')} onAction={() => router.push('/guide')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingHorizontal: 16 }}>
             {data.cities.slice(0, 10).map((c) => (
               <Pressable key={c.id} onPress={() => router.push(`/city/${c.id}`)} style={{ alignItems: 'center', width: 76 }}>
@@ -153,7 +154,7 @@ export default function Home() {
       {/* فعاليات أكثر */}
       {(data?.events?.length ?? 0) > 1 ? (
         <>
-          <Section title="فعاليات قادمة" action="الكل" onAction={() => router.push('/events')} />
+          <Section title={t('فعاليات قادمة')} action={t('الكل')} onAction={() => router.push('/events')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {data!.events.slice(1, 8).map((e) => (
               <Pressable key={e.id} onPress={() => router.push(`/event/${e.id}`)} style={st.evCard}>
@@ -171,7 +172,7 @@ export default function Home() {
       {/* آخر الأخبار */}
       {data?.articles?.length ? (
         <>
-          <Section title="آخر الأخبار" action="كل الأخبار" onAction={() => router.push('/news')} />
+          <Section title={t('آخر الأخبار')} action={t('كل الأخبار')} onAction={() => router.push('/news')} />
           <View style={{ gap: 10, paddingHorizontal: 16 }}>
             {data.articles.slice(0, 3).map((a) => (
               <Pressable key={a.id} onPress={() => router.push(`/article/${a.id}`)} style={st.near}>
@@ -216,7 +217,7 @@ function PickCard({ place, star }: { place: Place; star?: boolean }) {
       <Image source={place.image || place.thumb || photos.heritage} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
       <LinearGradient colors={['transparent', 'rgba(32,22,54,0.92)']} locations={[0.45, 1]} style={StyleSheet.absoluteFill} />
       <View style={st.pickTop}>
-        {star ? <View style={st.starTag}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">معلم الأسبوع</AppText></View> : <View />}
+        {star ? <View style={st.starTag}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{t('معلم الأسبوع')}</AppText></View> : <View />}
         <HeartButton id={place.id} size={46} light />
       </View>
       <View style={st.pickTx}>
@@ -236,7 +237,7 @@ function NearRow({ p }: { p: Place }) {
         <AppText style={{ fontFamily: font.bold, fontSize: 17 }} numberOfLines={1}>{p.title}</AppText>
         <AppText variant="small" muted numberOfLines={1}>{p.cat}</AppText>
       </View>
-      {p.km != null ? <View style={st.km}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{p.km < 0.05 ? 'هنا' : p.km < 1 ? `${Math.round(p.km * 1000)} م` : `${p.km} كم`}</AppText></View> : null}
+      {p.km != null ? <View style={st.km}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{p.km < 0.05 ? t('هنا') : p.km < 1 ? t('{n} م', { n: Math.round(p.km * 1000) }) : t('{n} كم', { n: p.km })}</AppText></View> : null}
     </Pressable>
   );
 }
@@ -248,7 +249,7 @@ function EventBanner({ e }: { e: EventItem }) {
       <Image source={e.image || e.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
       <LinearGradient colors={['rgba(43,39,69,0.95)', 'rgba(43,39,69,0.2)']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={{ padding: 18, gap: 4, width: '70%' }}>
-        <View style={st.evTag}><AppText style={{ fontFamily: font.bold, fontSize: 12 }} color={brand.pinkDeep}>{days > 0 ? `بعد ${days} أيام` : 'الحين'}</AppText></View>
+        <View style={st.evTag}><AppText style={{ fontFamily: font.bold, fontSize: 12 }} color={brand.pinkDeep}>{days > 0 ? t('بعد {n} أيام', { n: days }) : t('الحين')}</AppText></View>
         <AppText style={{ fontFamily: font.bold, fontSize: 20, lineHeight: 30 }} color="#fff" numberOfLines={2}>{e.title}</AppText>
         <AppText variant="small" color="#E2DAEE" numberOfLines={1}>{e.address || (e.city ? cityName(e.city) : '')}</AppText>
       </View>
@@ -290,7 +291,7 @@ function CityDeals({ city }: { city: string }) {
   if (!F.coupons || !data?.length) return null;
   return (
     <>
-      <Section title={`عروض ${cityName(city)}`} action="كل الكوبونات" onAction={() => router.push('/coupons')} />
+      <Section title={t('عروض {city}', { city: cityName(city) })} action={t('كل الكوبونات')} onAction={() => router.push('/coupons')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 10 }}>
         {data.slice(0, 6).map((c) => <View key={c.id} style={{ width: Math.min(320, W - 60) }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
       </ScrollView>

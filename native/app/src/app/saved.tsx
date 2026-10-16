@@ -11,6 +11,7 @@ import { cityName, getPlacesByIds } from '@/lib/content';
 import { useTrip } from '@/lib/trip';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font, kindStyle } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 /** محفوظاتي: الأماكن المحفوظة مجمعة حسب المدينة */
 export default function Saved() {
@@ -26,16 +27,16 @@ export default function Saved() {
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 60 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}>
         <BackButton />
-        <View><AppText variant="title">محفوظاتي</AppText><AppText variant="small" muted>{places.length} عنصر</AppText></View>
+        <View><AppText variant="title">{t('محفوظاتي')}</AppText><AppText variant="small" muted>{t('{n} عنصر', { n: places.length })}</AppText></View>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16, paddingBottom: 4 }}>
-        {[`أماكن ${places.length}`, 'كوبونات', 'فعاليات', 'أدلة'].map((t, i) => <Chip key={t} label={t} on={tab === i} onPress={() => setTab(i)} />)}
+        {[`${t('أماكن')} ${places.length}`, t('كوبونات'), t('فعاليات'), t('أدلة')].map((x, i) => <Chip key={x} label={x} on={tab === i} onPress={() => setTab(i)} />)}
       </ScrollView>
-      {tab > 0 ? <Empty title="قريباً" sub="حفظ الكوبونات والفعاليات والأدلة يتفعل مع تسجيل الدخول" /> : !places.length ? (
-        <Empty title="ما حفظت شي للحين" sub="اضغط القلب على أي مكان يعجبك" action="تصفح الدليل" onAction={() => router.push('/guide')} />
+      {tab > 0 ? <Empty title={t('قريباً')} sub={t('حفظ الكوبونات والفعاليات والأدلة يتفعل مع تسجيل الدخول')} /> : !places.length ? (
+        <Empty title={t('ما حفظت شي للحين')} sub={t('اضغط القلب على أي مكان يعجبك')} action={t('تصفح الدليل')} onAction={() => router.push('/guide')} />
       ) : (
         <>
-          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 }}>قوائمي</AppText>
+          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 }}>{t('قوائمي')}</AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16 }}>
             {[...byCity.entries()].map(([c, list]) => (
               <Pressable key={c} style={{ width: 150 }} onPress={() => router.push(`/city/${c}`)}>
@@ -43,11 +44,11 @@ export default function Saved() {
                   {list.slice(0, 2).map((p) => <Image key={p.id} source={p.thumb} style={{ flex: 1, height: 110 }} contentFit="cover" />)}
                 </View>
                 <AppText style={{ fontFamily: font.bold, fontSize: 14, marginTop: 6 }}>{cityName(c)}</AppText>
-                <AppText variant="tiny" muted>{list.length} أماكن</AppText>
+                <AppText variant="tiny" muted>{t('{n} أماكن', { n: list.length })}</AppText>
               </Pressable>
             ))}
           </ScrollView>
-          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>المحفوظ مؤخراً</AppText>
+          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>{t('المحفوظ مؤخراً')}</AppText>
           <View style={{ gap: 10, paddingHorizontal: 16 }}>
             {[...places].reverse().map((p) => (
               <ImageRow key={p.id} img={p.thumb || undefined} cat={`${p.cat} · ${cityName(p.city)}`} catColor={kindStyle[p.kinds[0]]?.fg ?? brand.purple}

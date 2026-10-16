@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { GuideScreen } from '@/components/screens/Guide';
 import { MapScreen } from '@/components/screens/MapView';
 import { brand, font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 /** استكشف: الدليل (قائمة المدن) والخريطة في مكان واحد */
 export default function Explore() {
@@ -13,10 +14,10 @@ export default function Explore() {
   const [mode, setMode] = useState<'list' | 'map'>(prm.mode === 'map' ? 'map' : 'list');
   const toggle = (
     <View style={st.seg}>
-      {([['list', 'قائمة', 'book'], ['map', 'خريطة', 'map']] as const).map(([k, t, ic]) => (
+      {([['list', t('قائمة'), 'book'], ['map', t('خريطة'), 'map']] as const).map(([k, label, ic]) => (
         <Pressable key={k} onPress={() => setMode(k)} style={[st.item, mode === k && st.on]} accessibilityRole="tab" accessibilityState={{ selected: mode === k }}>
           <Icon name={ic} size={17} color={mode === k ? '#fff' : brand.muted} />
-          <AppText variant="small" style={{ fontFamily: font.bold }} color={mode === k ? '#fff' : brand.muted}>{t}</AppText>
+          <AppText variant="small" style={{ fontFamily: font.bold }} color={mode === k ? '#fff' : brand.muted}>{label}</AppText>
         </Pressable>
       ))}
     </View>

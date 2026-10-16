@@ -9,22 +9,23 @@ import { Icon } from '@/components/Icon';
 import { Chip } from '@/components/ui';
 import { cityName } from '@/lib/content';
 import { couponColor, couponErr, createCoupon, dayLabel, editCoupon, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
+import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
 type K = Coupon['kind'];
-const KINDS: [K, string, string][] = [['percent', '%', 'خصم بالنسبة'], ['amount', 'ر.س', 'خصم بمبلغ'], ['bogo', '1+1', 'اشتر واحد والثاني مجاناً'], ['gift', 'هدية', 'صنف مجاني مع الطلب']];
+const KINDS: [K, string, string][] = [['percent', '%', t('خصم بالنسبة')], ['amount', t('ر.س'), t('خصم بمبلغ')], ['bogo', '1+1', t('اشتر واحد والثاني مجاناً')], ['gift', t('هدية'), t('صنف مجاني مع الطلب')]];
 const PCTS = ['10', '15', '20', '25', '30'];
-const DUR: [string, number][] = [['أسبوع', 7], ['أسبوعين', 14], ['شهر', 30], ['3 شهور', 90], ['بدون نهاية', 0]];
-const PTS: [string, number][] = [['مجاني للكل', 0], ['100 نقطة', 100], ['200 نقطة', 200], ['500 نقطة', 500]];
-const LVLS: [string, number][] = [['الكل', 0], ['مستوى 3+', 3], ['مستوى 5+', 5], ['مستوى 7+', 7]];
+const DUR: [string, number][] = [[t('أسبوع'), 7], [t('أسبوعين'), 14], [t('شهر'), 30], [t('3 شهور'), 90], [t('بدون نهاية'), 0]];
+const PTS: [string, number][] = [[t('مجاني للكل'), 0], [t('{n} نقطة', { n: 100 }), 100], [t('{n} نقطة', { n: 200 }), 200], [t('{n} نقطة', { n: 500 }), 500]];
+const LVLS: [string, number][] = [[t('الكل'), 0], [t('مستوى {n}+', { n: 3 }), 3], [t('مستوى {n}+', { n: 5 }), 5], [t('مستوى {n}+', { n: 7 }), 7]];
 const todayISO = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
 const addDays = (d: string, n: number) => new Date(new Date(d + 'T00:00:00Z').getTime() + n * 86400e3).toISOString().slice(0, 10);
 
 function offOf(kind: K, value: string) {
-  if (kind === 'percent') return `خصم ${value || '…'}%`;
-  if (kind === 'amount') return `خصم ${value || '…'} ر.س`;
-  if (kind === 'bogo') return '1+1 مجاناً';
-  return value ? `هدية: ${value}` : 'هدية مع طلبك';
+  if (kind === 'percent') return t('خصم {v}%', { v: value || '…' });
+  if (kind === 'amount') return t('خصم {v} ر.س', { v: value || '…' });
+  if (kind === 'bogo') return t('1+1 مجاناً');
+  return value ? t('هدية: {v}', { v: value }) : t('هدية مع طلبك');
 }
 
 /** إضافة أو تعديل كوبون — يروح للمراجعة، وبعد الموافقة يطلع في كوبونات المدينة وصفحة المحل */
@@ -66,21 +67,21 @@ export default function MerchantCoupon() {
   }, [editId]);
 
   // العنوان يتكتب تلقائياً لين التاجر يعدّله بنفسه
-  const auto = useMemo(() => (kind === 'bogo' ? 'اشتر واحد والثاني علينا' : kind === 'gift' ? (value ? `${value} مجاناً مع طلبك` : '') : `${offOf(kind, value)} على كل الطلبات`), [kind, value]);
+  const auto = useMemo(() => (kind === 'bogo' ? t('اشتر واحد والثاني علينا') : kind === 'gift' ? (value ? t('{v} مجاناً مع طلبك', { v: value }) : '') : t('{off} على كل الطلبات', { off: offOf(kind, value) })), [kind, value]);
   useEffect(() => { if (!touched) setTitle(auto); }, [auto, touched]);
   const end = dur ? addDays(start, dur) : '';
   const bg = couponColor(m?.kind);
 
   const ready = title.trim().length >= 4 && (kind === 'bogo' || kind === 'gift' || +value > 0) && license.trim().length >= 4 && declare && !busy;
   const submit = async () => {
-    if (!ready) { setErr(title.trim().length < 4 ? 'اكتب عنوان الكوبون.' : license.trim().length < 4 ? 'اكتب رقم ترخيص التخفيضات من وزارة التجارة.' : !declare ? 'لازم توافق على الإقرار.' : 'حدد قيمة الخصم.'); return; }
+    if (!ready) { setErr(title.trim().length < 4 ? t('اكتب عنوان الكوبون.') : license.trim().length < 4 ? t('اكتب رقم ترخيص التخفيضات من وزارة التجارة.') : !declare ? t('لازم توافق على الإقرار.') : t('حدد قيمة الخصم.')); return; }
     setBusy(true); setErr('');
     const body = { kind, value, title: title.trim(), terms: terms.trim(), minOrder: minOrder ? +minOrder : null, perUser, qty: qty ? +qty : null, hours: hours.trim(), start, end, points, minLevel, license: license.trim(), declare };
     try {
       if (editId) await editCoupon(editId, body); else await createCoupon(body);
-      Alert.alert('انرسل للمراجعة', 'نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.', [{ text: 'تمام', onPress: () => router.replace('/merchant') }]);
+      Alert.alert(t('انرسل للمراجعة'), t('نراجعه خلال 24 ساعة، ويوصلك إشعار أول ما ينتشر.'), [{ text: t('تمام'), onPress: () => router.replace('/merchant') }]);
     } catch (e) {
-      if ((e as { code?: string })?.code === 'terms_required') { router.push('/merchant/terms?accept=1'); setErr('حدّثنا الشروط والأحكام. وافق عليها وارجع أرسل الكوبون.'); }
+      if ((e as { code?: string })?.code === 'terms_required') { router.push('/merchant/terms?accept=1'); setErr(t('حدّثنا الشروط والأحكام. وافق عليها وارجع أرسل الكوبون.')); }
       else setErr(couponErr(e));
     } finally { setBusy(false); }
   };
@@ -90,20 +91,20 @@ export default function MerchantCoupon() {
       <ScrollView contentContainerStyle={{ paddingBottom: 150 }} keyboardShouldPersistTaps="handled">
         <View style={[st.head, { paddingTop: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Pressable style={st.glass} onPress={() => (prm.first ? router.replace('/merchant') : router.back())} accessibilityLabel="رجوع"><Icon name="back" color="#fff" size={20} /></Pressable>
+            <Pressable style={st.glass} onPress={() => (prm.first ? router.replace('/merchant') : router.back())} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>
             <View style={{ flex: 1 }}>
-              <AppText variant="small" color="#F9A158" style={{ fontFamily: font.semibold }}>دليل السعودية للأعمال</AppText>
-              <AppText variant="title" color="#fff">{editId ? 'تعديل الكوبون' : 'أضف كوبون'}</AppText>
+              <AppText variant="small" color="#F9A158" style={{ fontFamily: font.semibold }}>{t('دليل السعودية للأعمال')}</AppText>
+              <AppText variant="title" color="#fff">{editId ? t('تعديل الكوبون') : t('أضف كوبون')}</AppText>
             </View>
           </View>
           <AppText variant="small" color="#E2DAEE" style={{ marginTop: 10, lineHeight: 22 }}>
-            الكوبون ينضاف لقسم كوبونات {m ? cityName(m.city) : 'مدينتك'} بعد الموافقة، ويطلع في صفحة محلك.
+            {t('الكوبون ينضاف لقسم كوبونات {city} بعد الموافقة، ويطلع في صفحة محلك.', { city: m ? cityName(m.city) : t('مدينتك') })}
           </AppText>
           {prm.first ? <View style={st.steps}>{[1, 2, 3, 4].map((i) => <View key={i} style={[st.step, i <= 3 && { backgroundColor: brand.orange }]} />)}</View> : null}
         </View>
 
         <View style={{ paddingHorizontal: 16 }}>
-          <Field label="نوع العرض">
+          <Field label={t('نوع العرض')}>
             <View style={st.grid}>
               {KINDS.map(([k, sym, t]) => (
                 <Pressable key={k} style={[st.kind, kind === k && st.kindOn]} onPress={() => { setKind(k); if (k === 'percent') { setValue('20'); setCustom(false); } else if (k === 'amount') { setValue('25'); setCustom(true); } else setValue(''); }}>
@@ -115,55 +116,55 @@ export default function MerchantCoupon() {
           </Field>
 
           {kind === 'percent' ? (
-            <Field label="قيمة الخصم">
+            <Field label={t('قيمة الخصم')}>
               <View style={st.wrap}>
                 {PCTS.map((p) => <Chip key={p} label={p + '%'} on={!custom && value === p} color={brand.orangeDeep} onPress={() => { setValue(p); setCustom(false); }} />)}
-                <Chip label="أخرى" on={custom} color={brand.orangeDeep} onPress={() => setCustom(true)} />
+                <Chip label={t('أخرى')} on={custom} color={brand.orangeDeep} onPress={() => setCustom(true)} />
               </View>
-              {custom ? <Input style={{ marginTop: 8 }} value={value} onChangeText={(t) => setValue(t.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" placeholder="النسبة (5 – 90)" /> : null}
+              {custom ? <Input style={{ marginTop: 8 }} value={value} onChangeText={(t) => setValue(t.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" placeholder={t('النسبة (5 – 90)')} /> : null}
             </Field>
           ) : kind === 'amount' ? (
-            <Field label="قيمة الخصم" hint="بالريال">
-              <Input value={value} onChangeText={(t) => setValue(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="مثلاً 25" />
+            <Field label={t('قيمة الخصم')} hint={t('بالريال')}>
+              <Input value={value} onChangeText={(t) => setValue(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder={t('مثلاً 25')} />
             </Field>
           ) : kind === 'gift' ? (
-            <Field label="وش الهدية؟">
-              <Input value={value} onChangeText={setValue} placeholder="مثلاً: قهوة سعودية، حلى اليوم" maxLength={40} />
+            <Field label={t('وش الهدية؟')}>
+              <Input value={value} onChangeText={setValue} placeholder={t('مثلاً: قهوة سعودية، حلى اليوم')} maxLength={40} />
             </Field>
           ) : null}
 
-          <Field label="عنوان الكوبون" hint="يظهر للمستخدم">
-            <Input value={title} onChangeText={(t) => { setTitle(t); setTouched(true); }} placeholder="خصم 20% على وجبات الفطور" maxLength={90} />
+          <Field label={t('عنوان الكوبون')} hint={t('يظهر للمستخدم')}>
+            <Input value={title} onChangeText={(t) => { setTitle(t); setTouched(true); }} placeholder={t('خصم 20% على وجبات الفطور')} maxLength={90} />
           </Field>
 
-          <Field label="الشروط">
+          <Field label={t('الشروط')}>
             <View style={formSt.box}>
-              <Row label="الحد الأدنى للطلب"><View style={st.inline}><Input value={minOrder} onChangeText={(t) => setMinOrder(t.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" placeholder="بدون" style={st.small} /><AppText variant="small" muted>ر.س</AppText></View></Row>
-              <Toggle label="مرة وحدة لكل مستخدم" on={perUser} onChange={setPerUser} />
-              <Row label="عدد الكوبونات المتاحة"><Input value={qty} onChangeText={(t) => setQty(t.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" placeholder="بدون حد" style={st.small} /></Row>
-              <Row label="الأوقات" last><Input value={hours} onChangeText={setHours} placeholder="كل الأوقات" style={[st.small, { width: 150 }]} maxLength={80} /></Row>
+              <Row label={t('الحد الأدنى للطلب')}><View style={st.inline}><Input value={minOrder} onChangeText={(t) => setMinOrder(t.replace(/\D/g, '').slice(0, 5))} keyboardType="number-pad" placeholder={t('بدون')} style={st.small} /><AppText variant="small" muted>{t('ر.س')}</AppText></View></Row>
+              <Toggle label={t('مرة وحدة لكل مستخدم')} on={perUser} onChange={setPerUser} />
+              <Row label={t('عدد الكوبونات المتاحة')}><Input value={qty} onChangeText={(t) => setQty(t.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" placeholder={t('بدون حد')} style={st.small} /></Row>
+              <Row label={t('الأوقات')} last><Input value={hours} onChangeText={setHours} placeholder={t('كل الأوقات')} style={[st.small, { width: 150 }]} maxLength={80} /></Row>
             </View>
           </Field>
 
-          <Field label="المدة" hint={end ? `${dayLabel(start)} – ${dayLabel(end)}` : `من ${dayLabel(start)}`}>
+          <Field label={t('المدة')} hint={end ? `${dayLabel(start)} – ${dayLabel(end)}` : t('من {d}', { d: dayLabel(start) })}>
             <View style={st.wrap}>{DUR.map(([t, n]) => <Chip key={t} label={t} on={dur === n} color={brand.purple} onPress={() => setDur(n)} />)}</View>
             <View style={[st.wrap, { marginTop: 8 }]}>
-              <Chip label="يبدأ اليوم" on={start === todayISO()} color={brand.purple} onPress={() => setStart(todayISO())} />
-              <Chip label="يبدأ بكرة" on={start === addDays(todayISO(), 1)} color={brand.purple} onPress={() => setStart(addDays(todayISO(), 1))} />
+              <Chip label={t('يبدأ اليوم')} on={start === todayISO()} color={brand.purple} onPress={() => setStart(todayISO())} />
+              <Chip label={t('يبدأ بكرة')} on={start === addDays(todayISO(), 1)} color={brand.purple} onPress={() => setStart(addDays(todayISO(), 1))} />
             </View>
           </Field>
 
-          <Field label="مكافأة لأهل النقاط" hint="اختياري">
-            <AppText variant="small" muted style={{ marginBottom: 8, lineHeight: 21 }}>مستخدمين الدليل يجمعون نقاط من المشاركة. خل عرضك يتبادل بالنقاط أو حصري للمستويات العالية، ويوصلك أنشط الناس.</AppText>
+          <Field label={t('مكافأة لأهل النقاط')} hint={t('اختياري')}>
+            <AppText variant="small" muted style={{ marginBottom: 8, lineHeight: 21 }}>{t('مستخدمين الدليل يجمعون نقاط من المشاركة. خل عرضك يتبادل بالنقاط أو حصري للمستويات العالية، ويوصلك أنشط الناس.')}</AppText>
             <View style={st.wrap}>{PTS.map(([t, n]) => <Chip key={t} label={t} on={points === n} color={brand.purple} onPress={() => setPoints(n)} />)}</View>
             <View style={[st.wrap, { marginTop: 8 }]}>{LVLS.map(([t, n]) => <Chip key={t} label={t} on={minLevel === n} color={brand.lilac} onPress={() => setMinLevel(n)} />)}</View>
           </Field>
 
-          <Field label="تفاصيل إضافية" hint="اختياري">
-            <Input value={terms} onChangeText={setTerms} multiline maxLength={600} placeholder="مثلاً: ما يشمل المشروبات، للجلسات الداخلية فقط" />
+          <Field label={t('تفاصيل إضافية')} hint={t('اختياري')}>
+            <Input value={terms} onChangeText={setTerms} multiline maxLength={600} placeholder={t('مثلاً: ما يشمل المشروبات، للجلسات الداخلية فقط')} />
           </Field>
 
-          <AppText style={{ fontFamily: font.semibold, fontSize: 13, marginTop: 18 }} muted>معاينة: كذا يشوفه المستخدم</AppText>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 13, marginTop: 18 }} muted>{t('معاينة: كذا يشوفه المستخدم')}</AppText>
           <View style={[st.prev, { backgroundColor: bg, shadowColor: bg }]}>
             {m?.photos[0] ? <Image source={m.photos[0]} style={{ width: 96, height: 120 }} contentFit="cover" /> : <View style={st.prevNo}><Icon name="shop" color="#fff" size={28} /></View>}
             <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
@@ -172,33 +173,33 @@ export default function MerchantCoupon() {
                 <AppText style={{ fontFamily: font.bold, fontSize: 21, lineHeight: 30 }} color="#fff" numberOfLines={1}>{offOf(kind, value)}</AppText>
                 <AppText variant="small" color="#fff" numberOfLines={1}>{title}</AppText>
               </View>
-              <AppText variant="tiny" color="#fff">{[points ? `بـ ${points} نقطة` : '', minLevel ? `مستوى ${minLevel}+` : '', end ? `حتى ${dayLabel(end)}` : '', qty ? `باقي ${qty}` : ''].filter(Boolean).join(' · ') || 'عرض مستمر'}</AppText>
+              <AppText variant="tiny" color="#fff">{[points ? t('بـ {n} نقطة', { n: points }) : '', minLevel ? t('مستوى {n}+', { n: minLevel }) : '', end ? t('حتى {d}', { d: dayLabel(end) }) : '', qty ? t('باقي {n}', { n: qty }) : ''].filter(Boolean).join(' · ') || t('عرض مستمر')}</AppText>
             </View>
-            <View style={st.prevStub}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">استخدمه</AppText></View>
+            <View style={st.prevStub}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{t('استخدمه')}</AppText></View>
           </View>
 
-          <Field label="وين يظهر">
+          <Field label={t('وين يظهر')}>
             <View style={formSt.box}>
-              <Row label={`كوبونات ${m ? cityName(m.city) : 'المدينة'}`}><AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>تلقائي</AppText></Row>
-              <Row label="صفحة محلك في الدليل" last><AppText variant="tiny" color={m?.placeId ? brand.green : brand.muted} style={{ fontFamily: font.semibold }}>{m?.placeId ? 'تلقائي' : 'بعد ما نربطها'}</AppText></Row>
+              <Row label={t('كوبونات {city}', { city: m ? cityName(m.city) : t('المدينة') })}><AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>{t('تلقائي')}</AppText></Row>
+              <Row label={t('صفحة محلك في الدليل')} last><AppText variant="tiny" color={m?.placeId ? brand.green : brand.muted} style={{ fontFamily: font.semibold }}>{m?.placeId ? t('تلقائي') : t('بعد ما نربطها')}</AppText></Row>
             </View>
           </Field>
-          <Field label="رقم ترخيص التخفيضات" hint="من وزارة التجارة · إجباري">
-            <Input value={license} onChangeText={setLicense} placeholder="رقم الترخيص" maxLength={40} autoCapitalize="characters" style={{ textAlign: 'left' }} />
-            <AppText variant="tiny" muted style={{ marginTop: 6, lineHeight: 18 }}>نظام التخفيضات يلزم كل محل يقدم خصم أو عرض ترويجي يطلع ترخيص من وزارة التجارة (من موقعها أو تطبيقها). الرقم يطلع للعملاء في صفحة الكوبون.</AppText>
+          <Field label={t('رقم ترخيص التخفيضات')} hint={t('من وزارة التجارة · إجباري')}>
+            <Input value={license} onChangeText={setLicense} placeholder={t('رقم الترخيص')} maxLength={40} autoCapitalize="characters" style={{ textAlign: 'left' }} />
+            <AppText variant="tiny" muted style={{ marginTop: 6, lineHeight: 18 }}>{t('نظام التخفيضات يلزم كل محل يقدم خصم أو عرض ترويجي يطلع ترخيص من وزارة التجارة (من موقعها أو تطبيقها). الرقم يطلع للعملاء في صفحة الكوبون.')}</AppText>
           </Field>
           <Pressable style={st.agree} onPress={() => setDeclare(!declare)}>
             <View style={[st.box, declare && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{declare ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
-            <AppText variant="small" style={{ flex: 1, lineHeight: 22 }}>أقر بأني حاصل على ترخيص التخفيضات من وزارة التجارة لهذا العرض وأن الرقم صحيح، وأتحمل مسؤولية العرض كاملة، وألتزم بتطبيقه كما هو مكتوب حسب <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>الشروط والأحكام</AppText>.</AppText>
+            <AppText variant="small" style={{ flex: 1, lineHeight: 22 }}>{t('أقر بأني حاصل على ترخيص التخفيضات من وزارة التجارة لهذا العرض وأن الرقم صحيح، وأتحمل مسؤولية العرض كاملة، وألتزم بتطبيقه كما هو مكتوب حسب')} <AppText variant="small" color={brand.link} style={{ fontFamily: font.bold }} onPress={() => router.push('/merchant/terms')}>{t('الشروط والأحكام')}</AppText>.</AppText>
           </Pressable>
           {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 14, fontFamily: font.semibold }}>{err}</AppText> : null}
         </View>
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Pressable style={[st.cta, !ready && { opacity: 0.5 }]} onPress={submit} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">أرسل للمراجعة</AppText>}
+          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{t('أرسل للمراجعة')}</AppText>}
         </Pressable>
-        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>بعد الموافقة ينضاف لـ{m ? cityName(m.city) : 'مدينتك'} تلقائياً</AppText>
+        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{t('بعد الموافقة ينضاف لـ{city} تلقائياً', { city: m ? cityName(m.city) : t('مدينتك') })}</AppText>
       </View>
     </KeyboardAvoidingView>
   );

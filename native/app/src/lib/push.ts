@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import { api } from './api';
 import { session } from './auth';
+import { tr } from './i18n';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let N: any = null;
@@ -35,7 +36,7 @@ export async function registerPush(ask = false, logout = false): Promise<boolean
   let { status } = await N.getPermissionsAsync();
   if (status !== 'granted' && ask) status = (await N.requestPermissionsAsync()).status;
   if (status !== 'granted') return false;
-  if (Platform.OS === 'android') await N.setNotificationChannelAsync('default', { name: 'دليل السعودية', importance: N.AndroidImportance.DEFAULT }).catch(() => {});
+  if (Platform.OS === 'android') await N.setNotificationChannelAsync('default', { name: tr('دليل السعودية', 'Saudi Guide'), importance: N.AndroidImportance.DEFAULT }).catch(() => {});
   token ??= (await N.getExpoPushTokenAsync(PROJECT_ID ? { projectId: PROJECT_ID } : undefined)).data;
   const raw = await AsyncStorage.getItem('sg_interests_v1').catch(() => null);
   let cities: string[] = [];

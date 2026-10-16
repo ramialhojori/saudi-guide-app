@@ -16,6 +16,7 @@ import { useFeatures } from '@/lib/features';
 import { CouponCard } from '@/components/CouponCard';
 import { myCoupons, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { brand, font, photos } from '@/theme/tokens';
+import { t, tr } from '@/lib/i18n';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
 
@@ -38,18 +39,18 @@ export default function Profile() {
   const stampTotal = user ? pp?.all.length ?? 21 : passport.total;
   // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
   const me = user ? {
-    ...demo, name: user.name || 'مستخدم الدليل', initial: (user.name || 'د').trim()[0], handle: user.handle, since: user.since,
-    city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || 'اكتب نبذة عنك من الإعدادات.',
+    ...demo, name: user.name || t('مستخدم الدليل'), initial: (user.name || 'د').trim()[0], handle: user.handle, since: user.since,
+    city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || t('اكتب نبذة عنك من الإعدادات.'),
     points: stats?.points ?? user.points, level: stats?.level ?? 1, nextLevelPts: stats?.nextAt ?? Math.max(user.points, 1), nextLevel: stats?.nextName ?? '',
     levelName: stats?.levelName ?? '', levelAt: stats?.levelAt ?? 0,
     stats: [
-      { v: String(stats?.counts.answers ?? 0), l: 'إجابة' }, { v: String(stats?.counts.questions ?? 0), l: 'سؤال' },
-      { v: String(stats?.counts.photos ?? 0), l: 'صورة' }, { v: String(stats?.counts.thanks ?? 0), l: 'شكر' },
+      { v: String(stats?.counts.answers ?? 0), l: t('إجابة') }, { v: String(stats?.counts.questions ?? 0), l: t('سؤال') },
+      { v: String(stats?.counts.photos ?? 0), l: t('صورة') }, { v: String(stats?.counts.thanks ?? 0), l: t('شكر') },
     ],
-  } : { ...demo, levelName: 'سفير الدليل', levelAt: 0 };
+  } : { ...demo, levelName: t('سفير الدليل'), levelAt: 0 };
   const pct = Math.min(1, Math.max(0, (me.points - me.levelAt) / Math.max(1, me.nextLevelPts - me.levelAt)));
   const badgeList = user && stats
-    ? stats.badges.map((b, i) => ({ icon: b.icon as IconName, t: b.name, s: b.earned ? 'حصّلته' : `${b.have} من ${b.goal}`, locked: !b.earned, bg: b.earned ? STAMP[i % STAMP.length] : brand.chip, fg: b.earned ? '#fff' : brand.faint }))
+    ? stats.badges.map((b, i) => ({ icon: b.icon as IconName, t: b.name, s: b.earned ? t('حصّلته') : t('{a} من {b}', { a: b.have, b: b.goal }), locked: !b.earned, bg: b.earned ? STAMP[i % STAMP.length] : brand.chip, fg: b.earned ? '#fff' : brand.faint }))
     : badges;
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
@@ -58,12 +59,12 @@ export default function Profile() {
         <LinearGradient colors={['rgba(43,31,69,0.3)', 'rgba(43,31,69,0.85)']} style={StyleSheet.absoluteFill} />
         <View style={[st.coverTop, { top: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} accessibilityLabel="رجوع"><Icon name="back" color="#fff" size={20} /></Pressable>
-            <AppText variant="title" color="#fff">ملفي</AppText>
+            <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" size={20} /></Pressable>
+            <AppText variant="title" color="#fff">{t('ملفي')}</AppText>
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable style={st.glass} onPress={() => Share.share({ message: 'ملفي على دليل السعودية' }).catch(() => {})} accessibilityLabel="مشاركة"><Icon name="share" color="#fff" size={20} /></Pressable>
-            <Pressable style={st.glass} onPress={() => router.push('/settings')} accessibilityLabel="الإعدادات"><Icon name="gear" color="#fff" size={20} /></Pressable>
+            <Pressable style={st.glass} onPress={() => Share.share({ message: t('ملفي على دليل السعودية') }).catch(() => {})} accessibilityLabel={t('مشاركة')}><Icon name="share" color="#fff" size={20} /></Pressable>
+            <Pressable style={st.glass} onPress={() => router.push('/settings')} accessibilityLabel={t('الإعدادات')}><Icon name="gear" color="#fff" size={20} /></Pressable>
           </View>
         </View>
       </View>
@@ -71,31 +72,31 @@ export default function Profile() {
       {!user ? (
         <Pressable style={st.guest} onPress={() => router.push('/login')}>
           <View style={{ flex: 1 }}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">سجّل دخولك عشان يصير هذا ملفك</AppText>
-            <AppText variant="small" color="#FFF1E4">رحلاتك تنحفظ، وتجمع نقاط وأوسمة. اللي تحت مثال.</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{t('سجّل دخولك عشان يصير هذا ملفك')}</AppText>
+            <AppText variant="small" color="#FFF1E4">{t('رحلاتك تنحفظ، وتجمع نقاط وأوسمة. اللي تحت مثال.')}</AppText>
           </View>
-          <View style={st.guestBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.orangeDeep}>دخول</AppText></View>
+          <View style={st.guestBtn}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.orangeDeep}>{t('دخول')}</AppText></View>
         </Pressable>
       ) : null}
       <View style={[st.card, !user && { marginTop: 12 }]}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
           <View>
             <View style={st.avRing}><Avatar t={me.initial} c={user ? tint(user.id) : brand.lilac} size={76} /></View>
-            <View style={st.lvl}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>مستوى {me.level}</AppText></View>
+            <View style={st.lvl}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('مستوى {n}', { n: me.level })}</AppText></View>
           </View>
           <View style={{ flex: 1 }}>
             <AppText variant="title">{me.name}</AppText>
-            <AppText variant="small" muted>{me.handle ? `@${me.handle} · ` : ''}عضو منذ {me.since}</AppText>
+            <AppText variant="small" muted>{me.handle ? `@${me.handle} · ` : ''}{t('عضو منذ {y}', { y: me.since })}</AppText>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
-              {me.city ? <><Icon name="pin" color={brand.pinkDeep} size={14} /><AppText variant="small" style={{ fontFamily: font.semibold }}>من {me.city}</AppText></> : null}
+              {me.city ? <><Icon name="pin" color={brand.pinkDeep} size={14} /><AppText variant="small" style={{ fontFamily: font.semibold }}>{t('من {city}', { city: me.city })}</AppText></> : null}
               {me.levelName ? <Pill label={me.levelName} bg={brand.purple} fg="#fff" /> : null}
             </View>
           </View>
         </View>
         <AppText variant="small" style={{ marginTop: 12, lineHeight: 22 }}>{me.bio}</AppText>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 }}>
-          <AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{me.points.toLocaleString('en')} نقطة</AppText>
-          <AppText variant="tiny" muted>{me.nextLevel ? `باقي ${me.nextLevelPts - me.points} للمستوى ${me.level + 1} «${me.nextLevel}»` : 'وصلت أعلى مستوى'}</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 13 }}>{t('{n} نقطة', { n: me.points.toLocaleString('en') })}</AppText>
+          <AppText variant="tiny" muted>{me.nextLevel ? t('باقي {n} للمستوى {l} «{name}»', { n: me.nextLevelPts - me.points, l: me.level + 1, name: me.nextLevel }) : t('وصلت أعلى مستوى')}</AppText>
         </View>
         <View style={st.bar}><View style={[st.barFill, { width: `${pct * 100}%` }]} /></View>
         <View style={{ flexDirection: 'row', marginTop: 16 }}>
@@ -111,10 +112,10 @@ export default function Profile() {
       {/* تأثيرك: مثل «مساهماتك انشافت X مرة» في قوقل ماب */}
       {F.impact && user && stats?.impact ? (
         <View style={st.impact}>
-          <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">تأثيرك</AppText>
-          <AppText variant="tiny" color="#CFC6DE">كل شي شاركته يساعد زوار ثانيين</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{t('تأثيرك')}</AppText>
+          <AppText variant="tiny" color="#CFC6DE">{t('كل شي شاركته يساعد زوار ثانيين')}</AppText>
           <View style={{ flexDirection: 'row', marginTop: 12 }}>
-            {[[stats.impact.views, 'مرة انشافت مساهماتك'], [stats.impact.thanks, 'شكر وصلك'], [stats.impact.helped, 'شخص جاوبته'], [stats.impact.facts + stats.impact.suggestions, 'معلومة أضفتها']].map(([v, l]) => (
+            {[[stats.impact.views, t('مرة انشافت مساهماتك')], [stats.impact.thanks, t('شكر وصلك')], [stats.impact.helped, t('شخص جاوبته')], [stats.impact.facts + stats.impact.suggestions, t('معلومة أضفتها')]].map(([v, l]) => (
               <View key={l as string} style={{ flex: 1, alignItems: 'center' }}>
                 <AppText style={{ fontFamily: font.bold, fontSize: 20 }} color="#F9A158">{Number(v).toLocaleString('en')}</AppText>
                 <AppText variant="tiny" color="#E2DAEE" center>{l}</AppText>
@@ -124,7 +125,7 @@ export default function Profile() {
           {F.suggest ? (
             <Pressable style={st.impactBtn} onPress={() => router.push('/suggest')}>
               <Icon name="plus" color="#fff" size={16} />
-              <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>أضف مكان ناقص في الدليل (+15)</AppText>
+              <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('أضف مكان ناقص في الدليل (+15)')}</AppText>
             </Pressable>
           ) : null}
         </View>
@@ -136,19 +137,19 @@ export default function Profile() {
           {F.points && F.coupons ? <Pressable style={st.ptsRow} onPress={() => router.push('/coupons?tab=points')}>
             <Badge icon="star" bg={brand.softOrange} fg={brand.orangeDeep} size={40} r={14} />
             <View style={{ flex: 1 }}>
-              <AppText style={{ fontFamily: font.bold }}>رصيدك {stats.balance} نقطة</AppText>
-              <AppText variant="tiny" muted>{stats.spent ? `صرفت ${stats.spent} · ` : ''}اصرفها على عروض المحلات</AppText>
+              <AppText style={{ fontFamily: font.bold }}>{t('رصيدك {n} نقطة', { n: stats.balance })}</AppText>
+              <AppText variant="tiny" muted>{stats.spent ? `${t('صرفت {n}', { n: stats.spent })} · ` : ''}{t('اصرفها على عروض المحلات')}</AppText>
             </View>
-            <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>استبدل</AppText>
+            <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{t('استبدل')}</AppText>
           </Pressable> : null}
           {F.guides && stats.role === 'user' ? (
             <Pressable style={[st.ptsRow, F.points && F.coupons && st.ptsLine]} onPress={() => router.push('/guide-request')}>
               <Badge icon="crown" bg={brand.softPurple} fg={brand.purple} size={40} r={14} />
               <View style={{ flex: 1 }}>
-                <AppText style={{ fontFamily: font.bold }}>مرشد موثّق</AppText>
-                <AppText variant="tiny" muted>{stats.guide.request?.status === 'pending' ? 'طلبك قيد المراجعة' : stats.guide.eligible ? 'صرت مؤهل! قدّم طلبك الحين' : `من ${stats.guide.at} نقطة تقدر تطلب الشارة · باقي ${Math.max(0, stats.guide.at - stats.points)}`}</AppText>
+                <AppText style={{ fontFamily: font.bold }}>{t('مرشد موثّق')}</AppText>
+                <AppText variant="tiny" muted>{stats.guide.request?.status === 'pending' ? t('طلبك قيد المراجعة') : stats.guide.eligible ? t('صرت مؤهل! قدّم طلبك الحين') : t('من {at} نقطة تقدر تطلب الشارة · باقي {left}', { at: stats.guide.at, left: Math.max(0, stats.guide.at - stats.points) })}</AppText>
               </View>
-              {stats.guide.eligible && stats.guide.request?.status !== 'pending' ? <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>قدّم</AppText> : <Icon name="chevron" color={brand.faint} size={16} />}
+              {stats.guide.eligible && stats.guide.request?.status !== 'pending' ? <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{t('قدّم')}</AppText> : <Icon name="chevron" color={brand.faint} size={16} />}
             </Pressable>
           ) : null}
         </View>
@@ -158,22 +159,22 @@ export default function Profile() {
       {F.passport ? <Pressable style={st.passport} onPress={() => router.push('/passport')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
-            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">جواز السعودية</AppText>
-            <AppText variant="small" color="#CFC6DE">{user && !stampNames.length ? 'اختم أول مدينة من صفحة أي مكان تزوره' : 'كل مدينة تزورها تنختم في جوازك'}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">{t('جواز السعودية')}</AppText>
+            <AppText variant="small" color="#CFC6DE">{user && !stampNames.length ? t('اختم أول مدينة من صفحة أي مكان تزوره') : t('كل مدينة تزورها تنختم في جوازك')}</AppText>
           </View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{stampNames.length} من {stampTotal} وجهة</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{t('{a} من {b} وجهة', { a: stampNames.length, b: stampTotal })}</AppText>
         </View>
         <View style={st.stamps}>
           {stampNames.slice(0, 9).map((c, i) => (
             <View key={c} style={[st.stamp, { backgroundColor: STAMP[i % STAMP.length] }]}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{c}</AppText></View>
           ))}
-          <View style={[st.stamp, st.stampLeft]}><AppText variant="tiny" color="#CFC6DE">+{stampTotal - stampNames.length} باقية</AppText></View>
+          <View style={[st.stamp, st.stampLeft]}><AppText variant="tiny" color="#CFC6DE">{t('+{n} باقية', { n: stampTotal - stampNames.length })}</AppText></View>
         </View>
       </Pressable> : null}
 
       {/* الأوسمة */}
       <View style={st.secRow}>
-        <AppText variant="section">أوسمتي <AppText variant="small" muted> {badgeList.filter((b) => !b.locked).length} من {badgeList.length}</AppText></AppText>
+        <AppText variant="section">{t('أوسمتي')} <AppText variant="small" muted> {t('{a} من {b}', { a: badgeList.filter((b) => !b.locked).length, b: badgeList.length })}</AppText></AppText>
       </View>
       <View style={st.badges}>
         {badgeList.map((b) => (
@@ -188,8 +189,8 @@ export default function Profile() {
       {/* الكوبونات */}
       {F.coupons ? (<>
       <View style={st.secRow}>
-        <AppText variant="section">كوبوناتي <AppText variant="small" muted> {user ? `${wallet?.length ?? 0} محفوظة` : 'مثال'}</AppText></AppText>
-        <Pressable onPress={() => router.push(user ? '/coupons?wallet=1' : '/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{user && wallet?.length ? 'المحفظة' : 'تصفح العروض'}</AppText></Pressable>
+        <AppText variant="section">{t('كوبوناتي')} <AppText variant="small" muted> {user ? t('{n} محفوظة', { n: wallet?.length ?? 0 }) : t('مثال')}</AppText></AppText>
+        <Pressable onPress={() => router.push(user ? '/coupons?wallet=1' : '/coupons')}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{user && wallet?.length ? t('المحفظة') : t('تصفح العروض')}</AppText></Pressable>
       </View>
       {user ? (
         wallet?.length ? (
@@ -199,7 +200,7 @@ export default function Profile() {
         ) : (
           <Pressable style={[st.act, { marginHorizontal: 16 }]} onPress={() => router.push('/coupons')}>
             <Badge icon="ticket" bg={brand.softPink} fg={brand.pinkDeep} size={36} r={12} />
-            <AppText variant="small" style={{ flex: 1 }}>احفظ عروض المحلات في مدينتك، وتلقاها هنا وقت ما تحتاجها.</AppText>
+            <AppText variant="small" style={{ flex: 1 }}>{t('احفظ عروض المحلات في مدينتك، وتلقاها هنا وقت ما تحتاجها.')}</AppText>
           </Pressable>
         )
       ) : (
@@ -211,7 +212,7 @@ export default function Profile() {
                 <AppText style={{ fontFamily: font.bold, fontSize: 24, lineHeight: 34 }} color="#fff">{c.off}</AppText>
                 <AppText variant="tiny" color="#FFF1E4">{c.until}</AppText>
               </View>
-              <View style={st.code}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">مثال</AppText></View>
+              <View style={st.code}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{t('مثال')}</AppText></View>
             </View>
           ))}
         </ScrollView>
@@ -224,30 +225,30 @@ export default function Profile() {
         <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
           <View style={st.bizIcon}><Icon name="shop" color="#fff" size={22} /></View>
           <View style={{ flex: 1 }}>
-            <AppText style={{ fontFamily: font.bold }} color="#fff">{biz ? biz.name : 'عندك نشاط تجاري؟'}</AppText>
-            <AppText variant="small" color="#CFC6DE">{biz ? (biz.status === 'approved' ? 'لوحة التاجر: كوبوناتك وتأكيد الاستخدام' : biz.status === 'pending' ? 'طلبك قيد المراجعة' : 'الطلب يحتاج تعديل') : 'سجّل نشاطك مجاناً وأضف عرضك'}</AppText>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">{biz ? biz.name : t('عندك نشاط تجاري؟')}</AppText>
+            <AppText variant="small" color="#CFC6DE">{biz ? (biz.status === 'approved' ? t('لوحة التاجر: كوبوناتك وتأكيد الاستخدام') : biz.status === 'pending' ? t('طلبك قيد المراجعة') : t('الطلب يحتاج تعديل')) : t('سجّل نشاطك مجاناً وأضف عرضك')}</AppText>
           </View>
           <Icon name="chevron" color="#fff" size={18} />
         </Pressable>
       ) : null}
 
       {/* آخر نشاطي */}
-      <View style={st.secRow}><AppText variant="section">آخر نشاطي</AppText></View>
+      <View style={st.secRow}><AppText variant="section">{t('آخر نشاطي')}</AppText></View>
       <View style={{ gap: 10, paddingHorizontal: 16 }}>
         {user && stats ? (
           stats.activity.length ? stats.activity.map((a) => (
             <Pressable key={a.type + a.postId + a.created} style={st.act} onPress={() => router.push(`/question/${a.postId}`)}>
               <Badge icon={a.type === 'answer' ? 'chat' : a.kind === 'tip' ? 'star' : a.kind === 'photo' ? 'cam' : 'chat'} bg={brand.softPurple} fg={brand.purple} size={36} r={12} />
               <View style={{ flex: 1 }}>
-                <AppText variant="small" numberOfLines={2}>{a.type === 'answer' ? 'جاوبت على «' : a.kind === 'question' ? 'سألت «' : 'شاركت «'}{a.text.slice(0, 70)}»</AppText>
+                <AppText variant="small" numberOfLines={2}>{t(a.type === 'answer' ? 'جاوبت على «{q}»' : a.kind === 'question' ? 'سألت «{q}»' : 'شاركت «{q}»', { q: a.text.slice(0, 70) })}</AppText>
                 <AppText variant="tiny" muted>{ago(a.created)}</AppText>
               </View>
-              {a.thanks ? <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>+{a.thanks} شكر</AppText> : null}
+              {a.thanks ? <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{t('+{n} شكر', { n: a.thanks })}</AppText> : null}
             </Pressable>
           )) : (
             <Pressable style={st.act} onPress={() => router.push('/community')}>
               <Badge icon="chat" bg={brand.softOrange} fg={brand.orangeDeep} size={36} r={12} />
-              <AppText variant="small" style={{ flex: 1 }}>ما عندك نشاط للحين. جاوب على سؤال في المجتمع واجمع أول نقاطك.</AppText>
+              <AppText variant="small" style={{ flex: 1 }}>{t('ما عندك نشاط للحين. جاوب على سؤال في المجتمع واجمع أول نقاطك.')}</AppText>
             </Pressable>
           )
         ) : activity.map((a) => (

@@ -15,8 +15,11 @@ import type { City, Place } from '@/lib/types';
 import { brand, font, kindStyle } from '@/theme/tokens';
 import { useFeatures } from '@/lib/features';
 import { useAuth } from '@/lib/auth';
+import { isEn, t } from '@/lib/i18n';
 
-const SHORT: Record<string, string> = { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
+const SHORT: Record<string, string> = isEn
+  ? { food: 'Restaurants', cafe: 'Cafes', sights: 'Sights', heritage: 'Heritage', nature: 'Nature', islamic: 'Islamic', fun: 'Fun', shopping: 'Shopping' }
+  : { food: 'مطاعم', cafe: 'مقاهي', sights: 'معالم', heritage: 'تراث', nature: 'طبيعة', islamic: 'إسلامية', fun: 'ترفيه', shopping: 'تسوق' };
 
 export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
   const insets = useSafeAreaInsets();
@@ -25,9 +28,9 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
   // ضغطة طويلة على الخريطة: يضيف مكان ناقص في نفس النقطة
   const addHere = (c: { lat: number; lng: number }) => {
     if (!F.suggest) return;
-    Alert.alert('تضيف مكان هنا؟', 'لو فيه مكان يستاهل في هالنقطة وما هو في الدليل، أضفه وينضاف باسمك (+15 نقطة).', [
-      { text: 'لا', style: 'cancel' },
-      { text: 'أضف مكان', onPress: () => router.push(user ? { pathname: '/suggest', params: { lat: String(c.lat), lng: String(c.lng), city: city?.id ?? '' } } : '/login') },
+    Alert.alert(t('تضيف مكان هنا؟'), t('لو فيه مكان يستاهل في هالنقطة وما هو في الدليل، أضفه وينضاف باسمك (+15 نقطة).'), [
+      { text: t('لا'), style: 'cancel' },
+      { text: t('أضف مكان'), onPress: () => router.push(user ? { pathname: '/suggest', params: { lat: String(c.lat), lng: String(c.lng), city: city?.id ?? '' } } : '/login') },
     ]);
   };
   const { data: cities } = useAsync(getCities, []);
@@ -59,7 +62,7 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
         {toggle ? <View style={{ marginBottom: 10 }}>{toggle}</View> : null}
         <Pressable style={st.search} onPress={() => setPick((v) => !v)} accessibilityRole="button">
           <Icon name="search" color={brand.purple} size={20} />
-          <AppText style={{ flex: 1, fontFamily: font.semibold }} muted>ابحث في {city?.name ?? '...'} ▾</AppText>
+          <AppText style={{ flex: 1, fontFamily: font.semibold }} muted>{t('ابحث في {city}', { city: city?.name ?? '...' })} ▾</AppText>
         </Pressable>
         {pick ? (
           <View style={st.cityList}>
@@ -68,20 +71,20 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
                 <Pressable key={c.id} onPress={() => { setCity(c); setPick(false); setSel(null); setKind(undefined); }} style={st.cityRow}>
                   <View style={[st.dot, { backgroundColor: c.color }]} />
                   <AppText style={{ flex: 1, fontFamily: font.semibold }}>{c.name}</AppText>
-                  <AppText variant="small" muted>{c.count} مكان</AppText>
+                  <AppText variant="small" muted>{t('{n} مكان', { n: c.count })}</AppText>
                 </Pressable>
               ))}
             </ScrollView>
           </View>
         ) : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
-          <Chip label={`الكل · ${all.length}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />
+          <Chip label={`${t('الكل')} · ${all.length}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />
           {ks.map((k) => <Chip key={k.id} label={SHORT[k.id] ?? k.name} on={kind === k.id} color={kindStyle[k.id]?.fg} onPress={() => setKind(k.id)} />)}
         </ScrollView>
       </View>
 
       <View style={[st.side, { bottom: sel ? 300 : 120 }]}>
-        <Pressable onPress={locate} style={st.fab} accessibilityLabel="موقعي"><Icon name="nav" color={brand.skyDeep} size={20} /></Pressable>
+        <Pressable onPress={locate} style={st.fab} accessibilityLabel={t('موقعي')}><Icon name="nav" color={brand.skyDeep} size={20} /></Pressable>
       </View>
 
       {sel ? (
@@ -93,10 +96,10 @@ export function MapScreen({ toggle }: { toggle?: ReactNode } = {}) {
             <AppText variant="small" muted numberOfLines={2}>{sel.summary}</AppText>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <Pressable onPress={() => trip.toggle(sel.id)} style={[st.btn, { backgroundColor: brand.orange }]}>
-                <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{ids.includes(sel.id) ? '✓ في رحلتي' : '+ رحلتي'}</AppText>
+                <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{ids.includes(sel.id) ? t('✓ في رحلتي') : t('+ رحلتي')}</AppText>
               </Pressable>
               <Pressable onPress={() => router.push(`/place/${sel.id}`)} style={[st.btn, { backgroundColor: brand.chip }]}>
-                <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>التفاصيل</AppText>
+                <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color={brand.purple}>{t('التفاصيل')}</AppText>
               </Pressable>
             </View>
           </View>

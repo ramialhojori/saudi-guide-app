@@ -11,14 +11,15 @@ import { getCities } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
 import type { City } from '@/lib/types';
 import { brand, font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 const REGIONS: { id: string; label: string; ids: string[] }[] = [
-  { id: 'all', label: 'الكل', ids: [] },
-  { id: 'west', label: 'الغربية', ids: ['medina', 'jeddah', 'makkah-region', 'taif', 'yanbu', 'alula', 'umluj'] },
-  { id: 'center', label: 'الوسطى', ids: ['riyadh', 'diriyah', 'riyadh-region', 'qassim-region'] },
-  { id: 'south', label: 'الجنوب', ids: ['abha', 'asir-region', 'jizan', 'najran', 'albaha'] },
-  { id: 'north', label: 'الشمال', ids: ['tabuk-region', 'hail', 'aljawf-region', 'northern-border', 'alula'] },
-  { id: 'east', label: 'الشرقية', ids: ['eastern-region'] },
+  { id: 'all', label: t('الكل'), ids: [] },
+  { id: 'west', label: t('الغربية'), ids: ['medina', 'jeddah', 'makkah-region', 'taif', 'yanbu', 'alula', 'umluj'] },
+  { id: 'center', label: t('الوسطى'), ids: ['riyadh', 'diriyah', 'riyadh-region', 'qassim-region'] },
+  { id: 'south', label: t('الجنوب'), ids: ['abha', 'asir-region', 'jizan', 'najran', 'albaha'] },
+  { id: 'north', label: t('الشمال'), ids: ['tabuk-region', 'hail', 'aljawf-region', 'northern-border', 'alula'] },
+  { id: 'east', label: t('الشرقية'), ids: ['eastern-region'] },
 ];
 const HOME_CITY = 'medina';
 
@@ -40,24 +41,24 @@ export function GuideScreen({ asTab, toggle }: { asTab?: boolean; toggle?: React
       <View style={st.head}>
         {asTab ? null : <BackButton />}
         <View style={{ flex: 1 }}>
-          <AppText variant="title">{asTab ? 'استكشف' : 'الدليل'}</AppText>
-          <AppText variant="small" muted>{cities.length} وجهة · {total.toLocaleString('en')} مكان</AppText>
+          <AppText variant="title">{asTab ? t('استكشف') : t('الدليل')}</AppText>
+          <AppText variant="small" muted>{t('{n} وجهة', { n: cities.length })} · {t('{n} مكان', { n: total.toLocaleString('en') })}</AppText>
         </View>
-        <Pressable style={st.searchBtn} onPress={() => router.push('/search')} accessibilityLabel="بحث"><Icon name="search" color={brand.text} size={20} /></Pressable>
+        <Pressable style={st.searchBtn} onPress={() => router.push('/search')} accessibilityLabel={t('بحث')}><Icon name="search" color={brand.text} size={20} /></Pressable>
       </View>
       {toggle ? <View style={{ paddingHorizontal: 16, paddingTop: 14 }}>{toggle}</View> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 14 }}>
         {REGIONS.map((r) => <Chip key={r.id} label={r.label} on={r.id === reg} color={brand.ink} onPress={() => setReg(r.id)} />)}
       </ScrollView>
 
-      {mine ? <CityTile c={mine} wide tag="مدينتك" /> : null}
+      {mine ? <CityTile c={mine} wide tag={t('مدينتك')} /> : null}
       <View style={st.grid}>
         {big.map((c) => <CityTile key={c.id} c={c} />)}
       </View>
 
       {rest.length ? (
         <>
-          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 }}>باقي الوجهات</AppText>
+          <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 }}>{t('باقي الوجهات')}</AppText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16 }}>
             {rest.map((c) => (
               <Pressable key={c.id} onPress={() => router.push(`/city/${c.id}`)} style={st.restChip}>
@@ -71,10 +72,10 @@ export function GuideScreen({ asTab, toggle }: { asTab?: boolean; toggle?: React
 
       <View style={st.plan}>
         <View style={{ flex: 1 }}>
-          <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">ما تدري وين تروح؟</AppText>
-          <AppText variant="small" color="#CFC6DE">قل لنا مدتك واهتماماتك ونقترح لك وجهة وخطة</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 17 }} color="#fff">{t('ما تدري وين تروح؟')}</AppText>
+          <AppText variant="small" color="#CFC6DE">{t('قل لنا مدتك واهتماماتك ونقترح لك وجهة وخطة')}</AppText>
         </View>
-        <Pressable style={st.planBtn} onPress={() => router.push('/planner')}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">خطط لي</AppText></Pressable>
+        <Pressable style={st.planBtn} onPress={() => router.push('/planner')}><AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#fff">{t('خطط لي')}</AppText></Pressable>
       </View>
     </ScrollView>
   );
@@ -88,7 +89,7 @@ function CityTile({ c, wide, tag }: { c: City; wide?: boolean; tag?: string }) {
       {tag ? <View style={st.tag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{tag}</AppText></View> : null}
       <View style={{ position: 'absolute', right: 14, bottom: 12, left: 14 }}>
         <AppText style={{ fontFamily: font.bold, fontSize: wide ? 24 : 18 }} color="#fff">{c.name}</AppText>
-        <AppText variant="tiny" color="#E2DAEE">{c.count} مكان</AppText>
+        <AppText variant="tiny" color="#E2DAEE">{t('{n} مكان', { n: c.count })}</AppText>
       </View>
       <View style={[st.colorBar, { backgroundColor: c.color }]} />
     </Pressable>

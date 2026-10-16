@@ -14,23 +14,24 @@ import { useAsync } from '@/lib/useAsync';
 import { countEvents, getSeasonMeta, seasonsFrom, seasonStatus, slug } from '@/lib/seasons';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const DAY = 86400e3;
 const ksaKey = (t: number) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
-const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
 /** أنواع الفعاليات — كل نوع يطابق تصنيفات قودبابر بالكلمات، بلون من الهوية */
 const TYPES: { id: string; t: string; icon: IconName; fg: string; bg: string; match: RegExp }[] = [
-  { id: 'concert', t: 'حفلات', icon: 'mic', fg: brand.pinkDeep, bg: brand.softPink, match: /غنائ|حفل|موسيق/ },
-  { id: 'theater', t: 'مسرح', icon: 'star', fg: brand.purple, bg: brand.softPurple, match: /مسرح/ },
-  { id: 'sport', t: 'رياضة', icon: 'fun', fg: brand.skyDeep, bg: brand.softSky, match: /^رياضي|رياضة/ },
-  { id: 'festival', t: 'مهرجانات', icon: 'spark', fg: brand.orangeDeep, bg: brand.softOrange, match: /مهرجان/ },
-  { id: 'expo', t: 'معارض ومؤتمرات', icon: 'book', fg: brand.lilac, bg: brand.softPurple, match: /معارض|مؤتمر|معرض/ },
-  { id: 'heritage', t: 'تراث وثقافة', icon: 'heritage', fg: brand.orangeInk, bg: brand.softBrown, match: /تراث|ثقاف/ },
-  { id: 'fun', t: 'ترفيه', icon: 'fun', fg: brand.green, bg: brand.softGreen, match: /ترفيه|استجمام/ },
-  { id: 'adventure', t: 'تجارب ومغامرات', icon: 'nature', fg: brand.green, bg: brand.softGreen, match: /تجارب|مغامر/ },
-  { id: 'family', t: 'عائلية', icon: 'family', fg: brand.orangeDeep, bg: brand.softOrange, match: /عائل|أطفال|طفل/ },
-  { id: 'food', t: 'طعام', icon: 'food', fg: brand.orangeDeep, bg: brand.softOrange, match: /طعام|مطاعم|أكل/ },
+  { id: 'concert', t: t('حفلات'), icon: 'mic', fg: brand.pinkDeep, bg: brand.softPink, match: /غنائ|حفل|موسيق/ },
+  { id: 'theater', t: t('مسرح'), icon: 'star', fg: brand.purple, bg: brand.softPurple, match: /مسرح/ },
+  { id: 'sport', t: t('رياضة'), icon: 'fun', fg: brand.skyDeep, bg: brand.softSky, match: /^رياضي|رياضة/ },
+  { id: 'festival', t: t('مهرجانات'), icon: 'spark', fg: brand.orangeDeep, bg: brand.softOrange, match: /مهرجان/ },
+  { id: 'expo', t: t('معارض ومؤتمرات'), icon: 'book', fg: brand.lilac, bg: brand.softPurple, match: /معارض|مؤتمر|معرض/ },
+  { id: 'heritage', t: t('تراث وثقافة'), icon: 'heritage', fg: brand.orangeInk, bg: brand.softBrown, match: /تراث|ثقاف/ },
+  { id: 'fun', t: t('ترفيه'), icon: 'fun', fg: brand.green, bg: brand.softGreen, match: /ترفيه|استجمام/ },
+  { id: 'adventure', t: t('تجارب ومغامرات'), icon: 'nature', fg: brand.green, bg: brand.softGreen, match: /تجارب|مغامر/ },
+  { id: 'family', t: t('عائلية'), icon: 'family', fg: brand.orangeDeep, bg: brand.softOrange, match: /عائل|أطفال|طفل/ },
+  { id: 'food', t: t('طعام'), icon: 'food', fg: brand.orangeDeep, bg: brand.softOrange, match: /طعام|مطاعم|أكل/ },
 ];
 const SEASON = /^(موسم|لحظات)/;
 const typeOf = (e: EventItem) => TYPES.find((t) => (e.cats || []).some((c) => !SEASON.test(c) && t.match.test(c)));
@@ -76,14 +77,14 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
       <View style={[st.head, { paddingTop: insets.top + 10 }]}>
         <View style={st.blob1} /><View style={st.blob2} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {asTab ? null : <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel="رجوع"><Icon name="back" color="#fff" /></Pressable>}
+          {asTab ? null : <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" /></Pressable>}
           <View style={{ flex: 1 }}>
-            <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>الفعاليات</AppText>
-            <AppText variant="small" color="#E2DAEE">{dated.length} فعالية قادمة · {ongoing.length} مستمرة</AppText>
+            <AppText variant="title" color="#fff" style={{ fontSize: 26, lineHeight: 36 }}>{t('الفعاليات')}</AppText>
+            <AppText variant="small" color="#E2DAEE">{t('{n} فعالية قادمة', { n: dated.length })} · {t('{n} مستمرة', { n: ongoing.length })}</AppText>
           </View>
         </View>
         <View style={st.whenRow}>
-          {(['الكل', 'اليوم', 'بكرة', 'الويكند'] as const).map((l, i) => (
+          {[t('الكل'), t('اليوم'), t('بكرة'), t('الويكند')].map((l, i) => (
             <Pressable key={l} onPress={() => setWhen(i)} style={[st.when, when === i && st.whenOn, !counts[i] && when !== i && { opacity: 0.55 }]}>
               <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color={when === i ? brand.purple : '#fff'} center>{l}</AppText>
               <AppText variant="tiny" color={when === i ? brand.orangeDeep : '#E2DAEE'} center>{counts[i]}</AppText>
@@ -94,14 +95,14 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
 
       {/* الأنواع */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 16 }}>
-        <TypeChip t="الكل" icon="cal" fg={brand.text} bg={brand.card} on={!type} onPress={() => setType(null)} />
+        <TypeChip t={t('الكل')} icon="cal" fg={brand.text} bg={brand.card} on={!type} onPress={() => setType(null)} />
         {types.map((t) => <TypeChip key={t.id} t={t.t} icon={t.icon} fg={t.fg} bg={t.bg} on={type === t.id} onPress={() => setType(type === t.id ? null : t.id)} />)}
       </ScrollView>
 
       {/* المواسم: بطاقة لكل موسم شغّال أو قريب — تفتح صفحة الموسم */}
       {seasonList.length ? (
         <>
-          <View style={st.secRow}><AppText variant="section">المواسم</AppText><AppText variant="tiny" muted>اضغط الموسم وشوف كل فعالياته</AppText></View>
+          <View style={st.secRow}><AppText variant="section">{t('المواسم')}</AppText><AppText variant="tiny" muted>{t('اضغط الموسم وشوف كل فعالياته')}</AppText></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {seasonList.map((x) => (
               <Pressable key={x.name} onPress={() => router.push(`/season/${slug(x.name)}`)} style={[st.seasonCard, { backgroundColor: x.color }]}>
@@ -122,14 +123,14 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
         <Pressable onPress={() => setPickCity((v) => !v)} style={st.cityBtn}>
           <Icon name="pin" color={brand.pinkDeep} size={18} />
-          <AppText style={{ fontFamily: font.bold, flex: 1 }}>{city ? cityName(city) : 'كل المدن'} ▾</AppText>
-          <AppText variant="tiny" muted>{cities.length} مدن فيها فعاليات</AppText>
+          <AppText style={{ fontFamily: font.bold, flex: 1 }}>{city ? cityName(city) : t('كل المدن')} ▾</AppText>
+          <AppText variant="tiny" muted>{t('{n} مدن فيها فعاليات', { n: cities.length })}</AppText>
         </Pressable>
         {pickCity ? (
           <View style={st.cityList}>
             {[null, ...cities].map((c) => (
               <Pressable key={c ?? 'all'} onPress={() => { setCity(c); setPickCity(false); }} style={st.cityRow}>
-                <AppText style={{ flex: 1, fontFamily: c === city ? font.bold : font.regular }} color={c === city ? brand.purple : brand.text}>{c ? cityName(c) : 'كل المدن'}</AppText>
+                <AppText style={{ flex: 1, fontFamily: c === city ? font.bold : font.regular }} color={c === city ? brand.purple : brand.text}>{c ? cityName(c) : t('كل المدن')}</AppText>
                 <AppText variant="tiny" muted>{events.filter((e) => !c || e.city === c).length}</AppText>
               </Pressable>
             ))}
@@ -144,18 +145,18 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
         const days = next ? Math.max(0, Math.round((new Date(next.start).getTime() - now) / DAY)) : 0;
         return (
           <View style={st.noDay}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{`ما فيه فعاليات ${['', 'اليوم', 'بكرة', 'هالويكند'][when]}${city ? ' في ' + cityName(city) : ''}`}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{`${t('ما فيه فعاليات')} ${['', t('اليوم'), t('بكرة'), t('هالويكند')][when]}${city ? ' ' + t('في') + ' ' + cityName(city) : ''}`}</AppText>
             {next ? (
               <>
-                <AppText variant="small" muted center>{days <= 0 ? 'لكن فيه فعالية شغالة الحين:' : `أقرب فعالية بعد ${days === 1 ? 'يوم' : days === 2 ? 'يومين' : days + ' أيام'}:`}</AppText>
+                <AppText variant="small" muted center>{days <= 0 ? t('لكن فيه فعالية شغالة الحين:') : tr(`أقرب فعالية بعد ${days === 1 ? 'يوم' : days === 2 ? 'يومين' : days + ' أيام'}:`, `Next event in ${days === 1 ? '1 day' : days + ' days'}:`)}</AppText>
                 <View style={{ alignSelf: 'stretch' }}><Row e={next} /></View>
               </>
             ) : null}
-            <Pressable onPress={() => setWhen(0)} style={st.allBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>شوف كل الفعاليات ({counts[0]})</AppText></Pressable>
+            <Pressable onPress={() => setWhen(0)} style={st.allBtn}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('شوف كل الفعاليات ({n})', { n: counts[0] })}</AppText></Pressable>
           </View>
         );
       })() : null}
-      {!loading && !shown.length && !ongoing.length && !(when > 0 && dated.length) ? <Empty title="ما فيه فعاليات هنا" sub="جرّب نوع ثاني أو مدينة ثانية" /> : null}
+      {!loading && !shown.length && !ongoing.length && !(when > 0 && dated.length) ? <Empty title={t('ما فيه فعاليات هنا')} sub={t('جرّب نوع ثاني أو مدينة ثانية')} /> : null}
 
       {top ? (
         <Pressable style={st.top} onPress={() => router.push(`/event/${top.id}`)}>
@@ -167,18 +168,18 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
           </View>
           <View style={{ position: 'absolute', right: 16, left: 16, bottom: 14, gap: 4 }}>
             <View style={{ flexDirection: 'row', gap: 6 }}>
-              <Pill label="الأقرب موعداً" bg={brand.orange} fg="#fff" />
+              <Pill label={t('الأقرب موعداً')} bg={brand.orange} fg="#fff" />
               {typeOf(top) ? <Pill label={typeOf(top)!.t} bg="rgba(255,255,255,0.2)" fg="#fff" /> : null}
             </View>
             <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 32 }} color="#fff" numberOfLines={2}>{top.title}</AppText>
-            <AppText variant="small" color="#E2DAEE" numberOfLines={1}>{place(top)}{top.tickets ? ' · التذاكر متوفرة' : ''}</AppText>
+            <AppText variant="small" color="#E2DAEE" numberOfLines={1}>{place(top)}{top.tickets ? ' · ' + t('التذاكر متوفرة') : ''}</AppText>
           </View>
         </Pressable>
       ) : null}
 
       {[...groups.entries()].map(([k, list]) => {
         const d = new Date(k + 'T00:00:00Z');
-        const label = k === today ? 'اليوم · ' : k === tomorrow ? 'بكرة · ' : '';
+        const label = k === today ? t('اليوم') + ' · ' : k === tomorrow ? t('بكرة') + ' · ' : '';
         return (
           <View key={k}>
             <View style={st.dayHead}>
@@ -194,14 +195,14 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
         <>
           <View style={[st.dayHead, { marginTop: 10 }]}>
             <View style={[st.dayDot, { backgroundColor: brand.green }]} />
-            <AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={brand.green}>مستمرة الحين · تقدر تزورها أي يوم</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={brand.green}>{t('مستمرة الحين · تقدر تزورها أي يوم')}</AppText>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {ongoing.map((e) => (
               <Pressable key={e.id} style={st.card} onPress={() => router.push(`/event/${e.id}`)}>
                 <Image source={e.thumb || e.image || photos.fest} style={{ width: '100%', height: 120 }} contentFit="cover" />
                 <View style={{ padding: 10 }}>
-                  <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>حتى {riyadhDate(e.end, false)}</AppText>
+                  <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>{t('حتى')} {riyadhDate(e.end, false)}</AppText>
                   <AppText style={{ fontFamily: font.bold, fontSize: 14, lineHeight: 21 }} numberOfLines={2}>{e.title}</AppText>
                   <AppText variant="tiny" muted numberOfLines={1}>{e.city ? cityName(e.city) : ''}</AppText>
                 </View>
