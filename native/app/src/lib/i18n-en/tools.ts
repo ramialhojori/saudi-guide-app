@@ -567,4 +567,5 @@ export default {
   "الحجز يتم في موقع الشريك، وقد نحصل على عمولة بدون أي تكلفة إضافية عليك.": "Booking happens on our partner's site; we may earn a commission at no extra cost to you.",
   "تبي تقعد قريب؟": "Want to stay nearby?",
   "جهّز حجوزات رحلتك": "Get your bookings ready",
+  "العروض": "Offers",
 } as Record<string, string>;
