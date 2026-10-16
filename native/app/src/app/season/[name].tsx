@@ -15,7 +15,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
-import { isEn, t } from '@/lib/i18n';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const ksaKey = (t: number) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
@@ -68,7 +68,7 @@ export default function SeasonScreen() {
           <AppText style={{ fontFamily: font.semibold, lineHeight: 26 }}>{t('الموسم انتهى ويرجع كل سنة')}{s.when ? ` (${t('عادة')} ${s.when})` : ''}{t('. تابعه ونبلغك أول ما تنعلن مواعيده وفعالياته.')}</AppText>
         ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {[[cd.d, t('يوم')], [cd.h, t('ساعة')], [cd.m, t('دقيقة')]].map(([v, l]) => (
+          {[[cd.d, tr('يوم', 'days')], [cd.h, t('ساعة')], [cd.m, t('دقيقة')]].map(([v, l]) => (
             <View key={l} style={[st.cbox, { backgroundColor: s.color + '18' }]}>
               <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 28 }} color={s.color} center>{String(v).padStart(2, '0')}</AppText>
               <AppText variant="tiny" muted center>{l}</AppText>

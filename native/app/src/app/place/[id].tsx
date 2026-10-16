@@ -264,7 +264,7 @@ export default function PlaceScreen() {
           {/* تواصل */}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
             {p.phone ? <Contact icon="phone" label={t('اتصال')} on={() => Linking.openURL(`tel:${p.phone}`)} /> : null}
-            {extLink(p.website) ? <Contact icon="globe" label={t('الموقع')} on={() => WebBrowser.openBrowserAsync(extLink(p.website))} /> : null}
+            {extLink(p.website) ? <Contact icon="globe" label={tr('الموقع', 'Website')} on={() => WebBrowser.openBrowserAsync(extLink(p.website))} /> : null}
           </View>
         </View>
 

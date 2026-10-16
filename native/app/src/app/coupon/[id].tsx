@@ -33,7 +33,7 @@ export default function CouponDetail() {
   const used = !!c.usedByMe && c.perUser;
   const rows: [string, string][] = [
     ...(c.points ? [[t('يتبادل بـ'), t('{n} نقطة من رصيدك', { n: c.points })] as [string, string]] : []),
-    ...(c.minLevel ? [[t('حصري لـ'), t('المستوى {n} «{name}» وأعلى', { n: c.minLevel, name: c.levelName })] as [string, string]] : []),
+    ...(c.minLevel ? [[t('حصري لـ'), t('المستوى {n} «{name}» وأعلى', { n: c.minLevel, name: t(c.levelName || '') })] as [string, string]] : []),
     ...(c.minOrder ? [[t('الحد الأدنى للطلب'), t('{n} ر.س', { n: c.minOrder })] as [string, string]] : []),
     [t('الاستخدام'), c.perUser ? t('مرة وحدة لكل شخص') : t('تقدر تستخدمه أكثر من مرة')],
     ...(c.hours ? [[t('الأوقات'), c.hours] as [string, string]] : []),

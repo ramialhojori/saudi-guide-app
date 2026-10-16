@@ -50,7 +50,7 @@ export default function Profile() {
   } : { ...demo, levelName: t('سفير الدليل'), levelAt: 0 };
   const pct = Math.min(1, Math.max(0, (me.points - me.levelAt) / Math.max(1, me.nextLevelPts - me.levelAt)));
   const badgeList = user && stats
-    ? stats.badges.map((b, i) => ({ icon: b.icon as IconName, t: b.name, s: b.earned ? t('حصّلته') : t('{a} من {b}', { a: b.have, b: b.goal }), locked: !b.earned, bg: b.earned ? STAMP[i % STAMP.length] : brand.chip, fg: b.earned ? '#fff' : brand.faint }))
+    ? stats.badges.map((b, i) => ({ icon: b.icon as IconName, t: t(b.name), s: b.earned ? t('حصّلته') : t('{a} من {b}', { a: b.have, b: b.goal }), locked: !b.earned, bg: b.earned ? STAMP[i % STAMP.length] : brand.chip, fg: b.earned ? '#fff' : brand.faint }))
     : badges;
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
@@ -89,7 +89,7 @@ export default function Profile() {
             <AppText variant="small" muted>{me.handle ? `@${me.handle} · ` : ''}{t('عضو منذ {y}', { y: me.since })}</AppText>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
               {me.city ? <><Icon name="pin" color={brand.pinkDeep} size={14} /><AppText variant="small" style={{ fontFamily: font.semibold }}>{t('من {city}', { city: me.city })}</AppText></> : null}
-              {me.levelName ? <Pill label={me.levelName} bg={brand.purple} fg="#fff" /> : null}
+              {me.levelName ? <Pill label={t(me.levelName)} bg={brand.purple} fg="#fff" /> : null}
             </View>
           </View>
         </View>
@@ -140,7 +140,7 @@ export default function Profile() {
               <AppText style={{ fontFamily: font.bold }}>{t('رصيدك {n} نقطة', { n: stats.balance })}</AppText>
               <AppText variant="tiny" muted>{stats.spent ? `${t('صرفت {n}', { n: stats.spent })} · ` : ''}{t('اصرفها على عروض المحلات')}</AppText>
             </View>
-            <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{t('استبدل')}</AppText>
+            <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{tr('استبدل', 'Redeem')}</AppText>
           </Pressable> : null}
           {F.guides && stats.role === 'user' ? (
             <Pressable style={[st.ptsRow, F.points && F.coupons && st.ptsLine]} onPress={() => router.push('/guide-request')}>
@@ -171,12 +171,12 @@ export default function Profile() {
 
       {/* جواز السعودية */}
       {F.passport ? <Pressable style={st.passport} onPress={() => router.push('/passport')}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff">{t('جواز السعودية')}</AppText>
             <AppText variant="small" color="#CFC6DE">{user && !stampNames.length ? t('اختم أول مدينة من صفحة أي مكان تزوره') : t('كل مدينة تزورها تنختم في جوازك')}</AppText>
           </View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 13 }} color="#F9A158">{t('{a} من {b} وجهة', { a: stampNames.length, b: stampTotal })}</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 13, flexShrink: 0 }} color="#F9A158">{t('{a} من {b} وجهة', { a: stampNames.length, b: stampTotal })}</AppText>
         </View>
         <View style={st.stamps}>
           {stampNames.slice(0, 9).map((c, i) => (

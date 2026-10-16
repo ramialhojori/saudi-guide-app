@@ -19,7 +19,7 @@ import { useAsync } from '@/lib/useAsync';
 import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
 import { track } from '@/lib/track';
-import { isEn, t } from '@/lib/i18n';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
@@ -61,7 +61,7 @@ export default function EventScreen() {
           </View>
           {left ? (
             <View style={st.count}>
-              {[[left.d, t('يوم')], [left.h, t('ساعة')], [left.m, t('دقيقة')]].map(([v, l]) => (
+              {[[left.d, tr('يوم', 'days')], [left.h, t('ساعة')], [left.m, t('دقيقة')]].map(([v, l]) => (
                 <View key={l} style={st.cbox}><AppText style={{ fontFamily: font.bold, fontSize: 24, lineHeight: 30 }} color="#fff" center>{String(v).padStart(2, '0')}</AppText><AppText variant="tiny" color="#E2DAEE" center>{l}</AppText></View>
               ))}
               <AppText variant="small" color="#fff" style={{ fontFamily: font.semibold }}>{t('على البداية')}</AppText>

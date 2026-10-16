@@ -15,7 +15,7 @@ import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
 import { track } from '@/lib/track';
 import { useFeatures } from '@/lib/features';
-import { isEn, t } from '@/lib/i18n';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const SHORT: Record<string, string> = isEn
   ? { food: 'Restaurants', cafe: 'Cafes', sights: 'Sights', heritage: 'Heritage', nature: 'Nature', islamic: 'Islamic', fun: 'Fun', shopping: 'Shopping' }
@@ -52,7 +52,7 @@ export default function CityScreen() {
     <Pressable style={st.addCard} onPress={() => router.push({ pathname: '/suggest', params: { city: id } })}>
       <View style={st.addIcon}><Icon name="plus" color="#fff" size={20} /></View>
       <View style={{ flex: 1 }}>
-        <AppText style={{ fontFamily: font.bold }}>{t('تعرف مكان في {city} ما هو هنا؟', { city: city?.name ?? t('المدينة') })}</AppText>
+        <AppText style={{ fontFamily: font.bold }}>{t('تعرف مكان في {city} ما هو هنا؟', { city: city?.name ?? tr('المدينة', 'the city') })}</AppText>
         <AppText variant="small" muted>{t('أضفه مع صوره، وينضاف للدليل باسمك (+15 نقطة)')}</AppText>
       </View>
     </Pressable>
