@@ -11,8 +11,9 @@ import { useAuth } from '@/lib/auth';
 import { cityName } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { brand, font, kindStyle, photos, INPUT_START } from '@/theme/tokens';
+import { t, tr } from '@/lib/i18n';
 
-const STARTERS = ['وش أزور في المدينة المنورة مع العائلة؟', 'وش فيه فعاليات في الرياض هالأسبوع؟', 'أبي مقهى هادي في جدة للشغل', 'وين أتعشى في العلا بإطلالة حلوة؟'];
+const STARTERS = [t('وش أزور في المدينة المنورة مع العائلة؟'), t('وش فيه فعاليات في الرياض هالأسبوع؟'), t('أبي مقهى هادي في جدة للشغل'), t('وين أتعشى في العلا بإطلالة حلوة؟')];
 
 /** «اسأل الدليل»: مساعد ذكي يجاوب من محتوى الدليل فقط (أماكن وفعاليات وإجابات أهل المدن) */
 export default function AskAi() {
@@ -54,18 +55,18 @@ export default function AskAi() {
       <View style={[st.top, { paddingTop: insets.top + 10 }]}>
         <BackButton />
         <View style={{ flex: 1 }}>
-          <AppText variant="title">اسأل الدليل</AppText>
-          <AppText variant="tiny" muted>{quota?.plus ? 'دليل+ · بدون حد' : left != null ? `باقي لك ${left} ${left === 1 ? 'سؤال' : 'أسئلة'} اليوم مجاناً` : 'مساعدك الذكي للسياحة في السعودية'}</AppText>
+          <AppText variant="title">{t('اسأل الدليل')}</AppText>
+          <AppText variant="tiny" muted>{quota?.plus ? t('دليل+ · بدون حد') : left != null ? tr(`باقي لك ${left} ${left === 1 ? 'سؤال' : 'أسئلة'} اليوم مجاناً`, `${left} free ${left === 1 ? 'question' : 'questions'} left today`) : t('مساعدك الذكي للسياحة في السعودية')}</AppText>
         </View>
-        <Pressable onPress={() => router.push('/plus')} style={st.plus}><Icon name="spark" color="#fff" size={14} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>دليل+</AppText></Pressable>
+        <Pressable onPress={() => router.push('/plus')} style={st.plus}><Icon name="spark" color="#fff" size={14} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('دليل+')}</AppText></Pressable>
       </View>
 
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30, gap: 12 }} keyboardShouldPersistTaps="handled">
         {!msgs.length ? (
           <View style={st.intro}>
             <View style={st.introIcon}><Icon name="spark" color="#fff" size={26} /></View>
-            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>هلا! وش تبي تعرف؟</AppText>
-            <AppText variant="small" muted center style={{ lineHeight: 22 }}>أجاوبك من أماكن الدليل وفعالياته ونصايح أهل المدن، وأعطيك الأماكن جاهزة تضيفها لرحلتك.</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>{t('هلا! وش تبي تعرف؟')}</AppText>
+            <AppText variant="small" muted center style={{ lineHeight: 22 }}>{t('أجاوبك من أماكن الدليل وفعالياته ونصايح أهل المدن، وأعطيك الأماكن جاهزة تضيفها لرحلتك.')}</AppText>
             <View style={{ gap: 8, marginTop: 10, alignSelf: 'stretch' }}>
               {STARTERS.map((s) => <Pressable key={s} style={st.starter} onPress={() => send(s)}><AppText variant="small" style={{ fontFamily: font.semibold }}>{s}</AppText></Pressable>)}
             </View>
@@ -108,16 +109,16 @@ export default function AskAi() {
             ) : null}
           </View>
         ))}
-        {busy ? <View style={[st.bot, { flexDirection: 'row', gap: 8, alignItems: 'center' }]}><ActivityIndicator color={brand.purple} /><AppText variant="small" muted>أدوّر لك في الدليل…</AppText></View> : null}
+        {busy ? <View style={[st.bot, { flexDirection: 'row', gap: 8, alignItems: 'center' }]}><ActivityIndicator color={brand.purple} /><AppText variant="small" muted>{t('أدوّر لك في الدليل…')}</AppText></View> : null}
         {err ? <AppText center color={brand.pinkDeep} style={{ fontFamily: font.semibold }}>{err}</AppText> : null}
-        {err && left === 0 ? <Pressable onPress={() => router.push('/plus')} style={[st.follow, { alignSelf: 'center', backgroundColor: brand.purple }]}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>اشترك في دليل+ بدون حد</AppText></Pressable> : null}
+        {err && left === 0 ? <Pressable onPress={() => router.push('/plus')} style={[st.follow, { alignSelf: 'center', backgroundColor: brand.purple }]}><AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('اشترك في دليل+ بدون حد')}</AppText></Pressable> : null}
       </ScrollView>
 
       <View style={[st.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TextInput value={text} onChangeText={setText} placeholder="اسأل عن أي مكان أو فعالية…" placeholderTextColor={brand.faint} style={st.input} multiline maxLength={500} onSubmitEditing={() => send()} />
+        <TextInput value={text} onChangeText={setText} placeholder={t('اسأل عن أي مكان أو فعالية…')} placeholderTextColor={brand.faint} style={st.input} multiline maxLength={500} onSubmitEditing={() => send()} />
         <Pressable onPress={() => send()} disabled={busy || !text.trim()} style={[st.send, (busy || !text.trim()) && { opacity: 0.4 }]}><Icon name="up" color="#fff" size={20} /></Pressable>
       </View>
-      <AppText variant="tiny" muted center style={{ paddingBottom: Math.max(insets.bottom, 6), marginTop: -6 }}>المساعد يجاوب من محتوى الدليل، وتأكد من المواعيد قبل ما تروح.</AppText>
+      <AppText variant="tiny" muted center style={{ paddingBottom: Math.max(insets.bottom, 6), marginTop: -6 }}>{t('المساعد يجاوب من محتوى الدليل، وتأكد من المواعيد قبل ما تروح.')}</AppText>
     </KeyboardAvoidingView>
   );
 }

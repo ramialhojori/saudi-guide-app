@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui';
 import { appleAvailable, signInWithApple } from '@/lib/auth';
 import { appleWebAvailable, renderGoogleButton, signInWithAppleWeb, webConfig } from '@/lib/webAuth';
 import { brand, font } from '@/theme/tokens';
+import { t, tr } from '@/lib/i18n';
 
 /** تسجيل الدخول — مثل التصميم: آبل (شغال)، قوقل والجوال (قريباً)، أو تصفح كزائر */
 export default function Login() {
@@ -33,7 +34,7 @@ export default function Login() {
   useEffect(() => {
     if (!googleWeb || !gBox.current) return;
     const el = gBox.current as unknown as HTMLElement;
-    renderGoogleButton(el, el.offsetWidth || 340, done, (m) => setErr(`ما قدرنا نكمل الدخول بقوقل. (${m})`)).catch(() => setGoogleWeb(false));
+    renderGoogleButton(el, el.offsetWidth || 340, done, (m) => setErr(t('ما قدرنا نكمل الدخول بقوقل. ({m})', { m }))).catch(() => setGoogleWeb(false));
   }, [googleWeb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const done = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -43,7 +44,7 @@ export default function Login() {
       if ((await (web ? signInWithAppleWeb() : signInWithApple())) === 'ok') done();
     } catch (e: unknown) {
       const x = e as { code?: string; message?: string };
-      setErr(`ما قدرنا نكمل الدخول. (${x?.code || x?.message || 'خطأ'})`);
+      setErr(t('ما قدرنا نكمل الدخول. ({m})', { m: x?.code || x?.message || t('خطأ') }));
     } finally { setBusy(false); }
   };
 
@@ -51,10 +52,10 @@ export default function Login() {
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
       <View style={[st.top, { paddingTop: insets.top + 40 }]}>
         <View style={st.blob1} /><View style={st.blob2} />
-        <Pressable onPress={done} style={[st.close, { top: insets.top + 10 }]} accessibilityLabel="إغلاق"><Icon name="x" color="#fff" size={20} /></Pressable>
+        <Pressable onPress={done} style={[st.close, { top: insets.top + 10 }]} accessibilityLabel={t('إغلاق')}><Icon name="x" color="#fff" size={20} /></Pressable>
         <View style={st.mark}><Image source={require('../../assets/brand/mark.png')} style={{ width: 56, height: 56 }} contentFit="contain" /></View>
-        <AppText variant="title" color="#fff" center style={{ fontSize: 25, marginTop: 16 }}>سجّل وخلّ رحلاتك معك</AppText>
-        <AppText variant="small" color="#E2DAEE" center>خطوة وحدة، بدون كلمة مرور</AppText>
+        <AppText variant="title" color="#fff" center style={{ fontSize: 25, marginTop: 16 }}>{t('سجّل وخلّ رحلاتك معك')}</AppText>
+        <AppText variant="small" color="#E2DAEE" center>{t('خطوة وحدة، بدون كلمة مرور')}</AppText>
       </View>
 
       <View style={{ padding: 20, gap: 12 }}>
@@ -66,7 +67,7 @@ export default function Login() {
         ) : (
           <Pressable onPress={Platform.OS === 'ios' || appleWeb ? onApple : undefined} style={[st.btn, { backgroundColor: '#000', opacity: Platform.OS === 'ios' || appleWeb ? 1 : 0.5 }]}>
             <Icon name="apple" color="#fff" fill="#fff" size={22} strokeWidth={1.6} />
-            <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' || appleWeb ? 'المتابعة مع Apple' : web ? 'Apple قريباً على الموقع' : 'Apple على الآيفون فقط'}</AppText>
+            <AppText style={st.btnTx} color="#fff">{Platform.OS === 'ios' || appleWeb ? t('المتابعة مع Apple') : web ? t('Apple قريباً على الموقع') : t('Apple على الآيفون فقط')}</AppText>
           </Pressable>
         )}
         {googleWeb ? (
@@ -74,28 +75,28 @@ export default function Login() {
         ) : (
           <View style={[st.btn, { backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.line }]}>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#4285F4">G</AppText>
-            <AppText style={st.btnTx}>المتابعة مع Google</AppText>
-            <View style={st.soon}><AppText variant="tiny" color={brand.purple}>قريباً</AppText></View>
+            <AppText style={st.btnTx}>{t('المتابعة مع Google')}</AppText>
+            <View style={st.soon}><AppText variant="tiny" color={brand.purple}>{t('قريباً')}</AppText></View>
           </View>
         )}
         <View style={[st.btn, { backgroundColor: brand.softPurple }]}>
           <Icon name="phone" color={brand.purple} size={20} />
-          <AppText style={st.btnTx} color={brand.purple}>برقم الجوال</AppText>
-          <View style={st.soon}><AppText variant="tiny" color={brand.purple}>قريباً</AppText></View>
+          <AppText style={st.btnTx} color={brand.purple}>{t('برقم الجوال')}</AppText>
+          <View style={st.soon}><AppText variant="tiny" color={brand.purple}>{t('قريباً')}</AppText></View>
         </View>
         {busy ? <ActivityIndicator color={brand.purple} /> : null}
         {err ? <AppText variant="small" color={brand.pinkDeep} center>{err}</AppText> : null}
       </View>
 
       <View style={st.perks}>
-        {([['bag', brand.softOrange, brand.orangeDeep, 'رحلاتك ومفضلتك على كل أجهزتك'], ['star', brand.softPurple, brand.purple, 'نقاط وأوسمة وجواز السعودية'], ['ticket', brand.softPink, brand.pinkDeep, 'كوبونات حصرية في مدينتك']] as const).map(([k, bg, fg, t]) => (
-          <View key={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Badge icon={k} bg={bg} fg={fg} size={32} r={10} /><AppText variant="small">{t}</AppText></View>
+        {([['bag', brand.softOrange, brand.orangeDeep, t('رحلاتك ومفضلتك على كل أجهزتك')], ['star', brand.softPurple, brand.purple, t('نقاط وأوسمة وجواز السعودية')], ['ticket', brand.softPink, brand.pinkDeep, t('كوبونات حصرية في مدينتك')]] as const).map(([k, bg, fg, tx]) => (
+          <View key={tx} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Badge icon={k} bg={bg} fg={fg} size={32} r={10} /><AppText variant="small">{tx}</AppText></View>
         ))}
       </View>
-      <Pressable onPress={done} style={{ marginTop: 18 }}><AppText center style={{ fontFamily: font.semibold }} color={brand.purple}>تصفح كزائر</AppText></Pressable>
+      <Pressable onPress={done} style={{ marginTop: 18 }}><AppText center style={{ fontFamily: font.semibold }} color={brand.purple}>{t('تصفح كزائر')}</AppText></Pressable>
 
       <AppText variant="tiny" muted center style={[st.terms, { bottom: Math.max(insets.bottom, 16) + 6 }]}>
-        بالمتابعة توافق على <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}>شروط الاستخدام</AppText> و<AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}>سياسة الخصوصية</AppText>
+        {t('بالمتابعة توافق على')} <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })}>{t('شروط الاستخدام')}</AppText>{tr('و', ' and ')}<AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })}>{t('سياسة الخصوصية')}</AppText>
       </AppText>
     </View>
   );

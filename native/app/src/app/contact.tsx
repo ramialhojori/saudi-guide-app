@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { ago } from '@/lib/community';
 import { CONTACT_KINDS, myContact, sendContact, type ContactMsg } from '@/lib/contact';
 import { brand, font, INPUT_START } from '@/theme/tokens';
+import { t, isEn } from '@/lib/i18n';
 
 /** «تواصل معنا»: يختار نوع الرسالة ويكتبها، وتوصل لوحة التحكم مباشرة. والرد يوصله هنا وبإشعار */
 export default function Contact() {
@@ -37,7 +38,7 @@ export default function Contact() {
       if (user) myContact().then(setMine).catch(() => {});
     } catch (e) {
       const c = e instanceof ApiError ? e.code : '';
-      setErr(c === 'too_many' ? 'أرسلت رسائل كثيرة اليوم، جرّب بكرة.' : c === 'text_too_short' ? 'اكتب تفاصيل أكثر شوي.' : 'ما قدرنا نرسلها، تأكد من النت وجرّب مرة ثانية.');
+      setErr(c === 'too_many' ? t('أرسلت رسائل كثيرة اليوم، جرّب بكرة.') : c === 'text_too_short' ? t('اكتب تفاصيل أكثر شوي.') : t('ما قدرنا نرسلها، تأكد من النت وجرّب مرة ثانية.'));
     } finally { setBusy(false); }
   };
 
@@ -47,24 +48,24 @@ export default function Contact() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <BackButton />
           <View style={{ flex: 1 }}>
-            <AppText variant="title">تواصل معنا</AppText>
-            <AppText variant="small" muted>رسالتك توصل فريق الدليل مباشرة، والرد يوصلك هنا</AppText>
+            <AppText variant="title">{t('تواصل معنا')}</AppText>
+            <AppText variant="small" muted>{t('رسالتك توصل فريق الدليل مباشرة، والرد يوصلك هنا')}</AppText>
           </View>
         </View>
 
         {sent ? (
           <View style={st.done}>
             <View style={st.doneIc}><Icon name="check" color="#fff" size={26} strokeWidth={3} /></View>
-            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>وصلتنا رسالتك، شكراً لك</AppText>
-            <AppText variant="small" muted center style={{ lineHeight: 22 }}>{user ? 'بنرد عليك هنا وبيوصلك إشعار أول ما نرد.' : 'بنرد عليك على وسيلة التواصل اللي كتبتها.'}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>{t('وصلتنا رسالتك، شكراً لك')}</AppText>
+            <AppText variant="small" muted center style={{ lineHeight: 22 }}>{user ? t('بنرد عليك هنا وبيوصلك إشعار أول ما نرد.') : t('بنرد عليك على وسيلة التواصل اللي كتبتها.')}</AppText>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-              <Pressable style={[st.btn, { backgroundColor: brand.purple }]} onPress={() => { setSent(false); setKind(''); }}><AppText color="#fff" style={{ fontFamily: font.bold }}>رسالة ثانية</AppText></Pressable>
-              <Pressable style={[st.btn, { backgroundColor: brand.ink }]} onPress={() => router.back()}><AppText color="#fff" style={{ fontFamily: font.bold }}>رجوع</AppText></Pressable>
+              <Pressable style={[st.btn, { backgroundColor: brand.purple }]} onPress={() => { setSent(false); setKind(''); }}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('رسالة ثانية')}</AppText></Pressable>
+              <Pressable style={[st.btn, { backgroundColor: brand.ink }]} onPress={() => router.back()}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('رجوع')}</AppText></Pressable>
             </View>
           </View>
         ) : (
           <>
-            <AppText style={{ fontFamily: font.bold, marginTop: 20, marginBottom: 10 }}>وش نوع رسالتك؟</AppText>
+            <AppText style={{ fontFamily: font.bold, marginTop: 20, marginBottom: 10 }}>{t('وش نوع رسالتك؟')}</AppText>
             <View style={st.kinds}>
               {CONTACT_KINDS.map((x) => {
                 const on = kind === x.id;
@@ -79,19 +80,19 @@ export default function Contact() {
 
             {kind ? (
               <>
-                <AppText style={{ fontFamily: font.bold, marginTop: 18, marginBottom: 8 }}>رسالتك</AppText>
+                <AppText style={{ fontFamily: font.bold, marginTop: 18, marginBottom: 8 }}>{t('رسالتك')}</AppText>
                 <TextInput value={text} onChangeText={setText} placeholder={k?.hint} placeholderTextColor={brand.faint} multiline maxLength={2000} style={st.input} />
                 <AppText variant="tiny" muted style={{ marginTop: 4 }}>{text.length} / 2000</AppText>
                 {!user ? (
                   <>
-                    <AppText style={{ fontFamily: font.bold, marginTop: 14, marginBottom: 8 }}>كيف نرد عليك؟</AppText>
-                    <TextInput value={replyTo} onChangeText={setReplyTo} placeholder="إيميلك أو رقم جوالك" placeholderTextColor={brand.faint} style={[st.input, { minHeight: 50 }]} keyboardType="email-address" autoCapitalize="none" />
-                    <Pressable onPress={() => router.push('/login')}><AppText variant="small" color={brand.purple} style={{ marginTop: 8 }}>أو سجّل دخولك ويوصلك الرد داخل التطبيق</AppText></Pressable>
+                    <AppText style={{ fontFamily: font.bold, marginTop: 14, marginBottom: 8 }}>{t('كيف نرد عليك؟')}</AppText>
+                    <TextInput value={replyTo} onChangeText={setReplyTo} placeholder={t('إيميلك أو رقم جوالك')} placeholderTextColor={brand.faint} style={[st.input, { minHeight: 50 }]} keyboardType="email-address" autoCapitalize="none" />
+                    <Pressable onPress={() => router.push('/login')}><AppText variant="small" color={brand.purple} style={{ marginTop: 8 }}>{t('أو سجّل دخولك ويوصلك الرد داخل التطبيق')}</AppText></Pressable>
                   </>
                 ) : null}
                 {err ? <AppText color={brand.pinkDeep} style={{ marginTop: 10, fontFamily: font.semibold }}>{err}</AppText> : null}
                 <Pressable onPress={send} disabled={!ok || busy} style={[st.send, (!ok || busy) && { opacity: 0.45 }]}>
-                  {busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>أرسل</AppText>}
+                  {busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{t('أرسل')}</AppText>}
                 </Pressable>
               </>
             ) : null}
@@ -100,19 +101,19 @@ export default function Contact() {
 
         {mine.length ? (
           <>
-            <AppText style={{ fontFamily: font.bold, marginTop: 26, marginBottom: 10 }}>رسائلك السابقة</AppText>
+            <AppText style={{ fontFamily: font.bold, marginTop: 26, marginBottom: 10 }}>{t('رسائلك السابقة')}</AppText>
             <View style={{ gap: 10 }}>
               {mine.map((m) => (
                 <View key={m.id} style={st.msg}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={st.tag}><AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{m.kindName}</AppText></View>
+                    <View style={st.tag}><AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{isEn ? CONTACT_KINDS.find((x) => x.id === m.kind)?.name ?? m.kindName : m.kindName}</AppText></View>
                     <AppText variant="tiny" muted style={{ flex: 1 }}>{ago(m.created)}</AppText>
-                    <AppText variant="tiny" color={m.reply ? brand.green : brand.orangeDeep} style={{ fontFamily: font.bold }}>{m.reply ? 'تم الرد' : m.status === 'new' ? 'وصلت' : 'تمت'}</AppText>
+                    <AppText variant="tiny" color={m.reply ? brand.green : brand.orangeDeep} style={{ fontFamily: font.bold }}>{m.reply ? t('تم الرد') : m.status === 'new' ? t('وصلت') : t('تمت')}</AppText>
                   </View>
                   <AppText variant="small" style={{ lineHeight: 22, marginTop: 6 }} numberOfLines={4}>{m.text}</AppText>
                   {m.reply ? (
                     <View style={st.reply}>
-                      <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>رد فريق الدليل</AppText>
+                      <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold }}>{t('رد فريق الدليل')}</AppText>
                       <AppText variant="small" style={{ lineHeight: 22 }}>{m.reply}</AppText>
                     </View>
                   ) : null}

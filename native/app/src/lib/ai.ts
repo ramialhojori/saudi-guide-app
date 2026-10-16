@@ -1,6 +1,7 @@
 /** الذكاء الاصطناعي (دليل+): «اسأل الدليل» و«خطط لي رحلة» الذكي — كله عن طريق سيرفرنا */
 import { api } from './api';
 import { session } from './auth';
+import { t } from './i18n';
 
 const tok = () => session().token;
 export type Quota = { plus: boolean; limit: number | null; used: number; left: number | null };
@@ -22,8 +23,8 @@ export const aiPlan = (b: { city: string; days: number; start?: string; party?: 
 export function aiErr(e: unknown) {
   const c = (e as { code?: string })?.code;
   return ({
-    login_required: 'سجّل دخولك عشان تستخدم المساعد.', quota: 'خلصت محاولاتك المجانية لليوم. مع دليل+ تستخدمه بدون حد، أو ارجع بكرة.',
-    plus_required: 'الخطة الذكية خاصة بمشتركين دليل+.', plan_quota: 'استخدمت خطتك الذكية المجانية لهالشهر. جرّب دليل+ 3 أيام مجاناً وخطط كل رحلاتك بدون حد.', feature_off: 'الميزة متوقفة مؤقتاً.', ai_not_configured: 'المساعد مو جاهز للحين.', ai_failed: 'ما قدرنا نجهز الرد، جرّب مرة ثانية.',
-    timeout: 'تأخر الرد، جرّب مرة ثانية.', network: 'ما فيه اتصال، تأكد من النت.',
-  } as Record<string, string>)[c || ''] || 'صار خطأ، جرّب بعد شوي.';
+    login_required: t('سجّل دخولك عشان تستخدم المساعد.'), quota: t('خلصت محاولاتك المجانية لليوم. مع دليل+ تستخدمه بدون حد، أو ارجع بكرة.'),
+    plus_required: t('الخطة الذكية خاصة بمشتركين دليل+.'), plan_quota: t('استخدمت خطتك الذكية المجانية لهالشهر. جرّب دليل+ 3 أيام مجاناً وخطط كل رحلاتك بدون حد.'), feature_off: t('الميزة متوقفة مؤقتاً.'), ai_not_configured: t('المساعد مو جاهز للحين.'), ai_failed: t('ما قدرنا نجهز الرد، جرّب مرة ثانية.'),
+    timeout: t('تأخر الرد، جرّب مرة ثانية.'), network: t('ما فيه اتصال، تأكد من النت.'),
+  } as Record<string, string>)[c || ''] || t('صار خطأ، جرّب بعد شوي.');
 }

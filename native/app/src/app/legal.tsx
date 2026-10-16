@@ -7,6 +7,7 @@ import { BackButton } from '@/components/ui';
 import { getLegal } from '@/lib/contact';
 import { useAsync } from '@/lib/useAsync';
 import { brand, font } from '@/theme/tokens';
+import { t } from '@/lib/i18n';
 
 /** سياسة الخصوصية / شروط الاستخدام / قواعد المجتمع — داخل التطبيق */
 export default function Legal() {
@@ -20,11 +21,11 @@ export default function Legal() {
         <BackButton />
         <View style={{ flex: 1 }}>
           <AppText variant="title">{data?.title ?? ''}</AppText>
-          {data ? <AppText variant="tiny" muted>آخر تحديث {data.date}</AppText> : null}
+          {data ? <AppText variant="tiny" muted>{t('آخر تحديث {date}', { date: data.date })}</AppText> : null}
         </View>
       </View>
       {loading && !data ? <Loading /> : null}
-      {error && !data ? <AppText muted center style={{ marginTop: 40 }}>ما قدرنا نفتح الصفحة، تأكد من النت.</AppText> : null}
+      {error && !data ? <AppText muted center style={{ marginTop: 40 }}>{t('ما قدرنا نفتح الصفحة، تأكد من النت.')}</AppText> : null}
       {data ? (
         <>
           <AppText style={{ lineHeight: 26, marginTop: 16 }}>{data.intro}</AppText>
@@ -34,7 +35,7 @@ export default function Legal() {
               {items.map((x) => <AppText key={x} variant="small" style={{ lineHeight: 24 }}>• {x}</AppText>)}
             </View>
           ))}
-          <AppText variant="tiny" muted center style={{ marginTop: 18 }}>لأي سؤال: الإعدادات ← تواصل معنا</AppText>
+          <AppText variant="tiny" muted center style={{ marginTop: 18 }}>{t('لأي سؤال: الإعدادات ← تواصل معنا')}</AppText>
         </>
       ) : null}
     </ScrollView>

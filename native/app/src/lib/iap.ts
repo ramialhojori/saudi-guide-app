@@ -7,6 +7,7 @@
 import { Platform } from 'react-native';
 import { api, ApiError } from './api';
 import { session, setPlusUntil } from './auth';
+import { t } from './i18n';
 
 export const PLUS_SKUS = { yearly: 'com.yearly', monthly: 'com.monthly' } as const;
 export type PlusPlan = keyof typeof PLUS_SKUS;
@@ -25,12 +26,12 @@ export class IapError extends Error {}
 /** رسالة مفهومة للمستخدم */
 export function iapMessage(e: unknown): string {
   const m = String((e as Error)?.message || e);
-  if (m === 'not_ios') return 'الاشتراك متوفر حالياً من تطبيق الآيفون.';
-  if (m === 'needs_update') return 'حدّث التطبيق لآخر نسخة عشان تقدر تشترك.';
-  if (m === 'login_required') return 'سجّل دخولك أول عشان يرتبط الاشتراك بحسابك.';
-  if (m === 'no_products') return 'ما قدرنا نجيب الأسعار من App Store. تأكد من النت وجرّب مرة ثانية.';
-  if (m === 'nothing_to_restore') return 'ما لقينا اشتراك سابق على حساب Apple هذا.';
-  return `ما قدرنا نكمل الاشتراك. جرّب مرة ثانية (${m.slice(0, 50)})`;
+  if (m === 'not_ios') return t('الاشتراك متوفر حالياً من تطبيق الآيفون.');
+  if (m === 'needs_update') return t('حدّث التطبيق لآخر نسخة عشان تقدر تشترك.');
+  if (m === 'login_required') return t('سجّل دخولك أول عشان يرتبط الاشتراك بحسابك.');
+  if (m === 'no_products') return t('ما قدرنا نجيب الأسعار من App Store. تأكد من النت وجرّب مرة ثانية.');
+  if (m === 'nothing_to_restore') return t('ما لقينا اشتراك سابق على حساب Apple هذا.');
+  return t('ما قدرنا نكمل الاشتراك. جرّب مرة ثانية ({m})', { m: m.slice(0, 50) });
 }
 
 let connected: Promise<void> | null = null;

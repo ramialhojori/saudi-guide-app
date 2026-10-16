@@ -49,8 +49,8 @@ export function riyadhDate(iso: string, withTime = true): string {
   if (!iso) return '';
   const d = new Date(new Date(iso).getTime() + 3 * 3600e3);
   const h = d.getUTCHours(), mi = d.getUTCMinutes();
-  const t = `${h % 12 || 12}:${String(mi).padStart(2, '0')} ${h < 12 ? t('ص') : t('م')}`;
-  return `${d.getUTCDate()} ${MO[d.getUTCMonth()]}${withTime ? ' · ' + t : ''}`;
+  const tm = `${h % 12 || 12}:${String(mi).padStart(2, '0')} ${h < 12 ? t('ص') : t('م')}`;
+  return `${d.getUTCDate()} ${MO[d.getUTCMonth()]}${withTime ? ' · ' + tm : ''}`;
 }
 
 /** موعد الفعالية: لو بدأت وما خلصت → «مستمرة حتى 31 ديسمبر» */
