@@ -104,8 +104,8 @@ export default function News() {
         <View style={st.head}>
           <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" /></Pressable>
           <View style={{ flex: 1 }}>
-            <AppText variant="small" color="#E4DAF2">{t('من الدليل والصحف السعودية')}</AppText>
             <AppText variant="title" color="#fff" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
+            <AppText variant="small" color="#E4DAF2">{t('من الدليل والصحف السعودية')}</AppText>
           </View>
         </View>
         <View style={st.tabs}>
