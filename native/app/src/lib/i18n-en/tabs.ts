@@ -1,5 +1,6 @@
 /** قاموس إنجليزي — مجموعة tabs (المفتاح = النص العربي كما هو في الكود) */
 export default {
+  'اشترك في دليل+': 'Subscribe to Dalil+',
   'معالم': 'Sights',
   'تراث': 'Heritage',
   'طبيعة': 'Nature',

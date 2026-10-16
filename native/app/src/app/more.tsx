@@ -13,6 +13,7 @@ import { t } from '@/lib/i18n';
 type Item = { icon: IconName; label: string; color: string; on: () => void; soon?: boolean };
 
 const ITEMS: Item[] = [
+  { icon: 'star', label: t('اشترك في دليل+'), color: brand.orangeDeep, on: () => router.push('/plus') },
   { icon: 'spark', label: t('اسأل الدليل (مساعد ذكي)'), color: brand.purple, on: () => router.push('/ask-ai') },
   { icon: 'route', label: t('خطط لي رحلتي'), color: brand.orange, on: () => router.push('/planner') },
   { icon: 'news', label: t('الأخبار'), color: brand.sky, on: () => router.push('/news') },
