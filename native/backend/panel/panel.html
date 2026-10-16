@@ -225,7 +225,7 @@ async function securityView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['affiliate', 'الحجز بالعمولة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
   if (!KEY && !TOKEN) return loginView();
   if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
@@ -237,7 +237,7 @@ async function render() {
     <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, affiliate: affiliateView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -883,13 +883,27 @@ async function errorsView() {
 async function tripsView() {
   const m = $('#main');
   const STT = { draft: ['مسودة', 'b-draft'], live: ['منشورة', 'b-live'], hidden: ['مخفية', 'b-hidden'] };
-  m.innerHTML = `<h1>رحلات جاهزة</h1><p class="sub">رحلات منسقة لكل مدينة تطلع في صفحة المدينة والرئيسية، والمستخدم يحفظها في «رحلتي» بضغطة. أطلب من Claude يجهز رحلات جديدة، وتنزل هنا مسودة لين تنشرها.</p><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.innerHTML = `<h1>رحلات جاهزة</h1><p class="sub">رحلات منسقة لكل مدينة تطلع في صفحة المدينة والرئيسية، والمستخدم يحفظها في «رحلتي» بضغطة. «الحصرية» يشوف منها غير المشترك أول يوم بس. أطلب من Claude يجهز رحلات جديدة، وتنزل هنا مسودة لين تنشرها.</p><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   const d = await api('/admin/trips');
-  $('#res').innerHTML = d.trips.map((x) => `<div class="post"><div class="row"><b class="grow">${h(x.title)} <span class="muted" style="font-size:13px">${h(cityName(x.city))} · ${x.dayCount} يوم · ${x.placeCount} أماكن · حفظها ${x.saves}</span></b><span class="badge ${(STT[x.status] || ['', 'b-hidden'])[1]}">${(STT[x.status] || [x.status])[0]}</span></div>
+  $('#res').innerHTML = d.trips.map((x) => `<div class="post"><div class="row"><b class="grow">${h(x.title)} <span class="muted" style="font-size:13px">${h(cityName(x.city))} · ${x.dayCount} يوم · ${x.placeCount} أماكن · حفظها ${x.saves}</span></b>${x.plusOnly ? '<span class="badge" style="background:#FFF1D6;color:#9A5B00">حصرية دليل+</span>' : ''}<span class="badge ${(STT[x.status] || ['', 'b-hidden'])[1]}">${(STT[x.status] || [x.status])[0]}</span></div>
     ${x.intro ? `<div style="font-size:14px">${h(x.intro)}</div>` : ''}
     <div class="muted" style="font-size:13px">${x.days.map((dd, i) => `<b>اليوم ${i + 1}:</b> ${h(dd.title || '')} (${dd.places.length} أماكن)`).join(' · ')}</div>
-    <div class="row">${x.status !== 'live' ? `<button class="btn g" data-tr="${x.id}" data-s="live">انشرها</button>` : ''}${x.status === 'live' ? `<button class="btn ghost" data-tr="${x.id}" data-s="draft">رجّعها مسودة</button>` : ''}${x.status !== 'hidden' ? `<button class="btn ghost" data-tr="${x.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفها</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه رحلات للحين. أطلب من Claude: «جهز رحلات جاهزة لكل مدينة»</div>';
+    <div class="row">${x.status !== 'live' ? `<button class="btn g" data-tr="${x.id}" data-s="live">انشرها</button>` : ''}${x.status === 'live' ? `<button class="btn ghost" data-tr="${x.id}" data-s="draft">رجّعها مسودة</button>` : ''}${x.status !== 'hidden' ? `<button class="btn ghost" data-tr="${x.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفها</button>` : ''}<button class="btn ghost" data-tp="${x.id}" data-v="${x.plusOnly ? 0 : 1}">${x.plusOnly ? 'خلّها للكل' : 'خلّها حصرية لدليل+'}</button></div></div>`).join('') || '<div class="empty">ما فيه رحلات للحين. أطلب من Claude: «جهز رحلات جاهزة لكل مدينة»</div>';
   m.querySelectorAll('[data-tr]').forEach((b) => (b.onclick = async () => { await api('/admin/trips/' + b.dataset.tr, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); tripsView(); }));
+  m.querySelectorAll('[data-tp]').forEach((b) => (b.onclick = async () => { await api('/admin/trips/' + b.dataset.tp, { method: 'POST', body: { plus_only: b.dataset.v === '1' } }); toast('تم'); tripsView(); }));
+}
+async function affiliateView() {
+  const m = $('#main');
+  m.innerHTML = `<h1>الحجز بالعمولة</h1><p class="sub">أزرار «احجز» في صفحة المدينة والمكان والرحلات الجاهزة. المستخدم يحجز من موقع الشريك، وتنحسب لك عمولة عن طريق Travelpayouts (حسابك: 787616). في الرابط تقدر تستخدم {city} {city_en} {lat} {lng} {place}.</p><div id="res" class="card" style="max-width:720px"><p class="muted">لحظة...</p></div>`;
+  const d = await api('/admin/affiliate');
+  $('#res').innerHTML = `<label class="row" style="padding:8px 0;cursor:pointer"><span class="grow" style="font-weight:700">إظهار أزرار الحجز في التطبيق</span><input type="checkbox" id="afOn" ${d.on ? 'checked' : ''} style="width:22px;height:22px"></label>
+    ${d.kinds.map((k) => `<div style="margin-top:10px"><div style="font-weight:600;margin-bottom:4px">${h(d.labels[k])}</div><input class="in" dir="ltr" data-af="${k}" value="${h(d.links[k] || '')}" placeholder="https://..." style="width:100%"></div>`).join('')}
+    <div class="row" style="margin-top:14px"><button class="btn g" id="afSave">احفظ</button></div>`;
+  $('#afSave').onclick = async () => {
+    const links = {}; m.querySelectorAll('[data-af]').forEach((i) => (links[i.dataset.af] = i.value.trim()));
+    try { await api('/admin/affiliate', { method: 'POST', body: { on: $('#afOn').checked, links } }); toast('انحفظ'); affiliateView(); }
+    catch (e) { toast(e.message === 'bad_url' ? 'الرابط لازم يبدأ بـ https://' : errMsg(e)); }
+  };
 }
 async function papersView() {
   const m = $('#main');

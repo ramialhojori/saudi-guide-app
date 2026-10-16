@@ -41,6 +41,7 @@ export const FEATURES = {
   ai_summary: '«خلاصة الزوار» الذكية أعلى صفحة المكان',
   ads: 'الإعلانات (AdMob) لغير مشتركي دليل+',
   papers: 'الصحف السعودية («أخباري» ومتابعة الصحف)',
+  videos: 'رفع مراجعات الفيديو من الزوار (المعتمد يبقى ظاهر حتى لو قفلتها)',
 };
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();

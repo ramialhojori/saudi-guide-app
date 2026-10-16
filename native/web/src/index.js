@@ -103,6 +103,8 @@ function inject(res, meta, site) {
     // شريط آبل الرسمي «افتح في التطبيق» على سفاري الآيفون
     `<meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}${meta?.deep ? `, app-argument=saudiguide://${meta.deep}` : ''}">`,
     `<meta name="theme-color" content="#604C87">`,
+    // Travelpayouts Drive (مشروع 583393): يربط روابط الحجز بحساب رامي ويحسب العمولة — طلبه رامي 16 أكتوبر 2026
+    `<script data-cfasync="false" data-no-defer="1">(function(){var s=document.createElement('script');s.async=1;s.src='https://tpembars.com/NTgzMzkz.js?t=583393';document.head.appendChild(s);})();</script>`,
     meta?.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replace(/</g, '\\u003c')}</script>` : '',
   ].join('');
   const noscript = meta?.h1 ? `<noscript><main dir="rtl" lang="ar"><h1>${esc(meta.h1)}</h1><p>${esc(meta.body || meta.desc)}</p><p><a href="https://apps.apple.com/app/id${APP_STORE_ID}">حمّل تطبيق دليل السعودية</a></p></main></noscript>` : '';

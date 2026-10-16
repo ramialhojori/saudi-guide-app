@@ -26,6 +26,7 @@ export function ReadyTripsStrip({ city, title }: { city?: string; title?: string
             <Image source={x.cover} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
             <LinearGradient colors={['transparent', 'rgba(32,22,54,0.9)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
             <View style={st.badge}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{x.dayCount === 1 ? t('يوم واحد') : t('{n} أيام', { n: x.dayCount })}</AppText></View>
+            {x.plusOnly ? <View style={st.plus}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('حصرية دليل+')}</AppText></View> : null}
             <View style={{ position: 'absolute', bottom: 12, right: 12, left: 12 }}>
               {!city ? <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>{cityName(x.city)}</AppText> : null}
               <AppText style={{ fontFamily: font.bold, fontSize: 16, lineHeight: 24 }} color="#fff" numberOfLines={2}>{tripTitle(x)}</AppText>
@@ -41,5 +42,6 @@ export function ReadyTripsStrip({ city, title }: { city?: string; title?: string
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, marginBottom: 10 },
   card: { width: 210, height: 230, borderRadius: 22, overflow: 'hidden', backgroundColor: brand.chip },
+  plus: { position: 'absolute', top: 10, right: 10, backgroundColor: brand.purple, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   badge: { position: 'absolute', top: 10, left: 10, backgroundColor: brand.orange, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
 });

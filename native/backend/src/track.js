@@ -1,7 +1,7 @@
 /* قياس الاستخدام: التطبيق يرسل دفعات أحداث بسيطة كل شوي، ونخزنها عدّادات يومية.
    ما نخزن أي معلومة شخصية: معرّف الجهاز رقم عشوائي يولده التطبيق، والبحث نخزنه كلمات مجمّعة. */
 
-const METRICS = new Set(['open', 'place', 'event', 'search', 'search_empty', 'coupon', 'share', 'directions', 'trip_add', 'city', 'article', 'screen', 'share_app', 'rate_app', 'review_prompt', 'invite_share', 'invite_redeem', 'share_article']);
+const METRICS = new Set(['open', 'place', 'event', 'search', 'search_empty', 'coupon', 'share', 'directions', 'trip_add', 'city', 'article', 'screen', 'share_app', 'rate_app', 'review_prompt', 'invite_share', 'invite_redeem', 'share_article', 'book_click']);
 export const dayMk = (t = Date.now()) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
 
 export async function trackRoute(request, env, J) {

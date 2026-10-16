@@ -7,6 +7,7 @@ import { AppText } from './AppText';
 import { Icon } from './Icon';
 import { alert } from '@/lib/alert';
 import { useAuth } from '@/lib/auth';
+import { useFeatures } from '@/lib/features';
 import { t } from '@/lib/i18n';
 import { useAsync } from '@/lib/useAsync';
 import { getPlaceVideos, pickAndUpload, playerAvailable, type PlaceVideo } from '@/lib/videos';
@@ -27,6 +28,7 @@ export function PlaceVideos({ placeId }: { placeId: number }) {
   const { data } = useAsync(() => getPlaceVideos(placeId).catch(() => []), [placeId]);
   const [playing, setPlaying] = useState<PlaceVideo | null>(null);
   const [busy, setBusy] = useState('');
+  const uploads = useFeatures().videos !== false; // رامي يقدر يقفل الرفع من اللوحة، والمعتمد يبقى ظاهر
 
   const open = (v: PlaceVideo) => (playerAvailable() ? setPlaying(v) : WebBrowser.openBrowserAsync(v.url).catch(() => {}));
   const add = () => {
@@ -45,14 +47,15 @@ export function PlaceVideos({ placeId }: { placeId: number }) {
     else if (err) alert(t('ما انرفع'), err);
   };
 
+  if (!uploads && !data?.length) return null;
   return (
     <View style={{ marginTop: 18 }}>
       <View style={st.head}>
         <AppText variant="section" style={{ flex: 1 }}>{t('فيديوهات الزوار')}</AppText>
-        <Pressable style={st.add} onPress={add} disabled={!!busy}>
+        {uploads ? <Pressable style={st.add} onPress={add} disabled={!!busy}>
           {busy ? <ActivityIndicator color={brand.purple} size="small" /> : <Icon name="cam" color={brand.purple} size={16} />}
           <AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{busy || t('أضف فيديو')}</AppText>
-        </Pressable>
+        </Pressable> : null}
       </View>
       {data?.length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16 }}>

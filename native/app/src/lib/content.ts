@@ -34,7 +34,7 @@ async function tryApi<T>(path: string, fallback: () => T | Promise<T>): Promise<
 }
 
 /* أسماء المدن والتصنيفات بالإنجليزي (نفس اللي في السيرفر backend/src/i18n.js) */
-const CITY_EN: Record<string, string> = {
+export const CITY_EN: Record<string, string> = {
   riyadh: 'Riyadh', medina: 'Madinah', 'makkah-region': 'Makkah', alula: 'AlUla', 'asir-region': 'Asir', taif: 'Taif', jeddah: 'Jeddah',
   jizan: 'Jazan', abha: 'Abha', diriyah: 'Diriyah', yanbu: 'Yanbu', albaha: 'Al-Baha', 'riyadh-region': 'Riyadh Region', 'tabuk-region': 'Tabuk',
   'qassim-region': 'Al-Qassim', 'eastern-region': 'Eastern Province', umluj: 'Umluj & the Red Sea', hail: 'Hail', 'aljawf-region': 'Al-Jouf',

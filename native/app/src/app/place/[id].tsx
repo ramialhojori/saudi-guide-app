@@ -4,6 +4,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { BannerSlot } from '@/components/Ads';
 import { PlaceVideos } from '@/components/PlaceVideos';
+import { BookStrip } from '@/components/BookStrip';
 import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { usePullUpClose } from '@/components/PullUpClose';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -306,6 +307,9 @@ export default function PlaceScreen() {
 
         {/* فيديوهات الزوار */}
         {F.photos ? <PlaceVideos placeId={p.id} /> : null}
+
+        {/* الحجز بالعمولة: فنادق قريبة وجولات */}
+        <BookStrip city={p.city} lat={p.lat ?? undefined} lng={p.lng ?? undefined} place={p.title} kinds={['hotels', 'tours']} title={t('تبي تقعد قريب؟')} />
 
         {/* التقييمات وصور الزوار */}
         {F.reviews ? (<>

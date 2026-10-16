@@ -12,6 +12,7 @@ import { Icon } from '@/components/Icon';
 import { Loading } from '@/components/State';
 import { OfflineCard } from '@/components/OfflineCard';
 import { ReadyTripsStrip } from '@/components/ReadyTrips';
+import { BookStrip } from '@/components/BookStrip';
 import { BackButton, Chip, ImageRow } from '@/components/ui';
 import { cityKinds, getCities, getCityPlaces, getWeather } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
@@ -102,6 +103,7 @@ export default function CityScreen() {
 
       {!q ? <OfflineCard city={id} name={city?.name ?? ''} /> : null}
       {!q ? <ReadyTripsStrip city={id} /> : null}
+      {!q ? <BookStrip city={id} kinds={['hotels', 'flights', 'tours', 'cars']} /> : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 14 }}>
         <Chip label={`${t('الكل')} ${city?.count ?? ''}`} on={!kind} color={brand.ink} onPress={() => setKind(undefined)} />

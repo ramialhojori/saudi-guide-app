@@ -36,6 +36,6 @@ export async function pickAndUpload(placeId: number, camera: boolean, onProgress
     const res = await fetch(`${env.apiUrl}/v1/places/${placeId}/videos?duration=${Math.round(dur)}`, { method: 'POST', headers: { 'Content-Type': type, Authorization: `Bearer ${session().token}` }, body: blob });
     if (res.ok) return null;
     const e = (await res.json().catch(() => ({}))).error;
-    return ({ too_many_pending: t('عندك 3 مقاطع تنتظر المراجعة. انتظر لين نراجعها.'), too_big: t('الفيديو كبير (أكثر من 40 ميقا).'), bad_type: t('صيغة الفيديو ما تنفع، جرّب مقطع ثاني.'), login_required: t('سجّل دخولك أول.') } as Record<string, string>)[e] || t('ما قدرنا نرفع الفيديو. تأكد من النت وجرّب مرة ثانية.');
+    return ({ too_many_pending: t('عندك 3 مقاطع تنتظر المراجعة. انتظر لين نراجعها.'), too_big: t('الفيديو كبير (أكثر من 40 ميقا).'), bad_type: t('صيغة الفيديو ما تنفع، جرّب مقطع ثاني.'), login_required: t('سجّل دخولك أول.'), feature_off: t('رفع الفيديو موقوف مؤقتاً.') } as Record<string, string>)[e] || t('ما قدرنا نرفع الفيديو. تأكد من النت وجرّب مرة ثانية.');
   } catch { return t('ما قدرنا نرفع الفيديو. تأكد من النت وجرّب مرة ثانية.'); }
 }

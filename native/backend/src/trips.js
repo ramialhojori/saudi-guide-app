@@ -1,3 +1,4 @@
+import { sessionUser } from './auth.js';
 /* «رحلات جاهزة»: رحلات منسقة لكل مدينة (يوم في العلا، ويكند عائلي في أبها، جدة التاريخية مشي…)
    - كل رحلة: أيام، وكل يوم قائمة أماكن من الدليل بالترتيب، ووصف قصير
    - تنضاف من اللوحة أو من Claude (مسودة دايماً) ولا تطلع للناس إلا لما رامي ينشرها
@@ -9,8 +10,15 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS ready_trips ( id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, title TEXT NOT NULL, title_en TEXT, intro TEXT, intro_en TEXT, tags TEXT NOT NULL DEFAULT '[]', days TEXT NOT NULL DEFAULT '[]', cover TEXT, status TEXT NOT NULL DEFAULT 'draft', sort INTEGER NOT NULL DEFAULT 50, saves INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
   'CREATE INDEX IF NOT EXISTS ready_trips_city ON ready_trips(status, city, sort)',
 ];
+const ALTERS = ['ALTER TABLE ready_trips ADD COLUMN plus_only INTEGER NOT NULL DEFAULT 0'];
 let ready = false;
-async function ensure(env) { if (!ready) { await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))); ready = true; } }
+async function ensure(env) {
+  if (ready) return;
+  await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
+  for (const a of ALTERS) { try { await env.DB.prepare(a).run(); } catch { /* موجود */ } }
+  ready = true;
+}
+const isPlusUser = (me) => { const t = now(); return !!me && ((me.plus_until && me.plus_until > t) || (me.plus_grant_until && me.plus_grant_until > t)); };
 
 const TAGS = ['family', 'couples', 'friends', 'heritage', 'nature', 'food', 'budget', 'luxury', 'weekend', 'walking'];
 /** days: [{ title, note, places: [id...] }] */
@@ -25,7 +33,7 @@ async function out(env, r, full) {
   const days = parse(r.days, []);
   const o = {
     id: r.id, city: r.city, title: r.title, titleEn: r.title_en || '', intro: r.intro || '', introEn: r.intro_en || '', tags: parse(r.tags, []),
-    cover: r.cover || '', dayCount: days.length, placeCount: days.reduce((n, d) => n + d.places.length, 0), saves: r.saves,
+    cover: r.cover || '', plusOnly: !!r.plus_only, dayCount: days.length, placeCount: days.reduce((n, d) => n + d.places.length, 0), saves: r.saves,
   };
   if (!o.cover && days[0]?.places?.[0]) {
     const p = await env.DB.prepare('SELECT thumb, images FROM places WHERE id=?').bind(days[0].places[0]).first();
@@ -47,7 +55,11 @@ export async function tripsRoute(p, request, env, J, q) {
   if ((m = p.match(/^\/v1\/trips\/(\d+)$/)) && request.method === 'GET') {
     const r = await env.DB.prepare("SELECT * FROM ready_trips WHERE id=? AND status='live'").bind(+m[1]).first();
     if (!r) return J({ error: 'not_found' }, 404);
-    return J({ trip: await out(env, r, true) }, 200, 300);
+    const trip = await out(env, r, true);
+    delete trip.status; delete trip.sort;
+    // «حصرية دليل+»: غير المشترك يشوف الغلاف والوصف وأول يوم بس
+    if (r.plus_only && !isPlusUser(await sessionUser(env, request))) { trip.locked = true; trip.days = trip.days.slice(0, 1); }
+    return J({ trip }, 200, r.plus_only ? 0 : 300);
   }
   if ((m = p.match(/^\/v1\/trips\/(\d+)\/save$/)) && request.method === 'POST') {
     await env.DB.prepare('UPDATE ready_trips SET saves=saves+1 WHERE id=?').bind(+m[1]).run();
@@ -77,15 +89,16 @@ export async function tripsAdmin(p, request, env, J) {
       tags: JSON.stringify((Array.isArray(b.tags) ? b.tags : parse(old?.tags, [])).filter((x) => TAGS.includes(x))),
       cover: String(b.cover ?? old?.cover ?? '').slice(0, 500), sort: b.sort != null ? +b.sort : old?.sort ?? 50,
       status: ['draft', 'live', 'hidden'].includes(b.status) ? b.status : old?.status || 'draft',
+      plus_only: b.plus_only != null ? (b.plus_only ? 1 : 0) : old?.plus_only || 0,
     };
     if (!f.city || f.title.length < 3) return J({ error: 'city_title_required' }, 400);
     if (id) {
-      await env.DB.prepare('UPDATE ready_trips SET city=?,title=?,title_en=?,intro=?,intro_en=?,tags=?,days=?,cover=?,sort=?,status=?,updated=? WHERE id=?')
-        .bind(f.city, f.title, f.title_en, f.intro, f.intro_en, f.tags, JSON.stringify(days), f.cover, f.sort, f.status, now(), id).run();
+      await env.DB.prepare('UPDATE ready_trips SET city=?,title=?,title_en=?,intro=?,intro_en=?,tags=?,days=?,cover=?,sort=?,status=?,plus_only=?,updated=? WHERE id=?')
+        .bind(f.city, f.title, f.title_en, f.intro, f.intro_en, f.tags, JSON.stringify(days), f.cover, f.sort, f.status, f.plus_only, now(), id).run();
     } else {
       // الجديد مسودة دايماً (القاعدة: رامي هو اللي ينشر)
-      const r = await env.DB.prepare("INSERT INTO ready_trips (city,title,title_en,intro,intro_en,tags,days,cover,sort,status,created,updated) VALUES (?,?,?,?,?,?,?,?,?,'draft',?,?)")
-        .bind(f.city, f.title, f.title_en, f.intro, f.intro_en, f.tags, JSON.stringify(days), f.cover, f.sort, now(), now()).run();
+      const r = await env.DB.prepare("INSERT INTO ready_trips (city,title,title_en,intro,intro_en,tags,days,cover,sort,status,plus_only,created,updated) VALUES (?,?,?,?,?,?,?,?,?,'draft',?,?,?)")
+        .bind(f.city, f.title, f.title_en, f.intro, f.intro_en, f.tags, JSON.stringify(days), f.cover, f.sort, f.plus_only, now(), now()).run();
       id = r.meta.last_row_id;
     }
     const row = await env.DB.prepare('SELECT * FROM ready_trips WHERE id=?').bind(id).first();

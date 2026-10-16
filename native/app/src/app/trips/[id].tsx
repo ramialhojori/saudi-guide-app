@@ -6,7 +6,9 @@ import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, View } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
+import { BookStrip } from '@/components/BookStrip';
 import { alert } from '@/lib/alert';
+import { isPlus, useAuth } from '@/lib/auth';
 import { cityName, getPlacesByIds } from '@/lib/content';
 import { t } from '@/lib/i18n';
 import { countSave, getReadyTrip, tripIntro, tripTitle } from '@/lib/readyTrips';
@@ -22,7 +24,9 @@ const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac, brand.green];
 export default function ReadyTripScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: x, loading } = useAsync(() => getReadyTrip(+id), [id]);
+  const { user } = useAuth();
+  const plus = isPlus(user);
+  const { data: x, loading } = useAsync(() => getReadyTrip(+id), [id, plus]);
   const ids = x ? x.days.flatMap((d) => d.places) : [];
   const { data: places } = useAsync(() => (ids.length ? getPlacesByIds(ids) : Promise.resolve([])), [x?.id]);
   const byId = new Map((places ?? []).map((p) => [p.id, p]));
@@ -65,6 +69,12 @@ export default function ReadyTripScreen() {
         </View>
         {tripIntro(x) ? <AppText style={{ margin: 16, marginBottom: 4, lineHeight: 26 }}>{tripIntro(x)}</AppText> : null}
 
+        {x.locked ? (
+          <View style={st.lockNote}>
+            <Icon name="lock" color={brand.purple} size={16} />
+            <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{t('رحلة حصرية لمشتركي دليل+: تشوف أول يوم، وباقي الأيام تنفتح لك مع الاشتراك.')}</AppText>
+          </View>
+        ) : null}
         {x.days.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
             {x.days.map((d, i) => (
@@ -100,11 +110,18 @@ export default function ReadyTripScreen() {
             );
           })}
         </View>
+        {!x.locked ? <BookStrip city={x.city} kinds={['hotels', 'flights', 'cars']} title={t('جهّز حجوزات رحلتك')} /> : null}
       </ScrollView>
       <View style={[st.bar, { paddingBottom: insets.bottom + 10 }]}>
-        <Pressable style={st.saveBtn} onPress={save} disabled={!places}>
-          <Icon name="route" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{t('احفظها في رحلتي')}</AppText>
-        </Pressable>
+        {x.locked ? (
+          <Pressable style={[st.saveBtn, { backgroundColor: brand.purple }]} onPress={() => router.push('/plus')}>
+            <Icon name="lock" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{t('افتح الرحلة كاملة مع دليل+')}</AppText>
+          </Pressable>
+        ) : (
+          <Pressable style={st.saveBtn} onPress={save} disabled={!places}>
+            <Icon name="route" color="#fff" size={18} /><AppText color="#fff" style={{ fontFamily: font.bold, fontSize: 16 }}>{t('احفظها في رحلتي')}</AppText>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -114,6 +131,7 @@ const st = StyleSheet.create({
   top: { position: 'absolute', right: 16, left: 16, flexDirection: 'row', justifyContent: 'space-between' },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
   dayChip: { height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: brand.card, justifyContent: 'center' },
+  lockNote: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand.chip, borderRadius: 14, padding: 10, marginHorizontal: 16, marginTop: 10 },
   note: { flexDirection: 'row', gap: 8, backgroundColor: brand.softOrange, borderRadius: 14, padding: 10, marginTop: 6 },
   num: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
   line: { width: 2, flex: 1, opacity: 0.4, marginVertical: 2 },

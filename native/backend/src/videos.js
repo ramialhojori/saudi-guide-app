@@ -3,6 +3,7 @@
    - المعتمد يطلع في صفحة المكان، وصاحبه ياخذ +20 نقطة وإشعار
    - 3 مقاطع قيد المراجعة كحد أقصى لكل مستخدم */
 import { sessionUser } from './auth.js';
+import { getFeatures } from './contrib.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const MAX = 40 * 1024 * 1024, PTS = 20;
@@ -28,6 +29,7 @@ export async function videosRoute(p, request, env, J) {
   const me = await sessionUser(env, request);
   if (!me) return J({ error: 'login_required' }, 401);
   if (!env.MEDIA) return J({ error: 'media_not_configured' }, 503);
+  if ((await getFeatures(env)).videos === false) return J({ error: 'feature_off' }, 403);
   if (me.community_ban_until && me.community_ban_until > now()) return J({ error: 'banned' }, 403);
   const place = await env.DB.prepare('SELECT id FROM places WHERE id=? AND deleted=0').bind(pid).first();
   if (!place) return J({ error: 'not_found' }, 404);

@@ -129,6 +129,7 @@ const ALTERS = [
   'ALTER TABLE merchants ADD COLUMN plan_warned INTEGER NOT NULL DEFAULT 0', // انرسل تنبيه قرب الانتهاء
   'ALTER TABLE users ADD COLUMN invite_code TEXT', // كود «ادعُ صديق» (invite.js)
   'CREATE UNIQUE INDEX IF NOT EXISTS users_invite ON users(invite_code)',
+  'ALTER TABLE ready_trips ADD COLUMN plus_only INTEGER NOT NULL DEFAULT 0', // رحلة «حصرية دليل+» (trips.js)
   'ALTER TABLE devices ADD COLUMN papers TEXT', // الصحف اللي يتابعها الجهاز (papers.js)
   'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
   // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)
