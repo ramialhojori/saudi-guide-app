@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
 import { Avatar, Badge, Pill } from '@/components/ui';
-import { useAuth } from '@/lib/auth';
+import { isPlus, useAuth } from '@/lib/auth';
 import { activity, badges, coupons, me as demo, passport } from '@/lib/mock';
 import { ago, myStats, tint, type Stats } from '@/lib/community';
 import { getPassport, type Passport as PassportData } from '@/lib/passport';
@@ -16,7 +16,7 @@ import { useFeatures } from '@/lib/features';
 import { CouponCard } from '@/components/CouponCard';
 import { myCoupons, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { brand, font, photos } from '@/theme/tokens';
-import { t, tr } from '@/lib/i18n';
+import { isEn, t, tr } from '@/lib/i18n';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
 
@@ -155,6 +155,20 @@ export default function Profile() {
         </View>
       ) : null}
 
+      {/* دليل+: مشترك → حالة الاشتراك، غير مشترك → دعوة للاشتراك */}
+      <Pressable style={st.plus} onPress={() => router.push('/plus')}>
+        <View style={st.plusIcon}><Icon name="star" color="#fff" size={20} /></View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color="#fff">{isPlus(user) ? t('أنت مشترك في دليل+') : t('اشترك في دليل+')}</AppText>
+          <AppText variant="tiny" color="#FFF1E4">
+            {isPlus(user)
+              ? t('فعّال حتى {d}', { d: new Date((user!.plusUntil || 0) * 1000).toLocaleDateString(isEn ? 'en-GB' : 'ar-SA', { day: 'numeric', month: 'long', year: 'numeric', calendar: 'gregory' }) })
+              : t('اسأل الدليل بلا حدود وخطط رحلاتك بذكاء')}
+          </AppText>
+        </View>
+        <Icon name="chevron" color="#fff" size={18} />
+      </Pressable>
+
       {/* جواز السعودية */}
       {F.passport ? <Pressable style={st.passport} onPress={() => router.push('/passport')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -274,6 +288,8 @@ const st = StyleSheet.create({
   lvl: { position: 'absolute', bottom: -6, alignSelf: 'center', backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
   bar: { height: 10, borderRadius: 5, backgroundColor: brand.chip, marginTop: 6, overflow: 'hidden' },
   barFill: { height: 10, borderRadius: 5, backgroundColor: brand.orange },
+  plus: { margin: 16, marginBottom: 0, backgroundColor: brand.orangeDeep, borderRadius: 22, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  plusIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   passport: { margin: 16, marginBottom: 0, backgroundColor: brand.ink, borderRadius: 26, padding: 18 },
   stamps: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
   stamp: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },

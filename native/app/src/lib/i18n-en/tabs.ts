@@ -1,5 +1,8 @@
 /** قاموس إنجليزي — مجموعة tabs (المفتاح = النص العربي كما هو في الكود) */
 export default {
+  'اسأل الدليل بلا حدود وخطط رحلاتك بذكاء': "Unlimited Ask the Guide and smart trip plans",
+  'فعّال حتى {d}': "Active until {d}",
+  'أنت مشترك في دليل+': "You're subscribed to Dalil+",
   'اشترك في دليل+': 'Subscribe to Dalil+',
   'معالم': 'Sights',
   'تراث': 'Heritage',
