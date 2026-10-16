@@ -225,7 +225,7 @@ async function securityView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
   if (!KEY && !TOKEN) return loginView();
   if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
@@ -237,7 +237,7 @@ async function render() {
     <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, report: reportView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -836,6 +836,48 @@ async function commentsView() {
     <div class="muted" style="font-size:13px">على خبر: ${h(c.article.title)}${c.reason ? ' · السبب: ' + h(c.reason) : ''}</div>
     <div class="row">${c.status !== 'visible' ? `<button class="btn g" data-cm="${c.id}" data-s="visible">انشره</button>` : ''}${c.status !== 'hidden' ? `<button class="btn ghost" data-cm="${c.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه شي هنا</div>';
   m.querySelectorAll('[data-cm]').forEach((b) => (b.onclick = async () => { await api('/admin/comments/' + b.dataset.cm, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); SUMMARY = null; commentsView(); }));
+}
+async function reportView() {
+  const m = $('#main');
+  m.innerHTML = `<h1>التقرير الأسبوعي</h1><p class="sub">آخر 7 أيام مقارنة بالأسبوع اللي قبله. يوصلك ملخصه كل أحد 9 الصبح كإشعار.</p><div id="res"><p class="muted">لحظة...</p></div>`;
+  const r = await api('/admin/report');
+  const L = { active: 'أجهزة نشطة', opens: 'فتح التطبيق', users: 'حسابات جديدة', tripAdds: 'إضافات لرحلتي', searches: 'عمليات بحث', shares: 'مشاركات', invites: 'دعوات أصدقاء', reviews: 'تقييمات', posts: 'أسئلة المجتمع', errors: 'أعطال (جهاز/يوم)' };
+  const ch = (a, b) => (!b ? '' : `<span style="font-size:12px;color:${a >= b ? 'var(--green)' : 'var(--pinkDeep)'}">${a >= b ? '▲' : '▼'} ${Math.abs(Math.round(((a - b) / b) * 100))}%</span>`);
+  const list = (arr, f) => arr.length ? arr.map(f).join('') : '<div class="muted">ما فيه بيانات</div>';
+  $('#res').innerHTML = `<div class="muted" style="margin-bottom:10px">${r.from} ← ${r.to} · مشتركين دليل+ الحين: <b>${r.plus}</b>${r.errorsOpen ? ` · <span style="color:var(--pinkDeep)">${r.errorsOpen} عطل مفتوح</span>` : ''}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">${Object.keys(L).map((k) => `<div class="post" style="gap:2px"><div class="muted" style="font-size:13px">${L[k]}</div><b style="font-size:24px">${r.cur[k]}</b><div class="muted" style="font-size:12px">قبل: ${r.prev[k]} ${ch(r.cur[k], r.prev[k])}</div></div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px">
+      <div class="post"><b>أكثر الأماكن مشاهدة</b>${list(r.topPlaces, (x) => `<div class="row"><span class="grow">${h(x.title || '#' + x.id)}</span><b>${x.n}</b></div>`)}</div>
+      <div class="post"><b>أكثر البحث</b>${list(r.topSearches, (x) => `<div class="row"><span class="grow">${h(x.k)}</span><b>${x.n}</b></div>`)}</div>
+      <div class="post"><b>بحثوا وما لقوا</b>${list(r.emptySearches, (x) => `<div class="row"><span class="grow">${h(x.k)}</span><b>${x.n}</b></div>`)}</div>
+      <div class="post"><b>أكثر المدن</b>${list(r.topCities, (x) => `<div class="row"><span class="grow">${h(cityName(x.k))}</span><b>${x.n}</b></div>`)}</div>
+    </div>`;
+}
+let ERTAB = 'open';
+async function errorsView() {
+  const m = $('#main');
+  const ST = { open: ['مفتوح', 'b-draft'], fixed: ['انحل', 'b-live'], ignored: ['متجاهل', 'b-hidden'] };
+  m.innerHTML = `<h1>الأعطال</h1><p class="sub">أي خطأ يصير لمستخدم في التطبيق يوصل هنا (بدون بيانات شخصية). نفس الخطأ يتجمع بسطر واحد. لو علّمته «انحل» ورجع، يرجع «مفتوح» لحاله.</p>
+    <div class="tabs">${[['open', 'مفتوحة'], ['fixed', 'انحلت'], ['ignored', 'متجاهلة']].map(([k, t]) => `<button data-et="${k}" class="${ERTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.querySelectorAll('[data-et]').forEach((b) => (b.onclick = () => { ERTAB = b.dataset.et; errorsView(); }));
+  const d = await api('/admin/errors');
+  const rows = d.errors.filter((e) => e.status === ERTAB);
+  $('#res').innerHTML = rows.map((e) => `<div class="post"><div class="row"><b class="grow" dir="ltr" style="text-align:left">${h(e.message)}</b>${e.fatal ? '<span class="badge b-draft">طيّح الصفحة</span>' : ''}<span class="badge ${(ST[e.status] || ['', 'b-hidden'])[1]}">${(ST[e.status] || [e.status])[0]}</span></div>
+    <div class="muted" style="font-size:13px">${e.count} مرة · ${e.devices} جهاز · ${h(e.platform || '')} ${h(e.version || '')}${e.screen ? ' · الصفحة ' + h(e.screen) : ''} · آخر مرة ${new Date(e.last * 1000).toLocaleString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</div>
+    ${e.stack ? `<pre dir="ltr" style="font-size:11px;white-space:pre-wrap;background:var(--chip);padding:8px;border-radius:10px;max-height:140px;overflow:auto">${h(e.stack)}</pre>` : ''}
+    <div class="row">${e.status !== 'fixed' ? `<button class="btn g" data-ef="${e.fp}" data-s="fixed">انحل</button>` : ''}${e.status !== 'ignored' ? `<button class="btn ghost" data-ef="${e.fp}" data-s="ignored">تجاهله</button>` : ''}${e.status !== 'open' ? `<button class="btn ghost" data-ef="${e.fp}" data-s="open">رجّعه مفتوح</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه أعطال هنا</div>';
+  m.querySelectorAll('[data-ef]').forEach((b) => (b.onclick = async () => { await api('/admin/errors/' + b.dataset.ef, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); errorsView(); }));
+}
+async function tripsView() {
+  const m = $('#main');
+  const STT = { draft: ['مسودة', 'b-draft'], live: ['منشورة', 'b-live'], hidden: ['مخفية', 'b-hidden'] };
+  m.innerHTML = `<h1>رحلات جاهزة</h1><p class="sub">رحلات منسقة لكل مدينة تطلع في صفحة المدينة والرئيسية، والمستخدم يحفظها في «رحلتي» بضغطة. أطلب من Claude يجهز رحلات جديدة، وتنزل هنا مسودة لين تنشرها.</p><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  const d = await api('/admin/trips');
+  $('#res').innerHTML = d.trips.map((x) => `<div class="post"><div class="row"><b class="grow">${h(x.title)} <span class="muted" style="font-size:13px">${h(cityName(x.city))} · ${x.dayCount} يوم · ${x.placeCount} أماكن · حفظها ${x.saves}</span></b><span class="badge ${(STT[x.status] || ['', 'b-hidden'])[1]}">${(STT[x.status] || [x.status])[0]}</span></div>
+    ${x.intro ? `<div style="font-size:14px">${h(x.intro)}</div>` : ''}
+    <div class="muted" style="font-size:13px">${x.days.map((dd, i) => `<b>اليوم ${i + 1}:</b> ${h(dd.title || '')} (${dd.places.length} أماكن)`).join(' · ')}</div>
+    <div class="row">${x.status !== 'live' ? `<button class="btn g" data-tr="${x.id}" data-s="live">انشرها</button>` : ''}${x.status === 'live' ? `<button class="btn ghost" data-tr="${x.id}" data-s="draft">رجّعها مسودة</button>` : ''}${x.status !== 'hidden' ? `<button class="btn ghost" data-tr="${x.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفها</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه رحلات للحين. أطلب من Claude: «جهز رحلات جاهزة لكل مدينة»</div>';
+  m.querySelectorAll('[data-tr]').forEach((b) => (b.onclick = async () => { await api('/admin/trips/' + b.dataset.tr, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); tripsView(); }));
 }
 async function papersView() {
   const m = $('#main');

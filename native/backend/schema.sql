@@ -465,3 +465,13 @@ CREATE INDEX IF NOT EXISTS admin_logins_at ON admin_logins(at DESC);
 -- «ادعُ صديق» (invite.js): مين دعا مين، وهل انعطت المكافأة
 CREATE TABLE IF NOT EXISTS referrals ( invitee_id TEXT PRIMARY KEY, inviter_id TEXT NOT NULL, code TEXT NOT NULL, rewarded INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL );
 CREATE INDEX IF NOT EXISTS referrals_inviter ON referrals(inviter_id, created);
+
+-- «رحلات جاهزة» (trips.js): رحلات منسقة لكل مدينة، مسودة لين رامي ينشرها
+CREATE TABLE IF NOT EXISTS ready_trips ( id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, title TEXT NOT NULL, title_en TEXT, intro TEXT, intro_en TEXT, tags TEXT NOT NULL DEFAULT '[]', days TEXT NOT NULL DEFAULT '[]', cover TEXT, status TEXT NOT NULL DEFAULT 'draft', sort INTEGER NOT NULL DEFAULT 50, saves INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, updated INTEGER NOT NULL );
+CREATE INDEX IF NOT EXISTS ready_trips_city ON ready_trips(status, city, sort);
+
+-- أعطال التطبيق (insights.js): نفس الخطأ سطر واحد بعدّاد، وجهاز واحد يُحسب مرة باليوم
+CREATE TABLE IF NOT EXISTS app_errors ( fp TEXT PRIMARY KEY, message TEXT NOT NULL, stack TEXT, screen TEXT, platform TEXT, version TEXT, fatal INTEGER NOT NULL DEFAULT 0, count INTEGER NOT NULL DEFAULT 1, devices INTEGER NOT NULL DEFAULT 1, first INTEGER NOT NULL, last INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'open' );
+CREATE INDEX IF NOT EXISTS app_errors_last ON app_errors(status, last DESC);
+CREATE TABLE IF NOT EXISTS app_error_hits ( fp TEXT NOT NULL, device TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (fp, device, day) );
+CREATE TABLE IF NOT EXISTS going_soon ( event_id INTEGER NOT NULL, user_id TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (event_id, user_id) );

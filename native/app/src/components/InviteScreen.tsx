@@ -76,7 +76,7 @@ export function InviteScreen({ code: incoming }: { code?: string }) {
               <AppText variant="small" muted>{t('للحسابات الجديدة في أول 7 أيام')}</AppText>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <TextInput value={code} onChangeText={(v) => setCode(v.toUpperCase())} placeholder={t('اكتب الكود')} placeholderTextColor={brand.muted} autoCapitalize="characters" autoCorrect={false}
-                  style={[st.input, { textAlign: INPUT_START }]} maxLength={12} />
+                  style={[st.input, { textAlign: INPUT_START, letterSpacing: code ? 2 : 0, fontFamily: code ? font.bold : font.regular }]} maxLength={12} />
                 <Pressable style={[st.btn, { marginTop: 0, paddingHorizontal: 18 }]} onPress={apply} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold }}>{t('فعّل')}</AppText>}</Pressable>
               </View>
             </View>
@@ -106,6 +106,6 @@ const st = StyleSheet.create({
   btn: { flexDirection: 'row', gap: 8, backgroundColor: brand.purple, borderRadius: 14, height: 48, alignItems: 'center', justifyContent: 'center' },
   stats: { flexDirection: 'row', gap: 10 },
   stat: { flex: 1, backgroundColor: brand.chip, borderRadius: 14, paddingVertical: 10, alignItems: 'center' },
-  input: { flex: 1, height: 48, borderRadius: 14, backgroundColor: brand.chip, paddingHorizontal: 14, fontFamily: font.bold, fontSize: 16, color: brand.text, letterSpacing: 2 },
+  input: { flex: 1, height: 48, borderRadius: 14, backgroundColor: brand.chip, paddingHorizontal: 14, fontSize: 16, color: brand.text },
   num: { width: 22, height: 22, borderRadius: 11, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
 });

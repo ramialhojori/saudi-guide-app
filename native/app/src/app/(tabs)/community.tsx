@@ -94,7 +94,7 @@ export default function Community() {
 
       <View style={st.search}>
         <Icon name="search" color={brand.muted} size={18} />
-        <TextInput value={q} onChangeText={onSearch} placeholder={t('ابحث في الأسئلة والنصايح: مواقف، فطور، عوائل…')} placeholderTextColor={brand.muted} style={st.searchIn} returnKeyType="search" />
+        <TextInput value={q} onChangeText={onSearch} placeholder={t('ابحث في أسئلة المجتمع')} placeholderTextColor={brand.muted} style={st.searchIn} returnKeyType="search" />
         {q ? <Pressable onPress={() => onSearch('')} hitSlop={10} accessibilityLabel={t('مسح البحث')}><Icon name="x" color={brand.muted} size={16} /></Pressable> : null}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, padding: 16 }}>

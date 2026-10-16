@@ -534,6 +534,28 @@ export async function myNotifications(env, u, request, J) {
 
 /* ——— جواز السعودية ——— */
 const VISIT_RADIUS_KM = 0.5;
+/* ——— تحدي الشهر في المدن ——— */
+const CH_GOAL = 5, CH_POINTS = 150;
+function monthKey() {
+  const mk = new Date(Date.now() + 3 * 3600e3);
+  const start = Math.floor(Date.UTC(mk.getUTCFullYear(), mk.getUTCMonth(), 1) / 1000) - 3 * 3600;
+  return { start, key: mk.toISOString().slice(0, 7) };
+}
+async function monthChallenge(env, uid, city) {
+  const { start, key } = monthKey();
+  const n = (await env.DB.prepare('SELECT COUNT(*) n FROM visits WHERE user_id=? AND city=? AND created>=?').bind(uid, city, start).first())?.n || 0;
+  if (n < CH_GOAL) return { n, goal: CH_GOAL, won: false };
+  const k = `ch:${key}:${uid}:${city}`;
+  const r = await env.DB.prepare('INSERT OR IGNORE INTO kv (k,v) VALUES (?,?)').bind(k, String(now())).run();
+  if (!r.meta.changes) return { n, goal: CH_GOAL, won: false, done: true };
+  const name = (CITIES.find((c) => c[0] === city) || [])[1] || '';
+  await env.DB.batch([
+    addPoints(env, uid, CH_POINTS),
+    env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) VALUES (?,'system',?,?,?)").bind(uid, `أنجزت تحدي ${name} هالشهر! ${CH_GOAL} أماكن مختلفة، و+${CH_POINTS} نقطة لك`, '/passport', now()),
+  ]);
+  return { n, goal: CH_GOAL, won: true };
+}
+
 export async function passportRoute(p, env, u, request, J) {
   if (p === '/v1/me/visits' && request.method === 'POST') {
     const b = await request.json().catch(() => ({}));
@@ -552,13 +574,22 @@ export async function passportRoute(p, env, u, request, J) {
       env.DB.prepare('INSERT INTO visits (user_id,place_id,city,dist,created) VALUES (?,?,?,?,?)').bind(u.id, place.id, place.city, Math.round(d * 1000), now()),
       addPoints(env, u.id, pts),
     ]);
-    return J({ ok: true, newCity, city: place.city, points: pts });
+    // تحدي الشهر: 5 أماكن مختلفة في نفس المدينة خلال الشهر (بتوقيت مكة) → +150 نقطة مرة وحدة لكل مدينة بالشهر
+    const ch = await monthChallenge(env, u.id, place.city);
+    return J({ ok: true, newCity, city: place.city, points: pts + (ch.won ? CH_POINTS : 0), challenge: ch });
   }
   if (p === '/v1/me/passport') {
     const { results } = await env.DB.prepare('SELECT city, COUNT(*) n, MIN(created) first FROM visits WHERE user_id=? GROUP BY city ORDER BY first').bind(u.id).all();
     const recent = await env.DB.prepare('SELECT v.place_id id, p.title, v.city, v.created FROM visits v JOIN places p ON p.id=v.place_id WHERE v.user_id=? ORDER BY v.created DESC LIMIT 10').bind(u.id).all();
     const total = await env.DB.prepare('SELECT COUNT(*) n FROM visits WHERE user_id=?').bind(u.id).first();
-    return J({ cities: results.map((r) => ({ id: r.city, count: r.n, first: r.first })), recent: recent.results, places: total.n, all: CITIES.map((c) => ({ id: c[0], name: c[1] })) });
+    const { start, key } = monthKey();
+    const month = await env.DB.prepare('SELECT city, COUNT(*) n FROM visits WHERE user_id=? AND created>=? GROUP BY city ORDER BY n DESC').bind(u.id, start).all();
+    const won = await env.DB.prepare("SELECT k FROM kv WHERE k LIKE ?").bind(`ch:${key}:${u.id}:%`).all();
+    return J({
+      cities: results.map((r) => ({ id: r.city, count: r.n, first: r.first })), recent: recent.results, places: total.n,
+      all: CITIES.map((c) => ({ id: c[0], name: c[1], lat: c[4], lng: c[5] })),
+      challenge: { key, goal: CH_GOAL, points: CH_POINTS, cities: month.results.map((r) => ({ id: r.city, n: r.n, won: won.results.some((w) => w.k.endsWith(':' + r.city)) })) },
+    });
   }
   return null;
 }

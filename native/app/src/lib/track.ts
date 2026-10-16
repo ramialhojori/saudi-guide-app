@@ -11,7 +11,7 @@ let device = '';
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lastOpen = 0;
 
-async function deviceId() {
+export async function deviceId() {
   if (device) return device;
   try {
     device = (await AsyncStorage.getItem('sg_device_v1')) || '';

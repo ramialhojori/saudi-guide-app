@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { BackButton } from '@/components/ui';
+import { TripsMap } from '@/components/TripsMap';
 import { useAuth } from '@/lib/auth';
 import { ago } from '@/lib/community';
 import { checkIn, getPassport, type Passport as PassportData } from '@/lib/passport';
@@ -117,6 +118,8 @@ export default function Passport() {
           })}
         </View>
       ) : null}
+      {!demo && pp ? <MonthChallenge pp={pp} /> : null}
+      {!demo && pp ? <TripsMap cities={pp.all} visited={pp.cities.map((c) => c.id)} /> : null}
       <View style={st.grid}>
         {visited.map(({ name, date }, i) => (
           <View key={name} style={st.cell}>
@@ -164,7 +167,39 @@ export default function Passport() {
 const MONTHS = isEn ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 const monthYear = (sec: number) => { const d = new Date(sec * 1000 + 3 * 3600e3); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
 
+/** تحدي الشهر: 5 أماكن مختلفة في نفس المدينة هالشهر = +150 نقطة */
+function MonthChallenge({ pp }: { pp: PassportData }) {
+  const ch = pp.challenge;
+  if (!ch) return null;
+  const nameOf = (id: string) => pp.all.find((a) => a.id === id)?.name ?? id;
+  const top = ch.cities.slice(0, 3);
+  return (
+    <View style={st.ch}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={st.chIc}><Icon name="flag" color="#fff" size={18} /></View>
+        <View style={{ flex: 1 }}>
+          <AppText style={{ fontFamily: font.bold, fontSize: 16 }}>{t('تحدي الشهر')}</AppText>
+          <AppText variant="small" muted>{t('اختم {n} أماكن مختلفة في مدينة وحدة هالشهر وخذ +{p} نقطة', { n: ch.goal, p: ch.points })}</AppText>
+        </View>
+      </View>
+      {top.length ? top.map((c) => (
+        <View key={c.id} style={{ gap: 4 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <AppText variant="small" style={{ fontFamily: font.bold }}>{nameOf(c.id)}</AppText>
+            <AppText variant="small" color={c.won ? brand.green : brand.orangeDeep} style={{ fontFamily: font.bold }}>{c.won ? t('أنجزته ✓') : `${Math.min(c.n, ch.goal)} / ${ch.goal}`}</AppText>
+          </View>
+          <View style={st.track}><View style={[st.fill, { width: `${Math.min(100, (c.n / ch.goal) * 100)}%`, backgroundColor: c.won ? brand.green : brand.orange }]} /></View>
+        </View>
+      )) : <AppText variant="small" muted>{t('ما ختمت شي هالشهر للحين. أول ختم يبدأ العداد.')}</AppText>}
+    </View>
+  );
+}
+
 const st = StyleSheet.create({
+  ch: { backgroundColor: brand.card, borderRadius: 22, padding: 14, marginHorizontal: 16, marginTop: 14, gap: 10 },
+  chIc: { width: 38, height: 38, borderRadius: 12, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  track: { height: 8, borderRadius: 4, backgroundColor: brand.chip, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 4 },
   head: { backgroundColor: brand.ink, paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, paddingTop: 18 },
   cell: { width: '33.33%', alignItems: 'center', paddingVertical: 8 },

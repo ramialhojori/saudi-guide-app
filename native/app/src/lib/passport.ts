@@ -5,7 +5,10 @@ import { session } from './auth';
 import type { CPost } from './community';
 import { t } from './i18n';
 
-export type Passport = { cities: { id: string; count: number; first: number }[]; recent: { id: number; title: string; city: string; created: number }[]; places: number; all: { id: string; name: string }[] };
+export type Passport = {
+  cities: { id: string; count: number; first: number }[]; recent: { id: number; title: string; city: string; created: number }[]; places: number; all: { id: string; name: string; lat?: number; lng?: number }[];
+  challenge?: { key: string; goal: number; points: number; cities: { id: string; n: number; won: boolean }[] };
+};
 export type PlaceSocial = { visits: number; posts: number; been: boolean; tip: { id: number; text: string; name: string; badge: string } | null };
 
 const tok = () => session().token;

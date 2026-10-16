@@ -19,6 +19,8 @@ import { businessAdmin } from './business.js';
 import { offersAdmin } from './offers.js';
 import { commentsAdmin } from './comments.js';
 import { papersAdmin } from './papers.js';
+import { tripsAdmin } from './trips.js';
+import { insightsAdmin } from './insights.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const enc = new TextEncoder();
@@ -145,6 +147,12 @@ const TOOLS = [
   ['decide_offer', 'يحدّث عرض رسمي: status (pending|active|paused|rejected|hidden)، note، fields (تعديل أي حقل من حقول create_coupons). ⚠️ التفعيل لرامي.', S({ id: num(''), status: str(''), note: str(''), fields: { type: 'object' } }, ['id']), (a) => ['POST', `/admin/offers/${+a.id}`, a]],
   ['list_comments', 'تعليقات الأخبار. status: pending (تنتظر مراجعة، الافتراضي) | reported (عليها بلاغات) | visible | rejected | hidden.', S({ status: str('') }), (a) => ['GET', `/admin/comments?status=${a.status || 'pending'}`]],
   ['moderate_comment', 'قرار على تعليق خبر: status visible (نشر) | hidden (إخفاء) | rejected (رفض). ما نحذف شي.', S({ id: num(''), status: str('') }, ['id', 'status']), (a) => ['POST', `/admin/comments/${+a.id}`, { status: a.status }]],
+  ['weekly_report', 'تقرير آخر 7 أيام مقارنة بالأسبوع اللي قبله: الأجهزة النشطة، فتح التطبيق، الحسابات الجديدة، المشاركات، الدعوات، التقييمات، مشتركين دليل+، أكثر الأماكن والبحث والمدن، البحث بدون نتائج، والأعطال.', S({}), () => ['GET', '/admin/report']],
+  ['list_app_errors', 'أعطال التطبيق المجمّعة (نفس الخطأ سطر واحد): الرسالة، مكانها، الإصدار، كم مرة وكم جهاز، أول وآخر مرة، الحالة (open|fixed|ignored).', S({}), () => ['GET', '/admin/errors']],
+  ['set_error_status', 'يغيّر حالة عطل: fp (البصمة من list_app_errors)، status (open|fixed|ignored).', S({ fp: str(''), status: str('') }, ['fp', 'status']), (a) => ['POST', `/admin/errors/${encodeURIComponent(a.fp)}`, { status: a.status }]],
+  ['list_ready_trips', 'الرحلات الجاهزة (كل الحالات): المدينة، العنوان، الأيام وأماكن كل يوم، كم واحد حفظها.', S({}), () => ['GET', '/admin/trips']],
+  ['create_ready_trip', 'ينشئ رحلة جاهزة (مسودة دايماً): city (معرّف المدينة مثل alula)، title، title_en، intro (سطرين)، intro_en، tags (family|couples|friends|heritage|nature|food|budget|luxury|weekend|walking)، days: [{title: «اليوم الأول: البلدة القديمة»، note: نصيحة قصيرة، places: [أرقام أماكن من search_places بالترتيب المنطقي للزيارة]}]. الأماكن لازم تكون موجودة في الدليل ومتقاربة جغرافياً لكل يوم (3-5 أماكن باليوم).', S({ city: str(''), title: str(''), title_en: str(''), intro: str(''), intro_en: str(''), tags: { type: 'array', items: { type: 'string' } }, days: { type: 'array', items: { type: 'object' } } }, ['city', 'title', 'days']), (a) => ['POST', '/admin/trips', a]],
+  ['update_ready_trip', 'يعدّل رحلة جاهزة: أي حقل من create_ready_trip، و status (draft|live|hidden). ⚠️ النشر (live) لرامي.', S({ id: num(''), status: str(''), city: str(''), title: str(''), title_en: str(''), intro: str(''), intro_en: str(''), tags: { type: 'array', items: { type: 'string' } }, days: { type: 'array', items: { type: 'object' } }, sort: num('') }, ['id']), (a) => ['POST', `/admin/trips/${+a.id}`, a]],
   ['list_papers', 'الصحف السعودية في قسم «الصحف»: الحالة (active|paused|error)، رابط RSS، عدد الأخبار، آخر سحب ناجح، آخر خطأ، المتابعين.', S({}), () => ['GET', '/admin/papers']],
   ['add_paper', 'يضيف صحيفة (أو يحدّث رابطها لو موجودة) ويجرب الرابط فوراً: name، feed (رابط RSS)، site، id (حروف إنجليزية)، lang (ar|en)، sort.', S({ name: str(''), feed: str(''), site: str(''), id: str(''), lang: str(''), sort: num('') }, ['name', 'feed']), (a) => ['POST', '/admin/papers', a]],
   ['update_paper', 'يوقف صحيفة أو يرجعها أو يعدّلها: status (active|paused|hidden)، name، feed، sort، lang. ما نحذف شي.', S({ id: str(''), status: str(''), name: str(''), feed: str(''), sort: num(''), lang: str('') }, ['id']), (a) => ['POST', `/admin/papers/${encodeURIComponent(a.id)}`, a]],
@@ -221,7 +229,7 @@ async function adminCall(env, origin, method, path, body) {
     return { sync: last.results };
   }
   // نفس سلسلة مسارات الإدارة في index.js (أي مسار إدارة جديد لازم ينضاف هنا كمان عشان أدوات اللوحة توصله)
-  const r = (await contactAdmin(req, env, p, q, J)) || (await businessAdmin(p, req, env, J, q)) || (await offersAdmin(p, req, env, J, q)) || (await commentsAdmin(p, req, env, J, q)) || (await papersAdmin(p, req, env, J)) || (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
+  const r = (await contactAdmin(req, env, p, q, J)) || (await businessAdmin(p, req, env, J, q)) || (await offersAdmin(p, req, env, J, q)) || (await commentsAdmin(p, req, env, J, q)) || (await papersAdmin(p, req, env, J)) || (await tripsAdmin(p, req, env, J)) || (await insightsAdmin(p, req, env, J)) || (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
     || (await guideAdmin(p, req, env, J)) || (p.startsWith('/admin/community/') ? await communityAdmin(p, req, env, J) : null);
   if (!r) throw new Error('not_found');
   if (r.__s >= 400) throw new Error(r.d?.error || 'error_' + r.__s);

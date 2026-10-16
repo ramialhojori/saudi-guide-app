@@ -9,7 +9,7 @@ import { useSyncExternalStore } from 'react';
 import { api } from './api';
 import { trip } from './trip';
 
-export type User = { id: string; name: string; handle: string; email: string; city: string; bio: string; avatar: string; role: string; points: number; balance?: number; since: number; plusUntil?: number };
+export type User = { id: string; name: string; handle: string; email: string; city: string; bio: string; avatar: string; role: string; points: number; balance?: number; since: number; plusUntil?: number; via?: 'apple' | 'google' | 'both' | '' };
 type State = { token: string | null; user: User | null; ready: boolean };
 
 const KEY = 'sg_session_v1';

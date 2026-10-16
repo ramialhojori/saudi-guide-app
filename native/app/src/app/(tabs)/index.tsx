@@ -23,6 +23,7 @@ import { useFeatures } from '@/lib/features';
 import type { EventItem, Place } from '@/lib/types';
 import { t, tr } from '@/lib/i18n';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
+import { ReadyTripsStrip } from '@/components/ReadyTrips';
 
 const W = Dimensions.get('window').width;
 const CARD_W = Math.min(300, W - 90);
@@ -140,10 +141,13 @@ export default function Home() {
       />
 
       {/* قريب منك */}
-      <Section title={t('قريب منك الحين')} action={t('على الخريطة')} onAction={() => router.push('/map')} />
+      <Section title={t('قريب منك الحين')} action={t('كل القريب')} onAction={() => router.push('/nearby')} />
       <View style={{ paddingHorizontal: 16, gap: 10 }}>
         {near.slice(0, 3).map((p) => <NearRow key={p.id} p={p} />)}
       </View>
+
+      {/* رحلات جاهزة من كل المدن */}
+      <ReadyTripsStrip />
 
       {/* فعالية قادمة */}
       {data?.events?.[0] ? <EventBanner e={data.events[0]} /> : null}

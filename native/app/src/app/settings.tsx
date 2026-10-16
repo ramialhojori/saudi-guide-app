@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isEn, setLang, t, tr } from '@/lib/i18n';
 import { AppText } from '@/components/AppText';
 import { Avatar, BackButton, Chip } from '@/components/ui';
+import { alert } from '@/lib/alert';
 import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ALL_CITY_IDS, cityName } from '@/lib/content';
@@ -61,9 +62,9 @@ export default function Settings() {
               {editing ? (
                 <TextInput value={name} onChangeText={setName} autoFocus style={st.input} placeholder={t('اسمك')} placeholderTextColor={brand.faint} maxLength={60} />
               ) : <AppText style={{ fontFamily: font.bold, fontSize: 17 }}>{user.name || t('مستخدم الدليل')}</AppText>}
-              <AppText variant="small" muted>{t('مسجّل بـ Apple')}{home ? ' · ' + t('من {city}', { city: cityName(home) || home }) : ''}</AppText>
+              <AppText variant="small" muted>{user.via === 'google' ? t('مسجّل بـ Google') : user.via === 'both' ? t('مسجّل بـ Apple و Google') : user.via === 'apple' ? t('مسجّل بـ Apple') : t('حسابك في الدليل')}{home ? ' · ' + t('من {city}', { city: cityName(home) || home }) : ''}</AppText>
             </View>
-            <Pressable style={st.edit} onPress={async () => { if (editing) await updateMe({ name: name.trim() || user.name, bio: bio.trim() }).catch(() => {}); setEditing((v) => !v); }}>
+            <Pressable style={st.edit} onPress={async () => { if (editing) { await updateMe({ name: name.trim() || user.name, bio: bio.trim() }).catch(() => alert(t('ما انحفظ'), t('تأكد من النت وجرّب مرة ثانية.'))); } else { setName(user.name || ''); setBio(user.bio || ''); } setEditing((v) => !v); }}>
               <AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{editing ? t('حفظ') : t('تعديل')}</AppText>
             </Pressable>
           </View>

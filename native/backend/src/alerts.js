@@ -2,7 +2,7 @@
    1) جديد في مدينتك: أي مكان أو فعالية تنتشر (live) تنسجّل، وكل يوم الساعة 5 العصر بتوقيت مكة
       يوصل متابعين المدينة إشعار واحد يجمع الجديد (ما نزعجهم بإشعار لكل مكان لو نشرت 30 مكان مرة وحدة)
    2) بداية موسم: يوم بداية الموسم (من بيانات المواسم) الساعة 10 الصبح لمتابعين مدينته
-   3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم
+   3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم، وتذكير ثاني قبلها بساعتين تقريباً
    4) «بكرة في مدينتك»: الساعة 7 المغرب، متابعين كل مدينة فيها فعاليات تبدأ بكرة يوصلهم إشعار واحد يجمعها
    5) «ويكندك في مدينتك»: كل خميس 8 المساء، أبرز فعاليات الجمعة والسبت
    المتابع = مدينته في الحساب أو المدن اللي يتابعها، والجوالات بدون حساب حسب المدن اللي اختارتها
@@ -106,6 +106,32 @@ async function goingReminders(env) {
   }
 }
 
+/** تذكير قبل الفعالية بساعتين تقريباً (بين ساعة ونص وساعتين ونص) للي ضغطوا «رايح» — مع رابط الفعالية (فيها زر الاتجاهات) */
+async function goingSoon(env) {
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS going_soon ( event_id INTEGER NOT NULL, user_id TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (event_id, user_id) )').run();
+  const mk = makkah();
+  const days = [mk.toISOString().slice(0, 10), new Date(mk.getTime() + 86400e3).toISOString().slice(0, 10)];
+  const { results } = await env.DB.prepare(`SELECT id, title, start FROM events WHERE deleted=0 AND all_day=0 AND substr(start,1,10) IN (?,?) LIMIT 500`).bind(...days).all();
+  const t = Date.now();
+  const soon = results.filter((e) => {
+    // التاريخ بدون منطقة زمنية = توقيت مكة
+    const at = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(e.start || '') ? e.start : `${e.start}+03:00`);
+    return Number.isFinite(at) && at - t >= 90 * 60e3 && at - t <= 150 * 60e3;
+  });
+  for (const e of soon) {
+    const { results: users } = await env.DB.prepare('SELECT user_id FROM event_going WHERE event_id=? AND user_id NOT IN (SELECT user_id FROM going_soon WHERE event_id=?) LIMIT 2000').bind(e.id, e.id).all();
+    if (!users.length) continue;
+    const text = `باقي ساعتين تقريباً على ${arTitle(e.title).slice(0, 70)}. افتحها وخذ الاتجاهات`;
+    for (let i = 0; i < users.length; i += 40) {
+      const part = users.slice(i, i + 40);
+      await env.DB.batch(part.flatMap((u) => [
+        env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) VALUES (?,'system',?,?,?)").bind(u.user_id, text, `/event/${e.id}`, now()),
+        env.DB.prepare('INSERT OR IGNORE INTO going_soon (event_id,user_id,at) VALUES (?,?,?)').bind(e.id, u.user_id, now()),
+      ]));
+    }
+  }
+}
+
 /** «بكرة في مدينتك»: فعاليات تبدأ بكرة، إشعار واحد لكل مدينة (7 المغرب) */
 async function tomorrowInCity(env) {
   const mk = makkah();
@@ -149,6 +175,7 @@ export async function runAlerts(env) {
   await cityDigest(env);
   await seasonStarts(env);
   await goingReminders(env);
+  await goingSoon(env);
   await tomorrowInCity(env);
   await weekendDigest(env);
 }

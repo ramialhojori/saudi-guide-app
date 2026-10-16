@@ -17,6 +17,7 @@ import { CouponCard } from '@/components/CouponCard';
 import { myCoupons, myMerchant, type Coupon, type Merchant } from '@/lib/coupons';
 import { brand, font, photos } from '@/theme/tokens';
 import { isEn, t, tr } from '@/lib/i18n';
+import { EditProfile } from '@/components/EditProfile';
 
 const STAMP = [brand.orange, brand.lilac, brand.sky, brand.pink, brand.orangeDeep, brand.purple];
 
@@ -37,10 +38,11 @@ export default function Profile() {
   }, [user?.id]));
   const stampNames = user ? (pp?.cities ?? []).map((c) => pp?.all.find((a) => a.id === c.id)?.name ?? c.id) : passport.visited;
   const stampTotal = user ? pp?.all.length ?? 21 : passport.total;
+  const [editOpen, setEditOpen] = useState(false);
   // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
   const me = user ? {
     ...demo, name: user.name || t('مستخدم الدليل'), initial: (user.name || tr('د', 'S')).trim()[0], handle: user.handle, since: user.since,
-    city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || t('اكتب نبذة عنك من الإعدادات.'),
+    city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || t('اضغط «تعديل» واكتب نبذة عنك.'),
     points: stats?.points ?? user.points, level: stats?.level ?? 1, nextLevelPts: stats?.nextAt ?? Math.max(user.points, 1), nextLevel: stats?.nextName ?? '',
     levelName: stats?.levelName ?? '', levelAt: stats?.levelAt ?? 0,
     stats: [
@@ -54,6 +56,7 @@ export default function Profile() {
     : badges;
   return (
     <ScrollView style={{ flex: 1, backgroundColor: brand.bg }} contentContainerStyle={{ paddingBottom: 130 }}>
+      <EditProfile open={editOpen} onClose={() => setEditOpen(false)} />
       <View style={st.cover}>
         <Image source={photos.land} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['rgba(43,31,69,0.3)', 'rgba(43,31,69,0.85)']} style={StyleSheet.absoluteFill} />
@@ -85,7 +88,10 @@ export default function Profile() {
             <View style={st.lvl}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('مستوى {n}', { n: me.level })}</AppText></View>
           </View>
           <View style={{ flex: 1 }}>
-            <AppText variant="title">{me.name}</AppText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <AppText variant="title" style={{ flexShrink: 1 }} numberOfLines={1}>{me.name}</AppText>
+              {user ? <Pressable onPress={() => setEditOpen(true)} style={st.editBtn} hitSlop={8} accessibilityLabel={t('عدّل ملفك')}><Icon name="edit" color={brand.purple} size={15} /><AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{t('تعديل')}</AppText></Pressable> : null}
+            </View>
             <AppText variant="small" muted>{me.handle ? `@${me.handle} · ` : ''}{t('عضو منذ {y}', { y: me.since })}</AppText>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
               {me.city ? <><Icon name="pin" color={brand.pinkDeep} size={14} /><AppText variant="small" style={{ fontFamily: font.semibold }}>{t('من {city}', { city: me.city })}</AppText></> : null}
@@ -285,6 +291,7 @@ export default function Profile() {
 }
 
 const st = StyleSheet.create({
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: brand.chip, borderRadius: 10, paddingHorizontal: 8, height: 26 },
   short: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 18, height: 52 },
   cover: { height: 190, backgroundColor: brand.ink },
   coverTop: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

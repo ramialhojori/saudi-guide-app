@@ -14,6 +14,6 @@ export function setupQuickActions() {
     { id: 'offers', title: t('العروض والكوبونات'), icon: ios ? 'symbol:ticket' : null, params: { href: '/offers' } },
     { id: 'news', title: t('أخباري'), icon: ios ? 'symbol:newspaper' : null, params: { href: '/news?tab=mine' } },
     { id: 'plan', title: t('خطط لي رحلة'), icon: ios ? 'symbol:map' : null, params: { href: '/planner' } },
-    { id: 'search', title: t('ابحث عن مكان'), icon: ios ? 'symbol:magnifyingglass' : null, params: { href: '/search' } },
+    { id: 'near', title: t('قريب مني الحين'), icon: ios ? 'symbol:location' : null, params: { href: '/nearby' } },
   ]).catch(() => {});
 }

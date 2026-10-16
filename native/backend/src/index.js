@@ -27,6 +27,8 @@ import { offersRoute, offersAdmin } from './offers.js';
 import { commentsRoute, commentsAdmin } from './comments.js';
 import { adminAuth, adminLoginRoute, adminSessionRoute } from './adminauth.js';
 import { inviteRoute } from './invite.js';
+import { tripsRoute, tripsAdmin } from './trips.js';
+import { errorsRoute, insightsAdmin, weeklyReport } from './insights.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
@@ -161,7 +163,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await tripsAdmin(p, request, env, J)) || (await insightsAdmin(p, request, env, J)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -184,6 +186,8 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
   if (p === '/v1/admin/login') { const r = await adminLoginRoute(p, request, env, J); if (r) return r; }
+  if (p === '/v1/errors') { const r = await errorsRoute(p, request, env, J); if (r) return r; }
+  if (p.startsWith('/v1/trips')) { const r = await tripsRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/invite')) { const r = await inviteRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/papers')) { const r = await papersRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/offers')) { const r = await offersRoute(p, request, env, J, q); if (r) return r; }
@@ -418,6 +422,7 @@ export default {
     ctx.waitUntil(runTranslate(env).catch((e) => console.log('translate', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
+    ctx.waitUntil(weeklyReport(env).catch((e) => console.log('report', e && e.message)));
     ctx.waitUntil(runPapers(env).catch((e) => console.log('papers', e && e.message)));
     ctx.waitUntil(planExpiry(env).catch((e) => console.log('plans', e && e.message)));
   },
