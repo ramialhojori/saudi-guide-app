@@ -18,7 +18,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { CouponCard } from '@/components/CouponCard';
 import { cityCoupons } from '@/lib/coupons';
-import { getOffers, offBadge } from '@/lib/offers';
+import { getOffers, offBadge, OFFER_STYLE } from '@/lib/offers';
 import { useFeatures } from '@/lib/features';
 import type { EventItem, Place } from '@/lib/types';
 import { t, tr } from '@/lib/i18n';
@@ -329,7 +329,7 @@ function OfficialDeals({ city }: { city: string }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 10 }}>
         {data.slice(0, 8).map((o) => (
           <Pressable key={o.id} onPress={() => router.push('/offers')} style={{ width: 170, backgroundColor: brand.card, borderRadius: 20, padding: 12, gap: 6 }}>
-            <View style={{ alignSelf: 'flex-start', backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: (OFFER_STYLE[o.category] || OFFER_STYLE.other).color, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
               <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color="#fff" numberOfLines={1}>{offBadge(o)}</AppText>
             </View>
             <AppText style={{ fontFamily: font.bold, fontSize: 14 }} numberOfLines={1}>{o.store}</AppText>

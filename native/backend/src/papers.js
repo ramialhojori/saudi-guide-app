@@ -11,7 +11,7 @@ import { sessionUser } from './auth.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const makkah = () => new Date(Date.now() + 3 * 3600e3);
-const UA = 'SaudiGuide/1.0 (+https://www.saudi-guide.com) news-reader';
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36 SaudiGuide/1.0';
 
 const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS news_sources ( id TEXT PRIMARY KEY, name TEXT NOT NULL, site TEXT, feed TEXT NOT NULL, lang TEXT NOT NULL DEFAULT 'ar', logo TEXT, status TEXT NOT NULL DEFAULT 'active', sort INTEGER NOT NULL DEFAULT 50, last_fetch INTEGER, last_ok INTEGER, last_error TEXT, fails INTEGER NOT NULL DEFAULT 0, items INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL )",
@@ -25,13 +25,13 @@ const SCHEMA = [
 /** الصحف الأولى (روابط RSS تأكدنا منها في فهرس Feedspot؛ اللي ما لقينا رابطها نجرب الشائع والكرون يتأكد بنفسه) */
 const SEED = [
   ['spa', 'واس', 'spa.gov.sa', 'https://www.spa.gov.sa/rss', 'ar', 1],
-  ['okaz', 'عكاظ', 'okaz.com.sa', 'https://www.okaz.com.sa/rssFeed/190', 'ar', 2],
-  ['riyadh', 'الرياض', 'alriyadh.com', 'https://www.alriyadh.com/rss', 'ar', 3],
-  ['sabq', 'سبق', 'sabq.org', 'https://sabq.org/rss', 'ar', 4],
-  ['madina', 'المدينة', 'al-madina.com', 'https://www.al-madina.com/rssFeed/193', 'ar', 5],
-  ['watan', 'الوطن', 'alwatan.com.sa', 'https://www.alwatan.com.sa/rssFeed/45', 'ar', 6],
+  ['okaz', 'عكاظ', 'okaz.com.sa', 'https://www.okaz.com.sa/rssFeed/0', 'ar', 2],
+  ['riyadh', 'الرياض', 'alriyadh.com', 'https://www.alriyadh.com/section.main.xml', 'ar', 3],
+  ['sabq', 'سبق', 'sabq.org', 'https://sabq.org/api/rss/articles', 'ar', 4],
+  ['madina', 'المدينة', 'al-madina.com', 'https://www.al-madina.com/rssFeed/1', 'ar', 5],
+  ['watan', 'الوطن', 'alwatan.com.sa', 'https://www.alwatan.com.sa/rssFeed/0', 'ar', 6],
   ['makkah', 'مكة', 'makkahnewspaper.com', 'https://makkahnewspaper.com/rssFeed/0', 'ar', 7],
-  ['alyaum', 'اليوم', 'alyaum.com', 'https://www.alyaum.com/rssFeed/1', 'ar', 8],
+  ['alyaum', 'اليوم', 'alyaum.com', 'https://www.alyaum.com/rssFeed/0', 'ar', 8],
   ['jazirah', 'الجزيرة', 'al-jazirah.com', 'https://www.al-jazirah.com/rss/ln.xml', 'ar', 9],
   ['bilad', 'البلاد', 'albiladdaily.com', 'https://albiladdaily.com/feed/', 'ar', 10],
   ['aawsat', 'الشرق الأوسط', 'aawsat.com', 'https://aawsat.com/feed', 'ar', 11],
@@ -46,6 +46,16 @@ async function ensure(env) {
   await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
   await env.DB.prepare('ALTER TABLE devices ADD COLUMN papers TEXT').run().catch(() => {});
   const t = now();
+  // تصحيح روابط الدفعة الأولى (16 أكتوبر 2026، تأكدنا منها من موقع كل صحيفة): القسم القديم → آخر الأخبار
+  const FIX = [['okaz', 'https://www.okaz.com.sa/rssFeed/190', 'https://www.okaz.com.sa/rssFeed/0'], ['riyadh', 'https://www.alriyadh.com/rss', 'https://www.alriyadh.com/section.main.xml'],
+    ['sabq', 'https://sabq.org/rss', 'https://sabq.org/api/rss/articles'], ['madina', 'https://www.al-madina.com/rssFeed/193', 'https://www.al-madina.com/rssFeed/1'],
+    ['watan', 'https://www.alwatan.com.sa/rssFeed/45', 'https://www.alwatan.com.sa/rssFeed/0'], ['alyaum', 'https://www.alyaum.com/rssFeed/1', 'https://www.alyaum.com/rssFeed/0'],
+    ['makkah', 'https://makkahnewspaper.com/rssFeed/0', 'https://makkahnewspaper.com/rssFeed/0']];
+  await env.DB.batch([
+    ...FIX.map(([id, from, to]) => env.DB.prepare("UPDATE news_sources SET feed=?, fails=0, last_fetch=NULL, status=CASE WHEN status='error' THEN 'active' ELSE status END WHERE id=? AND feed=?").bind(to, id, from)),
+    // واس ما عندها RSS عام (موقعها تطبيق ويب) → نوقفها لين نلقى مصدر
+    env.DB.prepare("UPDATE news_sources SET status='paused', last_error='واس ما تنشر RSS' WHERE id='spa' AND status<>'paused' AND items=0"),
+  ]);
   await env.DB.batch(SEED.map(([id, name, site, feed, lang, sort]) => env.DB.prepare('INSERT OR IGNORE INTO news_sources (id,name,site,feed,lang,logo,sort,created) VALUES (?,?,?,?,?,?,?,?)').bind(id, name, site, feed, lang, logoOf(site), sort, t)));
   ready = true;
 }
@@ -98,7 +108,7 @@ async function getFeed(url) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 12000);
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5' }, signal: ctl.signal, redirect: 'follow', cf: { cacheTtl: 300 } });
+    const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ar,en;q=0.8', Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5' }, signal: ctl.signal, redirect: 'follow', cf: { cacheTtl: 300 } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const xml = (await r.text()).slice(0, 1_500_000);
     if (!/<(rss|feed|rdf:RDF)[\s>]/i.test(xml)) throw new Error('ليس RSS');

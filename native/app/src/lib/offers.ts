@@ -15,7 +15,16 @@ export const getOffers = (city?: string) => api<{ offers: Offer[] }>(`/v1/offers
 /** عدّاد: نسخ الكود أو فتح الرابط (للوحة) */
 export const offerOpened = (id: number, act: 'copy' | 'open') => api(`/v1/offers/${id}/open`, { method: 'POST', body: { act } }).catch(() => {});
 
-export const OFFER_CATS: [string, string][] = [['food', t('مطاعم')], ['cafe', t('مقاهي')], ['hotel', t('فنادق')], ['fun', t('ترفيه')], ['shop', t('تسوق')], ['other', t('أخرى')]];
+export const OFFER_CATS: [string, string][] = [
+  ['food', t('مطاعم')], ['cafe', t('مقاهي')], ['delivery', t('توصيل')], ['grocery', t('سوبرماركت')], ['hotel', t('فنادق')], ['travel', t('طيران وسفر')],
+  ['car', t('تأجير سيارات')], ['fun', t('ترفيه')], ['shop', t('تسوق وأزياء')], ['electronics', t('إلكترونيات')], ['beauty', t('صحة وجمال')], ['other', t('أخرى')],
+];
+/** لون وأيقونة كل تصنيف (بطاقة العرض وفلتر التصنيفات) */
+export const OFFER_STYLE: Record<string, { color: string; icon: string }> = {
+  food: { color: '#E8833A', icon: 'food' }, cafe: { color: '#8E65AB', icon: 'cafe' }, delivery: { color: '#D9534F', icon: 'nav' }, grocery: { color: '#3E9B6B', icon: 'bag' },
+  hotel: { color: '#604C87', icon: 'star' }, travel: { color: '#2E86B8', icon: 'globe' }, car: { color: '#4A5A78', icon: 'route' }, fun: { color: '#C2456B', icon: 'fun' },
+  shop: { color: '#B8682E', icon: 'shop' }, electronics: { color: '#3B6FD4', icon: 'phone' }, beauty: { color: '#C25D9A', icon: 'spark' }, other: { color: '#7A7290', icon: 'ticket' },
+};
 export const CHANNEL: Record<string, string> = { any: t('في المتجر وأونلاين'), store: t('في المتجر'), online: t('أونلاين'), app: t('من التطبيق'), delivery: t('تطبيقات التوصيل') };
 
 /** نص الخصم الكبير في البطاقة */

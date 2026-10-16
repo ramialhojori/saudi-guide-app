@@ -9,10 +9,9 @@ import { Chip } from '@/components/ui';
 import { allCities, cityName } from '@/lib/content';
 import { useFeatures } from '@/lib/features';
 import { t } from '@/lib/i18n';
-import { CHANNEL, daysLeft, getOffers, OFFER_CATS, offBadge, offerOpened, type Offer } from '@/lib/offers';
+import { CHANNEL, daysLeft, getOffers, OFFER_CATS, OFFER_STYLE, offBadge, offerOpened, type Offer } from '@/lib/offers';
 import { brand, font } from '@/theme/tokens';
 
-const CAT_COLOR: Record<string, string> = { food: brand.orange, cafe: '#8E65AB', hotel: brand.purple, fun: brand.pinkDeep, shop: '#2E86B8', other: brand.orangeDeep };
 
 /** العروض والكوبونات: عروض البنوك والمتاجر وتطبيقات التوصيل (من مصادرها الرسمية) + رابط لكوبونات المحلات */
 export default function Offers() {
@@ -64,65 +63,23 @@ export default function Offers() {
       {cats.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10 }}>
           <Chip label={t('الكل')} on={!cat} color={brand.orangeDeep} onPress={() => setCat('')} />
-          {cats.map(([k, x]) => <Chip key={k} label={x} on={cat === k} color={brand.orangeDeep} onPress={() => setCat(cat === k ? '' : k)} />)}
+          {cats.map(([k, x]) => {
+            const on = cat === k, c = OFFER_STYLE[k] || OFFER_STYLE.other;
+            const n = (list ?? []).filter((o) => o.category === k).length;
+            return (
+              <Pressable key={k} onPress={() => setCat(on ? '' : k)} style={[st.catChip, on && { backgroundColor: c.color }]} accessibilityRole="button" accessibilityState={{ selected: on }}>
+                <Icon name={c.icon as never} size={15} color={on ? '#fff' : c.color} />
+                <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={on ? '#fff' : brand.text}>{x}</AppText>
+                <AppText variant="tiny" color={on ? '#fff' : brand.muted}>{n}</AppText>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       ) : null}
 
       <View style={{ gap: 12, paddingHorizontal: 16, paddingTop: 14 }}>
         {list === null ? <ActivityIndicator color={brand.pinkDeep} style={{ marginTop: 40 }} /> : null}
-        {shown.map((o) => {
-          const left = daysLeft(o), color = CAT_COLOR[o.category] || brand.orange, isOpen = open === o.id;
-          const badge = offBadge(o);
-          return (
-            <Pressable key={o.id} style={st.card} onPress={() => setOpen(isOpen ? null : o.id)}>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <View style={[st.off, { backgroundColor: color }]}>
-                  <AppText style={{ fontFamily: font.bold, fontSize: badge.length > 6 ? 12 : 18, lineHeight: badge.length > 6 ? 16 : 24 }} color="#fff" center numberOfLines={2}>{badge}</AppText>
-                  {o.unit === 'cashback' && o.value ? <AppText variant="tiny" color="#fff" center>{t('كاش باك')}</AppText> : null}
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <AppText style={{ fontFamily: font.bold, fontSize: 15 }} numberOfLines={1}>{o.store}</AppText>
-                  <AppText style={{ fontSize: 14, lineHeight: 21 }} numberOfLines={isOpen ? undefined : 2}>{o.title}</AppText>
-                  <AppText variant="tiny" muted style={{ marginTop: 2 }}>
-                    {[o.city ? cityName(o.city) || o.cityName : t('كل المدن'), CHANNEL[o.channel], o.newOnly ? t('للعملاء الجدد') : ''].filter(Boolean).join(' · ')}
-                  </AppText>
-                </View>
-              </View>
-
-              <View style={st.metaRow}>
-                {left != null ? (
-                  <View style={[st.pill, left <= 3 && { backgroundColor: brand.softPink }]}>
-                    <AppText variant="tiny" color={left <= 3 ? brand.pinkDeep : brand.muted} style={{ fontFamily: font.semibold }}>{left <= 0 ? t('آخر يوم اليوم') : left === 1 ? t('ينتهي بكرة') : t('باقي {n} يوم', { n: left })}</AppText>
-                  </View>
-                ) : null}
-                {o.minOrder ? <View style={st.pill}><AppText variant="tiny" muted>{t('الحد الأدنى {n} ر.س', { n: o.minOrder })}</AppText></View> : null}
-                {o.maxDiscount ? <View style={st.pill}><AppText variant="tiny" muted>{t('أقصى خصم {n} ر.س', { n: o.maxDiscount })}</AppText></View> : null}
-              </View>
-
-              {o.code ? (
-                <View style={st.codeRow}>
-                  <View style={st.code}><AppText style={{ fontFamily: font.bold, fontSize: 16, letterSpacing: 1 }} selectable>{o.code}</AppText></View>
-                  <Pressable style={[st.copy, copied === o.id && { backgroundColor: brand.green }]} onPress={() => copy(o)} accessibilityLabel={t('انسخ الكود')}>
-                    <Icon name={copied === o.id ? 'check' : 'ticket'} color="#fff" size={16} />
-                    <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{copied === o.id ? t('انتسخ') : t('انسخ')}</AppText>
-                  </Pressable>
-                </View>
-              ) : null}
-
-              {isOpen && o.terms ? <AppText variant="small" muted style={{ lineHeight: 21, marginTop: 10 }}>{o.terms}</AppText> : null}
-              {isOpen && o.deliveryApp ? <AppText variant="small" muted style={{ marginTop: 4 }}>{t('عن طريق {app}', { app: o.deliveryApp })}</AppText> : null}
-
-              <View style={st.acts}>
-                {o.useUrl ? (
-                  <Pressable style={st.goBtn} onPress={() => go(o)}>
-                    <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{o.channel === 'store' ? t('تفاصيل العرض') : t('روح للعرض')}</AppText>
-                  </Pressable>
-                ) : null}
-                <AppText variant="tiny" color={brand.link} style={{ fontFamily: font.semibold }}>{isOpen ? t('أقل') : o.terms ? t('الشروط') : ''}</AppText>
-              </View>
-            </Pressable>
-          );
-        })}
+        {shown.map((o) => <OfferCard key={o.id} o={o} open={open === o.id} copied={copied === o.id} onToggle={() => setOpen(open === o.id ? null : o.id)} onCopy={() => copy(o)} onGo={() => go(o)} />)}
         {list !== null && !shown.length ? (
           <View style={st.empty}>
             <Icon name="ticket" color={brand.pinkDeep} size={34} />
@@ -147,18 +104,81 @@ export default function Offers() {
   );
 }
 
+/** بطاقة العرض بشكل تذكرة: يمين = الخصم بلون التصنيف، يسار = المتجر والعرض، وتحت = الكود وزر العرض في سطر واحد */
+function OfferCard({ o, open, copied, onToggle, onCopy, onGo }: { o: Offer; open: boolean; copied: boolean; onToggle: () => void; onCopy: () => void; onGo: () => void }) {
+  const left = daysLeft(o), c = OFFER_STYLE[o.category] || OFFER_STYLE.other, badge = offBadge(o);
+  const catName = (OFFER_CATS.find(([k]) => k === o.category) || ['', ''])[1];
+  const where = [o.city ? cityName(o.city) || o.cityName : t('كل المدن'), CHANNEL[o.channel]].filter(Boolean).join(' · ');
+  const soon = left != null && left <= 3;
+  return (
+    <Pressable style={st.ticket} onPress={onToggle} accessibilityHint={t('اضغط للشروط')}>
+      <View style={{ flexDirection: 'row' }}>
+        <View style={[st.stub, { backgroundColor: c.color }]}>
+          <AppText style={{ fontFamily: font.bold, fontSize: badge.length > 6 ? 13 : 22, lineHeight: badge.length > 6 ? 18 : 28 }} color="#fff" center numberOfLines={2}>{badge}</AppText>
+          <AppText variant="tiny" color="rgba(255,255,255,0.85)" center>{o.unit === 'cashback' ? t('كاش باك') : o.unit === 'pct' || o.unit === 'sar' ? t('خصم') : ' '}</AppText>
+        </View>
+        {/* خط القص بين الجزأين */}
+        <View style={st.perf}>
+          <View style={[st.notch, { top: -9 }]} /><View style={st.dash} /><View style={[st.notch, { bottom: -9 }]} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0, paddingVertical: 12, paddingEnd: 14, paddingStart: 4, gap: 3 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name={c.icon as never} size={13} color={c.color} />
+            <AppText variant="tiny" color={c.color} style={{ fontFamily: font.bold }}>{catName}</AppText>
+            {o.newOnly ? <View style={st.newTag}><AppText variant="tiny" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t('للعملاء الجدد')}</AppText></View> : null}
+          </View>
+          <AppText style={{ fontFamily: font.bold, fontSize: 16 }} numberOfLines={1}>{o.store}</AppText>
+          <AppText style={{ fontSize: 13.5, lineHeight: 20 }} muted numberOfLines={open ? undefined : 2}>{o.title}</AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+            <AppText variant="tiny" muted numberOfLines={1} style={{ flexShrink: 1 }}>{where}</AppText>
+            {left != null ? <AppText variant="tiny" color={soon ? brand.pinkDeep : brand.muted} style={{ fontFamily: soon ? font.bold : font.regular }}>· {left <= 0 ? t('آخر يوم اليوم') : left === 1 ? t('ينتهي بكرة') : t('باقي {n} يوم', { n: left })}</AppText> : null}
+          </View>
+        </View>
+      </View>
+
+      {o.code || o.useUrl ? (
+        <View style={st.bottom}>
+          {o.code ? (
+            <Pressable style={[st.codeBox, copied && { borderColor: brand.green, backgroundColor: brand.softGreen }]} onPress={onCopy} accessibilityLabel={t('انسخ الكود')}>
+              <AppText style={{ fontFamily: font.bold, fontSize: 15, letterSpacing: 1.5 }} numberOfLines={1}>{o.code}</AppText>
+              <View style={st.copyTag}><Icon name={copied ? 'check' : 'ticket'} size={13} color={copied ? brand.green : brand.purple} /><AppText variant="tiny" color={copied ? brand.green : brand.purple} style={{ fontFamily: font.bold }}>{copied ? t('انتسخ') : t('انسخ')}</AppText></View>
+            </Pressable>
+          ) : <AppText variant="small" muted style={{ flex: 1 }}>{t('بدون كود · العرض يطبق تلقائياً')}</AppText>}
+          {o.useUrl ? (
+            <Pressable style={[st.goBtn, { backgroundColor: c.color }]} onPress={onGo} hitSlop={6}>
+              <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{o.code ? t('استخدمه') : t('افتح العرض')}</AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
+      {open ? (
+        <View style={st.terms}>
+          {o.minOrder || o.maxDiscount ? <AppText variant="small" style={{ fontFamily: font.semibold }}>{[o.minOrder ? t('الحد الأدنى {n} ر.س', { n: o.minOrder }) : '', o.maxDiscount ? t('أقصى خصم {n} ر.س', { n: o.maxDiscount }) : ''].filter(Boolean).join(' · ')}</AppText> : null}
+          {o.deliveryApp ? <AppText variant="small" muted>{t('عن طريق {app}', { app: o.deliveryApp })}</AppText> : null}
+          {o.terms ? <AppText variant="small" muted style={{ lineHeight: 21 }}>{o.terms}</AppText> : null}
+          {o.sourceUrl ? <Pressable onPress={() => Linking.openURL(o.sourceUrl).catch(() => {})}><AppText variant="tiny" color={brand.link} style={{ fontFamily: font.semibold }}>{t('مصدر العرض')}</AppText></Pressable> : null}
+        </View>
+      ) : o.terms || o.minOrder || o.maxDiscount ? <AppText variant="tiny" color={brand.link} style={{ fontFamily: font.semibold, paddingHorizontal: 14, paddingBottom: 10 }}>{t('الشروط')}</AppText> : null}
+    </Pressable>
+  );
+}
+
 const st = StyleSheet.create({
   head: { backgroundColor: brand.pink, paddingHorizontal: 20, paddingBottom: 22, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: brand.card, borderRadius: 22, padding: 14 },
-  off: { width: 70, minHeight: 70, borderRadius: 18, alignItems: 'center', justifyContent: 'center', padding: 4 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  pill: { backgroundColor: brand.chip, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  codeRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  code: { flex: 1, height: 44, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.orange, alignItems: 'center', justifyContent: 'center', direction: 'ltr' },
-  copy: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: brand.purple, borderRadius: 12, paddingHorizontal: 14, height: 44 },
-  acts: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
-  goBtn: { backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 16, height: 38, justifyContent: 'center' },
+  ticket: { backgroundColor: brand.card, borderRadius: 20, overflow: 'hidden' },
+  stub: { width: 92, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, paddingVertical: 14 },
+  perf: { width: 14, alignItems: 'center' },
+  dash: { flex: 1, width: 0, borderStartWidth: 1.5, borderStyle: 'dashed', borderColor: brand.chip, marginVertical: 10 },
+  notch: { position: 'absolute', width: 18, height: 18, borderRadius: 9, backgroundColor: brand.bg },
+  newTag: { backgroundColor: brand.softPink, borderRadius: 6, paddingHorizontal: 6 },
+  bottom: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: 1, borderTopColor: brand.chip, paddingHorizontal: 12, paddingVertical: 10 },
+  codeBox: { flex: 1, height: 40, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.lilac, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, gap: 8 },
+  copyTag: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  goBtn: { borderRadius: 12, paddingHorizontal: 16, height: 40, justifyContent: 'center' },
+  terms: { paddingHorizontal: 14, paddingBottom: 12, gap: 4 },
+  catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: brand.card },
   empty: { alignItems: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 22, padding: 24, marginTop: 6 },
   biz: { margin: 16, marginTop: 22, backgroundColor: brand.ink, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   bizIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },

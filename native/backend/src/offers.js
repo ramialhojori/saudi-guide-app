@@ -18,7 +18,10 @@ const num = (v) => (v === '' || v == null || isNaN(+v) ? null : +v);
 const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null);
 const url = (v) => { const s = str(v, 300); return /^https?:\/\/\S+$/i.test(s) ? s : null; };
 
-export const OFFER_CATS = ['food', 'cafe', 'hotel', 'fun', 'shop', 'other'];
+export const OFFER_CATS = ['food', 'cafe', 'delivery', 'grocery', 'hotel', 'travel', 'car', 'fun', 'shop', 'electronics', 'beauty', 'other'];
+// أسماء ثانية ممكن تجي من المهمة المجدولة → التصنيف الصحيح
+const CAT_ALIAS = { restaurant: 'food', restaurants: 'food', coffee: 'cafe', cafes: 'cafe', food_delivery: 'delivery', supermarket: 'grocery', groceries: 'grocery', hotels: 'hotel', flights: 'travel', airline: 'travel', tourism: 'travel', car_rental: 'car', cars: 'car', entertainment: 'fun', events: 'fun', fashion: 'shop', shopping: 'shop', retail: 'shop', tech: 'electronics', health: 'beauty', pharmacy: 'beauty', spa: 'beauty' };
+const catOf = (c) => { const k = String(c || '').toLowerCase().trim(); return OFFER_CATS.includes(k) ? k : CAT_ALIAS[k] || 'other'; };
 export const OFFER_UNITS = ['pct', 'sar', 'gift', 'bogo', 'free_delivery', 'fixed_price', 'cashback', 'other'];
 export const OFFER_CHANNELS = ['any', 'store', 'online', 'app', 'delivery'];
 const ALL_CITY = /^(all|any|كل المدن|جميع المدن|السعودية|المملكة|كل المملكة|أونلاين|اونلاين|online)$/i;
@@ -80,7 +83,7 @@ function clean(x) {
   if (!source) return { error: 'source_url_required' };
   return {
     row: {
-      kind: 'official', store_name: store, store_key: normStore(store), category: OFFER_CATS.includes(x.category) ? x.category : 'other', city, city_raw: str(x.city, 40) || null,
+      kind: 'official', store_name: store, store_key: normStore(store), category: catOf(x.category), city, city_raw: str(x.city, 40) || null,
       value, unit, title, code: x.code ? str(x.code, 40) : null, channel: OFFER_CHANNELS.includes(x.channel) ? x.channel : 'any', source_url: source, use_url: url(x.use_url),
       starts_at: starts, expires_at: expires, min_order: num(x.min_order), max_discount: num(x.max_discount), new_only: x.new_only ? 1 : 0,
       delivery_app: str(x.delivery_app, 40) || null, terms: str(x.terms, 300) || null, legacy_id: str(x.legacy_id, 64) || null,
