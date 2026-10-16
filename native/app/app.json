@@ -19,7 +19,13 @@
       "associatedDomains": [
         "applinks:www.saudi-guide.com",
         "applinks:saudi-guide.com"
-      ]
+      ],
+      "appleTeamId": "V8N7C973S7",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.saudiguide"
+        ]
+      }
     },
     "android": {
       "package": "carizmaapps.saudiguide",
@@ -134,7 +140,8 @@
             "com.google.android.googlequicksearchbox"
           ]
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true

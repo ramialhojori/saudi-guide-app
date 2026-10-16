@@ -16,6 +16,7 @@ import { session, useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
 import { openDirections } from '@/lib/maps';
 import { extLink, riyadhDate } from '@/lib/text';
+import { syncWidget } from '@/lib/widget';
 import { useAsync } from '@/lib/useAsync';
 import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
@@ -44,6 +45,7 @@ export default function EventScreen() {
     setGoing((v) => !v); setGoers((g) => ({ ...g, count: g.count + (going ? -1 : 1) }));
     await api(`/v1/events/${id}/going`, { method: 'POST', token: session().token }).catch(() => {});
     loadGoing();
+    syncWidget(true);
   };
   const left = useCountdown(e?.start);
 

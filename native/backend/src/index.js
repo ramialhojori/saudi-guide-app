@@ -29,6 +29,7 @@ import { adminAuth, adminLoginRoute, adminSessionRoute } from './adminauth.js';
 import { inviteRoute } from './invite.js';
 import { tripsRoute, tripsAdmin } from './trips.js';
 import { affiliateRoute, affiliateAdmin } from './affiliate.js';
+import { widgetRoute } from './widget.js';
 import { errorsRoute, insightsAdmin, weeklyReport } from './insights.js';
 import { videosRoute, videosAdmin } from './videos.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
@@ -190,6 +191,7 @@ async function route(request, env, ctx) {
   if (p === '/v1/admin/login') { const r = await adminLoginRoute(p, request, env, J); if (r) return r; }
   if (/^\/v1\/places\/\d+\/videos$/.test(p)) { const r = await videosRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/errors') { const r = await errorsRoute(p, request, env, J); if (r) return r; }
+  if (p === '/v1/widget') { const r = await widgetRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/affiliate') { const r = await affiliateRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/trips')) { const r = await tripsRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/invite')) { const r = await inviteRoute(p, request, env, J); if (r) return r; }

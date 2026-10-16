@@ -21,6 +21,7 @@ import { startTracking } from '@/lib/track';
 import { WebFrame } from '@/components/WebFrame';
 import { initLang, isRtl, LANG, t } from '@/lib/i18n';
 import { installErrorReporting, reportError, setErrorScreen } from '@/lib/errors';
+import { installWidgetSync, syncWidget } from '@/lib/widget';
 import { usePathname } from 'expo-router';
 import type { ErrorBoundaryProps } from 'expo-router';
 
@@ -80,7 +81,11 @@ export default function RootLayout() {
     prefs.onboarded().then((done) => { if (!done) setTimeout(() => router.replace('/welcome'), 50); });
   }, [loaded, error]);
   // دليل+: نستقبل عمليات آبل اللي ما انقفلت (تجديد، انقطاع نت) أول ما يكون فيه حساب
-  const uid = useAuth().user?.id;
+  const me = useAuth().user;
+  const uid = me?.id;
+  // ودجت الشاشة الرئيسية: يتحدث عند التشغيل، ولما يتغير الحساب أو المدينة
+  useEffect(() => { installWidgetSync(); }, []);
+  useEffect(() => { syncWidget(true); }, [uid, me?.city]);
   useEffect(() => { if (uid && Platform.OS === 'ios') startIap().catch(() => {}); }, [uid]);
   // إشعارات الجوال: تجهيز فتح الروابط مرة وحدة، وربط الجهاز بالحساب كل ما تغيّر
   useEffect(() => { startPush(); }, []);
