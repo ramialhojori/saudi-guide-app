@@ -12,7 +12,7 @@ import { BellButton } from '@/components/BellButton';
 import { Avatar, Section } from '@/components/ui';
 import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
 import { useWeather } from '@/lib/weather';
-import { useAuth } from '@/lib/auth';
+import { isPlus, useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
@@ -42,6 +42,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { data } = useAsync(getHome, []);
   const { user } = useAuth();
+  const F = useFeatures();
   const first = (user?.name || '').trim().split(/\s+/)[0];
   const near = useNearby();
   const weather = useWeather(user?.city);
@@ -72,6 +73,18 @@ export default function Home() {
           </Pressable>
         </View>
       </View>
+
+      {/* غلاف دليل+ صغير (يختفي للمشتركين) */}
+      {!isPlus(user) && (F.ai_chat || F.ai_planner) ? (
+        <Pressable style={st.plusBand} onPress={() => router.push('/plus')} accessibilityRole="button">
+          <View style={st.plusIcon}><Icon name="spark" color="#fff" size={20} /></View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color="#fff">{t('دليل+')}<AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>{'  '}{t('جرّبه 3 أيام مجاناً')}</AppText></AppText>
+            <AppText variant="tiny" color="#E2DAEE" numberOfLines={2}>{t('اسأل الدليل بلا حدود، وخطط رحلاتك يوم بيوم، وبدون إعلانات')}</AppText>
+          </View>
+          <View style={st.plusGo}><AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>{t('اشترك')}</AppText></View>
+        </Pressable>
+      ) : null}
 
       {/* أنواع الأماكن */}
       <View style={st.kinds}>
@@ -264,6 +277,9 @@ function EventBanner({ e }: { e: EventItem }) {
 const st = StyleSheet.create({
   hero: { height: 470, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, overflow: 'hidden', backgroundColor: brand.ink },
   top: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  plusBand: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, backgroundColor: brand.purple, borderRadius: 22, padding: 14 },
+  plusIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  plusGo: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, height: 36, justifyContent: 'center' },
   glass: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   avRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   heroTx: { position: 'absolute', right: 20, left: 20, bottom: 28, gap: 4 },

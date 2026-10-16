@@ -20,6 +20,7 @@ const notify = (env, uid, text, link) => env.DB.prepare("INSERT INTO notificatio
 export const FEATURES = {
   coupons: 'الكوبونات وعروض المحلات',
   translate: 'ترجمة المحتوى الجديد للإنجليزي تلقائياً',
+  comments: 'التعليقات على الأخبار (مع المراجعة الذكية)',
   official_auto: 'نشر العروض الرسمية (البنوك والمتاجر) مباشرة بدون مراجعة',
   merchants: 'بوابة التجار («سجّل نشاطك»)',
   points: 'صرف النقاط على الكوبونات',

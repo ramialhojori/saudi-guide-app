@@ -5,9 +5,9 @@ import { api } from './api';
 export type Features = {
   coupons: boolean; merchants: boolean; points: boolean; reviews: boolean; photos: boolean; passport: boolean;
   guides: boolean; impact: boolean; facts: boolean; suggest: boolean; heroes: boolean; challenge: boolean;
-  ai_chat: boolean; ai_planner: boolean;
+  ai_chat: boolean; ai_planner: boolean; comments: boolean;
 };
-const ALL_ON: Features = { coupons: true, merchants: true, points: true, reviews: true, photos: true, passport: true, guides: true, impact: true, facts: true, suggest: true, heroes: true, challenge: true, ai_chat: true, ai_planner: true };
+const ALL_ON: Features = { coupons: true, merchants: true, points: true, reviews: true, photos: true, passport: true, guides: true, impact: true, facts: true, suggest: true, heroes: true, challenge: true, ai_chat: true, ai_planner: true, comments: true };
 
 let cur: Features = ALL_ON;
 let at = 0;

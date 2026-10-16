@@ -443,3 +443,9 @@ CREATE INDEX IF NOT EXISTS leads_status ON business_leads(status, id);
 CREATE TABLE IF NOT EXISTS offers ( id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL DEFAULT 'official', store_name TEXT NOT NULL, store_key TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'other', city TEXT NOT NULL DEFAULT '', city_raw TEXT, value REAL, unit TEXT NOT NULL DEFAULT 'pct', title TEXT NOT NULL, code TEXT, channel TEXT NOT NULL DEFAULT 'any', source_url TEXT, use_url TEXT, starts_at TEXT, expires_at TEXT, min_order REAL, max_discount REAL, new_only INTEGER NOT NULL DEFAULT 0, delivery_app TEXT, terms TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, origin TEXT, legacy_id TEXT, copies INTEGER NOT NULL DEFAULT 0, opens INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, updated INTEGER NOT NULL );
 CREATE INDEX IF NOT EXISTS offers_pub ON offers(status, city, expires_at);
 CREATE INDEX IF NOT EXISTS offers_store ON offers(store_key, unit, value);
+
+-- تعليقات الأخبار (comments.js)
+CREATE TABLE IF NOT EXISTS article_comments ( id INTEGER PRIMARY KEY AUTOINCREMENT, article_id INTEGER NOT NULL, user_id TEXT NOT NULL, text TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'visible', reason TEXT, mod_by TEXT, reports INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL );
+CREATE INDEX IF NOT EXISTS acomments_article ON article_comments(article_id, status, id);
+CREATE INDEX IF NOT EXISTS acomments_status ON article_comments(status, id);
+CREATE TABLE IF NOT EXISTS comment_reports ( comment_id INTEGER NOT NULL, user_id TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id) );
