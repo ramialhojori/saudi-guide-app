@@ -59,7 +59,19 @@ const STATEMENTS = [
   "CREATE TABLE IF NOT EXISTS merchant_agreements ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, merchant_id INTEGER, version TEXT NOT NULL, ip TEXT, ua TEXT, created INTEGER NOT NULL )",
   "CREATE INDEX IF NOT EXISTS magree_user ON merchant_agreements(user_id, id)",
   "CREATE TABLE IF NOT EXISTS stats_daily ( day TEXT NOT NULL, metric TEXT NOT NULL, k TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, metric, k) )",
-  "CREATE TABLE IF NOT EXISTS active_devices ( day TEXT NOT NULL, device TEXT NOT NULL, platform TEXT, PRIMARY KEY (day, device) )"
+  "CREATE TABLE IF NOT EXISTS active_devices ( day TEXT NOT NULL, device TEXT NOT NULL, platform TEXT, PRIMARY KEY (day, device) )",
+  "CREATE TABLE IF NOT EXISTS tr ( kind TEXT NOT NULL, id INTEGER NOT NULL, lang TEXT NOT NULL, t TEXT, s TEXT, b TEXT, a TEXT, src TEXT, updated INTEGER NOT NULL, PRIMARY KEY (kind, id, lang) )",
+  "CREATE TABLE IF NOT EXISTS place_summary ( place_id INTEGER PRIMARY KEY, text TEXT NOT NULL, n INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE TABLE IF NOT EXISTS content_live ( kind TEXT NOT NULL, item_id INTEGER NOT NULL, city TEXT, title TEXT, at INTEGER NOT NULL, sent INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (kind, item_id) )",
+  "CREATE TABLE IF NOT EXISTS iap_subs ( orig_tx TEXT PRIMARY KEY, user_id TEXT NOT NULL, product TEXT NOT NULL, expires INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0, env TEXT, last_tx TEXT, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS iap_subs_user ON iap_subs(user_id)",
+  "CREATE TABLE IF NOT EXISTS coupon_alerts ( user_id TEXT NOT NULL, city TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, city) )",
+  "CREATE TABLE IF NOT EXISTS contact_msgs ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, kind TEXT NOT NULL, text TEXT NOT NULL, reply_to TEXT, city TEXT, app TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'new', reply TEXT, replied INTEGER, created INTEGER NOT NULL )",
+  "CREATE TABLE IF NOT EXISTS business_leads ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT NOT NULL, contact TEXT NOT NULL, city TEXT, kind TEXT, plan TEXT, note TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'new', admin_note TEXT, created INTEGER NOT NULL, updated INTEGER )",
+  "CREATE INDEX IF NOT EXISTS leads_status ON business_leads(status, id)",
+  "CREATE TABLE IF NOT EXISTS offers ( id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL DEFAULT 'official', store_name TEXT NOT NULL, store_key TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'other', city TEXT NOT NULL DEFAULT '', city_raw TEXT, value REAL, unit TEXT NOT NULL DEFAULT 'pct', title TEXT NOT NULL, code TEXT, channel TEXT NOT NULL DEFAULT 'any', source_url TEXT, use_url TEXT, starts_at TEXT, expires_at TEXT, min_order REAL, max_discount REAL, new_only INTEGER NOT NULL DEFAULT 0, delivery_app TEXT, terms TEXT, status TEXT NOT NULL DEFAULT 'pending', note TEXT, origin TEXT, legacy_id TEXT, copies INTEGER NOT NULL DEFAULT 0, opens INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, updated INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS offers_pub ON offers(status, city, expires_at)",
+  "CREATE INDEX IF NOT EXISTS offers_store ON offers(store_key, unit, value)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */

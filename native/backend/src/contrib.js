@@ -20,6 +20,7 @@ const notify = (env, uid, text, link) => env.DB.prepare("INSERT INTO notificatio
 export const FEATURES = {
   coupons: 'الكوبونات وعروض المحلات',
   translate: 'ترجمة المحتوى الجديد للإنجليزي تلقائياً',
+  official_auto: 'نشر العروض الرسمية (البنوك والمتاجر) مباشرة بدون مراجعة',
   merchants: 'بوابة التجار («سجّل نشاطك»)',
   points: 'صرف النقاط على الكوبونات',
   reviews: 'تقييمات الأماكن',
@@ -41,8 +42,9 @@ export const FEATURES = {
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();
   const saved = parse(r?.v, {});
+  // official_auto: مقفلة افتراضياً (العروض الرسمية تنضاف مسودة لين يعتمدها رامي)
   // translate: مقفلة افتراضياً (الترجمة نسويها في محادثة Claude بدل مفتاح الـAPI) — تشتغل بس لو انفعلت من اللوحة
-  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, k === 'translate' ? saved[k] === true : saved[k] !== false]));
+  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, k === 'translate' || k === 'official_auto' ? saved[k] === true : saved[k] !== false]));
 }
 
 /* ═════════ الأسئلة السريعة ═════════ */

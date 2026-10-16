@@ -182,7 +182,7 @@ async function render() {
   if (!KEY) return loginView();
   if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
-  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.leadsNew || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
+  const NB = { community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.leadsNew || 0) + (SUMMARY?.counts?.offersPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
     <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
@@ -769,6 +769,7 @@ async function usersView(q = '') {
 
 /* ——— التجار والكوبونات ——— */
 let MTAB = 'pending';
+let OTAB = null;
 const MK = { restaurant: 'مطعم', cafe: 'مقهى', sweets: 'مخبز وحلويات', juice: 'عصيرات ومشروبات', dates: 'تمور ومنتجات محلية', perfume: 'عطور وبخور', gifts: 'هدايا وتذكارات', clothing: 'ملابس وعبايات', shop: 'متجر', mall: 'مول ومركز تسوق', hotel: 'فندق وشقق فندقية', resort: 'منتجع واستراحة', experience: 'تجربة سياحية', tours: 'جولات ومنظم رحلات', fun: 'ترفيه وألعاب', car: 'تأجير سيارات ونقل', umrah: 'خدمات الحج والعمرة', salon: 'صالون ومشغل', other: 'نشاط آخر' };
 const MST = { pending: ['قيد المراجعة', 'b-draft'], approved: ['معتمد', 'b-live'], rejected: ['مرفوض', 'b-hidden'], hidden: ['موقوف', 'b-hidden'], active: ['فعّال', 'b-live'], paused: ['موقوف مؤقتاً', 'b-hidden'] };
 const stB = (s) => `<span class="badge ${(MST[s] || ['', 'b-hidden'])[1]}">${(MST[s] || [s])[0]}</span>`;
@@ -776,7 +777,7 @@ const dAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-
 async function merchantsView() {
   const m = $('#main');
   m.innerHTML = `<h1>التجار والكوبونات</h1><p class="sub">أصحاب المحلات يسجّلون من التطبيق (الملف الشخصي ← «سجّل نشاطك»). ما يظهر شي للزوار لين توافق هنا.</p>
-    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['reports', `بلاغات العملاء${SUMMARY?.counts?.creportsPending ? ' (' + SUMMARY.counts.creportsPending + ')' : ''}`], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف'], ['leads', `مهتمين بالباقات${SUMMARY?.counts?.leadsNew ? ' (' + SUMMARY.counts.leadsNew + ')' : ''}`]].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+    <div class="tabs">${[['pending', 'طلبات جديدة'], ['coupons', 'كوبونات تنتظر'], ['reports', `بلاغات العملاء${SUMMARY?.counts?.creportsPending ? ' (' + SUMMARY.counts.creportsPending + ')' : ''}`], ['approved', 'التجار المعتمدين'], ['allc', 'كل الكوبونات'], ['rejected', 'مرفوض / موقوف'], ['leads', `مهتمين بالباقات${SUMMARY?.counts?.leadsNew ? ' (' + SUMMARY.counts.leadsNew + ')' : ''}`], ['offers', `عروض البنوك والمتاجر${SUMMARY?.counts?.offersPending ? ' (' + SUMMARY.counts.offersPending + ')' : ''}`]].map(([k, t]) => `<button data-m="${k}" class="${MTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
   m.querySelectorAll('[data-m]').forEach((b) => (b.onclick = () => { MTAB = b.dataset.m; merchantsView(); }));
   if (MTAB === 'reports') {
     const RS = { refused: 'المحل رفض الكوبون', different: 'العرض مختلف عن المكتوب', conditions: 'شروط ما كانت مكتوبة', closed: 'المحل مقفل', other: 'مشكلة ثانية' };
@@ -788,6 +789,27 @@ async function merchantsView() {
       if (b.dataset.s === 'confirmed' && !confirm('تثبت البلاغ؟ العميل ياخذ 20 نقطة والتاجر تنسجل عليه مخالفة.')) return;
       await api('/admin/coupon-reports/' + b.dataset.rp, { method: 'POST', body: { status: b.dataset.s } }); toast('تم ووصلهم إشعار'); SUMMARY = null; merchantsView();
     }));
+    return;
+  }
+  if (MTAB === 'offers') {
+    const OS = { pending: ['تنتظر', 'b-draft'], active: ['منشور', 'b-live'], paused: ['موقوف', 'b-hidden'], rejected: ['مرفوض', 'b-hidden'] };
+    const CH = { any: 'المتجر والأونلاين', store: 'في المتجر', online: 'أونلاين', app: 'من التطبيق', delivery: 'تطبيقات التوصيل' };
+    OTAB ??= 'pending';
+    const d = await api('/admin/offers?status=' + OTAB);
+    const c = d.counts || {};
+    $('#res').innerHTML = `<div class="hint" style="margin-bottom:10px">عروض رسمية من البنوك والمتاجر (تضيفها المهمة المجدولة كل 3 أيام بأداة create_coupons). تنضاف مسودة لين تعتمدها، إلا لو فعّلت «نشر العروض الرسمية مباشرة» من المميزات. العرض المنتهي يختفي من التطبيق لحاله.</div>
+      <div class="row" style="margin-bottom:10px">${[['pending', `تنتظر (${c.pending || 0})`], ['active', `منشورة (${c.active || 0})`], ['expired', 'منتهية'], ['all', 'الكل']].map(([k, t]) => `<button class="btn ${OTAB === k ? 'p' : 'ghost'}" data-ot="${k}">${t}</button>`).join('')}${OTAB === 'pending' && d.offers.length ? '<button class="btn g" id="okAll" style="margin-inline-start:auto">اعتمد الكل</button>' : ''}</div>` +
+      (d.offers.map((o) => `<div class="post"><div class="row"><span style="background:var(--orange);color:#fff;border-radius:14px;padding:8px 12px;font-weight:700">${h(o.off)}</span>
+        <div class="grow"><div class="t" style="font-weight:700">${h(o.store)} · ${h(o.title)}</div><div class="m muted" style="font-size:13px">${[o.cityName, CH[o.channel], o.expiresAt ? (o.expiresAt < d.today ? '<b style="color:var(--pinkDeep)">انتهى ' + o.expiresAt + '</b>' : 'ينتهي ' + o.expiresAt) : 'بدون تاريخ انتهاء', o.code ? 'الكود: <b dir="ltr">' + h(o.code) + '</b>' : 'بدون كود', o.minOrder ? 'الحد الأدنى ' + o.minOrder + ' ر.س' : '', o.maxDiscount ? 'أقصى خصم ' + o.maxDiscount + ' ر.س' : '', o.newOnly ? 'للعملاء الجدد' : '', o.deliveryApp ? h(o.deliveryApp) : ''].filter(Boolean).join(' · ')}</div></div><span class="badge ${(OS[o.status] || OS.pending)[1]}">${(OS[o.status] || [o.status])[0]}</span></div>
+        ${o.terms ? `<div style="font-size:14px">${h(o.terms)}</div>` : ''}
+        <div class="muted" style="font-size:13px"><a href="${h(o.sourceUrl)}" target="_blank" rel="noopener">المصدر</a>${o.useUrl && o.useUrl !== o.sourceUrl ? ` · <a href="${h(o.useUrl)}" target="_blank" rel="noopener">رابط الاستخدام</a>` : ''} · ${o.origin === 'task' ? 'من المهمة المجدولة' : o.origin === 'import' ? 'منقول من القاعدة القديمة' : 'من اللوحة'} · ${dAr(o.created)}${o.status === 'active' ? ` · نسخ الكود ${o.copies} · فتح الرابط ${o.opens}` : ''}</div>
+        <div class="row">${o.status !== 'active' ? `<button class="btn g" data-of="${o.id}" data-s="active">اعتمد وانشر</button>` : `<button class="btn ghost" data-of="${o.id}" data-s="paused">أوقف</button>`}${o.status === 'pending' ? `<button class="btn p" data-of="${o.id}" data-s="rejected">ارفض</button>` : ''}<button class="btn ghost" data-of="${o.id}" data-s="hidden">إخفاء</button></div></div>`).join('') || `<div class="empty">${OTAB === 'pending' ? 'ما فيه عروض تنتظر' : 'ما فيه شي هنا'}</div>`);
+    m.querySelectorAll('[data-ot]').forEach((b) => (b.onclick = () => { OTAB = b.dataset.ot; merchantsView(); }));
+    m.querySelectorAll('[data-of]').forEach((b) => (b.onclick = async () => {
+      if (b.dataset.s === 'hidden' && !confirm('تخفي العرض؟ (ما ينحذف)')) return;
+      await api('/admin/offers/' + b.dataset.of, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); SUMMARY = null; merchantsView();
+    }));
+    const ok = $('#okAll'); if (ok) ok.onclick = async () => { if (!confirm(`تعتمد ${d.offers.length} عرض وتنشرها في التطبيق؟`)) return; const r = await api('/admin/offers/approve-all', { method: 'POST', body: {} }); toast(`انتشر ${r.approved} عرض`); SUMMARY = null; merchantsView(); };
     return;
   }
   if (MTAB === 'leads') {

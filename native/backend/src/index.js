@@ -23,6 +23,7 @@ import { searchRoute } from './search.js';
 import { contactRoute, contactAdmin } from './contact.js';
 import { businessRoute, businessAdmin, planExpiry } from './business.js';
 import { weatherRoute } from './weather.js';
+import { offersRoute, offersAdmin } from './offers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
@@ -151,7 +152,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -173,6 +174,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
+  if (p.startsWith('/v1/offers')) { const r = await offersRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }
 
   /* ——— المساهمة: المميزات، الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */
