@@ -6,7 +6,7 @@
  *  - معرّفات الوحدات من حساب AdMob حق تطبيق «دليل السياحة السعودية» (نفس التطبيق في المتجر)
  *  - المكتبة تنحمّل وقت التشغيل: لو النسخة المثبتة ما فيها الإعلانات (بناء قديم) التطبيق يكمل عادي بدون إعلانات
  */
-import { Platform } from 'react-native';
+import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 import { useEffect, useState } from 'react';
 import { isPlus, useAuth } from './auth';
 import { useFeatures } from './features';
@@ -18,6 +18,10 @@ export function adsLib(): any {
   if (tried) return lib;
   tried = true;
   if (Platform.OS === 'web') return null;
+  // النسخة المثبتة لازم تكون مبنية مع AdMob؛ نتأكد قبل التحميل (وإلا وضع التطوير يطلع خطأ يقفل الشاشة)
+  let native: unknown = null;
+  try { native = TurboModuleRegistry.get('RNGoogleMobileAdsModule') ?? NativeModules.RNGoogleMobileAdsModule; } catch { native = null; }
+  if (!native) return null;
   try { lib = require('react-native-google-mobile-ads'); } catch { lib = null; }
   return lib;
 }
