@@ -18,15 +18,19 @@ import {
 import { colors, isDark } from '@/theme/tokens';
 import { startTracking } from '@/lib/track';
 import { WebFrame } from '@/components/WebFrame';
+import { isRtl, LANG } from '@/lib/i18n';
 
-// التطبيق عربي بالكامل: الاتجاه من اليمين دائماً (في النسخ المبنية يضبطه expo-localization في app.json)
-if (!I18nManager.isRTL) {
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true);
+// اللغة والاتجاه: الجوال يتبع لغة الجهاز أول مرة، وبعدها اختيار المستخدم (lib/i18n.ts)
+I18nManager.allowRTL(isRtl);
+// نسخة الويب: /en/... تعني إنجليزي — نحفظ الاختيار ونشيل /en من الرابط عشان المسارات تشتغل
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  if (/^\/en(\/|$)/.test(location.pathname)) {
+    try { localStorage.setItem('sg_lang', 'en'); } catch { /* */ }
+    history.replaceState(null, '', location.pathname.replace(/^\/en/, '') || '/');
+  }
+  document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+  document.documentElement.lang = LANG;
 }
-
-// نسخة الويب (saudi-guide.com): الاتجاه واللغة من وسم html
-if (Platform.OS === 'web' && typeof document !== 'undefined') { document.documentElement.dir = 'rtl'; document.documentElement.lang = 'ar'; }
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 startTracking();

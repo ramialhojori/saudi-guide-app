@@ -1,4 +1,5 @@
 import { env } from '@/config/env';
+import { isEn } from './i18n';
 
 export class ApiError extends Error {
   constructor(public readonly code: string, public readonly status: number) {
@@ -13,7 +14,9 @@ export async function api<T>(path: string, { method = 'GET', body, timeoutMs = 1
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(env.apiUrl + path, {
+    // النسخة الإنجليزية: السيرفر يرجع المحتوى مترجم
+    const url = env.apiUrl + path + (isEn && method === 'GET' && path.startsWith('/v1/') ? (path.includes('?') ? '&' : '?') + 'lang=en' : '');
+    const res = await fetch(url, {
       method,
       headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,

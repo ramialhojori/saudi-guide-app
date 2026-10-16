@@ -83,7 +83,7 @@
         "expo-localization",
         {
           "supportsRTL": true,
-          "forcesRTL": true
+          "forcesRTL": false
         }
       ],
       "expo-image",
@@ -118,7 +118,7 @@
     },
     "extra": {
       "supportsRTL": true,
-      "forcesRTL": true,
+      "forcesRTL": false,
       "eas": {
         "projectId": "0b12b8b0-edf6-42bb-8bfd-31c7b0b72ae7"
       }

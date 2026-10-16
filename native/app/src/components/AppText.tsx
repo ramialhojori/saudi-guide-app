@@ -1,5 +1,6 @@
 import { Text, type TextProps } from 'react-native';
 import { colors, START, type } from '@/theme/tokens';
+import { isRtl } from '@/lib/i18n';
 
 type Props = TextProps & { variant?: keyof typeof type; muted?: boolean; color?: string; center?: boolean };
 
@@ -10,7 +11,7 @@ export function AppText({ variant = 'body', muted, color, center, style, ...rest
       {...rest}
       style={[
         type[variant],
-        { color: color ?? (muted ? colors.textMuted : colors.text), textAlign: center ? 'center' : START, writingDirection: 'rtl' },
+        { color: color ?? (muted ? colors.textMuted : colors.text), textAlign: center ? 'center' : START, writingDirection: isRtl ? 'rtl' : 'ltr' },
         style,
       ]}
     />

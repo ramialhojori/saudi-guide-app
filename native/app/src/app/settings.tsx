@@ -6,6 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { Alert, Appearance, DevSettings, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isEn, setLang } from '@/lib/i18n';
 import { AppText } from '@/components/AppText';
 import { Avatar, BackButton, Chip } from '@/components/ui';
 import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
@@ -76,7 +77,8 @@ export default function Settings() {
       )}
 
       <Group title="التفضيلات">
-        <Row label="اللغة"><Seg items={['عربي', 'English · قريباً']} on={0} /></Row>
+        {/* الإنجليزي جاهز للتجربة بس (نسخة التطوير) لين تكتمل ترجمة الواجهة */}
+        <Row label="اللغة · Language">{__DEV__ ? <Seg items={['عربي', 'English']} on={isEn ? 1 : 0} onPick={(i) => setLang(i ? 'en' : 'ar')} /> : <Seg items={['عربي', 'English · قريباً']} on={0} />}</Row>
         {__DEV__ ? <Row label="المظهر (تجربة)"><Seg items={['فاتح', 'ليلي']} on={isDark ? 1 : 0} onPick={(i) => setScheme(i ? 'dark' : 'light')} /></Row> : null}
         {user ? <Row label="مدينتي" value={(home ? cityName(home) || home : 'اختر') + ' ‹'} onPress={() => setOpen(open === 'home' ? '' : 'home')} /> : null}
         {open === 'home' ? <View style={st.chips}>{CITY_IDS.map((c) => <Chip key={c} label={cityName(c)} on={home === c} color={brand.ink} onPress={() => saveHome(c)} />)}</View> : null}

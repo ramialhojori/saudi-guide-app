@@ -1,5 +1,6 @@
 /* مولّد تلقائياً من schema.sql — لا تعدّله يدوياً (شغّل: python3 scripts/build_schema.py) */
 const STATEMENTS = [
+  "CREATE TABLE IF NOT EXISTS tr ( kind TEXT NOT NULL, id INTEGER NOT NULL, lang TEXT NOT NULL, t TEXT, s TEXT, b TEXT, a TEXT, src TEXT, updated INTEGER NOT NULL, PRIMARY KEY (kind, id, lang) )",
   "CREATE TABLE IF NOT EXISTS cities ( id TEXT PRIMARY KEY, name TEXT NOT NULL, gb_section INTEGER NOT NULL, color TEXT, lat REAL, lng REAL, kind TEXT NOT NULL DEFAULT 'city', cover TEXT, sort INTEGER NOT NULL DEFAULT 0 )",
   "CREATE TABLE IF NOT EXISTS places ( id INTEGER PRIMARY KEY, city TEXT NOT NULL, title TEXT NOT NULL, title_en TEXT, slug TEXT, cats TEXT NOT NULL DEFAULT '[]', kinds TEXT NOT NULL DEFAULT '[]', summary TEXT, body TEXT, images TEXT NOT NULL DEFAULT '[]', thumb TEXT, lat REAL, lng REAL, address TEXT, phone TEXT, website TEXT, email TEXT, url TEXT, comments INTEGER NOT NULL DEFAULT 1, premium INTEGER NOT NULL DEFAULT 0, search TEXT, sig TEXT, updated INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0 )",
   "CREATE INDEX IF NOT EXISTS places_city ON places(city, deleted)",

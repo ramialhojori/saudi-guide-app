@@ -4,6 +4,7 @@
    - ما فيه أي مفتاح سري في الكود: كل المفاتيح Secrets في Cloudflare
    مرجع المسارات: docs/api/API.md */
 
+import { localize, wantsEn, importTranslations, trStats, runTranslate } from './i18n.js';
 import { withCovers } from './covers.js';
 import { ensureSchema } from './schema.js';
 import { runSync, importRaw } from './sync.js';
@@ -34,7 +35,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, Authorization',
 };
-const VERSION = '0.21.1';
+const VERSION = '0.22.0';
 
 export function J(data, status = 200, maxAge = 0) {
   return new Response(JSON.stringify(data), {
@@ -140,6 +141,8 @@ async function route(request, env, ctx) {
     if (!env.ADMIN_KEY || request.headers.get('X-Admin-Key') !== env.ADMIN_KEY) return J({ error: 'unauthorized' }, 401);
     if (p === '/admin/sync' && request.method === 'POST') return J(await runSync(env, 'manual'));
     if (p === '/admin/import' && request.method === 'POST') return J(await importRaw(env, await request.json()));
+    if (p === '/admin/translations' && request.method === 'POST') return J(await importTranslations(env, await request.json()));
+    if (p === '/admin/translations') return J(await trStats(env));
     if (p === '/admin/weekly' && request.method === 'POST') {
       const body = await request.json();
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
@@ -352,7 +355,13 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
     try {
       await ensureSchema(env);
-      const res = await route(request, env, ctx);
+      let res = await route(request, env, ctx);
+      // النسخة الإنجليزية: نفس الرد بعد تبديل النصوص (?lang=en)
+      const u = new URL(request.url);
+      if (request.method === 'GET' && wantsEn(u.searchParams) && res.ok && (res.headers.get('Content-Type') || '').includes('json') && /^\/v1\/(home|cities|places|events|articles|search|nearby|seasons)/.test(u.pathname)) {
+        const data = await localize(env, await res.json());
+        res = new Response(JSON.stringify(data), { status: res.status, headers: res.headers });
+      }
       // أي طلب كتابة ممكن يكون أضاف إشعار لمستخدم → نرسله للجوال بالخلفية
       if (request.method === 'POST' || request.method === 'PUT') ctx.waitUntil(pushPending(env).catch((e) => console.log('push', e && e.message)));
       return res;
@@ -368,6 +377,7 @@ export default {
     // إشعارات المحتوى أول، وبعدها إشعارات الجوال (عشان تطلع بنفس الدورة)
     ctx.waitUntil(runAlerts(env).catch((e) => console.log('alerts', e && e.message)).then(() => pushPending(env)).catch((e) => console.log('push', e && e.message)));
     ctx.waitUntil(runQueue(env).catch((e) => console.log('queue', e && e.message)));
+    ctx.waitUntil(runTranslate(env).catch((e) => console.log('translate', e && e.message)));
     ctx.waitUntil(weeklyImpact(env).catch((e) => console.log('impact', e && e.message)));
     ctx.waitUntil(merchantWeekly(env).catch((e) => console.log('mweekly', e && e.message)));
   },
