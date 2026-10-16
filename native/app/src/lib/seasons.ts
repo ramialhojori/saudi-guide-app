@@ -24,6 +24,14 @@ const LOOK: Record<string, { color: string; photo: PhotoKey; line: string }> = {
   'مهرجان الرياض للكوميديا': { color: brand.orangeDeep, photo: 'art', line: 'عروض ستاند أب لأشهر الكوميديين' },
   'رالي حائل': { color: brand.orangeDeep, photo: 'land', line: 'رالي حائل الدولي في رمال النفود' },
 };
+/** أسماء المواسم بالإنجليزي (الاسم العربي يبقى هو المعرّف في الروابط والبيانات) */
+const NAME_EN: Record<string, string> = {
+  'موسم الرياض': 'Riyadh Season', 'موسم جدة': 'Jeddah Season', 'موسم الدرعية': 'Diriyah Season', 'لحظات العلا': 'AlUla Moments',
+  'موسم عسير': 'Asir Season', 'موسم الخبر': 'Khobar Season', 'مهرجان صيف تبوك': 'Tabuk Summer Festival', 'مدل بيست': 'MDLBEAST',
+  'شتاء طنطورة': 'Winter at Tantora', 'مهرجان الرياض للكوميديا': 'Riyadh Comedy Festival', 'رالي حائل': 'Hail International Rally',
+};
+/** اسم الموسم للعرض حسب اللغة */
+export const seasonLabel = (name: string) => (isEn && NAME_EN[name]) || name;
 /** الوصف الإنجليزي للمواسم الثابتة (نفس مفاتيح LOOK) */
 const LINE_EN: Record<string, string> = {
   'موسم الرياض': 'Concerts, theater, sports and experiences in the heart of the capital',

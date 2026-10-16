@@ -1,5 +1,6 @@
 import Svg, { Path } from 'react-native-svg';
 import { brand } from '@/theme/tokens';
+import { isEn } from '@/lib/i18n';
 
 /** أيقونات خطية — نفس المسارات المستخدمة في لوحة التصميم */
 export const ICONS = {
@@ -63,7 +64,8 @@ export type IconName = keyof typeof ICONS | 'heartFill';
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number; fill?: string };
 
 export function Icon({ name, size = 22, color = brand.text, strokeWidth = 2, fill }: Props) {
-  const d = ICONS[name === 'heartFill' ? 'heart' : name];
+  // أسهم الاتجاه (رجوع / التالي) مرسومة للعربي؛ بالإنجليزي تنعكس
+  const d = isEn && name === 'back' ? ICONS.chevron : isEn && name === 'chevron' ? ICONS.back : ICONS[name === 'heartFill' ? 'heart' : name];
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path d={d} stroke={color} strokeWidth={strokeWidth} fill={name === 'heartFill' ? color : fill ?? 'none'} strokeLinecap="round" strokeLinejoin="round" />

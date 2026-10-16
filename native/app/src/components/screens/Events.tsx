@@ -11,7 +11,7 @@ import { Pill } from '@/components/ui';
 import { cityName, getEvents } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
-import { countEvents, getSeasonMeta, seasonsFrom, seasonStatus, slug } from '@/lib/seasons';
+import { countEvents, getSeasonMeta, seasonsFrom, seasonStatus, slug, seasonLabel } from '@/lib/seasons';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
 import { isEn, t, tr } from '@/lib/i18n';
@@ -110,7 +110,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
                 <LinearGradient colors={['rgba(0,0,0,0)', x.color + 'F0']} locations={[0.15, 0.9]} style={StyleSheet.absoluteFill} />
                 <View style={st.seasonLive}><View style={[st.liveDot, { backgroundColor: x.live ? '#7CFC9A' : x.returning ? '#C9C2DA' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(x, now)}</AppText></View>
                 <View style={{ position: 'absolute', right: 14, left: 14, bottom: 12 }}>
-                  <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 30 }} color="#fff">{x.name}</AppText>
+                  <AppText style={{ fontFamily: font.bold, fontSize: 22, lineHeight: 30 }} color="#fff">{seasonLabel(x.name)}</AppText>
                   <AppText variant="tiny" color="#F2ECF8" numberOfLines={1}>{x.returning ? x.line : `${countEvents(x.events.length)} · ${x.line}`}</AppText>
                 </View>
               </Pressable>

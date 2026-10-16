@@ -32,6 +32,18 @@ async function tryApi<T>(path: string, fallback: () => T): Promise<T> {
   }
 }
 
+/* أسماء المدن والتصنيفات بالإنجليزي (نفس اللي في السيرفر backend/src/i18n.js) */
+const CITY_EN: Record<string, string> = {
+  riyadh: 'Riyadh', medina: 'Madinah', 'makkah-region': 'Makkah', alula: 'AlUla', 'asir-region': 'Asir', taif: 'Taif', jeddah: 'Jeddah',
+  jizan: 'Jazan', abha: 'Abha', diriyah: 'Diriyah', yanbu: 'Yanbu', albaha: 'Al-Baha', 'riyadh-region': 'Riyadh Region', 'tabuk-region': 'Tabuk',
+  'qassim-region': 'Al-Qassim', 'eastern-region': 'Eastern Province', umluj: 'Umluj & the Red Sea', hail: 'Hail', 'aljawf-region': 'Al-Jouf',
+  najran: 'Najran', 'northern-border': 'Northern Borders',
+};
+const KIND_EN: Record<string, string> = { sights: 'Sights', heritage: 'Heritage & Culture', islamic: 'Islamic Landmarks', nature: 'Nature & Valleys', fun: 'Entertainment', food: 'Restaurants', cafe: 'Cafés', shopping: 'Shopping' };
+if (isEn) {
+  for (const c of SNAP.cities) c.name = CITY_EN[c.id] ?? c.name;
+  for (const k of SNAP.kinds) k.name = KIND_EN[k.id] ?? k.name;
+}
 export const kinds: Kind[] = SNAP.kinds;
 /** كل مدن الدليل بالترتيب المعتمد (المجتمع، الإعدادات، النشر) */
 export const ALL_CITY_IDS = ['medina', 'makkah-region', 'riyadh', 'jeddah', 'alula', 'taif', 'abha', 'asir-region', 'diriyah', 'yanbu', 'umluj', 'eastern-region', 'tabuk-region', 'hail', 'qassim-region', 'albaha', 'jizan', 'najran', 'aljawf-region', 'northern-border', 'riyadh-region'];

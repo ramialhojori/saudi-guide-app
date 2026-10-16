@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { Empty, Loading } from '@/components/State';
 import { BackButton, Chip, Pill, RoundButton } from '@/components/ui';
 import { cityName, getEvents } from '@/lib/content';
-import { getSeasonMeta, seasonsFrom, seasonStatus, countEvents, toggleFollow, useFollowed } from '@/lib/seasons';
+import { getSeasonMeta, seasonsFrom, seasonStatus, countEvents, toggleFollow, useFollowed, seasonLabel } from '@/lib/seasons';
 import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem } from '@/lib/types';
@@ -56,7 +56,7 @@ export default function SeasonScreen() {
         </View>
         <View style={st.heroTx}>
           <View style={st.live}><View style={[st.liveDot, { backgroundColor: s.live ? '#7CFC9A' : brand.orange }]} /><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{seasonStatus(s, now)}</AppText></View>
-          <AppText variant="hero" color="#fff" style={{ fontSize: 36, lineHeight: 48 }}>{s.name}</AppText>
+          <AppText variant="hero" color="#fff" style={{ fontSize: 36, lineHeight: 48 }}>{seasonLabel(s.name)}</AppText>
           <AppText variant="small" color="#F2ECF8">{s.line}</AppText>
           {s.returning ? null : <AppText variant="small" color="#F2ECF8" style={{ marginTop: 4 }}>{riyadhDate(new Date(s.start).toISOString(), false)} – {riyadhDate(new Date(s.end).toISOString(), false)} · {countEvents(s.events.length)}</AppText>}
         </View>
