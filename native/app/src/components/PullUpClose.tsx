@@ -13,7 +13,7 @@ const H = Dimensions.get('window').height;
  * «ارفع الصفحة للرجوع»: لما يوصل المستخدم آخر صفحة المكان/الخبر/الفعالية ويكمّل يسحب لفوق بإبهامه،
  * الصفحة تطير لفوق وترجعه للقائمة اللي كان فيها (بنفس مكانه).
  * - الآيفون: السحب بعد آخر الصفحة (الارتداد) هو اللي يقفل
- * - الأندرويد (ما فيه ارتداد): لو كان في آخر الصفحة وسحب لفوق مرة ثانية بسرعة
+ * - الأندرويد (ما فيه ارتداد): نتابع حركة الإصبع نفسها وهو في آخر الصفحة، والصفحة ترتفع معه، ولو سحب كفاية وترك تنقفل
  * الاستخدام: const pull = usePullUpClose(); <Animated.View style={[{flex:1}, pull.style]}><ScrollView {...pull.scroll}>…{pull.footer}</ScrollView></Animated.View>
  */
 export function usePullUpClose() {
@@ -23,6 +23,8 @@ export function usePullUpClose() {
   const atEnd = useRef(false);
   const endAtStart = useRef(false);
   const closing = useRef(false);
+  const touchY = useRef<number | null>(null); // أندرويد: مكان الإصبع لما بدأ السحب وهو في آخر الصفحة
+  const dragUp = useRef(0);
 
   const close = () => {
     if (closing.current || !router.canGoBack()) return;
@@ -46,8 +48,29 @@ export function usePullUpClose() {
     const { contentOffset, contentSize, layoutMeasurement, velocity } = e.nativeEvent;
     const over = contentOffset.y - Math.max(0, contentSize.height - layoutMeasurement.height);
     if (Platform.OS === 'ios') { if (over >= PULL) close(); return; }
-    // أندرويد: كان في آخر الصفحة من قبل، وسحب لفوق بسرعة
-    if (endAtStart.current && atEnd.current && (velocity?.y ?? 0) > 0.4) close();
+    void velocity; // الأندرويد يتابع الإصبع في onTouchMove تحت
+  };
+
+  /* أندرويد: سحب الإصبع لفوق وهو في آخر الصفحة يرفع الصفحة معه */
+  const onTouchStart = (e: { nativeEvent: { pageY: number } }) => {
+    if (Platform.OS !== 'android') return;
+    touchY.current = atEnd.current ? e.nativeEvent.pageY : null; dragUp.current = 0;
+  };
+  const onTouchMove = (e: { nativeEvent: { pageY: number } }) => {
+    if (Platform.OS !== 'android' || closing.current) return;
+    if (touchY.current == null) { if (atEnd.current) touchY.current = e.nativeEvent.pageY; return; }
+    const d = Math.max(0, touchY.current - e.nativeEvent.pageY);
+    dragUp.current = d;
+    y.setValue(-Math.min(d, PULL * 2) * 0.5);
+    const p = Math.min(1, d / PULL);
+    if (Math.abs(p - pull) > 0.05 || p === 1 || p === 0) setPull(p);
+  };
+  const onTouchEnd = () => {
+    if (Platform.OS !== 'android' || closing.current) return;
+    const d = dragUp.current;
+    touchY.current = null; dragUp.current = 0;
+    if (d >= PULL) close();
+    else { Animated.spring(y, { toValue: 0, useNativeDriver: true }).start(); setPull(0); }
   };
 
   const footer = (
@@ -61,7 +84,7 @@ export function usePullUpClose() {
 
   return {
     style: { transform: [{ translateY: y }] },
-    scroll: { onScroll, onScrollBeginDrag, onScrollEndDrag, scrollEventThrottle: 32, alwaysBounceVertical: true },
+    scroll: { onScroll, onScrollBeginDrag, onScrollEndDrag, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd, scrollEventThrottle: 32, alwaysBounceVertical: true },
     footer,
   };
 }
