@@ -14,6 +14,10 @@ import { communityAdmin, guideAdmin } from './community.js';
 import { dashboard } from './track.js';
 import { seasonsAdmin } from './seasons.js';
 import { aiAdmin } from './ai.js';
+import { contactAdmin } from './contact.js';
+import { businessAdmin } from './business.js';
+import { offersAdmin } from './offers.js';
+import { commentsAdmin } from './comments.js';
 
 const now = () => Math.floor(Date.now() / 1000);
 const enc = new TextEncoder();
@@ -211,7 +215,8 @@ async function adminCall(env, origin, method, path, body) {
     const last = await env.DB.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 5').all();
     return { sync: last.results };
   }
-  const r = (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
+  // نفس سلسلة مسارات الإدارة في index.js (أي مسار إدارة جديد لازم ينضاف هنا كمان عشان أدوات اللوحة توصله)
+  const r = (await contactAdmin(req, env, p, q, J)) || (await businessAdmin(p, req, env, J, q)) || (await offersAdmin(p, req, env, J, q)) || (await commentsAdmin(p, req, env, J, q)) || (await seasonsAdmin(p, req, env, J)) || (await aiAdmin(p, req, env, J)) || (await adminRoute(p, req, env, J, q)) || (await merchantAdmin(p, req, env, J, q)) || (await reviewsAdmin(p, req, env, J, q)) || (await contribAdmin(p, req, env, J, q)) || (await messagesAdmin(p, req, env, J, q))
     || (await guideAdmin(p, req, env, J)) || (p.startsWith('/admin/community/') ? await communityAdmin(p, req, env, J) : null);
   if (!r) throw new Error('not_found');
   if (r.__s >= 400) throw new Error(r.d?.error || 'error_' + r.__s);
