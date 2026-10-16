@@ -3,7 +3,6 @@ import { useAuth } from '@/lib/auth';
 import { startIap } from '@/lib/iap';
 import { registerPush, startPush } from '@/lib/push';
 import { Appearance, DevSettings, I18nManager, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router } from 'expo-router';
 import { prefs } from '@/lib/prefs';
 import { StatusBar } from 'expo-status-bar';
@@ -16,6 +15,7 @@ import {
   IBMPlexSansArabic_700Bold,
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
 import { colors, isDark } from '@/theme/tokens';
+import { schemePref } from '@/theme/scheme';
 import { startTracking } from '@/lib/track';
 import { WebFrame } from '@/components/WebFrame';
 import { initLang, isRtl, LANG } from '@/lib/i18n';
@@ -34,12 +34,9 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 SplashScreen.preventAutoHideAsync().catch(() => {});
 startTracking();
 
-/* الوضع الليلي: الألوان تنحسب أول ما يفتح التطبيق حسب إعداد الآيفون.
-   في نسخة التجربة: لو اخترت مظهر من الإعدادات نطبقه، ولو تغيّر إعداد الآيفون نعيد التحميل عشان تتبدل الألوان */
-if (__DEV__ && Platform.OS !== 'web') {
-  AsyncStorage.getItem('sg_scheme_v1').then((c) => {
-    if ((c === 'dark' || c === 'light') && (c === 'dark') !== isDark) { Appearance.setColorScheme?.(c); setTimeout(() => DevSettings.reload(), 50); }
-  }).catch(() => {});
+/* الوضع الليلي: الألوان تنحسب أول ما يفتح التطبيق حسب اختيار المستخدم (scheme.ts).
+   في نسخة التجربة ومع «تلقائي»: لو تغيّر إعداد الآيفون نعيد التحميل عشان تتبدل الألوان */
+if (__DEV__ && Platform.OS !== 'web' && schemePref === 'auto') {
   Appearance.addChangeListener(({ colorScheme }) => { if ((colorScheme === 'dark') !== isDark) DevSettings.reload(); });
 }
 

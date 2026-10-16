@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
-import { Alert, Appearance, DevSettings, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isEn, setLang, t, tr } from '@/lib/i18n';
 import { AppText } from '@/components/AppText';
@@ -13,7 +13,8 @@ import { deleteAccount, session, signOut, updateMe, useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { tint } from '@/lib/community';
-import { brand, font, isDark, START, INPUT_START } from '@/theme/tokens';
+import { brand, font, START, INPUT_START } from '@/theme/tokens';
+import { schemePref, setSchemePref, type SchemePref } from '@/theme/scheme';
 import { env } from '@/config/env';
 
 /** الإعدادات — مثل التصميم. الحساب حقيقي، والتفضيلات تنحفظ في المراحل الجاية */
@@ -79,7 +80,7 @@ export default function Settings() {
       <Group title={t('التفضيلات')}>
         {/* الإنجليزي جاهز للتجربة بس (نسخة التطوير) لين تكتمل ترجمة الواجهة */}
         <Row label="اللغة · Language">{__DEV__ ? <Seg items={['عربي', 'English']} on={isEn ? 1 : 0} onPick={(i) => setLang(i ? 'en' : 'ar')} /> : <Seg items={['عربي', 'English · قريباً']} on={0} />}</Row>
-        {__DEV__ ? <Row label={t('المظهر (تجربة)')}><Seg items={[t('فاتح'), t('ليلي')]} on={isDark ? 1 : 0} onPick={(i) => setScheme(i ? 'dark' : 'light')} /></Row> : null}
+        <Row label={t('المظهر')}><Seg items={[t('تلقائي'), t('فاتح'), t('ليلي')]} on={SCHEMES.indexOf(schemePref)} onPick={(i) => setSchemePref(SCHEMES[i])} /></Row>
         {user ? <Row label={t('مدينتي')} value={(home ? cityName(home) || home : t('اختر')) + (isEn ? ' ›' : ' ‹')} onPress={() => setOpen(open === 'home' ? '' : 'home')} /> : null}
         {open === 'home' ? <View style={st.chips}>{CITY_IDS.map((c) => <Chip key={c} label={cityName(c)} on={home === c} color={brand.ink} onPress={() => saveHome(c)} />)}</View> : null}
         {user ? <Row label={t('المدن اللي أتابعها')} value={(follow.length ? tr(`${follow.length} ${follow.length === 1 ? 'مدينة' : follow.length === 2 ? 'مدينتين' : 'مدن'}`, `${follow.length} ${follow.length === 1 ? 'city' : 'cities'}`) : t('ولا مدينة')) + (isEn ? ' ›' : ' ‹')} onPress={() => setOpen(open === 'follow' ? '' : 'follow')} /> : null}
@@ -140,12 +141,7 @@ function Seg({ items, on, onPick }: { items: string[]; on: number; onPick?: (i: 
   );
 }
 
-/** نسخة التجربة: نجبر المظهر ونعيد تحميل التطبيق. النسخة النهائية تتبع إعداد الآيفون تلقائياً */
-function setScheme(c: 'light' | 'dark') {
-  AsyncStorage.setItem('sg_scheme_v1', c).catch(() => {});
-  Appearance.setColorScheme?.(c);
-  setTimeout(() => DevSettings.reload(), 150);
-}
+const SCHEMES: SchemePref[] = ['auto', 'light', 'dark'];
 
 const CITY_IDS = ALL_CITY_IDS;
 

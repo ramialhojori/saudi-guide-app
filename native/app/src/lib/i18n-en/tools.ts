@@ -426,4 +426,6 @@ export default {
   "أمس": "Yesterday",
   "قبل {n} أيام": "{n}d ago",
   "أخبار الصحف اللي أتابعها": "News from papers I follow",
+  "المظهر": "Appearance",
+  "تلقائي": "Auto",
 } as Record<string, string>;

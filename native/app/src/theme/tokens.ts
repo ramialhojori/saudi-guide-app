@@ -3,10 +3,10 @@
  * مطابقة للوحة التصميم (Design artifact · الاتجاه الأول): خلفية دافئة، حبر بنفسجي غامق،
  * وألوان الهوية موزعة على العناصر (ما نعتمد على البرتقالي لكل شي).
  */
-import { Appearance } from 'react-native';
+import { schemeIsDark } from './scheme';
 
-/** الوضع الليلي يتبع إعداد الآيفون (نقرأه أول ما يفتح التطبيق، ونعيد التحميل لو تغيّر — شوف _layout) */
-export const isDark = Appearance.getColorScheme() === 'dark';
+/** الوضع الليلي: حسب اختيار المستخدم في الإعدادات (تلقائي يتبع الآيفون، أو فاتح، أو ليلي) — شوف scheme.ts */
+export const isDark = schemeIsDark;
 
 const LIGHT = {
   ink: '#2B2745', // خلفيات غامقة (الشريط السفلي، أزرار غامقة)
