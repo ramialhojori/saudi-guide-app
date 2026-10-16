@@ -70,6 +70,7 @@ export function PapersFeed({ mine, onBrowse }: { mine?: boolean; onBrowse?: () =
       ) : null}
       {mine && !follows.length ? (
         <View style={st.empty}>
+          <View style={st.emptyIcon}><Icon name="news" color="#fff" size={26} /></View>
           <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{t('اختر صحفك')}</AppText>
           <AppText muted center>{t('تابع الصحف اللي تحبها، وتطلع لك أخبارها هنا ويوصلك إشعار بالجديد.')}</AppText>
           <PaperPicker papers={papers} />
@@ -129,8 +130,8 @@ function PaperRow({ it }: { it: PaperItem }) {
         {it.image ? <Image source={it.image} style={st.img} contentFit="cover" transition={150} /> : null}
       </View>
       <View style={st.readRow}>
-        <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{t('اقرأ في {name}', { name: it.sourceName })}</AppText>
-        <Icon name="globe" size={13} color={brand.purple} />
+        <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{t('اقرأ في {name}', { name: it.sourceName })}</AppText>
+        <Icon name="globe" size={13} color={brand.orangeDeep} />
       </View>
     </Pressable>
   );
@@ -152,7 +153,7 @@ function PaperPicker({ papers }: { papers: Paper[] | null }) {
               <AppText variant="tiny" muted>{p.site}</AppText>
             </View>
             <Pressable style={[st.follow, on && st.following]} onPress={() => toggleFollow(p.id)} accessibilityRole="button" accessibilityState={{ selected: on }}>
-              <AppText variant="small" style={{ fontFamily: font.bold }} color={on ? brand.purple : '#fff'}>{on ? t('متابَع') : t('تابع')}</AppText>
+              <AppText variant="small" style={{ fontFamily: font.bold }} color={on ? brand.orangeInk : '#fff'}>{on ? t('متابَع ✓') : t('تابع')}</AppText>
             </Pressable>
           </View>
         );
@@ -163,16 +164,17 @@ function PaperPicker({ papers }: { papers: Paper[] | null }) {
 
 const st = StyleSheet.create({
   src: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: brand.card },
-  srcOn: { backgroundColor: brand.ink },
+  srcOn: { backgroundColor: brand.orange },
   srcLogo: { width: 20, height: 20, borderRadius: 6, backgroundColor: brand.chip },
-  row: { marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 18, padding: 12, gap: 8 },
+  row: { marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 18, padding: 12, gap: 8, borderStartWidth: 4, borderStartColor: brand.pink },
   img: { width: 96, height: 86, borderRadius: 12, backgroundColor: brand.chip },
   logo: { width: 16, height: 16, borderRadius: 4, backgroundColor: brand.chip },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   empty: { marginHorizontal: 16, marginTop: 10, backgroundColor: brand.card, borderRadius: 20, paddingVertical: 18, gap: 6, alignItems: 'center' },
+  emptyIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: brand.pink, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   pick: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 16, padding: 10 },
   pickLogo: { width: 42, height: 42, borderRadius: 12, backgroundColor: brand.chip },
-  follow: { height: 34, paddingHorizontal: 16, borderRadius: 17, backgroundColor: brand.purple, alignItems: 'center', justifyContent: 'center' },
-  following: { backgroundColor: brand.chip },
+  follow: { height: 34, paddingHorizontal: 18, borderRadius: 17, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
+  following: { backgroundColor: brand.softOrange },
   done: { backgroundColor: brand.purple, borderRadius: 14, paddingHorizontal: 16, height: 34, justifyContent: 'center' },
 });

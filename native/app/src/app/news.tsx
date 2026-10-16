@@ -8,6 +8,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-
 import { setList as setBrowse } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
+import { Icon } from '@/components/Icon';
 import { BackButton, Chip } from '@/components/ui';
 import { getArticlesPage } from '@/lib/content';
 import { riyadhDate } from '@/lib/text';
@@ -99,19 +100,24 @@ export default function News() {
   const tabs: [Tab, string][] = [['guide', t('أخبار الدليل')], ['papers', t('الصحف')], ['mine', t('أخباري')]];
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
-      <View style={{ paddingTop: insets.top + 10, gap: 12, paddingBottom: 10 }}>
+      <View style={[st.band, { paddingTop: insets.top + 10 }]}>
         <View style={st.head}>
-          <BackButton />
-          <AppText variant="title" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
+          <Pressable style={st.glass} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" /></Pressable>
+          <View style={{ flex: 1 }}>
+            <AppText variant="small" color="#E4DAF2">{t('من الدليل والصحف السعودية')}</AppText>
+            <AppText variant="title" color="#fff" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
+          </View>
+          <View style={st.badge}><Icon name="news" color={brand.orange} size={22} /></View>
         </View>
         <View style={st.tabs}>
           {tabs.map(([k, label]) => (
             <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)} accessibilityRole="tab" accessibilityState={{ selected: tab === k }}>
-              <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }} color={tab === k ? '#fff' : brand.text}>{label}</AppText>
+              <AppText style={{ fontFamily: font.bold, fontSize: 13.5 }} color={tab === k ? brand.purple : '#fff'}>{label}</AppText>
             </Pressable>
           ))}
         </View>
       </View>
+      <View style={{ height: 12 }} />
       {tab === 'guide' ? <GuideNews /> : <PapersFeed key={tab} mine={tab === 'mine'} onBrowse={() => setTab('papers')} />}
     </View>
   );
@@ -123,7 +129,10 @@ const st = StyleSheet.create({
   heroImg: { width: '100%', height: 190, backgroundColor: brand.chip },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 18, padding: 10 },
   rowImg: { width: 92, height: 76, borderRadius: 12, backgroundColor: brand.chip },
-  tabs: { flexDirection: 'row', marginHorizontal: 16, backgroundColor: brand.card, borderRadius: 14, padding: 4, gap: 4 },
-  tab: { flex: 1, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  tabOn: { backgroundColor: brand.ink },
+  band: { backgroundColor: brand.purple, paddingBottom: 16, gap: 14, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  badge: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  tabs: { flexDirection: 'row', marginHorizontal: 16, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 16, padding: 4, gap: 4 },
+  tab: { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  tabOn: { backgroundColor: '#fff' },
 });

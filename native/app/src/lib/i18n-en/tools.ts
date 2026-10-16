@@ -440,4 +440,6 @@ export default {
   "استخدمه": "Use it",
   "افتح العرض": "Open offer",
   "مصدر العرض": "Offer source",
+  "من الدليل والصحف السعودية": "From the Guide and Saudi newspapers",
+  "متابَع ✓": "Following ✓",
 } as Record<string, string>;
