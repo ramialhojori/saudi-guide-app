@@ -81,12 +81,13 @@ function clean(x) {
   };
 }
 
-/** يضيف دفعة عروض. status: pending (الافتراضي) أو active (للعروض الرسمية بس، ولو official_auto مفعّل أو طلبها رامي من اللوحة) */
+/** يضيف دفعة عروض (رسمية بس). الحالة: active لو official_auto مفعّل (أو رامي اختارها من اللوحة)، وإلا pending */
 export async function createOffers(env, items, { status, origin = 'task' } = {}) {
   await ensure(env);
   const list = Array.isArray(items) ? items.slice(0, 50) : [];
   const F = await getFeatures(env);
-  const st = status === 'active' && (origin === 'panel' || F.official_auto) ? 'active' : 'pending';
+  // اللوحة: حسب اختيار رامي. المهمة المجدولة والنقل: تنشر مباشرة لو «نشر العروض الرسمية مباشرة» مفعّل، وإلا مسودة
+  const st = origin === 'panel' ? (status === 'active' ? 'active' : 'pending') : F.official_auto && status !== 'pending' ? 'active' : 'pending';
   const added = [], rejected = [];
   for (let i = 0; i < list.length; i++) {
     const x = list[i] || {};

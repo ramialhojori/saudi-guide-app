@@ -18,6 +18,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import { CouponCard } from '@/components/CouponCard';
 import { cityCoupons } from '@/lib/coupons';
+import { getOffers, offBadge } from '@/lib/offers';
 import { useFeatures } from '@/lib/features';
 import type { EventItem, Place } from '@/lib/types';
 import { t, tr } from '@/lib/i18n';
@@ -135,6 +136,8 @@ export default function Home() {
 
       {/* عروض المدينة من التجار */}
       <CityDeals city={user?.city || 'medina'} />
+      {/* عروض البنوك والمتاجر (العروض الرسمية) */}
+      <OfficialDeals city={user?.city || 'medina'} />
 
       {/* وجهات المملكة */}
       {data?.cities?.length ? (
@@ -294,6 +297,28 @@ function CityDeals({ city }: { city: string }) {
       <Section title={t('عروض {city}', { city: cityName(city) })} action={t('كل الكوبونات')} onAction={() => router.push('/coupons')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 10 }}>
         {data.slice(0, 6).map((c) => <View key={c.id} style={{ width: Math.min(320, W - 60) }}><CouponCard c={c} onPress={() => router.push(`/coupon/${c.id}`)} /></View>)}
+      </ScrollView>
+    </>
+  );
+}
+
+/** عروض البنوك والمتاجر في الرئيسية: أقرب العروض انتهاءً، وتفتح صفحة العروض */
+function OfficialDeals({ city }: { city: string }) {
+  const { data } = useAsync(() => getOffers(city).catch(() => []), [city]);
+  if (!data?.length) return null;
+  return (
+    <>
+      <Section title={t('عروض البنوك والمتاجر')} action={t('كل العروض')} onAction={() => router.push('/offers')} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 10 }}>
+        {data.slice(0, 8).map((o) => (
+          <Pressable key={o.id} onPress={() => router.push('/offers')} style={{ width: 170, backgroundColor: brand.card, borderRadius: 20, padding: 12, gap: 6 }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: brand.orange, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <AppText style={{ fontFamily: font.bold, fontSize: 15 }} color="#fff" numberOfLines={1}>{offBadge(o)}</AppText>
+            </View>
+            <AppText style={{ fontFamily: font.bold, fontSize: 14 }} numberOfLines={1}>{o.store}</AppText>
+            <AppText variant="small" muted numberOfLines={2} style={{ lineHeight: 19 }}>{o.title}</AppText>
+          </Pressable>
+        ))}
       </ScrollView>
     </>
   );

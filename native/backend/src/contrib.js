@@ -42,9 +42,9 @@ export const FEATURES = {
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();
   const saved = parse(r?.v, {});
-  // official_auto: مقفلة افتراضياً (العروض الرسمية تنضاف مسودة لين يعتمدها رامي)
+  // official_auto: مفعّلة افتراضياً بطلب رامي (16 أكتوبر 2026): العروض الرسمية السليمة تنشر مباشرة، ويقدر يقفلها من اللوحة
   // translate: مقفلة افتراضياً (الترجمة نسويها في محادثة Claude بدل مفتاح الـAPI) — تشتغل بس لو انفعلت من اللوحة
-  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, k === 'translate' || k === 'official_auto' ? saved[k] === true : saved[k] !== false]));
+  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, k === 'translate' ? saved[k] === true : saved[k] !== false]));
 }
 
 /* ═════════ الأسئلة السريعة ═════════ */
