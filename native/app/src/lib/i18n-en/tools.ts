@@ -364,4 +364,5 @@ export default {
   "ينتهي بكرة": "Ends tomorrow",
   "اسحب لفوق للرجوع": "Pull up to go back",
   "اترك للرجوع": "Release to go back",
+  "المزيد": "More",
 } as Record<string, string>;

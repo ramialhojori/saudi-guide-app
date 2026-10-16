@@ -56,6 +56,7 @@ export default function Home() {
         <View style={[st.top, { top: insets.top + 10 }]}>
           <Image source={require('../../../assets/brand/logo-white.png')} style={{ width: 150, height: 44 }} contentFit="contain" />
           <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable style={st.glass} onPress={() => router.push('/more')} accessibilityLabel={t('المزيد')}><Icon name="menu" color="#fff" size={22} /></Pressable>
             <BellButton style={st.glass} />
             <Pressable accessibilityLabel={t('ملفي')} onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || tr('؟', '?')) : tr('د', 'S')} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
           </View>

@@ -56,6 +56,7 @@ export const ICONS = {
   nav: 'M3 11l18-8-8 18-2-8z',
   news: 'M4 4h16v16H4zM8 9h8M8 13h8M8 17h5',
   calendar: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   route: 'M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 15V9a4 4 0 0 1 4-4h4M18 9v6a4 4 0 0 1-4 4h-4',
   ticket2: 'M3 8a2 2 0 0 0 0 4v4h18v-4a2 2 0 0 1 0-4V4H3zM10 4v12',
 } as const;

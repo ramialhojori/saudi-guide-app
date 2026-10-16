@@ -169,6 +169,12 @@ export default function Profile() {
         <Icon name="chevron" color="#fff" size={18} />
       </Pressable>
 
+      {/* اختصارات: العروض والمزيد (صفحة «المزيد» ما لها تبويب) */}
+      <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 12 }}>
+        <Pressable style={st.short} onPress={() => router.push('/offers')}><Icon name="ticket" color={brand.orangeDeep} size={20} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{t('العروض والكوبونات')}</AppText></Pressable>
+        <Pressable style={st.short} onPress={() => router.push('/more')}><Icon name="menu" color={brand.purple} size={20} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{t('المزيد')}</AppText></Pressable>
+      </View>
+
       {/* جواز السعودية */}
       {F.passport ? <Pressable style={st.passport} onPress={() => router.push('/passport')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
@@ -278,6 +284,7 @@ export default function Profile() {
 }
 
 const st = StyleSheet.create({
+  short: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: brand.card, borderRadius: 18, height: 52 },
   cover: { height: 190, backgroundColor: brand.ink },
   coverTop: { position: 'absolute', right: 20, left: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glass: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
