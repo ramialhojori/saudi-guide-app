@@ -81,7 +81,9 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS news_items_pub ON news_items(published DESC)",
   "CREATE INDEX IF NOT EXISTS news_items_src ON news_items(source, published DESC)",
   "CREATE INDEX IF NOT EXISTS news_items_fetched ON news_items(fetched)",
-  "CREATE TABLE IF NOT EXISTS news_follows ( user_id TEXT NOT NULL, source TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, source) )"
+  "CREATE TABLE IF NOT EXISTS news_follows ( user_id TEXT NOT NULL, source TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, source) )",
+  "CREATE TABLE IF NOT EXISTS admin_logins ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, email TEXT, provider TEXT, ok INTEGER NOT NULL, reason TEXT, ip TEXT, ua TEXT, at INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS admin_logins_at ON admin_logins(at DESC)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */

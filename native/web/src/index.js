@@ -152,6 +152,14 @@ export default {
       if (/iphone|ipad|ipod/i.test(ua)) return Response.redirect(`https://apps.apple.com/app/id${APP_STORE_ID}`, 302);
       return Response.redirect(`${site}/`, 302);
     }
+    // لوحة التحكم على نفس دومين الموقع (عشان دخول قوقل/آبل يشتغل)، وطلباتها تروح للسيرفر مباشرة
+    if (path === '/panel') {
+      const req = new Request(env.API_URL + '/panel?key=1', { headers: { Accept: 'text/html' } });
+      const r = env.API ? await env.API.fetch(req).catch(() => null) : await fetch(req).catch(() => null);
+      if (!r || !r.ok) return new Response('اللوحة ما ردت، حدّث الصفحة', { status: 502, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      const html = (await r.text()).replace('const API = location.origin;', `const API = ${JSON.stringify(env.API_URL)};`);
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Cross-Origin-Opener-Policy': 'same-origin-allow-popups' } });
+    }
     if (path === '/robots.txt') return new Response(prod ? `User-agent: *\nAllow: /\nDisallow: /panel\n\nSitemap: ${site}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
     if (path === '/sitemap.xml' || path === '/index-sitemap.xml') return sitemap(env, site);
     if (path === '/privacy' || path === '/terms') return redirect(site, `/legal?doc=${path.slice(1)}`);

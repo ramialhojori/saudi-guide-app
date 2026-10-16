@@ -135,6 +135,8 @@ const ST = { live: ['منشور', 'b-live'], draft: ['مسودة', 'b-draft'], h
 const EV_TYPES = ['حفلات غنائية', 'مسرح', 'رياضية', 'مهرجانات', 'معارض ومؤتمرات', 'تراث وثقافة', 'ترفيه', 'تجارب ومغامرات', 'عائلية', 'طعام'];
 const SEASONS = ['موسم الرياض', 'موسم جدة', 'موسم الدرعية', 'لحظات العلا'];
 let KEY = localStorage.getItem('sg_admin') || '';
+let TOKEN = localStorage.getItem('sg_panel_token') || '';
+let ME = null;
 let META = null, VIEW = 'home', SUMMARY = null;
 const $ = (s, el = document) => el.querySelector(s);
 const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -142,53 +144,100 @@ const cityName = (id) => META?.cities.find((c) => c.id === id)?.name || id || '�
 function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => (el.style.display = 'none'), 2600); }
 
 async function api(path, opt = {}) {
-  const r = await fetch(API + path, { method: opt.method || 'GET', headers: { 'X-Admin-Key': KEY, ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(opt.headers || {}) }, body: opt.body instanceof Blob ? opt.body : opt.body ? JSON.stringify(opt.body) : undefined });
+  const r = await fetch(API + path, { method: opt.method || 'GET', headers: { ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : { 'X-Admin-Key': KEY }), ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(opt.headers || {}) }, body: opt.body instanceof Blob ? opt.body : opt.body ? JSON.stringify(opt.body) : undefined });
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401) { const wasIn = !!localStorage.getItem('sg_admin'); KEY = ''; localStorage.removeItem('sg_admin'); if (wasIn) render(); throw new Error('unauthorized'); }
+  if (r.status === 401 && path.startsWith('/admin')) { const wasIn = !!(TOKEN || KEY); signOut(false); if (wasIn) render(); throw new Error('unauthorized'); }
   if (!r.ok) throw new Error(d.error || 'http_' + r.status);
   return d;
 }
 const ERR = { text_required: 'اكتب الرسالة', title_required: 'اكتب الاسم', start_required: 'حدد تاريخ البداية', bad_city: 'اختر المدينة', bad_type: 'الصورة لازم JPG أو PNG أو WEBP', bad_size: 'الصورة أكبر من 10MB', bad_time: 'الوقت لازم يكون بعد الحين', no_channel: 'اختر قناة وحدة على الأقل' };
 const errMsg = (e) => ERR[e.message] || 'صار خطأ: ' + e.message;
 
-/* ——— الدخول ——— */
-function loginView() {
+/* ——— الدخول: بحساب دليل السعودية (قوقل أو آبل) — لازم يكون الحساب مشرف ——— */
+function signOut(all) {
+  const t = TOKEN;
+  if (all && t) fetch(API + '/admin/session/logout-all', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).catch(() => {});
+  TOKEN = ''; KEY = ''; ME = null; META = null; SUMMARY = null;
+  localStorage.removeItem('sg_panel_token'); localStorage.removeItem('sg_admin');
+}
+const LOGIN_ERR = { not_admin: 'هذا الحساب مو مشرف. ادخل بالحساب اللي عليه صلاحية الإدارة.', no_account: 'ما فيه حساب في دليل السعودية بهذا الإيميل. سجّل في التطبيق أول، أو ادخل بحسابك الثاني.', bad_token: 'ما قدرنا نتحقق من الدخول، جرّب مرة ثانية.', too_many: 'محاولات كثيرة. انتظر ساعة وجرّب.' };
+async function panelLogin(provider, idToken) {
+  $('#msg').textContent = '';
+  try {
+    const r = await fetch(API + '/v1/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider, idToken }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { $('#msg').textContent = LOGIN_ERR[d.error] || 'ما نجح الدخول (' + (d.error || r.status) + ')'; return; }
+    TOKEN = d.token; localStorage.setItem('sg_panel_token', TOKEN); localStorage.removeItem('sg_admin'); KEY = '';
+    ME = d.user; render();
+  } catch (e) { $('#msg').textContent = 'السيرفر ما رد: ' + e.message; }
+}
+const loadJs = (src) => new Promise((ok, no) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = no; document.head.appendChild(el); });
+async function loginView() {
   $('#root').innerHTML = `<div class="login"><i>د</i><h1 style="font-size:22px">لوحة دليل السعودية</h1>
-    <p class="sub">اضغط الزر البرتقالي عشان يلصق مفتاح الإدارة اللي نسخه لك أمر «افتح-اللوحة».</p>
-    <button class="btn o" style="width:100%;padding:14px;font-size:17px" id="paste">الصق المفتاح وادخل</button>
-    <p class="muted" style="margin:16px 0 8px;font-size:13px">أو الصقه يدوياً هنا (Cmd+V):</p>
-    <input class="in" id="k" type="password" placeholder="مفتاح الإدارة" autocomplete="off" autofocus>
-    <button class="btn" style="width:100%;margin-top:10px" id="go">دخول</button><p id="msg" style="color:var(--pinkDeep);font-weight:700"></p></div>`;
-  const go = async (k) => {
-    const raw = String(k || $('#k').value);
-    // المفتاح حروف وأرقام إنجليزية بس — نطلعه حتى لو انلصق معه كلام ثاني
-    KEY = (raw.match(/[A-Za-z0-9_-]{8,}/) || [''])[0];
-    if (!raw.trim()) { $('#msg').textContent = 'ما فيه شي منسوخ. شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده لا تنسخ أي شي ثاني'; return; }
-    if (!KEY) { $('#msg').textContent = 'اللي منسوخ مو المفتاح (غالباً نسخت شي بعد الأمر). شغّل أمر «افتح-اللوحة» مرة ثانية، وبعده اضغط الزر البرتقالي على طول'; return; }
+    <p class="sub">ادخل بحسابك في دليل السعودية. اللوحة للحسابات المشرفة بس.</p>
+    <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
+    <button class="btn" id="apple" style="width:100%;margin-top:10px;display:none;background:#000">دخول بآبل</button>
+    <p id="msg" style="color:var(--pinkDeep);font-weight:700;margin-top:12px"></p>
+    <details style="margin-top:22px;text-align:right"><summary class="muted" style="cursor:pointer;font-size:13px">دخول بمفتاح الإدارة (للطوارئ)</summary>
+      <input class="in" id="k" type="password" placeholder="مفتاح الإدارة" autocomplete="off" style="margin-top:8px">
+      <button class="btn" style="width:100%;margin-top:8px" id="go">دخول بالمفتاح</button></details></div>`;
+  const go = async () => {
+    KEY = (String($('#k').value).match(/[A-Za-z0-9_-]{8,}/) || [''])[0]; TOKEN = '';
+    if (!KEY) { $('#msg').textContent = 'الصق المفتاح'; return; }
     try { await api('/admin/summary'); localStorage.setItem('sg_admin', KEY); render(); }
-    catch (e) { KEY = ''; $('#msg').textContent = e.message === 'unauthorized' ? 'المفتاح غلط. شغّل أمر «افتح-اللوحة» مرة ثانية' : 'السيرفر ما رد: ' + e.message; }
+    catch (e) { KEY = ''; $('#msg').textContent = e.message === 'unauthorized' ? 'المفتاح غلط' : 'السيرفر ما رد: ' + e.message; }
   };
-  $('#paste').onclick = async () => {
-    try { const t = await navigator.clipboard.readText(); go(t); }
-    catch { $('#msg').textContent = 'المتصفح ما سمح باللصق. اضغط داخل الخانة تحت واضغط Cmd+V'; $('#k').focus(); }
-  };
-  $('#go').onclick = () => go(); $('#k').onkeydown = (e) => { if (e.key === 'Enter') go(); };
-  setTimeout(() => $('#k').focus(), 100);
+  $('#go').onclick = go; $('#k').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  let cfg = {};
+  try { cfg = await fetch(API + '/v1/web/config').then((r) => r.json()); } catch { $('#msg').textContent = 'السيرفر ما رد، حدّث الصفحة'; return; }
+  if (cfg.googleWebClientId) {
+    try {
+      await loadJs('https://accounts.google.com/gsi/client');
+      google.accounts.id.initialize({ client_id: cfg.googleWebClientId, callback: (r) => panelLogin('google', r.credential), ux_mode: 'popup', auto_select: false });
+      google.accounts.id.renderButton($('#gbtn'), { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', locale: 'ar', width: 300 });
+    } catch { $('#gbtn').innerHTML = '<p class="muted">ما قدرنا نحمّل زر قوقل</p>'; }
+  }
+  if (cfg.appleServiceId) {
+    $('#apple').style.display = 'block';
+    $('#apple').onclick = async () => {
+      try {
+        await loadJs('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/ar_SA/appleid.auth.js');
+        AppleID.auth.init({ clientId: cfg.appleServiceId, scope: 'name email', redirectURI: location.origin, usePopup: true });
+        const r = await AppleID.auth.signIn();
+        panelLogin('apple', r.authorization.id_token);
+      } catch (e) { if (e?.error !== 'popup_closed_by_user') $('#msg').textContent = 'ما نجح الدخول بآبل'; }
+    };
+  }
+}
+
+/* ——— الأمان: مين دخل اللوحة ومتى ——— */
+async function securityView() {
+  const m = $('#main');
+  m.innerHTML = `<h1>الأمان والدخول</h1><p class="sub">${ME ? `داخل بحساب <b>${h(ME.name || ME.email)}</b>${ME.email ? ' (' + h(ME.email) + ')' : ''}. الجلسة تنتهي لحالها بعد 30 يوم.` : 'داخل بمفتاح الإدارة.'}</p>
+    <div class="row" style="margin-bottom:14px"><button class="btn p" id="allout">اطلع من كل الأجهزة</button></div>
+    <h2 style="font-size:17px">آخر محاولات الدخول</h2><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  $('#allout').onclick = () => { if (!confirm('بيطلع كل جهاز داخل اللوحة الحين (وأنت منهم). تكمل؟')) return; signOut(true); render(); };
+  const R = { not_admin: 'الحساب مو مشرف', no_account: 'ما له حساب', too_many: 'محاولات كثيرة' };
+  const d = await api('/admin/session/logins');
+  $('#res').innerHTML = d.logins.map((l) => `<div class="post"><div class="row"><b class="grow">${h(l.name || l.email || 'غير معروف')}</b><span class="badge ${l.ok ? 'b-live' : 'b-draft'}">${l.ok ? 'دخل' : 'مرفوض'}</span></div>
+    <div class="muted" style="font-size:13px">${new Date(l.at * 1000).toLocaleString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · ${l.provider === 'apple' ? 'آبل' : 'قوقل'}${l.email ? ' · ' + h(l.email) : ''}${l.reason ? ' · ' + h(R[l.reason] || l.reason) : ''}</div>
+    <div class="muted" style="font-size:12px" dir="ltr">${h(l.ip || '')} · ${h((l.ua || '').slice(0, 90))}</div></div>`).join('') || '<div class="empty">ما فيه دخول مسجّل للحين</div>';
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
-  if (!KEY) return loginView();
-  if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
+  if (!KEY && !TOKEN) return loginView();
+  if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
+  if (!META) { try { META = await api('/admin/meta'); } catch (e) { if (KEY || TOKEN) $('#root').innerHTML = `<div class="login"><p>ما قدرنا نحمّل اللوحة (${h(e.message)}). حدّث الصفحة.</p></div>`; return; } }
   const rep = SUMMARY?.counts?.reported || 0;
   const NB = { comments: SUMMARY?.counts?.commentsPending || 0, community: rep + (SUMMARY?.counts?.communityPending || 0), merchants: (SUMMARY?.counts?.merchantsPending || 0) + (SUMMARY?.counts?.leadsNew || 0) + (SUMMARY?.counts?.offersPending || 0) + (SUMMARY?.counts?.couponsPending || 0) + (SUMMARY?.counts?.creportsPending || 0), photos: (SUMMARY?.counts?.photosPending || 0) + (SUMMARY?.counts?.reviewsReported || 0), users: SUMMARY?.counts?.guidesPending || 0, suggest: SUMMARY?.counts?.suggPending || 0, contact: SUMMARY?.counts?.contactNew || 0 };
   $('#root').innerHTML = `<div class="app"><aside><div class="brand"><i>د</i>لوحة الدليل</div>
     ${NAV.map(([id, t]) => `<button class="nav ${VIEW === id ? 'on' : ''}" data-v="${id}">${t}${NB[id] ? `<b>${NB[id]}</b>` : ''}</button>`).join('')}
-    <div class="foot">كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
+    <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
-  $('#out').onclick = (e) => { e.preventDefault(); KEY = ''; localStorage.removeItem('sg_admin'); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView })[VIEW]();
+  $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -774,14 +823,14 @@ const MK = { restaurant: 'مطعم', cafe: 'مقهى', sweets: 'مخبز وحل�
 const MST = { pending: ['قيد المراجعة', 'b-draft'], approved: ['معتمد', 'b-live'], rejected: ['مرفوض', 'b-hidden'], hidden: ['موقوف', 'b-hidden'], active: ['فعّال', 'b-live'], paused: ['موقوف مؤقتاً', 'b-hidden'] };
 const stB = (s) => `<span class="badge ${(MST[s] || ['', 'b-hidden'])[1]}">${(MST[s] || [s])[0]}</span>`;
 const dAr = (t) => new Date(t * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short' });
-let CTAB = 'pending';
+let CMTAB = 'pending';
 async function commentsView() {
   const m = $('#main');
   const BY = { filter: 'الفلتر', ai: 'المراجعة الذكية', off: 'بدون مراجعة', error: 'المراجعة ما ردت' };
   m.innerHTML = `<h1>تعليقات الأخبار</h1><p class="sub">كل تعليق يمر على الفلتر والمراجعة الذكية قبل النشر: المسيء ينرفض فوراً، واللي فيه شك يجيك هنا. 3 بلاغات على تعليق تخفيه تلقائياً.</p>
-    <div class="tabs">${[['pending', 'تنتظر مراجعتك'], ['reported', 'عليها بلاغات'], ['visible', 'منشورة'], ['rejected', 'مرفوضة'], ['hidden', 'مخفية']].map(([k, t]) => `<button data-ct="${k}" class="${CTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
-  m.querySelectorAll('[data-ct]').forEach((b) => (b.onclick = () => { CTAB = b.dataset.ct; commentsView(); }));
-  const d = await api('/admin/comments?status=' + CTAB);
+    <div class="tabs">${[['pending', 'تنتظر مراجعتك'], ['reported', 'عليها بلاغات'], ['visible', 'منشورة'], ['rejected', 'مرفوضة'], ['hidden', 'مخفية']].map(([k, t]) => `<button data-ct="${k}" class="${CMTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.querySelectorAll('[data-ct]').forEach((b) => (b.onclick = () => { CMTAB = b.dataset.ct; commentsView(); }));
+  const d = await api('/admin/comments?status=' + CMTAB);
   $('#res').innerHTML = d.comments.map((c) => `<div class="post"><div class="row"><b class="grow">${h(c.user.name)}</b><span class="muted" style="font-size:13px">${dAr(c.created)}${c.reports ? ' · ' + c.reports + ' بلاغ' : ''}${c.by ? ' · ' + (BY[c.by] || c.by) : ''}</span></div>
     <div style="font-size:15px">${h(c.text)}</div>
     <div class="muted" style="font-size:13px">على خبر: ${h(c.article.title)}${c.reason ? ' · السبب: ' + h(c.reason) : ''}</div>

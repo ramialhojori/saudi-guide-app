@@ -31,7 +31,7 @@ export async function sessionUser(env, request) {
 
 /* ——— التحقق من رموز آبل وقوقل ——— */
 const JWKS = { apple: 'https://appleid.apple.com/auth/keys', google: 'https://www.googleapis.com/oauth2/v3/certs' };
-async function verifyIdToken(provider, token, audiences) {
+export async function verifyIdToken(provider, token, audiences) {
   const [h, p, s] = String(token || '').split('.');
   if (!s) throw new Error('bad_token');
   const head = json64(h), pl = json64(p);
@@ -76,14 +76,19 @@ async function upsertUser(env, provider, sub, email, name, verified) {
 }
 
 /* ——— المسارات ——— */
+/** المعرّفات المقبولة لرموز آبل/قوقل (التطبيق + الموقع) */
+export function audiencesFor(env, provider) {
+  return provider === 'apple'
+    ? [...(env.APPLE_AUDIENCES || 'com.saudiguide,host.exp.Exponent').split(','), ...(env.APPLE_SERVICE_ID ? [env.APPLE_SERVICE_ID] : [])]
+    : [...(env.GOOGLE_CLIENT_IDS || '').split(','), env.GOOGLE_WEB_CLIENT_ID || ''].filter(Boolean);
+}
+
 export async function authRoute(p, request, env, J) {
   if (request.method === 'POST' && (p === '/v1/auth/apple' || p === '/v1/auth/google')) {
     if (!env.SESSION_SECRET) return J({ error: 'auth_not_configured' }, 503);
     const b = await request.json().catch(() => ({}));
     const provider = p.endsWith('apple') ? 'apple' : 'google';
-    const aud = provider === 'apple'
-      ? [...(env.APPLE_AUDIENCES || 'com.saudiguide,host.exp.Exponent').split(','), ...(env.APPLE_SERVICE_ID ? [env.APPLE_SERVICE_ID] : [])]
-      : [...(env.GOOGLE_CLIENT_IDS || '').split(','), env.GOOGLE_WEB_CLIENT_ID || ''].filter(Boolean);
+    const aud = audiencesFor(env, provider);
     try {
       const pl = await verifyIdToken(provider, b.idToken, aud);
       const name = String(b.name || pl.name || '').trim().slice(0, 60);

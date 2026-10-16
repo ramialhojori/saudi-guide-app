@@ -25,6 +25,7 @@ import { businessRoute, businessAdmin, planExpiry } from './business.js';
 import { weatherRoute } from './weather.js';
 import { offersRoute, offersAdmin } from './offers.js';
 import { commentsRoute, commentsAdmin } from './comments.js';
+import { adminAuth, adminLoginRoute, adminSessionRoute } from './adminauth.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
@@ -139,12 +140,17 @@ async function route(request, env, ctx) {
 
   /* ——— لوحة التحكم (الصفحة نفسها عامة، وكل بياناتها تحتاج مفتاح الإدارة) ——— */
   if (p === '/panel') {
+    const u = new URL(request.url);
+    if (u.hostname.startsWith('saudi-guide-api.') && !u.searchParams.has('key')) return Response.redirect((env.WEB_URL || 'https://saudi-guide-web.saudi-guide2030.workers.dev') + '/panel', 302);
     return new Response(PANEL_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' } });
   }
 
   /* ——— الإدارة (بمفتاح) ——— */
   if (p.startsWith('/admin/')) {
-    if (!env.ADMIN_KEY || request.headers.get('X-Admin-Key') !== env.ADMIN_KEY) return J({ error: 'unauthorized' }, 401);
+    // مفتاح الإدارة (للأدوات الآلية) أو جلسة مشرف مسجّل بحسابه (adminauth.js)
+    const who = await adminAuth(env, request);
+    if (!who) return J({ error: 'unauthorized' }, 401);
+    { const r = await adminSessionRoute(p, request, env, J, who); if (r) return r; }
     if (p === '/admin/sync' && request.method === 'POST') return J(await runSync(env, 'manual'));
     if (p === '/admin/import' && request.method === 'POST') return J(await importRaw(env, await request.json()));
     if (p === '/admin/translations' && request.method === 'POST') return J(await importTranslations(env, await request.json()));
@@ -176,6 +182,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
+  if (p === '/v1/admin/login') { const r = await adminLoginRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/papers')) { const r = await papersRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/offers')) { const r = await offersRoute(p, request, env, J, q); if (r) return r; }
   if (/^\/v1\/articles\/\d+\/comments$/.test(p) || /^\/v1\/comments\/\d+\/report$/.test(p)) { const r = await commentsRoute(p, request, env, J); if (r) return r; }
