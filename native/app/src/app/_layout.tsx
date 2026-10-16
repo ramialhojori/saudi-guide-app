@@ -24,10 +24,8 @@ import { isRtl, LANG } from '@/lib/i18n';
 I18nManager.allowRTL(isRtl);
 // نسخة الويب: /en/... تعني إنجليزي — نحفظ الاختيار ونشيل /en من الرابط عشان المسارات تشتغل
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  if (/^\/en(\/|$)/.test(location.pathname)) {
-    try { localStorage.setItem('sg_lang', 'en'); } catch { /* */ }
-    history.replaceState(null, '', location.pathname.replace(/^\/en/, '') || '/');
-  }
+  // /en/... : نحفظ اختيار الإنجليزي، وصفحة app/en تحوّل لنفس المسار بدون /en
+  if (/^\/en(\/|$)/.test(location.pathname)) { try { localStorage.setItem('sg_lang', 'en'); } catch { /* */ } }
   document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
   document.documentElement.lang = LANG;
 }
