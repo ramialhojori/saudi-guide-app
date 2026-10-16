@@ -10,6 +10,7 @@ import { useSyncExternalStore } from 'react';
 import { api } from './api';
 import { session } from './auth';
 import { registerPush } from './push';
+import { happyMoment } from './review';
 
 export type Paper = { id: string; name: string; site: string; logo: string | null; lang: 'ar' | 'en'; items: number };
 export type PaperItem = { id: number; source: string; sourceName: string; logo: string | null; title: string; link: string; image: string | null; snippet: string; at: number };
@@ -45,6 +46,7 @@ export function toggleFollow(id: string) {
   save();
   // أول متابعة: نطلب إذن الإشعارات (لو ما انطلب) عشان يوصله الجديد
   if (follows.length === 1) registerPush(true).catch(() => {});
+  else if (follows.includes(id)) happyMoment('paper_follow');
 }
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
 export const useFollows = () => useSyncExternalStore(subscribe, () => follows);

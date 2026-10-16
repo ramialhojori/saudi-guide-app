@@ -22,6 +22,7 @@ const ITEMS: Item[] = [
   { icon: 'chat', label: t('اسأل أهل المدينة'), color: brand.pink, on: () => router.push('/community') },
   { icon: 'ticket', label: t('العروض والكوبونات'), color: brand.orange, on: () => router.push('/offers') },
   { icon: 'shop', label: t('عندك نشاط تجاري؟ دليل السعودية للأعمال'), color: brand.orangeDeep, on: () => router.push('/business') },
+  { icon: 'crown', label: t('ادعُ صديق وخذوا 3 أيام دليل+'), color: brand.orange, on: () => router.push('/invite') },
   { icon: 'share', label: t('شارك التطبيق مع أصحابك'), color: brand.pink, on: shareApp },
   { icon: 'star', label: t('قيّم التطبيق في المتجر'), color: '#E0A526', on: rateApp },
   { icon: 'share', label: t('تابعنا على إكس'), color: brand.purple, on: () => Linking.openURL('https://x.com/SAUDIA_GUIDE') },

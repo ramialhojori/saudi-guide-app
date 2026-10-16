@@ -172,6 +172,7 @@ export default function Profile() {
       {/* اختصارات: العروض والمزيد (صفحة «المزيد» ما لها تبويب) */}
       <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginTop: 12 }}>
         <Pressable style={st.short} onPress={() => router.push('/offers')}><Icon name="ticket" color={brand.orangeDeep} size={20} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{t('العروض والكوبونات')}</AppText></Pressable>
+        <Pressable style={st.short} onPress={() => router.push('/invite')}><Icon name="crown" color={brand.orange} size={20} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{t('ادعُ صديق')}</AppText></Pressable>
         <Pressable style={st.short} onPress={() => router.push('/more')}><Icon name="menu" color={brand.purple} size={20} /><AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{t('المزيد')}</AppText></Pressable>
       </View>
 

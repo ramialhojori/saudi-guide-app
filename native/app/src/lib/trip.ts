@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
+import { happyMoment } from './review';
 
 const KEY = 'sg_trip_v1';        // القديم: قائمة مسطّحة
 const KEY_DAYS = 'sg_trip_days_v2'; // الجديد: أيام
@@ -55,6 +56,7 @@ export const trip = {
   toggle(id: number) {
     if (ids.includes(id)) return commit(without(id));
     const d = days.map((x) => [...x]); d[d.length - 1].push(id); commit(d);
+    happyMoment('trip_add');
   },
   /** يضيف ليوم معيّن (أو ينقله له لو موجود في يوم ثاني) */
   addTo(id: number, day: number) {

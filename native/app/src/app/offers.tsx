@@ -11,6 +11,7 @@ import { useFeatures } from '@/lib/features';
 import { t } from '@/lib/i18n';
 import { CHANNEL, daysLeft, getOffers, OFFER_CATS, OFFER_STYLE, offBadge, offerOpened, type Offer } from '@/lib/offers';
 import { brand, font } from '@/theme/tokens';
+import { happyMoment } from '@/lib/review';
 
 
 /** العروض والكوبونات: عروض البنوك والمتاجر وتطبيقات التوصيل (من مصادرها الرسمية) + رابط لكوبونات المحلات */
@@ -38,6 +39,7 @@ export default function Offers() {
     await Clipboard.setStringAsync(o.code).catch(() => {});
     setCopied(o.id); setTimeout(() => setCopied((x) => (x === o.id ? null : x)), 2000);
     offerOpened(o.id, 'copy');
+    happyMoment('offer_copy');
   };
   const go = (o: Offer) => { if (!o.useUrl) return; offerOpened(o.id, 'open'); Linking.openURL(o.useUrl).catch(() => {}); };
 

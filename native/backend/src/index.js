@@ -26,6 +26,7 @@ import { weatherRoute } from './weather.js';
 import { offersRoute, offersAdmin } from './offers.js';
 import { commentsRoute, commentsAdmin } from './comments.js';
 import { adminAuth, adminLoginRoute, adminSessionRoute } from './adminauth.js';
+import { inviteRoute } from './invite.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
@@ -183,6 +184,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
   if (p === '/v1/admin/login') { const r = await adminLoginRoute(p, request, env, J); if (r) return r; }
+  if (p.startsWith('/v1/invite')) { const r = await inviteRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/papers')) { const r = await papersRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/offers')) { const r = await offersRoute(p, request, env, J, q); if (r) return r; }
   if (/^\/v1\/articles\/\d+\/comments$/.test(p) || /^\/v1\/comments\/\d+\/report$/.test(p)) { const r = await commentsRoute(p, request, env, J); if (r) return r; }

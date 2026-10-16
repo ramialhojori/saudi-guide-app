@@ -72,6 +72,11 @@
               "scheme": "https",
               "host": "www.saudi-guide.com",
               "pathPrefix": "/plan"
+            },
+            {
+              "scheme": "https",
+              "host": "www.saudi-guide.com",
+              "pathPrefix": "/invite"
             }
           ],
           "category": [

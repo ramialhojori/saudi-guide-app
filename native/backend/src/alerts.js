@@ -4,6 +4,7 @@
    2) بداية موسم: يوم بداية الموسم (من بيانات المواسم) الساعة 10 الصبح لمتابعين مدينته
    3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم
    4) «بكرة في مدينتك»: الساعة 7 المغرب، متابعين كل مدينة فيها فعاليات تبدأ بكرة يوصلهم إشعار واحد يجمعها
+   5) «ويكندك في مدينتك»: كل خميس 8 المساء، أبرز فعاليات الجمعة والسبت
    المتابع = مدينته في الحساب أو المدن اللي يتابعها، والجوالات بدون حساب حسب المدن اللي اختارتها
    الإشعار ينحفظ في صندوق الإشعارات، وإشعار الجوال يطلع من push.js حسب تفضيلات المستخدم */
 import { arTitle } from './titles.js';
@@ -122,6 +123,26 @@ async function tomorrowInCity(env) {
   }
 }
 
+/** «ويكندك في مدينتك»: كل خميس 8 المساء، أبرز الفعاليات الشغالة الجمعة والسبت في كل مدينة (إشعار واحد) */
+async function weekendDigest(env) {
+  const mk = makkah();
+  if (mk.getUTCDay() !== 4 || mk.getUTCHours() !== 20 || !(await onceToday(env, 'alerts_weekend_day'))) return;
+  const fri = new Date(mk.getTime() + 86400e3).toISOString().slice(0, 10);
+  const sat = new Date(mk.getTime() + 2 * 86400e3).toISOString().slice(0, 10);
+  // شغالة يوم الجمعة أو السبت: تبدأ قبل نهاية السبت وتنتهي بعد بداية الجمعة
+  const { results } = await env.DB.prepare(`SELECT id, title, city FROM events WHERE deleted=0 AND city<>'' AND substr(start,1,10)<=?
+      AND substr(COALESCE(NULLIF("end",''),start),1,10)>=? ORDER BY start LIMIT 800`).bind(sat, fri).all();
+  const byCity = {};
+  for (const e of results) (byCity[e.city] ??= []).push(e);
+  for (const [city, evs] of Object.entries(byCity)) {
+    const name = cityName(city);
+    if (!name) continue;
+    const titles = evs.slice(0, 3).map((e) => arTitle(e.title).slice(0, 45));
+    const text = evs.length === 1 ? `ويكندك في ${name}: ${titles[0]}` : `ويكندك في ${name}: ${count(evs.length, 'فعاليتين', 'فعاليات', 'فعالية')} منها ${list(titles)}`;
+    await toFollowers(env, city, text, evs.length === 1 ? `/event/${evs[0].id}` : '/events', 'events');
+  }
+}
+
 /** الكرون كل 10 دقايق */
 export async function runAlerts(env) {
   if (!(await getFeatures(env)).alerts) return;
@@ -129,4 +150,5 @@ export async function runAlerts(env) {
   await seasonStarts(env);
   await goingReminders(env);
   await tomorrowInCity(env);
+  await weekendDigest(env);
 }

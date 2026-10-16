@@ -27,10 +27,10 @@ export function adsLib(): any {
   return lib;
 }
 
-// rewarded: وحدة «شاهد إعلان وأخفِ الإعلانات ساعة» — فاضية لين ننشئها في AdMob (الزر يختفي لو فاضية، إلا وقت التطوير)
+// rewarded: وحدة «شاهد إعلان وأخفِ الإعلانات ساعة» (أنشأناها في AdMob يوم 16 أكتوبر 2026، المكافأة AdFreeHour)
 const IDS = {
-  ios: { native: 'ca-app-pub-5413358932647152/6627712784', banner: 'ca-app-pub-5413358932647152/2667666067', rewarded: '' },
-  android: { native: 'ca-app-pub-5413358932647152/2857409612', banner: 'ca-app-pub-5413358932647152/4412810817', rewarded: '' },
+  ios: { native: 'ca-app-pub-5413358932647152/6627712784', banner: 'ca-app-pub-5413358932647152/2667666067', rewarded: 'ca-app-pub-5413358932647152/1338433058' },
+  android: { native: 'ca-app-pub-5413358932647152/2857409612', banner: 'ca-app-pub-5413358932647152/4412810817', rewarded: 'ca-app-pub-5413358932647152/5684872171' },
 };
 type Kind = 'native' | 'banner' | 'rewarded';
 /** معرّف الوحدة (إعلانات تجريبية وقت التطوير عشان ما ينحظر الحساب) */

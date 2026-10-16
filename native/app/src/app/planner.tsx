@@ -17,6 +17,7 @@ import { useFeatures } from '@/lib/features';
 import { INPUT_START } from '@/theme/tokens';
 import { brand, font, kindStyle, photos } from '@/theme/tokens';
 import { t, isEn } from '@/lib/i18n';
+import { happyMoment } from '@/lib/review';
 
 const CITIES: [string, string][] = [['medina', 'المدينة المنورة'], ['riyadh', 'الرياض'], ['jeddah', 'جدة'], ['makkah-region', 'مكة المكرمة'], ['alula', 'العلا'], ['abha', 'أبها'], ['taif', 'الطائف'], ['diriyah', 'الدرعية'], ['yanbu', 'ينبع'], ['eastern-region', 'الشرقية'], ['tabuk-region', 'تبوك'], ['hail', 'حائل'], ['albaha', 'الباحة'], ['qassim-region', 'القصيم']];
 const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac, brand.green];
@@ -76,7 +77,7 @@ export default function Planner() {
   const go = async () => {
     if (useSmart) return goSmart();
     setBusy(true);
-    try { const p = await makePlan(city, days, want, pace); setPlan(p); setDay(0); } catch { Alert.alert(t('ما قدرنا نجهز الخطة'), t('تأكد من النت وجرّب مرة ثانية.')); } finally { setBusy(false); }
+    try { const p = await makePlan(city, days, want, pace); setPlan(p); setDay(0); happyMoment('plan'); } catch { Alert.alert(t('ما قدرنا نجهز الخطة'), t('تأكد من النت وجرّب مرة ثانية.')); } finally { setBusy(false); }
   };
   const save = () => {
     if (!plan) return;

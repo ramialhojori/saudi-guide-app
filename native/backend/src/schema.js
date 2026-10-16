@@ -83,7 +83,9 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS news_items_fetched ON news_items(fetched)",
   "CREATE TABLE IF NOT EXISTS news_follows ( user_id TEXT NOT NULL, source TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (user_id, source) )",
   "CREATE TABLE IF NOT EXISTS admin_logins ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, email TEXT, provider TEXT, ok INTEGER NOT NULL, reason TEXT, ip TEXT, ua TEXT, at INTEGER NOT NULL )",
-  "CREATE INDEX IF NOT EXISTS admin_logins_at ON admin_logins(at DESC)"
+  "CREATE INDEX IF NOT EXISTS admin_logins_at ON admin_logins(at DESC)",
+  "CREATE TABLE IF NOT EXISTS referrals ( invitee_id TEXT PRIMARY KEY, inviter_id TEXT NOT NULL, code TEXT NOT NULL, rewarded INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL )",
+  "CREATE INDEX IF NOT EXISTS referrals_inviter ON referrals(inviter_id, created)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
@@ -116,6 +118,8 @@ const ALTERS = [
   "ALTER TABLE merchants ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'", // باقة التاجر (business.js): free | plus | pro
   'ALTER TABLE merchants ADD COLUMN plan_until INTEGER', // نهاية الباقة (فاضي = بدون نهاية)
   'ALTER TABLE merchants ADD COLUMN plan_warned INTEGER NOT NULL DEFAULT 0', // انرسل تنبيه قرب الانتهاء
+  'ALTER TABLE users ADD COLUMN invite_code TEXT', // كود «ادعُ صديق» (invite.js)
+  'CREATE UNIQUE INDEX IF NOT EXISTS users_invite ON users(invite_code)',
   'ALTER TABLE devices ADD COLUMN papers TEXT', // الصحف اللي يتابعها الجهاز (papers.js)
   'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
   // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)

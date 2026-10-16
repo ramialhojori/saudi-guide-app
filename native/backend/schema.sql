@@ -461,3 +461,7 @@ CREATE TABLE IF NOT EXISTS news_follows ( user_id TEXT NOT NULL, source TEXT NOT
 -- دخول لوحة التحكم بالحساب (adminauth.js): كل محاولة دخول ناجحة أو مرفوضة
 CREATE TABLE IF NOT EXISTS admin_logins ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, email TEXT, provider TEXT, ok INTEGER NOT NULL, reason TEXT, ip TEXT, ua TEXT, at INTEGER NOT NULL );
 CREATE INDEX IF NOT EXISTS admin_logins_at ON admin_logins(at DESC);
+
+-- «ادعُ صديق» (invite.js): مين دعا مين، وهل انعطت المكافأة
+CREATE TABLE IF NOT EXISTS referrals ( invitee_id TEXT PRIMARY KEY, inviter_id TEXT NOT NULL, code TEXT NOT NULL, rewarded INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL );
+CREATE INDEX IF NOT EXISTS referrals_inviter ON referrals(inviter_id, created);
