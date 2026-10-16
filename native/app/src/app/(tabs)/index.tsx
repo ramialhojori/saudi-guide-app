@@ -10,7 +10,7 @@ import { HeartButton } from '@/components/HeartButton';
 import { Icon, type IconName } from '@/components/Icon';
 import { BellButton } from '@/components/BellButton';
 import { Avatar, Section } from '@/components/ui';
-import { getHome, nearby, cityName, weekLabel } from '@/lib/content';
+import { allCities, getHome, nearby, cityName, weekLabel } from '@/lib/content';
 import { useWeather } from '@/lib/weather';
 import { isPlus, useAuth } from '@/lib/auth';
 import { initial, tint } from '@/lib/community';
@@ -45,7 +45,7 @@ export default function Home() {
   const { user } = useAuth();
   const F = useFeatures();
   const first = (user?.name || '').trim().split(/\s+/)[0];
-  const near = useNearby();
+  const { list: near, perm: nearPerm, ask: askLocation } = useNearby(user?.city);
   const weather = useWeather(user?.city);
   const feat = useFeatures();
 
@@ -143,7 +143,16 @@ export default function Home() {
       {/* قريب منك */}
       <Section title={t('قريب منك الحين')} action={t('كل القريب')} onAction={() => router.push('/nearby')} />
       <View style={{ paddingHorizontal: 16, gap: 10 }}>
-        {near.slice(0, 3).map((p) => <NearRow key={p.id} p={p} />)}
+        {nearPerm === false ? (
+          <Pressable style={st.locAsk} onPress={askLocation}>
+            <Icon name="pin" color={brand.orange} size={20} />
+            <AppText variant="small" style={{ flex: 1, fontFamily: font.semibold }}>{t('شغّل الموقع عشان نعرض الأماكن اللي حولك بالضبط')}</AppText>
+            <AppText variant="small" color={brand.purple} style={{ fontFamily: font.bold }}>{t('شغّل')}</AppText>
+          </Pressable>
+        ) : null}
+        {near === null ? [0, 1, 2].map((i) => <View key={i} style={[st.near, { height: 84, opacity: 0.6 }]} />) : null}
+        {near?.slice(0, 3).map((p) => <NearRow key={p.id} p={p} />)}
+        {near && !near.length ? <AppText variant="small" muted>{t('ما لقينا أماكن قريبة منك في الدليل للحين.')}</AppText> : null}
       </View>
 
       {/* رحلات جاهزة من كل المدن */}
@@ -211,25 +220,37 @@ export default function Home() {
   );
 }
 
-function useNearby() {
-  const [list, setList] = useState<Place[]>([]);
+/** «قريب منك الحين»: موقعك لو مسموح (مع حد أقصى للانتظار)، وإلا مدينتك؛ ولو القريب قليل نوسّع الدائرة */
+const withTimeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<null>((r) => setTimeout(() => r(null), ms))]);
+function useNearby(homeCity?: string) {
+  const [list, setList] = useState<Place[] | null>(null);
+  const [perm, setPerm] = useState<boolean | null>(null);
+  const [tick, setTick] = useState(0);
   useEffect(() => {
     let alive = true;
     (async () => {
-      let at = MADINAH;
+      const home = allCities.find((c) => c.id === homeCity);
+      let at = home?.lat && home?.lng ? { lat: home.lat, lng: home.lng } : MADINAH;
+      let granted = false;
       try {
-        const perm = await Location.getForegroundPermissionsAsync();
-        if (perm.granted) {
-          const pos = await Location.getLastKnownPositionAsync();
+        granted = (await Location.getForegroundPermissionsAsync()).granted;
+        if (granted) {
+          const pos = (await withTimeout(Location.getLastKnownPositionAsync(), 2500))
+            ?? (await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 6000));
           if (pos) at = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         }
-      } catch {}
-      const r = await nearby(at.lat, at.lng, 25).catch(() => []);
-      if (alive) setList(r.filter((p) => p.thumb));
+      } catch { /* */ }
+      if (alive) setPerm(granted);
+      let r = (await nearby(at.lat, at.lng, 25).catch(() => [])).filter((p) => p.thumb);
+      if (r.length < 3) r = (await nearby(at.lat, at.lng, 80).catch(() => [])).filter((p) => p.thumb);
+      if (alive) setList(r);
     })();
     return () => { alive = false; };
-  }, []);
-  return list;
+  }, [homeCity, tick]);
+  const ask = async () => {
+    try { const r = await Location.requestForegroundPermissionsAsync(); if (r.granted) { setList(null); setTick((x) => x + 1); } } catch { /* */ }
+  };
+  return { list, perm, ask };
 }
 
 function PickCard({ place, star }: { place: Place; star?: boolean }) {
@@ -299,6 +320,7 @@ const st = StyleSheet.create({
   pickTop: { flexDirection: 'row', justifyContent: 'space-between', padding: 14 },
   starTag: { backgroundColor: brand.orange, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
   pickTx: { position: 'absolute', right: 18, left: 18, bottom: 18 },
+  locAsk: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: brand.softOrange, borderRadius: 18, padding: 12 },
   near: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: brand.card, borderRadius: 24, padding: 10 },
   nearImg: { width: 72, height: 72, borderRadius: 18 },
   km: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },

@@ -569,4 +569,7 @@ export default {
   "جهّز حجوزات رحلتك": "Get your bookings ready",
   "العروض": "Offers",
   "صحفي": "My papers",
+  "شغّل الموقع عشان نعرض الأماكن اللي حولك بالضبط": "Turn on location to see places right around you",
+  "شغّل": "Turn on",
+  "ما لقينا أماكن قريبة منك في الدليل للحين.": "No places near you in the guide yet.",
 } as Record<string, string>;
