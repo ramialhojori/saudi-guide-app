@@ -288,7 +288,7 @@ export default {
   'هالكوبون حصري لمستوى أعلى من مستواك.': 'This coupon is exclusive to a higher level than yours.',
   'نقاط العميل ما تكفي لهالكوبون.': 'The customer doesn\'t have enough points for this coupon.',
   'العميل مستواه أقل من المطلوب للكوبون.': 'The customer\'s level is below what this coupon requires.',
-  'أنت مرشد موثّق من قبل.': 'You\'re already a verified guide.',
+  'أنت خبير محلي موثّق من قبل.': "You're already a Verified Local Expert.",
   'بلّغت عن هالكوبون قبل، ونراجع بلاغك.': 'You\'ve already reported this coupon, and we\'re reviewing your report.',
   'لازم توافق على الشروط والأحكام أول.': 'You need to accept the Terms and Conditions first.',
   'طلبك قيد المراجعة.': 'Your request is under review.',

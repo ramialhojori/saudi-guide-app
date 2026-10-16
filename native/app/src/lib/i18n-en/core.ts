@@ -1,5 +1,7 @@
 /** قاموس إنجليزي — مجموعة core (المفتاح = النص العربي كما هو في الكود) */
 export default {
+  'وسام مجتمع للي يساعدون الناس بإجاباتهم ونصايحهم. مو ترخيص إرشاد سياحي، وما يقدّم الخبير خدمات إرشاد مدفوعة عن طريق التطبيق.': 'A community badge for people who help others with answers and tips. It is not a tour-guide licence, and experts do not offer paid guiding through the app.',
+  'مثلاً: من أهل المدينة، أعرف المزارع والمساجد التاريخية، وأحب أساعد الزوار…': "e.g. I'm from Madinah, I know the farms and historic mosques, and I love helping visitors…",
   'أخبار المشاريع': 'Project News',
   'سياحة وفعاليات': 'Tourism & Events',
   'مشاريع رؤية السعودية 2030': 'Vision 2030 Projects',

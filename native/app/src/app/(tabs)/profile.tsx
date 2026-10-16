@@ -131,7 +131,7 @@ export default function Profile() {
         </View>
       ) : null}
 
-      {/* النقاط: الرصيد والصرف وطريق «مرشد موثّق» */}
+      {/* النقاط: الرصيد والصرف وطريق «خبير محلي موثّق» */}
       {user && stats && (F.points || F.guides) ? (
         <View style={st.pts}>
           {F.points && F.coupons ? <Pressable style={st.ptsRow} onPress={() => router.push('/coupons?tab=points')}>
@@ -146,7 +146,7 @@ export default function Profile() {
             <Pressable style={[st.ptsRow, F.points && F.coupons && st.ptsLine]} onPress={() => router.push('/guide-request')}>
               <Badge icon="crown" bg={brand.softPurple} fg={brand.purple} size={40} r={14} />
               <View style={{ flex: 1 }}>
-                <AppText style={{ fontFamily: font.bold }}>{t('مرشد موثّق')}</AppText>
+                <AppText style={{ fontFamily: font.bold }}>{t('خبير محلي موثّق')}</AppText>
                 <AppText variant="tiny" muted>{stats.guide.request?.status === 'pending' ? t('طلبك قيد المراجعة') : stats.guide.eligible ? t('صرت مؤهل! قدّم طلبك الحين') : t('من {at} نقطة تقدر تطلب الشارة · باقي {left}', { at: stats.guide.at, left: Math.max(0, stats.guide.at - stats.points) })}</AppText>
               </View>
               {stats.guide.eligible && stats.guide.request?.status !== 'pending' ? <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.link}>{t('قدّم')}</AppText> : <Icon name="chevron" color={brand.faint} size={16} />}

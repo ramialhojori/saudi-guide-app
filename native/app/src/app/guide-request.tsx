@@ -11,7 +11,7 @@ import { couponErr } from '@/lib/coupons';
 import { brand, font } from '@/theme/tokens';
 import { t } from '@/lib/i18n';
 
-/** طلب شارة «مرشد موثّق»: من 500 نقطة، والإدارة تراجعه من اللوحة */
+/** طلب شارة «خبير محلي موثّق»: من 500 نقطة، والإدارة تراجعه من اللوحة */
 export default function GuideRequest() {
   const insets = useSafeAreaInsets();
   const [s, setS] = useState<Stats | null>(null);
@@ -35,12 +35,13 @@ export default function GuideRequest() {
         <BackButton />
         <View style={st.hero}>
           <View style={st.icon}><Icon name="crown" color="#fff" size={32} /></View>
-          <AppText variant="title" color="#fff" center style={{ marginTop: 12 }}>{t('مرشد موثّق')}</AppText>
+          <AppText variant="title" color="#fff" center style={{ marginTop: 12 }}>{t('خبير محلي موثّق')}</AppText>
           <AppText variant="small" color="#E2DAEE" center style={{ lineHeight: 22 }}>{t('شارة تطلع جنب اسمك في المجتمع، وإجاباتك تظهر أول، والناس يثقون فيها أكثر.')}</AppText>
+          <AppText variant="tiny" color="#CFC6DE" center style={{ lineHeight: 19, marginTop: 8 }}>{t('وسام مجتمع للي يساعدون الناس بإجاباتهم ونصايحهم. مو ترخيص إرشاد سياحي، وما يقدّم الخبير خدمات إرشاد مدفوعة عن طريق التطبيق.')}</AppText>
         </View>
 
         {!s ? <ActivityIndicator color={brand.purple} style={{ marginTop: 30 }} /> : s.role !== 'user' ? (
-          <View style={st.card}><AppText style={{ fontFamily: font.bold }} center>{s.role === 'guide' ? t('أنت مرشد موثّق') : t('أنت من فريق الدليل')} ✓</AppText></View>
+          <View style={st.card}><AppText style={{ fontFamily: font.bold }} center>{s.role === 'guide' ? t('أنت خبير محلي موثّق') : t('أنت من فريق الدليل')} ✓</AppText></View>
         ) : sent || req?.status === 'pending' ? (
           <View style={st.card}>
             <Icon name="check" color={brand.green} size={30} />
@@ -59,7 +60,7 @@ export default function GuideRequest() {
             {req?.status === 'rejected' ? <AppText variant="small" color={brand.pinkDeep} style={{ marginBottom: 6 }}>{t('الطلب السابق ما انقبل')}{req.note ? `: ${req.note}` : ''}.</AppText> : null}
             <AppText style={{ fontFamily: font.bold }}>{t('عرّفنا بنفسك')}</AppText>
             <AppText variant="small" muted style={{ marginBottom: 8, lineHeight: 21 }}>{t('وش المدن اللي تعرفها زين؟ وش خبرتك؟ (تشوفه الإدارة بس)')}</AppText>
-            <Input value={about} onChangeText={setAbout} multiline maxLength={600} placeholder={t('مثلاً: من أهل المدينة، أعرف المزارع والمساجد التاريخية، وأحب أرشد الزوار…')} />
+            <Input value={about} onChangeText={setAbout} multiline maxLength={600} placeholder={t('مثلاً: من أهل المدينة، أعرف المزارع والمساجد التاريخية، وأحب أساعد الزوار…')} />
             {err ? <AppText variant="small" color={brand.pinkDeep} style={{ marginTop: 8 }}>{err}</AppText> : null}
             <Pressable style={st.btn} onPress={submit} disabled={busy}>{busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold }} color="#fff">{t('أرسل الطلب')}</AppText>}</Pressable>
           </View>

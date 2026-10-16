@@ -27,7 +27,7 @@ function sysKind(n: Note): SysKind {
   if (/اقتراح/.test(tx)) return { title: /ما قدرنا/.test(tx) ? t('بخصوص اقتراحك') : t('اقتراحك وصل للدليل'), icon: 'pin', bg: brand.softGreen, fg: brand.green, go: l || '/profile' };
   if (/صورت|صورة/.test(tx)) return { title: t('صورتك'), icon: 'cam', bg: brand.softSky, fg: brand.skyDeep, go: l || undefined };
   if (/كوبون|خصم|العرض|عرض /.test(tx)) return { title: t('كوبونات وعروض'), icon: 'ticket', bg: brand.softPink, fg: brand.pinkDeep, go: l || '/coupons' };
-  if (/مبروك|أبطال|وسام|مرشد|تكريم/.test(tx)) return { title: t('مبروك!'), icon: 'crown', bg: brand.softOrange, fg: brand.orangeDeep, go: l || '/profile' };
+  if (/مبروك|أبطال|وسام|مرشد|خبير محلي|تكريم/.test(tx)) return { title: t('مبروك!'), icon: 'crown', bg: brand.softOrange, fg: brand.orangeDeep, go: l || '/profile' };
   if (/انتشرت|مشاركتك|سؤالك|المجتمع/.test(tx)) return { title: t('مشاركتك في المجتمع'), icon: 'chat', bg: brand.softPurple, fg: brand.lilac, go: n.postId ? `/question/${n.postId}` : '/community' };
   if (/تأثيرك|نقاط|نقطة/.test(tx)) return { title: t('نقاطك وتأثيرك'), icon: 'star', bg: brand.softOrange, fg: brand.orangeDeep, go: l || '/profile' };
   if (/فعالي|موسم/.test(tx)) return { title: t('فعاليات'), icon: 'cal', bg: brand.softPink, fg: brand.pinkDeep, go: l || '/events' };

@@ -50,7 +50,7 @@ export type Post = {
 export const posts: Post[] = [
   { id: 1, who: tr('نورة', 'Noura'), av: tr('ن', 'N'), c: brand.sky, where: tr('زائرة من الكويت', 'Visitor from Kuwait'), when: tr('قبل ساعة', '1 hour ago'), kind: 'question',
     text: tr('أول مرة أزور المدينة مع عائلتي، وش أحسن مكان نفطر فيه قريب من الحرم؟', 'First time visiting Madinah with my family. What\'s the best breakfast spot near the Haram?'), answers: 7, thanks: 42,
-    best: { who: tr('رامي', 'Rami'), badge: tr('مرشد محلي موثّق', 'Verified local guide'), text: tr('جرّبوا فطور «قباء» الشعبي بعد صلاة الفجر، الفول والتميس عندهم ممتاز وبعدها امشوا لمسجد قباء.', 'Try the traditional "Quba" breakfast after Fajr prayer. Their foul and tamees are excellent, then walk to Quba Mosque.') } },
+    best: { who: tr('رامي', 'Rami'), badge: tr('خبير محلي موثّق', 'Verified local guide'), text: tr('جرّبوا فطور «قباء» الشعبي بعد صلاة الفجر، الفول والتميس عندهم ممتاز وبعدها امشوا لمسجد قباء.', 'Try the traditional "Quba" breakfast after Fajr prayer. Their foul and tamees are excellent, then walk to Quba Mosque.') } },
   { id: 2, who: tr('فهد', 'Fahad'), av: tr('ف', 'F'), c: brand.orange, where: tr('في صخرة الفيل', 'At Elephant Rock'), when: tr('صورة من العلا', 'Photo from AlUla'), kind: 'photo', badge: tr('عدسة الدليل', 'Guide Lens'), photo: 'rock',
     text: tr('الغروب هنا شي ثاني.. نصيحة: تعالوا قبل 5 دقائق عشان تلقون جلسة قريبة.', 'Sunset here is something else.. Tip: come 5 minutes early to get a close spot.'), thanks: 120 },
 ];

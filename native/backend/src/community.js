@@ -20,7 +20,7 @@ const cityOk = (c) => !c || CITIES.some((x) => x[0] === c);
 
 function badgeOf(role, points) {
   if (role === 'admin') return 'فريق الدليل';
-  if (role === 'guide') return 'مرشد موثّق';
+  if (role === 'guide') return 'خبير محلي موثّق';
   if (points >= 500) return 'خبير المدينة';
   if (points >= 150) return 'دليل نشيط';
   return '';
@@ -467,7 +467,7 @@ export const LEVELS = [
   [0, 'زائر جديد'], [20, 'مستكشف'], [60, 'رحّال'], [150, 'دليل نشيط'], [300, 'ابن الديرة'],
   [500, 'خبير المدينة'], [800, 'مرجع الديرة'], [1200, 'سفير الدليل'], [1800, 'حكيم الدليل'], [2500, 'أسطورة الدليل'],
 ];
-export const GUIDE_AT = 500; // من 500 نقطة يقدر يطلب «مرشد موثّق»
+export const GUIDE_AT = 500; // من 500 نقطة يقدر يطلب «خبير محلي موثّق»
 
 export const BADGES = [
   ['first', 'أول سؤال', 'chat', 'questions', 1],
@@ -579,7 +579,7 @@ export async function goingRoute(id, env, u, request, J) {
   return J({ count: n.n, going: me, who: who.results.map((r) => ({ id: r.id, name: r.name || 'د' })) });
 }
 
-/* ——— طلب «مرشد موثّق» ——— */
+/* ——— طلب «خبير محلي موثّق» ——— */
 export async function guideRequest(env, u, request, J) {
   if (request.method !== 'POST') return J({ error: 'method_not_allowed' }, 405);
   if (u.role !== 'user') return J({ error: 'already_guide' }, 409);
@@ -613,7 +613,7 @@ export async function guideAdmin(p, request, env, J) {
     const ops = [env.DB.prepare('UPDATE guide_requests SET status=?, note=?, updated=? WHERE user_id=?').bind(st, note || null, now(), g.user_id)];
     if (st === 'approved') ops.push(env.DB.prepare("UPDATE users SET role='guide' WHERE id=? AND role='user'").bind(g.user_id));
     ops.push(env.DB.prepare("INSERT INTO notifications (user_id,type,text,created) VALUES (?,'system',?,?)").bind(g.user_id,
-      st === 'approved' ? 'مبروك! صرت «مرشد موثّق» في دليل السعودية، والشارة تطلع جنب اسمك في المجتمع.' : `ما انقبل طلب «مرشد موثّق» هالمرة${note ? ': ' + note : ''}. تقدر تطلب مرة ثانية بعد شهر.`, now()));
+      st === 'approved' ? 'مبروك! صرت «خبير محلي موثّق» في دليل السعودية، والشارة تطلع جنب اسمك في المجتمع.' : `ما انقبل طلب «خبير محلي موثّق» هالمرة${note ? ': ' + note : ''}. تقدر تطلب مرة ثانية بعد شهر.`, now()));
     await env.DB.batch(ops);
     return J({ ok: true });
   }

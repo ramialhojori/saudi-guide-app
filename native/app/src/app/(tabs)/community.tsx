@@ -158,7 +158,7 @@ export default function Community() {
                 <View key={c.id} style={{ alignItems: 'center', gap: 6 }}>
                   <View style={first ? st.ring1 : null}><Avatar t={initial(c.name)} c={tint(c.id)} size={first ? 64 : 50} /></View>
                   <AppText style={{ fontFamily: font.bold }} color="#fff">{c.name}</AppText>
-                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{t('{n} نقطة', { n: c.score })}{c.guide ? ` · ${t('مرشد')}` : ''}</AppText>
+                  <AppText variant="tiny" color={first ? '#F9A158' : '#CFC6DE'}>{t('{n} نقطة', { n: c.score })}{c.guide ? ` · ${t('خبير محلي')}` : ''}</AppText>
                 </View>
               );
             })}

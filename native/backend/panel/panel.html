@@ -218,7 +218,7 @@ async function homeView() {
     [k.communityPending, 'مشاركة تنتظر مراجعتك', 'community', 'var(--orange)'], [k.contactNew, 'رسالة تواصل جديدة', 'contact', 'var(--purple)'], [k.reported, 'بلاغ في المجتمع', 'community', 'var(--pinkDeep)'], [k.creports, 'بلاغ عميل على كوبون', 'merchants', 'var(--pinkDeep)'],
     [k.merchantsPending, 'طلب تاجر جديد', 'merchants', 'var(--purple)'], [k.couponsPending, 'كوبون ينتظر الموافقة', 'merchants', 'var(--purple)'],
     [k.photosPending, 'صورة زوار تنتظر', 'photos', 'var(--skyDeep)'], [k.suggPending, 'اقتراح من الزوار', 'suggest', 'var(--skyDeep)'],
-    [k.guidesPending, 'طلب «مرشد موثّق»', 'users', 'var(--green)'], [k.unanswered, 'سؤال بدون إجابة', 'community', 'var(--lilac)'],
+    [k.guidesPending, 'طلب «خبير محلي موثّق»', 'users', 'var(--green)'], [k.unanswered, 'سؤال بدون إجابة', 'community', 'var(--lilac)'],
   ].filter((t) => t[0]);
   const list = (rows, fmt, empty) => rows.length ? rows.map(fmt).join('') : `<div class="muted" style="font-size:13px;padding:6px 0">${empty}</div>`;
   const noTrack = !a.all_time;
@@ -733,8 +733,8 @@ async function usersView(q = '') {
   const m = $('#main');
   if (!$('#uq') || m.dataset.ut !== UTAB) {
     m.dataset.ut = UTAB;
-    m.innerHTML = `<h1>المستخدمين</h1><p class="sub">«مرشد موثّق» يطلع جنب اسمه في المجتمع. «فريق الدليل» للإدارة. اللي يوصل 500 نقطة يقدر يطلب التوثيق من التطبيق.</p>
-      <div class="tabs">${[['all', 'كل المستخدمين'], ['guides', 'طلبات «مرشد موثّق»']].map(([k, t]) => `<button data-u="${k}" class="${UTAB === k ? 'on' : ''}">${t}${k === 'guides' && SUMMARY?.counts?.guidesPending ? ` (${SUMMARY.counts.guidesPending})` : ''}</button>`).join('')}</div>
+    m.innerHTML = `<h1>المستخدمين</h1><p class="sub">«خبير محلي موثّق» يطلع جنب اسمه في المجتمع. «فريق الدليل» للإدارة. اللي يوصل 500 نقطة يقدر يطلب التوثيق من التطبيق.</p>
+      <div class="tabs">${[['all', 'كل المستخدمين'], ['guides', 'طلبات «خبير محلي موثّق»']].map(([k, t]) => `<button data-u="${k}" class="${UTAB === k ? 'on' : ''}">${t}${k === 'guides' && SUMMARY?.counts?.guidesPending ? ` (${SUMMARY.counts.guidesPending})` : ''}</button>`).join('')}</div>
       ${UTAB === 'all' ? '<div class="filters"><input class="in" id="uq" placeholder="ابحث بالاسم"></div>' : '<span id="uq"></span>'}<div id="res" class="list"></div>`;
     m.querySelectorAll('[data-u]').forEach((b) => (b.onclick = () => { UTAB = b.dataset.u; usersView(); }));
   }
@@ -743,7 +743,7 @@ async function usersView(q = '') {
     const GS = { pending: ['ينتظر', 'b-draft'], approved: ['انقبل', 'b-live'], rejected: ['مرفوض', 'b-hidden'] };
     $('#res').innerHTML = d.requests.map((g) => `<div class="post"><div class="row"><b class="grow">${h(g.name || 'بدون اسم')}</b><span class="muted" style="font-size:13px">${cityName(g.city)} · ${g.points} نقطة · ${g.answers} إجابة · ${g.best} أفضل إجابة · ${g.visits} زيارة</span><span class="badge ${GS[g.status][1]}">${GS[g.status][0]}</span></div>
       <div>${h(g.about || '')}</div>${g.note ? `<div class="muted" style="font-size:13px">ملاحظتك: ${h(g.note)}</div>` : ''}
-      ${g.status === 'pending' ? `<div class="row"><button class="btn g" data-g="${h(g.user_id)}" data-s="approved">اعتمده مرشد موثّق</button><button class="btn p" data-g="${h(g.user_id)}" data-s="rejected">رفض</button></div>` : ''}</div>`).join('') || '<div class="empty">ما فيه طلبات للحين</div>';
+      ${g.status === 'pending' ? `<div class="row"><button class="btn g" data-g="${h(g.user_id)}" data-s="approved">اعتمده خبير محلي موثّق</button><button class="btn p" data-g="${h(g.user_id)}" data-s="rejected">رفض</button></div>` : ''}</div>`).join('') || '<div class="empty">ما فيه طلبات للحين</div>';
     m.querySelectorAll('[data-g]').forEach((b) => (b.onclick = async () => {
       let note = '';
       if (b.dataset.s === 'rejected') { note = prompt('سبب الرفض (يوصله)؟'); if (note === null) return; }
@@ -753,7 +753,7 @@ async function usersView(q = '') {
   }
   let t; $('#uq').oninput = (e) => { clearTimeout(t); t = setTimeout(() => usersView(e.target.value), 350); };
   const d = await api('/admin/users' + (q ? '?q=' + encodeURIComponent(q) : ''));
-  const R = { user: 'مستخدم', guide: 'مرشد موثّق', admin: 'فريق الدليل' };
+  const R = { user: 'مستخدم', guide: 'خبير محلي موثّق', admin: 'فريق الدليل' };
   $('#res').innerHTML = d.users.map((u) => `<div class="item" style="cursor:default"><div class="ph" style="border-radius:50%;background:var(--lilac);color:#fff;font-weight:700;font-size:20px">${h((u.name || 'د')[0])}</div>
     <div class="grow"><div class="t">${h(u.name || 'بدون اسم')}</div><div class="m">${u.points} نقطة · ${cityName(u.city)} · سجّل ${new Date(u.created * 1000).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')}</div></div>
     ${u.plus_until && u.plus_until * 1000 > Date.now() ? `<span class="badge b-live">دليل+ لين ${dAr(u.plus_until)}</span>` : ''}<button class="btn ghost" data-plus="${u.id}" data-pn="${h(u.name || '')}">دليل+</button>
@@ -880,7 +880,7 @@ async function photosView() {
 }
 
 /* ——— الرسائل والإشعارات ——— */
-const SEG = [['all', 'الكل'], ['new', 'الجدد (آخر 7 أيام)'], ['inactive', 'غايبين +30 يوم'], ['guides', 'المرشدين وفريق الدليل'], ['merchants', 'التجار المعتمدين']];
+const SEG = [['all', 'الكل'], ['new', 'الجدد (آخر 7 أيام)'], ['inactive', 'غايبين +30 يوم'], ['guides', 'الخبراء المحليين وفريق الدليل'], ['merchants', 'التجار المعتمدين']];
 const LINKS = [['', 'الإشعارات (بدون رابط)'], ['/', 'الرئيسية'], ['/explore', 'الدليل'], ['/events', 'الفعاليات'], ['/community', 'المجتمع'], ['/coupons', 'الكوبونات'], ['/trip', 'رحلتي'], ['custom', 'مكان أو فعالية معينة...']];
 async function messagesView() {
   const m = $('#main');
@@ -941,12 +941,12 @@ async function badgesView() {
   const d = await api('/admin/badges');
   const max = Math.max(1, ...d.levels.map((l) => l.users));
   m.innerHTML = `<h1>الأوسمة والنقاط</h1><p class="sub">النقاط تجي من المشاركة: سؤال +2، إجابة +5، أفضل إجابة +15، شكر +1، تقييم مكان +3، صورة مقبولة +5، زيارة مؤكدة +10 (ومدينة جديدة +25).</p>
-    <div class="stats">${[[d.total, 'مستخدم', 'var(--purple)'], [d.guides, 'مرشد موثّق', 'var(--green)'], [d.badges.reduce((a, b) => a + (b.users || 0), 0), 'وسام محصّل', 'var(--orangeDeep)']].map(([n, l, c]) => `<div class="stat"><div class="n" style="color:${c}">${n}</div><div class="l">${l}</div></div>`).join('')}</div>
+    <div class="stats">${[[d.total, 'مستخدم', 'var(--purple)'], [d.guides, 'خبير محلي موثّق', 'var(--green)'], [d.badges.reduce((a, b) => a + (b.users || 0), 0), 'وسام محصّل', 'var(--orangeDeep)']].map(([n, l, c]) => `<div class="stat"><div class="n" style="color:${c}">${n}</div><div class="l">${l}</div></div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px" class="msgGrid">
     <div class="card"><b>الأوسمة</b><div class="list" style="margin-top:10px">${d.badges.map((b) => `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--chip)"><span style="width:38px;height:38px;border-radius:12px;background:var(--softOrange);display:grid;place-items:center;color:var(--orangeDeep);font-weight:700">★</span><div class="grow"><b>${h(b.name)}</b><div class="muted" style="font-size:12px">${({ questions: 'سؤال', tips: 'نصيحة', answers: 'إجابة', best: 'أفضل إجابة', photos: 'صورة', thanks: 'شكر', trip: 'مكان في رحلتي', visits: 'زيارة مؤكدة', cities: 'مدينة مزارة', reviews: 'تقييم' })[b.key] || b.key} × ${b.goal}</div></div><b>${b.users == null ? '—' : b.users}</b><span class="muted" style="font-size:12px">مستخدم</span></div>`).join('')}</div></div>
     <div class="card"><b>المستويات</b><div style="margin-top:10px;display:grid;gap:8px">${d.levels.map((l, i) => `<div><div class="row" style="font-size:13px"><b>${i + 1}. ${h(l.name)}</b><span class="muted">من ${l.at} نقطة</span><span class="grow"></span><b>${l.users}</b></div><div style="height:8px;background:var(--chip);border-radius:4px;margin-top:4px"><div style="height:100%;width:${(l.users / max) * 100}%;background:var(--lilac);border-radius:4px"></div></div></div>`).join('')}</div></div></div>
     <div class="card" style="margin-top:14px" id="heroes"></div>
-    <div class="card" style="margin-top:14px"><b>أعلى 25 مستخدم</b><div class="list" style="margin-top:10px">${d.top.map((u, i) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><b style="width:26px">${i + 1}</b><div class="grow"><b>${h(u.name || 'بدون اسم')}</b> ${u.role === 'guide' ? '<span class="badge b-live">مرشد</span>' : u.role === 'admin' ? '<span class="badge b-panel">فريق الدليل</span>' : ''}<div class="muted" style="font-size:12px">${cityName(u.city)} · ${u.answers} إجابة · ${u.visits} زيارة</div></div><b style="color:var(--orangeDeep)">${u.points}</b></div>`).join('') || '<div class="muted">ما فيه مستخدمين</div>'}</div><p class="muted" style="font-size:13px">تقدر تعطي أحد «مرشد موثّق» من صفحة المستخدمين.</p></div>`;
+    <div class="card" style="margin-top:14px"><b>أعلى 25 مستخدم</b><div class="list" style="margin-top:10px">${d.top.map((u, i) => `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><b style="width:26px">${i + 1}</b><div class="grow"><b>${h(u.name || 'بدون اسم')}</b> ${u.role === 'guide' ? '<span class="badge b-live">خبير محلي</span>' : u.role === 'admin' ? '<span class="badge b-panel">فريق الدليل</span>' : ''}<div class="muted" style="font-size:12px">${cityName(u.city)} · ${u.answers} إجابة · ${u.visits} زيارة</div></div><b style="color:var(--orangeDeep)">${u.points}</b></div>`).join('') || '<div class="muted">ما فيه مستخدمين</div>'}</div><p class="muted" style="font-size:13px">تقدر تعطي أحد «خبير محلي موثّق» من صفحة المستخدمين.</p></div>`;
   heroesBlock($('#heroes'));
 }
 
@@ -1078,7 +1078,7 @@ async function heroesBlock(el) {
   const d = await api('/admin/heroes' + (city ? '?city=' + city : ''));
   el.innerHTML = `<div class="row"><b class="grow">أبطال ${h(d.month)}</b><select class="in" style="width:auto" id="hc"><option value="">كل المدن</option>${META.cities.map((c) => `<option value="${c.id}" ${c.id === city ? 'selected' : ''}>${h(c.name)}</option>`).join('')}</select></div>
     <p class="muted" style="font-size:13px;margin:6px 0">الترتيب من مساهمات الشهر: إجابة 5، أفضل إجابة 15، سؤال 2، تقييم 3، زيارة 10، صورة 5، سؤال سريع 1. يطلعون في المجتمع تلقائياً.</p>
-    <div class="list">${d.heroes.map((x, i) => `<label class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><input type="checkbox" data-hero="${h(x.id)}" ${i < 3 ? 'checked' : ''}><b style="width:22px">${i + 1}</b><span class="grow"><b>${h(x.name)}</b> ${x.guide ? '<span class="badge b-live">مرشد</span>' : ''}<span class="muted" style="font-size:12px"> · ${x.answers} إجابة · ${x.reviews} تقييم · ${x.visits} زيارة</span></span><b style="color:var(--orangeDeep)">${x.score}</b></label>`).join('') || '<div class="muted">ما فيه مساهمات هالشهر للحين</div>'}</div>
+    <div class="list">${d.heroes.map((x, i) => `<label class="row" style="padding:6px 0;border-bottom:1px solid var(--chip)"><input type="checkbox" data-hero="${h(x.id)}" ${i < 3 ? 'checked' : ''}><b style="width:22px">${i + 1}</b><span class="grow"><b>${h(x.name)}</b> ${x.guide ? '<span class="badge b-live">خبير محلي</span>' : ''}<span class="muted" style="font-size:12px"> · ${x.answers} إجابة · ${x.reviews} تقييم · ${x.visits} زيارة</span></span><b style="color:var(--orangeDeep)">${x.score}</b></label>`).join('') || '<div class="muted">ما فيه مساهمات هالشهر للحين</div>'}</div>
     ${d.heroes.length ? `<div class="row" style="margin-top:10px"><input class="in" id="hb" type="number" value="50" min="0" max="500" style="width:110px"><span class="muted">نقطة هدية</span><button class="btn o" id="honor">كرّم المحددين</button></div>` : ''}`;
   $('#hc', el).onchange = (e) => { el.dataset.city = e.target.value; heroesBlock(el); };
   $('#honor', el) && ($('#honor', el).onclick = async () => {

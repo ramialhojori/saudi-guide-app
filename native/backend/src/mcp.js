@@ -156,11 +156,11 @@ const TOOLS = [
   ['get_challenge', 'تحدي الأسبوع الحالي.', S({}), () => ['GET', '/admin/challenge']],
   ['set_challenge', 'يضبط تحدي الأسبوع (title, prize, tag, photo, city, end ISO) أو clear=true لإلغائه. يظهر للزوار مباشرة.', S({ title: str(''), prize: str(''), tag: str('وسم بدون #'), photo: str(''), city: CITY, end: str('ISO مع +03:00'), clear: { type: 'boolean' } }), (a) => ['POST', '/admin/challenge', a]],
 
-  /* —— المستخدمين والمرشدين والأوسمة —— */
+  /* —— المستخدمين والخبراء المحليين والأوسمة —— */
   ['list_users', 'المستخدمين (حتى 100، الأعلى نقاط). q: اسم أو رقم.', S({ q: str('') }), (a) => ['GET', '/admin/users?' + qs(a)]],
-  ['set_user_role', 'يغيّر دور مستخدم: user | guide (مرشد موثّق) | admin (فريق الدليل). ⚠️ بس بطلب رامي.', S({ userId: str(''), role: str('user|guide|admin') }, ['userId', 'role']), (a) => ['POST', '/admin/community/role', a]],
-  ['list_guide_requests', 'طلبات «مرشد موثّق» مع إحصاءات كل متقدم.', S({}), () => ['GET', '/admin/guides']],
-  ['decide_guide_request', 'يقبل أو يرفض طلب مرشد موثّق (يوصله إشعار). ⚠️ القرار لرامي.', S({ userId: str(''), status: str('approved|rejected'), note: str('سبب الرفض (اختياري)') }, ['userId', 'status']), (a) => ['POST', `/admin/guides/${encodeURIComponent(a.userId)}`, { status: a.status, note: a.note }]],
+  ['set_user_role', 'يغيّر دور مستخدم: user | guide (خبير محلي موثّق) | admin (فريق الدليل). ⚠️ بس بطلب رامي.', S({ userId: str(''), role: str('user|guide|admin') }, ['userId', 'role']), (a) => ['POST', '/admin/community/role', a]],
+  ['list_guide_requests', 'طلبات «خبير محلي موثّق» مع إحصاءات كل متقدم.', S({}), () => ['GET', '/admin/guides']],
+  ['decide_guide_request', 'يقبل أو يرفض طلب خبير محلي موثّق (يوصله إشعار). ⚠️ القرار لرامي.', S({ userId: str(''), status: str('approved|rejected'), note: str('سبب الرفض (اختياري)') }, ['userId', 'status']), (a) => ['POST', `/admin/guides/${encodeURIComponent(a.userId)}`, { status: a.status, note: a.note }]],
   ['badges', 'الأوسمة وعدد اللي حصلوا على كل وسام.', S({}), () => ['GET', '/admin/badges']],
   ['heroes', 'أبطال المساهمة (الأكثر مساهمة) — عام أو لمدينة.', S({ city: CITY }), (a) => ['GET', '/admin/heroes?' + qs(a)]],
   ['honor_heroes', 'يكرّم مستخدمين: إشعار تهنئة + نقاط إضافية (حتى 500). ⚠️ لازم confirmed=true وبس بعد موافقة رامي على الأسماء والنقاط والنص.', S({ userIds: { type: 'array', items: { type: 'string' } }, bonus: num(''), text: str(''), confirmed: { type: 'boolean' } }, ['userIds', 'confirmed']), null, 'honor'],
@@ -347,7 +347,7 @@ export async function mcpRoute(p, request, env) {
         if (x.method === 'initialize') {
           return ok({ protocolVersion: x.params?.protocolVersion || '2025-06-18', capabilities: { tools: { listChanged: false } },
             serverInfo: { name: 'dalil-saudi-panel', title: 'لوحة دليل السعودية', version: '1.0.0' },
-            instructions: 'لوحة تطبيق دليل السعودية (الأماكن والفعاليات والأخبار، «اسأل أهل المدينة»، التجار والكوبونات، صور وتقييمات الزوار، المستخدمين والمرشدين، الرسائل، مفاتيح الميزات). القواعد: أي مكان أو فعالية أو خبر جديد يُضاف مسودة دائماً، ولا تنشر (set_status live) إلا إذا طلب رامي ذلك صراحة. لا تحذف شيئاً: الإخفاء بدل الحذف. الأوقات بتوقيت مكة (+03:00). أي شي يوصل للمستخدمين مباشرة (send_message، honor_heroes، community_post، قبول/رفض التجار والكوبونات والمرشدين، set_features، set_user_role) لا تسويه إلا بطلب رامي أو بعد ما يوافق على التفاصيل. الردود في المجتمع باسم «فريق دليل السعودية» تكون دقيقة ومفيدة وبدون إعلانات.' });
+            instructions: 'لوحة تطبيق دليل السعودية (الأماكن والفعاليات والأخبار، «اسأل أهل المدينة»، التجار والكوبونات، صور وتقييمات الزوار، المستخدمين والخبراء المحليين، الرسائل، مفاتيح الميزات). القواعد: أي مكان أو فعالية أو خبر جديد يُضاف مسودة دائماً، ولا تنشر (set_status live) إلا إذا طلب رامي ذلك صراحة. لا تحذف شيئاً: الإخفاء بدل الحذف. الأوقات بتوقيت مكة (+03:00). أي شي يوصل للمستخدمين مباشرة (send_message، honor_heroes، community_post، قبول/رفض التجار والكوبونات والمرشدين، set_features، set_user_role) لا تسويه إلا بطلب رامي أو بعد ما يوافق على التفاصيل. الردود في المجتمع باسم «فريق دليل السعودية» تكون دقيقة ومفيدة وبدون إعلانات.' });
         }
         if (x.method === 'ping') return ok({});
         if (x.method === 'tools/list') return ok({ tools: TOOLS.map(([name, description, inputSchema]) => ({ name, description, inputSchema })) });
