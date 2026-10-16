@@ -8,6 +8,7 @@
      POST /v1/offers/:id/open {act}   عدّاد: نسخ الكود / فتح الرابط
      GET  /admin/offers?status=        POST /admin/offers (إضافة دفعة)   POST /admin/offers/:id {status, ...}
    - ما نحذف شي: الحذف = إخفاء */
+import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
 import { getFeatures } from './contrib.js';
 
@@ -48,7 +49,13 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS offers_store ON offers(store_key, unit, value)',
 ];
 let ready = false;
-async function ensure(env) { if (!ready) { await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))); ready = true; } }
+async function ensure(env) {
+  if (ready) return;
+  await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
+  // عروض حصرية لمشتركي دليل+: الكود ما يطلع إلا للمشترك
+  await env.DB.prepare('ALTER TABLE offers ADD COLUMN plus_only INTEGER NOT NULL DEFAULT 0').run().catch(() => {});
+  ready = true;
+}
 
 /** نص الخصم للعرض */
 export function offerOff(o) {
@@ -57,7 +64,7 @@ export function offerOff(o) {
 }
 const out = (o, admin) => ({
   id: o.id, kind: o.kind, store: o.store_name, category: o.category, city: o.city, cityName: o.city ? (CITIES.find((c) => c[0] === o.city) || [])[1] || '' : 'كل المدن',
-  value: o.value, unit: o.unit, off: offerOff(o), title: o.title, code: o.code || '', channel: o.channel, sourceUrl: o.source_url || '', useUrl: o.use_url || o.source_url || '',
+  value: o.value, unit: o.unit, off: offerOff(o), title: o.title, code: o.plus_only && !admin ? '' : o.code || '', hasCode: !!o.code, plusOnly: !!o.plus_only, channel: o.channel, sourceUrl: o.source_url || '', useUrl: o.use_url || o.source_url || '',
   startsAt: o.starts_at || '', expiresAt: o.expires_at || '', minOrder: o.min_order, maxDiscount: o.max_discount, newOnly: !!o.new_only, deliveryApp: o.delivery_app || '', terms: o.terms || '',
   ...(admin ? { status: o.status, note: o.note || '', origin: o.origin || '', copies: o.copies, opens: o.opens, created: o.created, updated: o.updated } : {}),
 });
@@ -86,7 +93,7 @@ function clean(x) {
       kind: 'official', store_name: store, store_key: normStore(store), category: catOf(x.category), city, city_raw: str(x.city, 40) || null,
       value, unit, title, code: x.code ? str(x.code, 40) : null, channel: OFFER_CHANNELS.includes(x.channel) ? x.channel : 'any', source_url: source, use_url: url(x.use_url),
       starts_at: starts, expires_at: expires, min_order: num(x.min_order), max_discount: num(x.max_discount), new_only: x.new_only ? 1 : 0,
-      delivery_app: str(x.delivery_app, 40) || null, terms: str(x.terms, 300) || null, legacy_id: str(x.legacy_id, 64) || null,
+      delivery_app: str(x.delivery_app, 40) || null, terms: str(x.terms, 300) || null, legacy_id: str(x.legacy_id, 64) || null, plus_only: x.plus_only ? 1 : 0,
     },
   };
 }
@@ -114,9 +121,9 @@ export async function createOffers(env, items, { status, origin = 'task' } = {})
       if (old) { rejected.push({ index: i, store: r.store_name, reason: 'already_imported', existing: old.id }); continue; }
     }
     const t = now();
-    const res = await env.DB.prepare(`INSERT INTO offers (kind,store_name,store_key,category,city,city_raw,value,unit,title,code,channel,source_url,use_url,starts_at,expires_at,min_order,max_discount,new_only,delivery_app,terms,status,origin,legacy_id,created,updated)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(r.kind, r.store_name, r.store_key, r.category, r.city, r.city_raw, r.value, r.unit, r.title, r.code, r.channel, r.source_url, r.use_url,
-      r.starts_at, r.expires_at, r.min_order, r.max_discount, r.new_only, r.delivery_app, r.terms, st, origin, r.legacy_id, t, t).run();
+    const res = await env.DB.prepare(`INSERT INTO offers (kind,store_name,store_key,category,city,city_raw,value,unit,title,code,channel,source_url,use_url,starts_at,expires_at,min_order,max_discount,new_only,delivery_app,terms,status,origin,legacy_id,created,updated,plus_only)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(r.kind, r.store_name, r.store_key, r.category, r.city, r.city_raw, r.value, r.unit, r.title, r.code, r.channel, r.source_url, r.use_url,
+      r.starts_at, r.expires_at, r.min_order, r.max_discount, r.new_only, r.delivery_app, r.terms, st, origin, r.legacy_id, t, t, r.plus_only).run();
     added.push({ id: res.meta.last_row_id, store: r.store_name, off: offerOff(r), status: st });
   }
   return { added, rejected, status: st, autoPublish: !!F.official_auto };
@@ -134,6 +141,16 @@ export async function offersRoute(p, request, env, J, q) {
     if (city) { sql += " AND (city='' OR city=?2)"; args.push(city); }
     const { results } = await env.DB.prepare(sql + ' ORDER BY (expires_at IS NULL), expires_at, id DESC LIMIT 100').bind(...args).all();
     return J({ offers: results.map((o) => out(o)) }, 200, 300);
+  }
+  // كود العرض الحصري: للمشترك في دليل+ بس
+  if ((m = p.match(/^\/v1\/offers\/(\d+)\/code$/)) && request.method === 'GET') {
+    const me = await sessionUser(env, request);
+    if (!me) return J({ error: 'login_required' }, 401);
+    const t = now();
+    if (!((me.plus_until && me.plus_until > t) || (me.plus_grant_until && me.plus_grant_until > t))) return J({ error: 'plus_required' }, 402);
+    const o = await env.DB.prepare("SELECT code FROM offers WHERE id=? AND status='active'").bind(+m[1]).first();
+    if (!o) return J({ error: 'not_found' }, 404);
+    return J({ code: o.code || '' });
   }
   if ((m = p.match(/^\/v1\/offers\/(\d+)\/open$/)) && request.method === 'POST') {
     const b = await request.json().catch(() => ({}));
@@ -175,8 +192,8 @@ export async function offersAdmin(p, request, env, J, q) {
     }
     const note = b.note === undefined ? o.note : str(b.note, 300);
     await env.DB.prepare(`UPDATE offers SET status=?, note=?, store_name=?, store_key=?, category=?, city=?, value=?, unit=?, title=?, code=?, channel=?, source_url=?, use_url=?, starts_at=?, expires_at=?,
-        min_order=?, max_discount=?, new_only=?, delivery_app=?, terms=?, updated=? WHERE id=?`).bind(status, note, f.store_name, f.store_key, f.category, f.city, f.value, f.unit, f.title, f.code, f.channel,
-      f.source_url, f.use_url, f.starts_at, f.expires_at, f.min_order, f.max_discount, f.new_only, f.delivery_app, f.terms, now(), o.id).run();
+        min_order=?, max_discount=?, new_only=?, delivery_app=?, terms=?, plus_only=?, updated=? WHERE id=?`).bind(status, note, f.store_name, f.store_key, f.category, f.city, f.value, f.unit, f.title, f.code, f.channel,
+      f.source_url, f.use_url, f.starts_at, f.expires_at, f.min_order, f.max_discount, f.new_only, f.delivery_app, f.terms, f.plus_only ?? o.plus_only ?? 0, now(), o.id).run();
     return J({ ok: true, status });
   }
   if (p === '/admin/offers/approve-all' && request.method === 'POST') {

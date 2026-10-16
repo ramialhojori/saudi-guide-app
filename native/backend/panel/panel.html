@@ -225,7 +225,7 @@ async function securityView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
   if (!KEY && !TOKEN) return loginView();
   if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
@@ -237,7 +237,7 @@ async function render() {
     <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, report: reportView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -836,6 +836,18 @@ async function commentsView() {
     <div class="muted" style="font-size:13px">على خبر: ${h(c.article.title)}${c.reason ? ' · السبب: ' + h(c.reason) : ''}</div>
     <div class="row">${c.status !== 'visible' ? `<button class="btn g" data-cm="${c.id}" data-s="visible">انشره</button>` : ''}${c.status !== 'hidden' ? `<button class="btn ghost" data-cm="${c.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه شي هنا</div>';
   m.querySelectorAll('[data-cm]').forEach((b) => (b.onclick = async () => { await api('/admin/comments/' + b.dataset.cm, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); SUMMARY = null; commentsView(); }));
+}
+let VTAB = 'pending';
+async function videosView() {
+  const m = $('#main');
+  m.innerHTML = `<h1>فيديوهات الزوار</h1><p class="sub">مقاطع قصيرة يرفعها الزوار عن الأماكن (لين دقيقة). ما تطلع في التطبيق إلا لما تعتمدها، وصاحبها ياخذ +20 نقطة.</p>
+    <div class="tabs">${[['pending', 'تنتظر مراجعتك'], ['approved', 'منشورة'], ['rejected', 'مرفوضة']].map(([k, t]) => `<button data-vt="${k}" class="${VTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  m.querySelectorAll('[data-vt]').forEach((b) => (b.onclick = () => { VTAB = b.dataset.vt; videosView(); }));
+  const d = await api('/admin/videos?status=' + VTAB);
+  $('#res').innerHTML = d.videos.map((v) => `<div class="post"><div class="row"><b class="grow">${h(String(v.place || '').split(' - ')[0])}</b><span class="muted" style="font-size:13px">${h(v.name || 'مستخدم')} · ${v.duration ? Math.round(v.duration) + ' ث · ' : ''}${Math.round((v.size || 0) / 1048576 * 10) / 10} ميقا</span></div>
+    <video src="${h(v.url)}" controls preload="metadata" style="width:100%;max-width:360px;max-height:420px;border-radius:14px;background:#000"></video>
+    <div class="row">${v.status !== 'approved' ? `<button class="btn g" data-vd="${v.id}" data-s="approved">انشره</button>` : ''}${v.status === 'pending' ? `<button class="btn p" data-vd="${v.id}" data-s="rejected">ارفضه</button>` : ''}${v.status === 'approved' ? `<button class="btn ghost" data-vd="${v.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه شي هنا</div>';
+  m.querySelectorAll('[data-vd]').forEach((b) => (b.onclick = async () => { await api('/admin/videos/' + b.dataset.vd, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); videosView(); }));
 }
 async function reportView() {
   const m = $('#main');

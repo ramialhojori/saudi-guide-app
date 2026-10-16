@@ -19,6 +19,8 @@ import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, INPUT_START } from '@/theme/tokens';
 import { track } from '@/lib/track';
 import { t } from '@/lib/i18n';
+import { alert } from '@/lib/alert';
+import { listen, voiceAvailable } from '@/lib/voice';
 
 const KIND_NAME: Record<string, string> = { food: t('مطاعم'), cafe: t('مقاهي'), sights: t('معالم'), heritage: t('تراث'), nature: t('طبيعة'), islamic: t('معالم إسلامية'), fun: t('ترفيه'), shopping: t('تسوق') };
 const KIND_ICON: Record<string, IconName> = { food: 'food', cafe: 'cafe', sights: 'sights', heritage: 'heritage', nature: 'nature', islamic: 'mosque', fun: 'fun', shopping: 'shop' };
@@ -50,6 +52,17 @@ export default function SearchScreen() {
   const [popular, setPopular] = useState<string[]>(DEFAULT_POPULAR);
   const [sugg, setSugg] = useState<Place[]>([]);
   const input = useRef<TextInput>(null);
+  // البحث بالصوت
+  const [listening, setListening] = useState(false);
+  const stopVoice = useRef<(() => void) | null>(null);
+  const toggleVoice = async () => {
+    if (listening) { stopVoice.current?.(); return; }
+    setListening(true);
+    stopVoice.current = await listen((txt, fin) => { setQ(txt); if (fin) remember(txt); }, (err) => {
+      setListening(false); stopVoice.current = null;
+      if (err === 'permission') alert(t('نحتاج إذن المايكروفون'), t('فعّل المايكروفون والتعرّف على الكلام لدليل السعودية من الإعدادات.'));
+    });
+  };
 
   useEffect(() => {
     AsyncStorage.getItem(RECENT_KEY).then((v) => setRecent(JSON.parse(v || '[]'))).catch(() => {});
@@ -263,6 +276,11 @@ export default function SearchScreen() {
         <View style={st.field}>
           <Icon name="search" color={brand.purple} size={20} strokeWidth={2.2} />
           <TextInput ref={input} value={q} onChangeText={setQ} onSubmitEditing={() => remember(q)} autoFocus={!params.kind && params.near !== '1' && !addMode} placeholder={t('مطعم بحري في جدة، مقهى، العلا...')} placeholderTextColor={brand.faint} style={st.input} returnKeyType="search" />
+          {voiceAvailable() ? (
+            <Pressable onPress={toggleVoice} hitSlop={8} accessibilityLabel={t('ابحث بصوتك')} style={[st.mic, listening && { backgroundColor: brand.pinkDeep }]}>
+              <Icon name="mic" color={listening ? '#fff' : brand.purple} size={18} />
+            </Pressable>
+          ) : null}
           {q ? <Pressable onPress={() => { setQ(''); input.current?.focus(); }} hitSlop={10} accessibilityLabel={t('امسح')}><View style={st.clear}><Icon name="x" size={12} color="#fff" /></View></Pressable> : null}
         </View>
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}><AppText style={{ fontFamily: font.semibold }} color={brand.purple}>{t('إلغاء')}</AppText></Pressable>
@@ -285,6 +303,7 @@ export default function SearchScreen() {
 }
 
 const st = StyleSheet.create({
+  mic: { width: 34, height: 34, borderRadius: 17, backgroundColor: brand.chip, alignItems: 'center', justifyContent: 'center' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
   field: { flex: 1, height: 54, backgroundColor: brand.card, borderWidth: 2, borderColor: brand.lilac, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14 },
   input: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: brand.text, textAlign: INPUT_START, minWidth: 0, outlineStyle: 'none' } as never,

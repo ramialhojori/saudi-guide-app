@@ -124,6 +124,16 @@
           "delayAppMeasurementInit": true,
           "userTrackingUsageDescription": "نستخدم هذا لعرض إعلانات تناسب اهتماماتك. تقدر ترفض وتظهر لك إعلانات عامة."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "نستخدم المايكروفون عشان تبحث بصوتك في الدليل.",
+          "speechRecognitionPermission": "نحوّل كلامك لنص عشان نبحث لك عن الأماكن.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
       ]
     ],
     "experiments": {

@@ -8,11 +8,13 @@ import { t } from './i18n';
 export type Offer = {
   id: number; store: string; category: string; city: string; cityName: string; value: number | null; unit: string; off: string; title: string;
   code: string; channel: string; sourceUrl: string; useUrl: string; startsAt: string; expiresAt: string; minOrder: number | null; maxDiscount: number | null;
-  newOnly: boolean; deliveryApp: string; terms: string;
+  newOnly: boolean; deliveryApp: string; terms: string; plusOnly?: boolean; hasCode?: boolean;
 };
 
 export const getOffers = (city?: string) => api<{ offers: Offer[] }>(`/v1/offers${city ? `?city=${city}` : ''}`).then((r) => r.offers);
 /** عدّاد: نسخ الكود أو فتح الرابط (للوحة) */
+/** كود عرض حصري (للمشترك في دليل+) */
+export const getPlusCode = (id: number, token: string) => api<{ code: string }>(`/v1/offers/${id}/code`, { token }).then((r) => r.code);
 export const offerOpened = (id: number, act: 'copy' | 'open') => api(`/v1/offers/${id}/open`, { method: 'POST', body: { act } }).catch(() => {});
 
 export const OFFER_CATS: [string, string][] = [

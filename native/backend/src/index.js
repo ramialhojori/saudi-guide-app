@@ -29,6 +29,7 @@ import { adminAuth, adminLoginRoute, adminSessionRoute } from './adminauth.js';
 import { inviteRoute } from './invite.js';
 import { tripsRoute, tripsAdmin } from './trips.js';
 import { errorsRoute, insightsAdmin, weeklyReport } from './insights.js';
+import { videosRoute, videosAdmin } from './videos.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
@@ -163,7 +164,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await tripsAdmin(p, request, env, J)) || (await insightsAdmin(p, request, env, J)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await tripsAdmin(p, request, env, J)) || (await insightsAdmin(p, request, env, J)) || (await videosAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -186,6 +187,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/weather') return weatherRoute(p, env, J, q);
   if (p === '/v1/admin/login') { const r = await adminLoginRoute(p, request, env, J); if (r) return r; }
+  if (/^\/v1\/places\/\d+\/videos$/.test(p)) { const r = await videosRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/errors') { const r = await errorsRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/trips')) { const r = await tripsRoute(p, request, env, J, q); if (r) return r; }
   if (p.startsWith('/v1/invite')) { const r = await inviteRoute(p, request, env, J); if (r) return r; }
@@ -242,9 +244,22 @@ async function route(request, env, ctx) {
 
   /* ——— صور المستخدمين من R2 ——— */
   if (p.startsWith('/media/') && request.method === 'GET' && env.MEDIA) {
-    const obj = await env.MEDIA.get(decodeURIComponent(p.slice(7)));
+    const key = decodeURIComponent(p.slice(7));
+    // تشغيل الفيديو في الآيفون يحتاج طلب أجزاء من الملف (Range → 206)
+    const rm = (request.headers.get('Range') || '').match(/^bytes=(\d*)-(\d*)$/);
+    if (rm) {
+      const head = await env.MEDIA.head(key);
+      if (!head) return J({ error: 'not_found' }, 404);
+      const size = head.size;
+      let start = rm[1] === '' ? Math.max(0, size - +rm[2]) : +rm[1];
+      let end = rm[1] !== '' && rm[2] !== '' ? Math.min(+rm[2], size - 1) : size - 1;
+      if (start >= size || start > end) return new Response(null, { status: 416, headers: { ...CORS, 'Content-Range': `bytes */${size}` } });
+      const part = await env.MEDIA.get(key, { range: { offset: start, length: end - start + 1 } });
+      return new Response(part.body, { status: 206, headers: { ...CORS, 'Content-Type': head.httpMetadata?.contentType || 'application/octet-stream', 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': String(end - start + 1), 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=31536000, immutable' } });
+    }
+    const obj = await env.MEDIA.get(key);
     if (!obj) return J({ error: 'not_found' }, 404);
-    return new Response(obj.body, { headers: { ...CORS, 'Content-Type': obj.httpMetadata?.contentType || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
+    return new Response(obj.body, { headers: { ...CORS, 'Content-Type': obj.httpMetadata?.contentType || 'image/jpeg', 'Content-Length': String(obj.size), 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=31536000, immutable' } });
   }
 
   const gm = p.match(/^\/v1\/events\/(\d+)\/going$/);

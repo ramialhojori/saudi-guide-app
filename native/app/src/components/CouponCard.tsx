@@ -11,11 +11,12 @@ export function CouponCard({ c, onPress, onSave, cta = t('استخدمه'), bizN
   const bg = couponColor(c.biz?.kind);
   const used = !!c.usedByMe && c.perUser;
   return (
-    <Pressable style={[st.card, { backgroundColor: bg, shadowColor: bg }, used && { opacity: 0.55 }]} onPress={onPress}>
+    <Pressable style={[st.card, { backgroundColor: bg, shadowColor: bg }, c.biz?.featured && st.featured, used && { opacity: 0.55 }]} onPress={onPress}>
+      {c.biz?.featured ? <View style={st.ribbon}><Icon name="star" color="#5A3A00" size={11} /><AppText variant="tiny" color="#5A3A00" style={{ fontFamily: font.bold }}>{t('مميّز')}</AppText></View> : null}
       {c.biz?.photo ? <Image source={c.biz.photo} style={{ width: 92, height: 120 }} contentFit="cover" /> : <View style={st.noImg}><Icon name="ticket" color="#fff" size={30} /></View>}
       <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
         <View>
-          <AppText variant="tiny" color="#fff" numberOfLines={1}>{bizName ?? c.biz?.name}{c.biz?.area ? ` · ${c.biz.area}` : ''}{c.biz?.verified ? ' ✓' : ''}{c.biz?.featured ? ` · ${t('مميّز')}` : ''}</AppText>
+          <AppText variant="tiny" color="#fff" numberOfLines={1}>{bizName ?? c.biz?.name}{c.biz?.area ? ` · ${c.biz.area}` : ''}{c.biz?.verified ? ' ✓' : ''}</AppText>
           <AppText style={{ fontFamily: font.bold, fontSize: 21, lineHeight: 30 }} color="#fff" numberOfLines={1}>{c.off}</AppText>
           <AppText variant="small" color="#fff" numberOfLines={1}>{c.title}</AppText>
         </View>
@@ -36,6 +37,8 @@ export function CouponCard({ c, onPress, onSave, cta = t('استخدمه'), bizN
 }
 
 const st = StyleSheet.create({
+  featured: { borderWidth: 2, borderColor: '#F6C445' },
+  ribbon: { position: 'absolute', top: 8, left: 8, zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F6C445', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 1 },
   card: { height: 120, borderRadius: 22, flexDirection: 'row', overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
   tag: { backgroundColor: 'rgba(43,39,69,0.55)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
   noImg: { width: 92, height: 120, backgroundColor: 'rgba(0,0,0,0.12)', alignItems: 'center', justifyContent: 'center' },

@@ -27,6 +27,7 @@ const PLANS: { id: PlanId; title: string; price: string; per: string; note: stri
 const PERKS: { icon: IconName; title: string; sub: string; c: string; bg: string }[] = [
   { icon: 'spark', title: t('اسأل الدليل بدون حد'), sub: t('مساعدك الذكي يجاوبك من أماكن الدليل وفعالياته ونصايح أهل المدن'), c: brand.purple, bg: brand.softPurple },
   { icon: 'route', title: t('خطط رحلتك بذكاء'), sub: t('خطة يوم بيوم حسب تواريخك ومين معك وميزانيتك، وتنحفظ في رحلتك'), c: brand.orangeDeep, bg: brand.softOrange },
+  { icon: 'ticket', title: t('عروض حصرية للمشتركين'), sub: t('أكواد خصم من مطاعم وفنادق ومتاجر ما تطلع إلا لمشتركي دليل+'), c: brand.orangeDeep, bg: brand.softOrange },
   { icon: 'down', title: t('المدن بدون نت'), sub: t('حمّل أي مدينة بأماكنها وصورها واستخدمها في البر والطريق'), c: brand.green, bg: brand.softGreen },
   { icon: 'x', title: t('بدون إعلانات'), sub: t('تصفح الدليل كله بهدوء'), c: brand.pinkDeep, bg: brand.softPink },
   { icon: 'crown', title: t('وسام دليل+ في ملفك'), sub: t('يطلع جنب اسمك في المجتمع وأجوبتك'), c: brand.skyDeep, bg: brand.softSky },

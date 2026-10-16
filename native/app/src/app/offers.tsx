@@ -9,9 +9,11 @@ import { Chip } from '@/components/ui';
 import { allCities, cityName } from '@/lib/content';
 import { useFeatures } from '@/lib/features';
 import { t } from '@/lib/i18n';
-import { CHANNEL, daysLeft, getOffers, OFFER_CATS, OFFER_STYLE, offBadge, offerOpened, type Offer } from '@/lib/offers';
+import { CHANNEL, daysLeft, getOffers, getPlusCode, OFFER_CATS, OFFER_STYLE, offBadge, offerOpened, type Offer } from '@/lib/offers';
 import { brand, font } from '@/theme/tokens';
 import { happyMoment } from '@/lib/review';
+import { isPlus, session, useAuth } from '@/lib/auth';
+import { alert } from '@/lib/alert';
 
 
 /** العروض والكوبونات: عروض البنوك والمتاجر وتطبيقات التوصيل (من مصادرها الرسمية) + رابط لكوبونات المحلات */
@@ -35,8 +37,19 @@ export default function Offers() {
   const cats = OFFER_CATS.filter(([k]) => (list ?? []).some((o) => o.category === k));
   const shown = useMemo(() => (list ?? []).filter((o) => !cat || o.category === cat), [list, cat]);
 
+  const { user } = useAuth();
+  const plus = isPlus(user);
   const copy = async (o: Offer) => {
-    await Clipboard.setStringAsync(o.code).catch(() => {});
+    let code = o.code;
+    if (o.plusOnly && !code) {
+      if (!plus) return alert(t('عرض حصري لمشتركي دليل+'), t('هذا الكود لمشتركي دليل+ بس. جرّب دليل+ 3 أيام مجاناً وخذ كل العروض الحصرية.'), [
+        { text: t('لاحقاً'), style: 'cancel' }, { text: t('جرّب دليل+'), onPress: () => router.push(user ? '/plus' : '/login') },
+      ]);
+      code = await getPlusCode(o.id, session().token || '').catch(() => '');
+      if (!code) return alert(t('ما قدرنا نجيب الكود'), t('جرّب بعد شوي.'));
+      setList((l) => (l ?? []).map((x) => (x.id === o.id ? { ...x, code } : x)));
+    }
+    await Clipboard.setStringAsync(code).catch(() => {});
     setCopied(o.id); setTimeout(() => setCopied((x) => (x === o.id ? null : x)), 2000);
     offerOpened(o.id, 'copy');
     happyMoment('offer_copy');
@@ -127,6 +140,7 @@ function OfferCard({ o, open, copied, onToggle, onCopy, onGo }: { o: Offer; open
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name={c.icon as never} size={13} color={c.color} />
             <AppText variant="tiny" color={c.color} style={{ fontFamily: font.bold }}>{catName}</AppText>
+            {o.plusOnly ? <View style={st.plusTag}><AppText variant="tiny" color="#fff" style={{ fontFamily: font.bold }}>{t('حصري دليل+')}</AppText></View> : null}
             {o.newOnly ? <View style={st.newTag}><AppText variant="tiny" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t('للعملاء الجدد')}</AppText></View> : null}
           </View>
           <AppText style={{ fontFamily: font.bold, fontSize: 16 }} numberOfLines={1}>{o.store}</AppText>
@@ -138,11 +152,12 @@ function OfferCard({ o, open, copied, onToggle, onCopy, onGo }: { o: Offer; open
         </View>
       </View>
 
-      {o.code || o.useUrl ? (
+      {o.code || o.hasCode || o.useUrl ? (
         <View style={st.bottom}>
-          {o.code ? (
+          {o.code || o.hasCode ? (
             <Pressable style={[st.codeBox, copied && { borderColor: brand.green, backgroundColor: brand.softGreen }]} onPress={onCopy} accessibilityLabel={t('انسخ الكود')}>
-              <AppText style={{ fontFamily: font.bold, fontSize: 15, letterSpacing: 1.5 }} numberOfLines={1}>{o.code}</AppText>
+              {o.code ? <AppText style={{ fontFamily: font.bold, fontSize: 15, letterSpacing: 1.5 }} numberOfLines={1}>{o.code}</AppText>
+                : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Icon name="lock" size={14} color={brand.orangeDeep} /><AppText variant="small" color={brand.orangeDeep} style={{ fontFamily: font.bold }}>{t('اكشف الكود')}</AppText></View>}
               <View style={st.copyTag}><Icon name={copied ? 'check' : 'ticket'} size={13} color={copied ? brand.green : brand.purple} /><AppText variant="tiny" color={copied ? brand.green : brand.purple} style={{ fontFamily: font.bold }}>{copied ? t('انتسخ') : t('انسخ')}</AppText></View>
             </Pressable>
           ) : <AppText variant="small" muted style={{ flex: 1 }}>{t('بدون كود · العرض يطبق تلقائياً')}</AppText>}
@@ -174,6 +189,7 @@ const st = StyleSheet.create({
   perf: { width: 14, alignItems: 'center' },
   dash: { flex: 1, width: 0, borderStartWidth: 1.5, borderStyle: 'dashed', borderColor: brand.chip, marginVertical: 10 },
   notch: { position: 'absolute', width: 18, height: 18, borderRadius: 9, backgroundColor: brand.bg },
+  plusTag: { backgroundColor: brand.orange, borderRadius: 6, paddingHorizontal: 6 },
   newTag: { backgroundColor: brand.softPink, borderRadius: 6, paddingHorizontal: 6 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: 1, borderTopColor: brand.chip, paddingHorizontal: 12, paddingVertical: 10 },
   codeBox: { flex: 1, height: 40, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: brand.lilac, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, gap: 8 },

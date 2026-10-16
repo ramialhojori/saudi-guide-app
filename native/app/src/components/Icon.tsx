@@ -53,6 +53,7 @@ export const ICONS = {
   edit: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   chevron: 'M15 6l-6 6 6 6',
   x: 'M6 6l12 12M18 6L6 18',
+  play: 'M8 5v14l11-7z',
   nav: 'M3 11l18-8-8 18-2-8z',
   news: 'M4 4h16v16H4zM8 9h8M8 13h8M8 17h5',
   calendar: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',

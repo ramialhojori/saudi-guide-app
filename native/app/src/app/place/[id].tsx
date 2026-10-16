@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { BannerSlot } from '@/components/Ads';
+import { PlaceVideos } from '@/components/PlaceVideos';
 import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { usePullUpClose } from '@/components/PullUpClose';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -302,6 +303,9 @@ export default function PlaceScreen() {
             </Pressable>
           ))}
         </ScrollView>
+
+        {/* فيديوهات الزوار */}
+        {F.photos ? <PlaceVideos placeId={p.id} /> : null}
 
         {/* التقييمات وصور الزوار */}
         {F.reviews ? (<>

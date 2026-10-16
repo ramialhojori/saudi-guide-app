@@ -91,7 +91,10 @@ const STATEMENTS = [
   "CREATE TABLE IF NOT EXISTS app_errors ( fp TEXT PRIMARY KEY, message TEXT NOT NULL, stack TEXT, screen TEXT, platform TEXT, version TEXT, fatal INTEGER NOT NULL DEFAULT 0, count INTEGER NOT NULL DEFAULT 1, devices INTEGER NOT NULL DEFAULT 1, first INTEGER NOT NULL, last INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'open' )",
   "CREATE INDEX IF NOT EXISTS app_errors_last ON app_errors(status, last DESC)",
   "CREATE TABLE IF NOT EXISTS app_error_hits ( fp TEXT NOT NULL, device TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (fp, device, day) )",
-  "CREATE TABLE IF NOT EXISTS going_soon ( event_id INTEGER NOT NULL, user_id TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (event_id, user_id) )"
+  "CREATE TABLE IF NOT EXISTS going_soon ( event_id INTEGER NOT NULL, user_id TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (event_id, user_id) )",
+  "CREATE TABLE IF NOT EXISTS place_videos ( id INTEGER PRIMARY KEY AUTOINCREMENT, place_id INTEGER NOT NULL, user_id TEXT NOT NULL, url TEXT NOT NULL, caption TEXT, duration REAL, size INTEGER, status TEXT NOT NULL DEFAULT 'pending', views INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL, decided INTEGER )",
+  "CREATE INDEX IF NOT EXISTS place_videos_place ON place_videos(place_id, status, created DESC)",
+  "CREATE INDEX IF NOT EXISTS place_videos_status ON place_videos(status, created)"
 ];
 
 /* أعمدة جديدة على جداول قديمة (لو العمود موجود يطلع خطأ ونتجاهله) */
