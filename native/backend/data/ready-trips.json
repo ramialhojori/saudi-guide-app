@@ -1,0 +1,52 @@
+[
+ {"city":"alula","title":"يومين في العلا: التاريخ والطبيعة","title_en":"Two Days in AlUla: History & Nature","intro":"أشهر معالم العلا في يومين: البلدة القديمة والواحة، ثم الحجر ودادان، وتختم كل يوم بغروب على صخرة.","intro_en":"AlUla's highlights in two days: the Old Town and oasis, then Hegra and Dadan, ending each day with a desert sunset.","tags":["heritage","nature","weekend"],"days":[
+  {"title":"البلدة القديمة والواحة","note":"ابدأ بدري قبل الحر، وخل مطل الحرة للغروب واوصله قبلها بـ20 دقيقة.","places":[59231603,76340282,98082992,98048643]},
+  {"title":"الحجر ودادان وجبل الفيل","note":"تذاكر الحجر تنحجز مسبقاً من موقع Experience AlUla، والجولة تاخذ ثلاث ساعات تقريباً.","places":[59231645,59231766,59233263,59231322,98082846]}]},
+ {"city":"alula","title":"مساء الفنون في الجديدة","title_en":"An Arts Evening in AlJadidah","intro":"حي الجديدة للفنون بالمشي: ورش حرف، معارض تصميم، موسيقى، وتختم بفيلم في سينما مفتوحة.","intro_en":"AlJadidah Arts District on foot: craft workshops, design exhibits, music, and an open-air film to finish.","tags":["couples","friends","walking"],"days":[
+  {"title":"من العصر لين الليل","note":"السينما تفتح غالباً من الخميس للسبت، شوف جدول العروض قبل تروح.","places":[98082987,98082996,98082991,98082760,98048641]}]},
+ {"city":"alula","title":"مغامرة العلا: 3 أيام","title_en":"AlUla Adventure: 3 Days","intro":"للي يحب الطبيعة والحركة: وادي عِشار، محمية شرعان، ووادي الفن، مع تخييم وسفاري وغروب.","intro_en":"For nature and adventure lovers: Ashar Valley, Sharaan Reserve and Wadi AlFann, with safari, stargazing and sunsets.","tags":["nature","friends","luxury"],"plus_only":true,"days":[
+  {"title":"وادي عِشار","note":"احجز نشاط هوساك (سفاري أو تأمل النجوم) قبلها بيوم.","places":[76340242,98083021,98082908]},
+  {"title":"محمية شرعان","note":"الجولات داخل المحمية بمرشد، والبس حذاء مشي مريح.","places":[98082982,71694948,59231502]},
+  {"title":"وادي الفن والمطل","note":"وادي الفن مكشوف، روحه الصبح أو قبل المغرب.","places":[98082981,98083020,98048643]}]},
+
+ {"city":"riyadh","title":"قلب الرياض التاريخي","title_en":"Historic Heart of Riyadh","intro":"يوم بين المصمك وحي الدحو ومركز الملك عبدالعزيز التاريخي، تعرف فيه قصة الرياض من البداية.","intro_en":"A day between Masmak, the old Dirah quarter and the King Abdulaziz Historical Center, telling Riyadh's story from the start.","tags":["heritage","walking","family"],"days":[
+  {"title":"من المصمك إلى المربع","note":"المصمك يقفل وقت الظهر غالباً، ابدأ فيه الصبح.","places":[59092134,59323943,59092109,59091133]}]},
+ {"city":"riyadh","title":"ويكند عائلي في الرياض","title_en":"Family Weekend in Riyadh","intro":"يومين للعائلة: حيوانات وثلج وألعاب، ثم العلوم والبوليفارد بالليل.","intro_en":"Two family days: zoo, snow and games, then science and the Boulevard at night.","tags":["family","weekend"],"days":[
+  {"title":"حيوانات وثلج","note":"مدينة الثلج وسفوري لاند في نفس المول، تقدر تقسم الأطفال حسب أعمارهم.","places":[59088353,67868545,59088334,59088290]},
+  {"title":"علوم ثم سهرة","note":"البوليفارد يزحم بعد العشاء أيام المواسم، روح بدري.","places":[59092091,59087936,75764610]}]},
+ {"city":"riyadh","title":"الرياض الحديثة","title_en":"Modern Riyadh","intro":"ناطحات سحاب، فن إسلامي، وتمشية في شارع التحلية: وجه الرياض العصري في يوم.","intro_en":"Skyscrapers, Islamic art and a stroll down Tahlia Street: Riyadh's modern side in one day.","tags":["friends","couples"],"days":[
+  {"title":"من المركز المالي للتحلية","note":"متحف الفيصل داخل مركز الفيصلية، وفي البرج مطل بانورامي.","places":[58983364,59087544,59092097,59087486]}]},
+
+ {"city":"jeddah","title":"جدة التاريخية مشياً","title_en":"Historic Jeddah on Foot","intro":"البلد القديمة بأزقتها وسوق قابل ومتحف البحر الأحمر، وتختم على بحيرة الأربعين.","intro_en":"Al-Balad's alleys, Souq Qabil and the Red Sea Museum, ending at Al-Arbaeen Lagoon.","tags":["heritage","walking","budget"],"days":[
+  {"title":"البلد","note":"أحلى وقت العصر لين بعد المغرب، والجو ألطف في الشتاء.","places":[59305351,98039654,98022460,93528777,98069723]}]},
+ {"city":"jeddah","title":"يوم على بحر جدة","title_en":"A Day by Jeddah's Sea","intro":"فقيه أكواريوم والممشى والواجهة البحرية: يوم سهل ومناسب للعائلة.","intro_en":"Fakieh Aquarium, the promenade and the waterfront: an easy family day.","tags":["family","budget"],"days":[
+  {"title":"الكورنيش من الجنوب للشمال","note":"الواجهة البحرية فيها مواقف كثيرة، وأجمل شي وقت الغروب.","places":[59300808,59300804,59300723,88253451,59300626]}]},
+ {"city":"jeddah","title":"جدة الفنون والسهر","title_en":"Jeddah Arts & Nights","intro":"حي جميل وحي السينما ومسرح ذا كلوب: سهرة شبابية بنكهة فنية.","intro_en":"Hayy Jameel, the Cinema District and The Club stage: an artsy night out.","tags":["friends","couples"],"days":[
+  {"title":"من العصر لين آخر الليل","note":"شوف برنامج العروض في حي جميل قبل تروح.","places":[98039659,98039660,98039670,98039676]}]},
+ {"city":"jeddah","title":"أبحر والشواطئ: يومين","title_en":"Obhur & the Beaches: 2 Days","intro":"يومين بحر: شاطئ أبحر والجولات المائية، ثم غوص ورياضات بحرية في درة العروس.","intro_en":"Two sea days: Obhur beach and water tours, then diving and water sports at Durrat Al-Arus.","tags":["friends","luxury","nature"],"plus_only":true,"days":[
+  {"title":"أبحر","note":"الجولات المائية تنحجز من مرسى اللؤلؤة، والأفضل الصبح قبل الرياح.","places":[98069751,76774480,98039728,98069756]},
+  {"title":"درة العروس","note":"17SIXTY تحتاج حجز مسبق للغوص، وخذ واقي شمس.","places":[98039721,98039726,98039727]}]},
+
+ {"city":"medina","title":"زيارة المدينة: المعالم الإسلامية","title_en":"Madinah's Islamic Landmarks","intro":"يومين بين المسجد النبوي ومتاحفه، ثم قباء والقبلتين والمساجد السبعة وأحد.","intro_en":"Two days: the Prophet's Mosque and its museums, then Quba, Al-Qiblatayn, the Seven Mosques and Uhud.","tags":["family","heritage"],"days":[
+  {"title":"حول المسجد النبوي","note":"المتاحف قريبة من الساحات، تقدر تزورها بين الصلوات.","places":[59408367,98094279,59407899,96397689]},
+  {"title":"قباء وأحد","note":"ابدأ بقباء الصبح (صلاة ركعتين فيه لها فضل)، وخل أحد آخر اليوم.","places":[59407890,59408115,59408433,59407888,59407886]}]},
+ {"city":"medina","title":"المدينة التراثية والمتاحف","title_en":"Heritage Madinah & Museums","intro":"سكة الحجاز ومتحف المدينة وبستان الصافية: تاريخ المدينة القريب في يوم واحد.","intro_en":"The Hejaz Railway, the Madinah Museum and Al-Safiyah Garden: the city's recent history in a day.","tags":["heritage","walking"],"days":[
+  {"title":"من المحطة للصافية","note":"متحف سكة الحجاز ومتحف المدينة في نفس المحطة القديمة.","places":[98094236,59408301,98094282,98094315]}]},
+ {"city":"medina","title":"مزارع وآبار المدينة","title_en":"Madinah's Farms & Wells","intro":"جولة في جنوب المدينة بين المزارع التاريخية والآبار النبوية، أجواء هادية وخضرة.","intro_en":"A tour of south Madinah's historic farms and Prophetic wells: calm and green.","tags":["nature","family"],"plus_only":true,"days":[
+  {"title":"مزارع قباء والعوالي","note":"بعض المزارع تفتح بمواعيد، اتصل قبل تروح.","places":[59407562,98092201,59408432,84673733,59408370]}]},
+
+ {"city":"abha","title":"يوم في أبها التراثية","title_en":"Heritage Abha in a Day","intro":"المفتاحة وشارع الفن ومتحف عسير وقصر شدا، وتختم بإطلالة الجبل الأخضر.","intro_en":"Al-Muftaha, Art Street, the Asir Museum and Shada Palace, ending with the Green Mountain view.","tags":["heritage","walking","family"],"days":[
+  {"title":"وسط أبها","note":"أغلبها قريبة من بعض، تقدر تمشيها.","places":[59237558,59237504,59238031,59237983,59377804,59237592]}]},
+ {"city":"abha","title":"السودة وطبب","title_en":"Al-Soudah & Tabab","intro":"أعلى قمة في السعودية وقرى تراثية بين الضباب: يوم كامل في الطبيعة.","intro_en":"Saudi Arabia's highest peak and heritage villages in the mist: a full day in nature.","tags":["nature","couples"],"days":[
+  {"title":"فوق الغيم","note":"خذ جاكيت حتى في الصيف، الجو يبرد فوق.","places":[59237701,59237698,59237896,59237898]}]},
+ {"city":"abha","title":"ويكند عائلي في أبها","title_en":"Family Weekend in Abha","intro":"يومين للعائلة: بحيرة السد والممشى، ثم الحدائق والمزارع.","intro_en":"Two family days: the dam lake and promenade, then parks and farms.","tags":["family","weekend","budget"],"days":[
+  {"title":"البحيرة والضباب","note":"ممشى الضباب أحلى بالعصر.","places":[59237597,59237593,59237692,59237621]},
+  {"title":"حدائق ومزارع","note":"مزرعة ركايب مناسبة للأطفال.","places":[59237246,59237337,96700901]}]},
+
+ {"city":"taif","title":"الطائف: الورد والهدا","title_en":"Taif: Roses & Al-Hada","intro":"التلفريك ومصانع الورد ومزرعة الفراولة في الهدا، أحلى في موسم الورد (مارس وأبريل).","intro_en":"The cable car, rose factories and a strawberry farm in Al-Hada; best in rose season (March–April).","tags":["nature","family"],"days":[
+  {"title":"الهدا","note":"موسم قطف الورد الصبح بدري، والمصانع تفتح للزوار.","places":[59328930,59328880,98048610,59328954,98048589]}]},
+ {"city":"taif","title":"وسط الطائف التاريخي","title_en":"Historic Central Taif","intro":"قصر شبرا وباب الحزم وسوق البلد وقصور الدهلوي: الطائف القديمة بالمشي.","intro_en":"Shubra Palace, Bab Al-Hazm, the old souq and Al-Dahlawi palaces: old Taif on foot.","tags":["heritage","walking","budget"],"days":[
+  {"title":"البلد","note":"السوق أحلى بعد العصر.","places":[59329112,67463579,59329158,98048580,59329160,59329085]}]},
+ {"city":"taif","title":"الشفا وجبل دكا","title_en":"Al-Shafa & Jabal Daka","intro":"جبال الشفا وإطلالات دكا ومقاهي الأكواخ، وأكبر شجرة معمرة في السعودية.","intro_en":"Al-Shafa's mountains, Daka's views, hut cafés and Saudi Arabia's oldest tree.","tags":["nature","couples","friends"],"days":[
+  {"title":"الشفا","note":"الطريق جبلي، سوق على مهلك.","places":[59328882,98048575,98073079,98048576]}]}
+]
