@@ -1,5 +1,5 @@
 /**
- * تحميل المدينة للاستخدام بدون نت (الجوال بس):
+ * تحميل المدينة للاستخدام بدون نت (الجوال بس، ولمشتركي دليل+ — السيرفر يرفض غيرهم):
  * - السيرفر يرجع كل أماكن المدينة بالتفاصيل + فعالياتها الجاية (/v1/cities/:id/offline)
  * - نحفظها ملف في مجلد التطبيق، ونحمّل صور الأماكن في ذاكرة الصور (expo-image) عشان تطلع بدون نت
  * - content.ts يرجع لها لما ما يكون فيه نت، قبل النسخة المدمجة في التطبيق
@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { Platform } from 'react-native';
 import { useSyncExternalStore } from 'react';
 import { api } from './api';
+import { session } from './auth';
 import type { EventItem, PlaceFull } from './types';
 
 export type OfflineCity = { city: string; at: number; places: PlaceFull[]; events: EventItem[] };
@@ -36,7 +37,7 @@ function fileOf(city: string) {
 export async function downloadCity(city: string, onProgress?: (p: number) => void): Promise<Entry> {
   if (!offlineSupported) throw new Error('unsupported');
   onProgress?.(0.02);
-  const data = await api<OfflineCity>(`/v1/cities/${city}/offline`, { timeoutMs: 60000 });
+  const data = await api<OfflineCity>(`/v1/cities/${city}/offline`, { timeoutMs: 60000, token: session().token });
   onProgress?.(0.15);
   fileOf(city).write(JSON.stringify(data));
   mem.set(city, data);

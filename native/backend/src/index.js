@@ -286,6 +286,10 @@ async function route(request, env, ctx) {
 
   /* تحميل المدينة للاستخدام بدون نت: كل أماكنها بالتفاصيل + فعالياتها الجاية (التطبيق يحفظها ويحمّل صورها) */
   if ((m = p.match(/^\/v1\/cities\/([a-z0-9-]+)\/offline$/))) {
+    // ميزة دليل+ بس (users.plus_until يشمل اشتراك آبل ومنحة المشرف)
+    const me = await sessionUser(env, request);
+    if (!me) return J({ error: 'login_required' }, 401);
+    if (!(me.plus_until && me.plus_until > Math.floor(Date.now() / 1000)) && !(me.plus_grant_until && me.plus_grant_until > Math.floor(Date.now() / 1000))) return J({ error: 'plus_required' }, 402);
     const now = new Date().toISOString();
     const [pl, ev] = await Promise.all([
       env.DB.prepare('SELECT * FROM places WHERE city=? AND deleted=0 ORDER BY (thumb IS NULL OR thumb=\'\') ASC, updated DESC LIMIT 600').bind(m[1]).all(),

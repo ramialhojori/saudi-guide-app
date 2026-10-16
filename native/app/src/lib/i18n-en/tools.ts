@@ -400,4 +400,9 @@ export default {
   "وصل تعليقك، وبينشر بعد المراجعة.": "Got your comment. It'll appear after review.",
   "وصلنا بلاغك وبنراجعه.": "We got your report and will review it.",
   "وقفنا تعليقاتك يوم لأن أكثر من تعليق انرفض. خلّ أسلوبنا محترم.": "Commenting is paused for a day because several comments were rejected. Please keep it respectful.",
+  "تحميل المدن لمشتركي دليل+": "City downloads are for Saudi Guide+",
+  "حمّل أي مدينة بأماكنها وتفاصيلها وصورها، واستخدمها في البر والطريق بدون نت. جرّب دليل+ 3 أيام مجاناً.": "Download any city with its places, details and photos to use offline on the road. Try Saudi Guide+ free for 3 days.",
+  "ميزة للمشتركين · الأماكن وصورها بدون نت": "Subscribers only · places and photos offline",
+  "المدن بدون نت": "Cities offline",
+  "حمّل أي مدينة بأماكنها وصورها واستخدمها في البر والطريق": "Download any city with its places and photos for the road",
 } as Record<string, string>;
