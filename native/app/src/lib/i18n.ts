@@ -36,15 +36,24 @@ export function t(ar: string, vars?: Record<string, string | number>): string {
 /** نص مختلف حسب اللغة بدون قاموس (للجمل الطويلة اللي تختلف صياغتها) */
 export const tr = (ar: string, en: string) => (isEn ? en : ar);
 
-/** يغيّر اللغة ويعيد التشغيل */
-export async function setLang(l: Lang) {
-  if (l === LANG) return;
-  if (Platform.OS === 'web') {
-    try { localStorage.setItem('sg_lang', l); } catch { /* */ }
-    const p = location.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
-    location.assign(l === 'en' ? `/en${p === '/' ? '' : p}` : p);
-    return;
-  }
+/**
+ * أول تشغيل على الجوال: نختار اللغة حسب لغة الجهاز (عربي → يمين، غيره → إنجليزي)
+ * الاتجاه يحفظه ريأكت نيتف (forceRTL) ويطبّقه بعد إعادة التشغيل؛ بعدها اختيار المستخدم من الإعدادات هو اللي يمشي
+ */
+export async function initLang() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    if (await AsyncStorage.getItem('sg_lang_init')) return;
+    await AsyncStorage.setItem('sg_lang_init', '1');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const code = (require('expo-localization').getLocales()?.[0]?.languageCode || 'ar').toLowerCase();
+    const want: Lang = code === 'ar' ? 'ar' : 'en';
+    if (want !== LANG) await applyLang(want);
+  } catch { /* */ }
+}
+
+async function applyLang(l: Lang) {
   I18nManager.allowRTL(l === 'ar');
   I18nManager.forceRTL(l === 'ar');
   try {
@@ -56,4 +65,16 @@ export async function setLang(l: Lang) {
     const { DevSettings } = require('react-native');
     DevSettings.reload();
   }
+}
+
+/** يغيّر اللغة ويعيد التشغيل */
+export async function setLang(l: Lang) {
+  if (l === LANG) return;
+  if (Platform.OS === 'web') {
+    try { localStorage.setItem('sg_lang', l); } catch { /* */ }
+    const p = location.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+    location.assign(l === 'en' ? `/en${p === '/' ? '' : p}` : p);
+    return;
+  }
+  await applyLang(l);
 }

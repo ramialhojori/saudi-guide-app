@@ -18,10 +18,11 @@ import {
 import { colors, isDark } from '@/theme/tokens';
 import { startTracking } from '@/lib/track';
 import { WebFrame } from '@/components/WebFrame';
-import { isRtl, LANG } from '@/lib/i18n';
+import { initLang, isRtl, LANG } from '@/lib/i18n';
 
 // اللغة والاتجاه: الجوال يتبع لغة الجهاز أول مرة، وبعدها اختيار المستخدم (lib/i18n.ts)
 I18nManager.allowRTL(isRtl);
+if (Platform.OS !== 'web') initLang();
 // نسخة الويب: /en/... تعني إنجليزي — نحفظ الاختيار ونشيل /en من الرابط عشان المسارات تشتغل
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   // /en/... : نحفظ اختيار الإنجليزي، وصفحة app/en تحوّل لنفس المسار بدون /en
