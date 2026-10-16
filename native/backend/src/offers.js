@@ -24,9 +24,16 @@ export const OFFER_CHANNELS = ['any', 'store', 'online', 'app', 'delivery'];
 const ALL_CITY = /^(all|any|كل المدن|جميع المدن|السعودية|المملكة|كل المملكة|أونلاين|اونلاين|online)$/i;
 
 /** المدينة: معرّف (riyadh) أو اسم عربي (الرياض) أو «كل المدن» → '' */
+/* مدن ومحافظات ما لها صفحة خاصة في الدليل → منطقتها */
+const CITY_ALIAS = {
+  'الخبر': 'eastern-region', 'الدمام': 'eastern-region', 'الظهران': 'eastern-region', 'الأحساء': 'eastern-region', 'الاحساء': 'eastern-region', 'القطيف': 'eastern-region', 'الجبيل': 'eastern-region', 'حفر الباطن': 'eastern-region', 'الشرقية': 'eastern-region',
+  'مكة': 'makkah-region', 'المدينة': 'medina', 'خميس مشيط': 'asir-region', 'النماص': 'asir-region', 'بريدة': 'qassim-region', 'عنيزة': 'qassim-region', 'القصيم': 'qassim-region',
+  'سكاكا': 'aljawf-region', 'عرعر': 'northern-border', 'جازان': 'jizan', 'جيزان': 'jizan', 'الخرج': 'riyadh-region', 'نيوم': 'tabuk-region', 'الوجه': 'tabuk-region', 'حقل': 'tabuk-region',
+};
 function cityId(v) {
   const s = str(v, 40);
   if (!s || ALL_CITY.test(s)) return '';
+  if (CITY_ALIAS[s]) return CITY_ALIAS[s];
   const c = CITIES.find((x) => x[0] === s || x[1] === s || x[1].replace(/^منطقة /, '') === s || s.includes(x[1]));
   return c ? c[0] : null;
 }
