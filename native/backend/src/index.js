@@ -22,6 +22,7 @@ import { aiRoute, aiAdmin } from './ai.js';
 import { searchRoute } from './search.js';
 import { contactRoute, contactAdmin } from './contact.js';
 import { businessRoute, businessAdmin, planExpiry } from './business.js';
+import { weatherRoute } from './weather.js';
 import { legalRoute } from './legal.js';
 import { webApiRoute } from './webapi.js';
 import { iapRoute } from './iap.js';
@@ -171,6 +172,7 @@ async function route(request, env, ctx) {
   if (p.startsWith('/v1/web/')) { const r = await webApiRoute(p, env, J); if (r) return r; }
   if (p.startsWith('/v1/contact')) { const r = await contactRoute(request, env, p, J); if (r) return r; }
   if (p.startsWith('/v1/business')) { const r = await businessRoute(p, request, env, J, q); if (r) return r; }
+  if (p === '/v1/weather') return weatherRoute(p, env, J, q);
   if (p.startsWith('/v1/ai/')) { const r = await aiRoute(p, request, env, J); if (r) return r; }
 
   /* ——— المساهمة: المميزات، الأسئلة السريعة، الاقتراحات، أبطال الشهر ——— */

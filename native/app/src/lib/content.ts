@@ -103,6 +103,9 @@ export const getHome = () =>
     articles: [...SNAP.articles].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
   })).then((h) => (h.picks?.length ? h : { ...h, picks: weeklyPicks() }));
 
+/** درجة الحرارة الحين في المدينة (من السيرفر، مخزّنة نص ساعة). null لو ما وصلت */
+export const getWeather = (city: string) => api<{ temp: number | null }>(`/v1/weather?city=${city}`).then((r) => r.temp).catch(() => null);
+
 export const getCities = () => tryApi<{ cities: City[] }>('/v1/cities', () => ({ cities: SNAP.cities })).then((r) => r.cities);
 
 export function getCityPlaces(city: string, kind?: string, q?: string) {

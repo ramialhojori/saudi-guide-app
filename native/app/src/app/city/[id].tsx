@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { Loading } from '@/components/State';
 import { OfflineCard } from '@/components/OfflineCard';
 import { BackButton, Chip, ImageRow } from '@/components/ui';
-import { cityKinds, getCities, getCityPlaces } from '@/lib/content';
+import { cityKinds, getCities, getCityPlaces, getWeather } from '@/lib/content';
 import { useAsync } from '@/lib/useAsync';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
@@ -34,6 +34,17 @@ const TAGLINE_EN: Record<string, string> = {
   alula: 'An open-air museum among rocks and oases',
 };
 
+/* أفضل وقت لزيارة كل مدينة (حسب الجو والمواسم): المرتفعات (أبها، عسير، الطائف، الباحة) صيفاً، والباقي من الخريف للربيع
+   المصادر: زوروا السعودية، Experiences by Roam، WeatherSpark، Champion Traveler (أكتوبر 2026) */
+const BEST: Record<string, [string, string]> = {
+  medina: ['نوفمبر – مارس', 'Nov – Mar'], 'makkah-region': ['نوفمبر – فبراير', 'Nov – Feb'], riyadh: ['أكتوبر – مارس', 'Oct – Mar'],
+  'riyadh-region': ['أكتوبر – مارس', 'Oct – Mar'], diriyah: ['أكتوبر – مارس', 'Oct – Mar'], jeddah: ['نوفمبر – مارس', 'Nov – Mar'],
+  alula: ['أكتوبر – مارس', 'Oct – Mar'], 'tabuk-region': ['أكتوبر – أبريل', 'Oct – Apr'], umluj: ['أكتوبر – أبريل', 'Oct – Apr'],
+  yanbu: ['أكتوبر – أبريل', 'Oct – Apr'], hail: ['نوفمبر – مارس', 'Nov – Mar'], 'qassim-region': ['نوفمبر – مارس', 'Nov – Mar'],
+  'aljawf-region': ['أكتوبر – أبريل', 'Oct – Apr'], 'northern-border': ['أكتوبر – أبريل', 'Oct – Apr'], 'eastern-region': ['نوفمبر – مارس', 'Nov – Mar'],
+  abha: ['يونيو – سبتمبر', 'Jun – Sep'], 'asir-region': ['يونيو – سبتمبر', 'Jun – Sep'], taif: ['أبريل – سبتمبر', 'Apr – Sep'],
+  albaha: ['يونيو – سبتمبر', 'Jun – Sep'], jizan: ['ديسمبر – مارس', 'Dec – Mar'], najran: ['أكتوبر – مارس', 'Oct – Mar'],
+};
 /** دليل المدينة — مثل التصميم: صورة المدينة، أرقام سريعة، أنواع، «لا تفوّتها»، وكل الأماكن */
 export default function CityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,6 +53,7 @@ export default function CityScreen() {
   const [kind, setKind] = useState<string | undefined>();
   const [q, setQ] = useState('');
   const { data: cities } = useAsync(getCities, []);
+  const { data: temp } = useAsync(() => getWeather(id), [id]);
   const city = cities?.find((c) => c.id === id);
   const kinds = useMemo(() => cityKinds(id), [id]);
   const { data, loading } = useAsync(() => getCityPlaces(id, kind, q.trim() || undefined), [id, kind, q]);
@@ -71,12 +83,12 @@ export default function CityScreen() {
           <AppText variant="tiny" color="#F9A158" style={{ fontFamily: font.bold }}>{t('دليل')}</AppText>
           <AppText variant="hero" color="#fff" style={{ fontSize: 40, lineHeight: 52 }}>{city?.name ?? ''}</AppText>
           <AppText variant="small" color="#E2DAEE">{(isEn ? TAGLINE_EN[id] : TAGLINE[id]) ?? t('اكتشف أماكنها ومطاعمها ومعالمها')}</AppText>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            {[t('{n} مكان', { n: city?.count ?? all.length })].map((s) => (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+            {[t('{n} مكان', { n: city?.count ?? all.length }), temp != null ? t('{n}° الحين', { n: temp }) : '', BEST[id] ? t('أفضل وقت: {m}', { m: BEST[id][isEn ? 1 : 0] }) : ''].filter(Boolean).map((s) => (
               <View key={s} style={st.glassPill}><AppText variant="tiny" color="#fff">{s}</AppText></View>
             ))}
           </View>
-          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{t('الصورة:')} {isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}</AppText> : null}
+          {CREDIT[id] || temp != null ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{[CREDIT[id] ? `${t('الصورة:')} ${isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}` : '', temp != null ? t('الحرارة من MET Norway') : ''].filter(Boolean).join(' · ')}</AppText> : null}
         </View>
       </View>
 
