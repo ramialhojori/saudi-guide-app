@@ -12,6 +12,7 @@ import { ReportCoupon } from '@/components/ReportCoupon';
 import { cityName } from '@/lib/content';
 import { bizKind, couponColor, couponErr, dayLabel, getCouponMe, toggleSave, type Coupon, type Me } from '@/lib/coupons';
 import { openDirections } from '@/lib/maps';
+import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 import { track } from '@/lib/track';
 
@@ -27,17 +28,17 @@ export default function CouponDetail() {
   useEffect(() => { if (id) track('coupon', Number(id)); }, [id]);
   useFocusEffect(useCallback(() => { getCouponMe(Number(id)).then((r) => { setC(r.coupon); setMe(r.me); }).catch((e) => setErr(couponErr(e))); }, [id, user?.id]));
 
-  if (!c) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{err ? <Empty title="الكوبون انتهى أو خلص" sub={err} /> : <Loading />}</View>;
+  if (!c) return <View style={{ flex: 1, backgroundColor: brand.bg, paddingTop: insets.top + 10, paddingHorizontal: 16 }}><BackButton />{err ? <Empty title={t('الكوبون انتهى أو خلص')} sub={err} /> : <Loading />}</View>;
   const bg = couponColor(c.biz?.kind);
   const used = !!c.usedByMe && c.perUser;
   const rows: [string, string][] = [
-    ...(c.points ? [['يتبادل بـ', `${c.points} نقطة من رصيدك`] as [string, string]] : []),
-    ...(c.minLevel ? [['حصري لـ', `المستوى ${c.minLevel} «${c.levelName}» وأعلى`] as [string, string]] : []),
-    ...(c.minOrder ? [['الحد الأدنى للطلب', `${c.minOrder} ر.س`] as [string, string]] : []),
-    ['الاستخدام', c.perUser ? 'مرة وحدة لكل شخص' : 'تقدر تستخدمه أكثر من مرة'],
-    ...(c.hours ? [['الأوقات', c.hours] as [string, string]] : []),
-    ['المدة', c.start || c.end ? `${c.start ? 'من ' + dayLabel(c.start) + ' ' : ''}${c.end ? 'حتى ' + dayLabel(c.end) : ''}` : 'مستمر'],
-    ...(c.left != null ? [['المتبقي', `${c.left} من ${c.qty}`] as [string, string]] : []),
+    ...(c.points ? [[t('يتبادل بـ'), t('{n} نقطة من رصيدك', { n: c.points })] as [string, string]] : []),
+    ...(c.minLevel ? [[t('حصري لـ'), t('المستوى {n} «{name}» وأعلى', { n: c.minLevel, name: c.levelName })] as [string, string]] : []),
+    ...(c.minOrder ? [[t('الحد الأدنى للطلب'), t('{n} ر.س', { n: c.minOrder })] as [string, string]] : []),
+    [t('الاستخدام'), c.perUser ? t('مرة وحدة لكل شخص') : t('تقدر تستخدمه أكثر من مرة')],
+    ...(c.hours ? [[t('الأوقات'), c.hours] as [string, string]] : []),
+    [t('المدة'), c.start || c.end ? `${c.start ? t('من {d}', { d: dayLabel(c.start) }) + ' ' : ''}${c.end ? t('حتى {d}', { d: dayLabel(c.end) }) : ''}` : t('مستمر')],
+    ...(c.left != null ? [[t('المتبقي'), t('{left} من {qty}', { left: c.left, qty: c.qty ?? '' })] as [string, string]] : []),
   ];
   const save = async () => { if (!user) return router.push('/login'); const s = await toggleSave(c.id).catch(() => c.saved); setC({ ...c, saved: s }); };
 
@@ -47,7 +48,7 @@ export default function CouponDetail() {
         <View style={[st.head, { backgroundColor: bg, paddingTop: insets.top + 10 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <BackButton light />
-            <Pressable style={st.glass} onPress={save} accessibilityLabel="احفظ في المحفظة"><Icon name={c.saved ? 'heartFill' : 'heart'} color="#fff" size={22} /></Pressable>
+            <Pressable style={st.glass} onPress={save} accessibilityLabel={t('احفظ في المحفظة')}><Icon name={c.saved ? 'heartFill' : 'heart'} color="#fff" size={22} /></Pressable>
           </View>
           <View style={{ alignItems: 'center', marginTop: 10 }}>
             {c.biz?.photo ? <Image source={c.biz.photo} style={st.logo} contentFit="cover" /> : <View style={[st.logo, { alignItems: 'center', justifyContent: 'center' }]}><Icon name="shop" color={bg} size={30} /></View>}
@@ -67,7 +68,7 @@ export default function CouponDetail() {
         </View>
         {c.terms ? (
           <View style={st.card}>
-            <AppText style={{ fontFamily: font.bold, marginBottom: 4 }}>الشروط</AppText>
+            <AppText style={{ fontFamily: font.bold, marginBottom: 4 }}>{t('الشروط')}</AppText>
             <AppText variant="small" style={{ lineHeight: 24 }}>{c.terms}</AppText>
           </View>
         ) : null}
@@ -76,33 +77,33 @@ export default function CouponDetail() {
           <View style={st.card}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <AppText style={{ fontFamily: font.bold, flex: 1 }}>{c.biz.name}</AppText>
-              {c.biz.verified ? <Pill label="موثّق" bg={brand.softGreen} fg={brand.green} /> : null}
+              {c.biz.verified ? <Pill label={t('موثّق')} bg={brand.softGreen} fg={brand.green} /> : null}
             </View>
             <AppText variant="small" muted>{bizKind(c.biz.kind)} · {cityName(c.biz.city)}{c.biz.area ? ` · ${c.biz.area}` : ''}</AppText>
             {c.biz.trust?.pct != null && c.biz.trust.n >= 3 ? (
               <AppText variant="small" color={c.biz.trust.pct >= 90 ? brand.green : c.biz.trust.pct >= 70 ? brand.orangeDeep : brand.pinkDeep} style={{ fontFamily: font.semibold, marginTop: 4 }}>
-                التزام بالعرض {c.biz.trust.pct}% · من {c.biz.trust.n} تجربة
+                {t('التزام بالعرض {pct}% · من {n} تجربة', { pct: c.biz.trust.pct, n: c.biz.trust.n })}
               </AppText>
-            ) : <AppText variant="tiny" muted style={{ marginTop: 4 }}>بعد كل استخدام نسأل العميل: انطبق العرض مثل ما هو مكتوب؟</AppText>}
+            ) : <AppText variant="tiny" muted style={{ marginTop: 4 }}>{t('بعد كل استخدام نسأل العميل: انطبق العرض مثل ما هو مكتوب؟')}</AppText>}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              {c.biz.placeId ? <Pressable style={st.mini} onPress={() => router.push(`/place/${c.biz!.placeId}`)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>صفحة المكان</AppText></Pressable> : null}
-              {c.biz.lat && c.biz.lng ? <Pressable style={st.mini} onPress={() => openDirections(c.biz!.lat, c.biz!.lng, c.biz!.name)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>الاتجاهات</AppText></Pressable> : null}
+              {c.biz.placeId ? <Pressable style={st.mini} onPress={() => router.push(`/place/${c.biz!.placeId}`)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>{t('صفحة المكان')}</AppText></Pressable> : null}
+              {c.biz.lat && c.biz.lng ? <Pressable style={st.mini} onPress={() => openDirections(c.biz!.lat, c.biz!.lng, c.biz!.name)}><AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={brand.purple}>{t('الاتجاهات')}</AppText></Pressable> : null}
             </View>
           </View>
         ) : null}
-        <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30, lineHeight: 18 }}>العرض مقدّم من المحل نفسه وهو المسؤول عنه{c.license ? ` · رقم ترخيص التخفيضات: ${c.license}` : ''}</AppText>
+        <AppText variant="tiny" muted center style={{ marginTop: 14, paddingHorizontal: 30, lineHeight: 18 }}>{t('العرض مقدّم من المحل نفسه وهو المسؤول عنه')}{c.license ? ` · ${t('رقم ترخيص التخفيضات:')} ${c.license}` : ''}</AppText>
         <View style={st.guard}>
-          <AppText variant="small" style={{ fontFamily: font.bold }}>ضمان الدليل</AppText>
-          <AppText variant="tiny" muted style={{ lineHeight: 19, marginTop: 2 }}>نراجع كل عرض قبل النشر. ولو المحل رفض الكوبون أو غيّر العرض، بلّغنا: نراجع البلاغ، ولو ثبت تاخذ 20 نقطة اعتذار والمحل تنسجل عليه مخالفة.</AppText>
-          {user ? <Pressable onPress={() => setRep(true)} hitSlop={8}><AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold, marginTop: 8 }}>بلّغ عن مشكلة في هالكوبون</AppText></Pressable> : null}
+          <AppText variant="small" style={{ fontFamily: font.bold }}>{t('ضمان الدليل')}</AppText>
+          <AppText variant="tiny" muted style={{ lineHeight: 19, marginTop: 2 }}>{t('نراجع كل عرض قبل النشر. ولو المحل رفض الكوبون أو غيّر العرض، بلّغنا: نراجع البلاغ، ولو ثبت تاخذ 20 نقطة اعتذار والمحل تنسجل عليه مخالفة.')}</AppText>
+          {user ? <Pressable onPress={() => setRep(true)} hitSlop={8}><AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold, marginTop: 8 }}>{t('بلّغ عن مشكلة في هالكوبون')}</AppText></Pressable> : null}
         </View>
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-        {used ? <Button label="استخدمته ✓" bg={brand.green} />
-          : user && me && c.minLevel && me.level < c.minLevel ? <Button label={`يحتاج المستوى ${c.minLevel} · مستواك ${me.level}`} bg={brand.faint} />
-          : user && me && c.points && me.balance < c.points ? <Button label={`تحتاج ${c.points - me.balance} نقطة زيادة`} bg={brand.faint} onPress={() => router.push('/community')} />
-          : <Button label={user ? 'استخدمه الحين' : 'سجّل دخولك عشان تستخدمه'} bg={bg} onPress={() => (user ? router.push({ pathname: '/coupon/use', params: { id: String(c.id) } }) : router.push('/login'))} />}
-        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{c.points && user && me ? `رصيدك ${me.balance} نقطة · تنخصم ${c.points} لما يأكد الكاشير` : 'افتحه وأنت عند الكاشير. الرمز يتغير كل 30 ثانية.'}</AppText>
+        {used ? <Button label={t('استخدمته ✓')} bg={brand.green} />
+          : user && me && c.minLevel && me.level < c.minLevel ? <Button label={t('يحتاج المستوى {n} · مستواك {me}', { n: c.minLevel, me: me.level })} bg={brand.faint} />
+          : user && me && c.points && me.balance < c.points ? <Button label={t('تحتاج {n} نقطة زيادة', { n: c.points - me.balance })} bg={brand.faint} onPress={() => router.push('/community')} />
+          : <Button label={user ? t('استخدمه الحين') : t('سجّل دخولك عشان تستخدمه')} bg={bg} onPress={() => (user ? router.push({ pathname: '/coupon/use', params: { id: String(c.id) } }) : router.push('/login'))} />}
+        <AppText variant="tiny" muted center style={{ marginTop: 6 }}>{c.points && user && me ? t('رصيدك {b} نقطة · تنخصم {n} لما يأكد الكاشير', { b: me.balance, n: c.points }) : t('افتحه وأنت عند الكاشير. الرمز يتغير كل 30 ثانية.')}</AppText>
       </View>
       <ReportCoupon id={c.id} visible={rep} onClose={() => setRep(false)} />
     </View>
