@@ -15,7 +15,7 @@ import type { Place } from '@/lib/types';
 import { brand, font, kindStyle, photos, START, INPUT_START } from '@/theme/tokens';
 import { track } from '@/lib/track';
 import { useFeatures } from '@/lib/features';
-import { isEn, t, tr } from '@/lib/i18n';
+import { isEn, t } from '@/lib/i18n';
 
 const SHORT: Record<string, string> = isEn
   ? { food: 'Restaurants', cafe: 'Cafes', sights: 'Sights', heritage: 'Heritage', nature: 'Nature', islamic: 'Islamic', fun: 'Fun', shopping: 'Shopping' }

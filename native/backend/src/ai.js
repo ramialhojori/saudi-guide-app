@@ -5,6 +5,7 @@
    - الحد المجاني باليوم يتحدد من اللوحة (kv: ai_limits)، ومشترك دليل+ (users.plus_until) بلا حد. الخطة الذكية: خطة مجانية وحدة بالشهر افتراضياً (plan=1 شهرياً)
    - مفتاح Claude في السيرفر فقط (ANTHROPIC_API_KEY) */
 
+import { arTitle } from './titles.js';
 import { syncPlus } from './iap.js';
 import { sessionUser } from './auth.js';
 import { CITIES, searchKey } from './normalize.js';
@@ -172,8 +173,8 @@ export async function aiRoute(p, request, env, J) {
       await env.DB.prepare('INSERT INTO ai_log (user_id,kind,q,ok,ms,tokens,created) VALUES (?,?,?,?,?,?,?)').bind(u.id, 'chat', question.slice(0, 300), 1, Date.now() - t0, out.tokens, now()).run();
       return J({
         answer: String(j.answer || '').slice(0, 2000),
-        places: places.map((id) => ph.find((r) => r.id === id)).filter(Boolean).map((r) => ({ id: r.id, title: r.title, city: r.city, kinds: parse(r.kinds), thumb: r.thumb || parse(r.images)[0] || '', summary: (r.summary || '').slice(0, 120) })),
-        events: events.map((id) => ev.find((r) => r.id === id)).filter(Boolean).map((r) => ({ id: r.id, title: r.title, city: r.city, start: r.start, end: r.end || '', thumb: r.thumb || parse(r.images)[0] || '' })),
+        places: places.map((id) => ph.find((r) => r.id === id)).filter(Boolean).map((r) => ({ id: r.id, title: arTitle(r.title), city: r.city, kinds: parse(r.kinds), thumb: r.thumb || parse(r.images)[0] || '', summary: (r.summary || '').slice(0, 120) })),
+        events: events.map((id) => ev.find((r) => r.id === id)).filter(Boolean).map((r) => ({ id: r.id, title: arTitle(r.title), city: r.city, start: r.start, end: r.end || '', thumb: r.thumb || parse(r.images)[0] || '' })),
         followups: (j.followups || []).map(String).slice(0, 3),
         quota: await quota(env, uu, 'chat'),
       });
@@ -205,8 +206,8 @@ export async function aiRoute(p, request, env, J) {
       const ph = pids.length ? (await env.DB.prepare(`SELECT id,title,city,kinds,thumb,images,summary,lat,lng FROM places WHERE id IN (${pids.join(',')})`).all()).results : [];
       const ev = eids.length ? (await env.DB.prepare(`SELECT id,title,city,start,"end",thumb,images,address FROM events WHERE id IN (${eids.join(',')})`).all()).results : [];
       const full = days.map((d) => ({ ...d, stops: d.stops.map((s) => {
-        if (s.type === 'event') { const r = ev.find((x) => x.id === s.id); return { ...s, title: r.title, thumb: r.thumb || parse(r.images)[0] || '', start: r.start, address: r.address || '' }; }
-        const r = ph.find((x) => x.id === s.id); return { ...s, title: r.title, thumb: r.thumb || parse(r.images)[0] || '', kinds: parse(r.kinds), lat: r.lat, lng: r.lng, summary: (r.summary || '').slice(0, 100) };
+        if (s.type === 'event') { const r = ev.find((x) => x.id === s.id); return { ...s, title: arTitle(r.title), thumb: r.thumb || parse(r.images)[0] || '', start: r.start, address: r.address || '' }; }
+        const r = ph.find((x) => x.id === s.id); return { ...s, title: arTitle(r.title), thumb: r.thumb || parse(r.images)[0] || '', kinds: parse(r.kinds), lat: r.lat, lng: r.lng, summary: (r.summary || '').slice(0, 100) };
       }) }));
       await useOne(env, u.id, 'plan');
       await env.DB.prepare('INSERT INTO ai_log (user_id,kind,q,ok,ms,tokens,created) VALUES (?,?,?,?,?,?,?)').bind(u.id, 'plan', `${o.city} ${o.days}d`, 1, Date.now() - t0, out.tokens, now()).run();

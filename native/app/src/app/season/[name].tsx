@@ -15,7 +15,7 @@ import { riyadhDate } from '@/lib/text';
 import { useAsync } from '@/lib/useAsync';
 import type { EventItem } from '@/lib/types';
 import { brand, font, photos } from '@/theme/tokens';
-import { isEn, t, tr } from '@/lib/i18n';
+import { isEn, t } from '@/lib/i18n';
 
 const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const ksaKey = (t: number) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);

@@ -41,7 +41,8 @@ export const FEATURES = {
 export async function getFeatures(env) {
   const r = await env.DB.prepare("SELECT v FROM kv WHERE k='features'").first();
   const saved = parse(r?.v, {});
-  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, saved[k] !== false]));
+  // translate: مقفلة افتراضياً (الترجمة نسويها في محادثة Claude بدل مفتاح الـAPI) — تشتغل بس لو انفعلت من اللوحة
+  return Object.fromEntries(Object.keys(FEATURES).map((k) => [k, k === 'translate' ? saved[k] === true : saved[k] !== false]));
 }
 
 /* ═════════ الأسئلة السريعة ═════════ */

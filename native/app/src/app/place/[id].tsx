@@ -69,7 +69,7 @@ export default function PlaceScreen() {
     if (r.already) return Alert.alert(t('مختوم من قبل'), t('هذا المكان موجود في جوازك.'));
     setSocial((x) => x && { ...x, been: true, visits: x.visits + 1 });
     // مثل قوقل: أول ما يختم نسأله عن تجربته وهو في المكان
-    Alert.alert(r.newCity ? t('ختم جديد في جوازك!') : t('انضافت الزيارة'), `${t('+{n} نقطة', { n: r.points })}${r.newCity ? ' · ' + t('مدينة جديدة في جواز السعودية') : ''}\n\n${t('كيف المكان؟ قيّمه الحين وخذ +3')}`, [
+    Alert.alert(r.newCity ? t('ختم جديد في جوازك!') : t('انضافت الزيارة'), `${t('+{n} نقطة', { n: r.points ?? 0 })}${r.newCity ? ' · ' + t('مدينة جديدة في جواز السعودية') : ''}\n\n${t('كيف المكان؟ قيّمه الحين وخذ +3')}`, [
       { text: t('بعدين'), style: 'cancel' },
       ...(F.reviews ? [{ text: t('قيّم تجربتك'), onPress: () => router.push({ pathname: '/review/[id]', params: { id: String(id) } }) }] : [{ text: t('افتح الجواز'), onPress: () => router.push('/passport') }]),
     ]);

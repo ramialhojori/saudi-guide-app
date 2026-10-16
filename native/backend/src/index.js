@@ -4,6 +4,7 @@
    - ما فيه أي مفتاح سري في الكود: كل المفاتيح Secrets في Cloudflare
    مرجع المسارات: docs/api/API.md */
 
+import { arTitle, enPart } from './titles.js';
 import { localize, wantsEn, importTranslations, trStats, runTranslate } from './i18n.js';
 import { withCovers } from './covers.js';
 import { ensureSchema } from './schema.js';
@@ -53,7 +54,7 @@ const parse = (s, d = []) => { try { return s ? JSON.parse(s) : d; } catch { ret
 /** صف مكان مختصر للقوائم (بدون النص الكامل) */
 function placeLite(r, from) {
   const o = {
-    id: r.id, city: r.city, title: r.title, kinds: parse(r.kinds), cat: parse(r.cats)[0] || '',
+    id: r.id, city: r.city, title: arTitle(r.title), kinds: parse(r.kinds), cat: parse(r.cats)[0] || '',
     thumb: r.thumb || '', image: parse(r.images)[0] || '', summary: (r.summary || '').slice(0, 160),
     lat: r.lat, lng: r.lng,
   };
@@ -62,13 +63,13 @@ function placeLite(r, from) {
 }
 function placeFull(r) {
   return {
-    ...placeLite(r), title_en: r.title_en || '', cats: parse(r.cats), body: r.body || '', images: parse(r.images),
+    ...placeLite(r), title_en: r.title_en || enPart(r.title), cats: parse(r.cats), body: r.body || '', images: parse(r.images),
     address: r.address || '', phone: r.phone || '', website: r.website || '', email: r.email || '',
     url: r.url || '', comments: !!r.comments, premium: !!r.premium, updated: r.updated,
   };
 }
 const eventRow = (r, full) => ({
-  id: r.id, title: r.title, summary: r.summary || '', thumb: r.thumb || '', image: parse(r.images)[0] || '',
+  id: r.id, title: arTitle(r.title), summary: r.summary || '', thumb: r.thumb || '', image: parse(r.images)[0] || '',
   start: r.start, end: r.end, all_day: !!r.all_day, cats: parse(r.cats), city: r.city, lat: r.lat, lng: r.lng,
   address: r.address || '', tickets: r.tickets || '', url: r.url || '',
   ...(full ? { body: r.body || '', images: parse(r.images), link: r.link || '' } : {}),

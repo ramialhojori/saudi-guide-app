@@ -19,7 +19,7 @@ import { useAsync } from '@/lib/useAsync';
 import { env } from '@/config/env';
 import { brand, font, photos } from '@/theme/tokens';
 import { track } from '@/lib/track';
-import { isEn, t, tr } from '@/lib/i18n';
+import { isEn, t } from '@/lib/i18n';
 
 const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 

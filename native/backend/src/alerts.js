@@ -5,6 +5,7 @@
    3) تذكير «رايح»: اللي ضغط «رايح» على فعالية يوصله تذكير الساعة 6 المغرب قبلها بيوم
    المتابع = مدينته في الحساب أو المدن اللي يتابعها، والجوالات بدون حساب حسب المدن اللي اختارتها
    الإشعار ينحفظ في صندوق الإشعارات، وإشعار الجوال يطلع من push.js حسب تفضيلات المستخدم */
+import { arTitle } from './titles.js';
 import { sendPush } from './messages.js';
 import { CITIES } from './normalize.js';
 import { getFeatures } from './contrib.js';
@@ -21,7 +22,7 @@ export async function logLive(env, kind, id) {
   const r = await env.DB.prepare(`SELECT id, title, city, deleted FROM ${kind} WHERE id=?`).bind(id).first();
   if (!r || r.deleted !== 0) return;
   await env.DB.prepare('INSERT OR IGNORE INTO content_live (kind,item_id,city,title,at,sent) VALUES (?,?,?,?,?,0)')
-    .bind(kind, id, r.city || '', String(r.title || '').split(' - ').pop().slice(0, 60), now()).run();
+    .bind(kind, id, r.city || '', arTitle(r.title).slice(0, 60), now()).run();
 }
 
 /** يوصل إشعار لمتابعين مدينة (أو للكل لو city فاضية): حسابات + جوالات بدون حساب */
@@ -99,7 +100,7 @@ async function goingReminders(env) {
   const t = now();
   for (let i = 0; i < results.length; i += 50) {
     await env.DB.batch(results.slice(i, i + 50).map((r) => env.DB.prepare("INSERT INTO notifications (user_id,type,text,link,created) VALUES (?,'system',?,?,?)")
-      .bind(r.user_id, `تذكير: بكرة ${String(r.title).split(' - ').pop().slice(0, 80)}. لا تنسى تخطط لوقتك`, `/event/${r.id}`, t)));
+      .bind(r.user_id, `تذكير: بكرة ${arTitle(r.title).slice(0, 80)}. لا تنسى تخطط لوقتك`, `/event/${r.id}`, t)));
   }
 }
 

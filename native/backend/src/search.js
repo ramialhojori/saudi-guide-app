@@ -7,6 +7,7 @@
  *  GET /v1/search?q=&city=&kind=&lat=&lng=&sort=near|best
  *  GET /v1/search/popular  → أكثر الكلمات بحثاً آخر 14 يوم (لشاشة البحث قبل ما يكتب)
  */
+import { arTitle } from './titles.js';
 import { searchKey, km, CITIES } from './normalize.js';
 import { PUBLIC_SQL, publicCoupon } from './merchants.js';
 
@@ -22,7 +23,7 @@ const CITY_ALIAS = { جده: 'jeddah', مكه: 'makkah-region', المدينه: 
 const KIND_WORDS = { مطعم: 'food', مطاعم: 'food', اكل: 'food', عشاء: 'food', غداء: 'food', فطور: 'food', مقهي: 'cafe', مقاهي: 'cafe', كافيه: 'cafe', قهوه: 'cafe', كوفي: 'cafe', مسجد: 'islamic', مساجد: 'islamic', تراث: 'heritage', تراثي: 'heritage', متحف: 'heritage', طبيعه: 'nature', حديقه: 'nature', منتزه: 'nature', شلال: 'nature', وادي: 'nature', بحر: 'nature', شاطي: 'nature', ترفيه: 'fun', العاب: 'fun', تسوق: 'shopping', مول: 'shopping', سوق: 'shopping', معلم: 'sights', معالم: 'sights' };
 
 function lite(r, from) {
-  const o = { id: r.id, city: r.city, title: r.title, kinds: parse(r.kinds), cat: parse(r.cats)[0] || '', thumb: r.thumb || '', image: parse(r.images)[0] || '', summary: (r.summary || '').slice(0, 160), lat: r.lat, lng: r.lng };
+  const o = { id: r.id, city: r.city, title: arTitle(r.title), kinds: parse(r.kinds), cat: parse(r.cats)[0] || '', thumb: r.thumb || '', image: parse(r.images)[0] || '', summary: (r.summary || '').slice(0, 160), lat: r.lat, lng: r.lng };
   if (from && r.lat && r.lng) o.km = Math.round(km(from.lat, from.lng, r.lat, r.lng) * 10) / 10;
   return o;
 }
@@ -120,7 +121,7 @@ export async function searchRoute(request, env, p, q) {
     env.DB.prepare("SELECT p.id, p.text, p.city, p.answers, p.created FROM posts p WHERE p.status='visible' AND p.kind='question' ORDER BY p.id DESC LIMIT 600").all().catch(() => ({ results: [] })),
   ]);
   const events = ev.results.filter((r) => (!ctx.city || r.city === ctx.city) && match(`${r.title} ${r.summary || ''} ${r.address || ''} ${parse(r.cats).join(' ')}`, words)).slice(0, 10)
-    .map((r) => ({ id: r.id, title: r.title, summary: r.summary || '', thumb: r.thumb || '', image: parse(r.images)[0] || '', start: r.start, end: r.end, all_day: !!r.all_day, cats: parse(r.cats), city: r.city, address: r.address || '' }));
+    .map((r) => ({ id: r.id, title: arTitle(r.title), summary: r.summary || '', thumb: r.thumb || '', image: parse(r.images)[0] || '', start: r.start, end: r.end, all_day: !!r.all_day, cats: parse(r.cats), city: r.city, address: r.address || '' }));
   const coupons = cp.results.filter((r) => (!ctx.city || r.m_city === ctx.city) && match(`${r.title} ${r.m_name} ${r.m_area || ''}`, words)).slice(0, 6).map((r) => publicCoupon(r, false));
   const questions = qs.results.filter((r) => (!ctx.city || r.city === ctx.city) && match(r.text, words)).slice(0, 6).map((r) => ({ id: r.id, text: r.text.slice(0, 160), city: r.city || '', answers: r.answers }));
 
