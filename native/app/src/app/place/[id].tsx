@@ -32,8 +32,8 @@ const W = Dimensions.get('window').width;
 
 /** صفحة المكان — مثل التصميم: صورة كبيرة، بطاقة المعلومات، نصيحة من أهل الديرة، الخريطة، الأسئلة، القريب منه */
 export default function PlaceScreen() {
-  const pull = usePullUpClose();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const pull = usePullUpClose({ kind: 'place', id: Number(id), skipTop: 440 });
   const insets = useSafeAreaInsets();
   const { data: p, loading, error } = useAsync(() => getPlace(Number(id)), [id]);
   const { data: near } = useAsync(() => (p?.lat && p?.lng ? nearby(p.lat, p.lng, 5) : Promise.resolve([])), [p?.id]);

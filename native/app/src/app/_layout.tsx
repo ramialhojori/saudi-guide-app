@@ -43,7 +43,7 @@ if (__DEV__ && Platform.OS !== 'web') {
   Appearance.addChangeListener(({ colorScheme }) => { if ((colorScheme === 'dark') !== isDark) DevSettings.reload(); });
 }
 
-const BOTTOM = { animation: 'slide_from_bottom', gestureDirection: 'vertical' } as const;
+const BOTTOM = { animation: 'slide_from_bottom' } as const;
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -77,7 +77,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="city/[id]" />
-        {/* صفحات المحتوى تطلع من تحت (مثل «Content appears from the bottom» في قودبابر): تنقفل بالسحب لتحت من أعلى الشاشة،
+        {/* صفحات المحتوى تطلع من تحت (مثل «Content appears from the bottom» في قودبابر): تنقفل بالسحب لتحت في أول الصفحة،
             أو بالسحب لفوق بعد آخر الصفحة (PullUpClose) */}
         <Stack.Screen name="place/[id]" options={BOTTOM} />
         <Stack.Screen name="event/[id]" options={BOTTOM} />

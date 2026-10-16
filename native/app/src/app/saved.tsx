@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { setList } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
@@ -52,7 +53,7 @@ export default function Saved() {
           <View style={{ gap: 10, paddingHorizontal: 16 }}>
             {[...places].reverse().map((p) => (
               <ImageRow key={p.id} img={p.thumb || undefined} cat={`${p.cat} · ${cityName(p.city)}`} catColor={kindStyle[p.kinds[0]]?.fg ?? brand.purple}
-                title={p.title} sub={p.summary} right={<HeartButton id={p.id} />} onPress={() => router.push(`/place/${p.id}`)} />
+                title={p.title} sub={p.summary} right={<HeartButton id={p.id} />} onPress={() => { setList('place', [...places].reverse().map((x) => x.id)); router.push(`/place/${p.id}`); }} />
             ))}
           </View>
         </>

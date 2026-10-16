@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { setList } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -65,6 +66,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
   const counts = [dated.length, dated.filter((e) => on(e, today)).length, dated.filter((e) => on(e, tomorrow)).length, dated.filter((e) => weekend.some((k) => on(e, k))).length];
   const shown = when === 1 ? dated.filter((e) => on(e, today)) : when === 2 ? dated.filter((e) => on(e, tomorrow)) : when === 3 ? dated.filter((e) => weekend.some((k) => on(e, k))) : dated;
   const top = shown[0];
+  evIds = [...shown, ...ongoing].map((e) => e.id); // للتنقل يمين/يسار بين الفعاليات من صفحة الفعالية
   const groups = new Map<string, EventItem[]>();
   for (const e of shown.slice(1)) {
     const k = ksaKey(Math.max(new Date(e.start).getTime(), now));
@@ -159,7 +161,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
       {!loading && !shown.length && !ongoing.length && !(when > 0 && dated.length) ? <Empty title={t('ما فيه فعاليات هنا')} sub={t('جرّب نوع ثاني أو مدينة ثانية')} /> : null}
 
       {top ? (
-        <Pressable style={st.top} onPress={() => router.push(`/event/${top.id}`)}>
+        <Pressable style={st.top} onPress={() => (setList('event', evIds), router.push(`/event/${top.id}`))}>
           <Image source={top.image || top.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient colors={['rgba(32,22,54,0)', 'rgba(32,22,54,0.94)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
           <View style={st.dateBox}>
@@ -199,7 +201,7 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
             {ongoing.map((e) => (
-              <Pressable key={e.id} style={st.card} onPress={() => router.push(`/event/${e.id}`)}>
+              <Pressable key={e.id} style={st.card} onPress={() => { setList('event', evIds); router.push(`/event/${e.id}`); }}>
                 <Image source={e.thumb || e.image || photos.fest} style={{ width: '100%', height: 120 }} contentFit="cover" />
                 <View style={{ padding: 10 }}>
                   <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.semibold }}>{t('حتى')} {riyadhDate(e.end, false)}</AppText>
@@ -215,13 +217,14 @@ export function EventsScreen({ asTab }: { asTab?: boolean } = {}) {
   );
 }
 
+let evIds: number[] = [];
 const place = (e: EventItem) => (e.address && !isUrl(e.address) ? e.address : e.city ? cityName(e.city) : '');
 
 function Row({ e }: { e: EventItem }) {
   const t = typeOf(e);
   const time = riyadhDate(e.start).split('·')[1]?.trim();
   return (
-    <Pressable style={st.row} onPress={() => router.push(`/event/${e.id}`)}>
+    <Pressable style={st.row} onPress={() => { setList('event', evIds); router.push(`/event/${e.id}`); }}>
       <Image source={e.thumb || e.image || photos.fest} style={st.rowImg} contentFit="cover" />
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>

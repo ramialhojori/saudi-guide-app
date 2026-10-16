@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { setList } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { HeartButton } from '@/components/HeartButton';
@@ -88,7 +89,6 @@ export default function CityScreen() {
               <View key={s} style={st.glassPill}><AppText variant="tiny" color="#fff">{s}</AppText></View>
             ))}
           </View>
-          {CREDIT[id] ? <AppText variant="tiny" color="rgba(255,255,255,0.6)" style={{ marginTop: 10 }}>{t('الصورة:')} {isEn ? CREDIT[id].replace(' عبر ', ' via ').replace('البحر الأحمر الدولية', 'Red Sea Global') : CREDIT[id]}</AppText> : null}
         </View>
       </View>
 
@@ -137,7 +137,7 @@ export default function CityScreen() {
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <ImageRow img={item.thumb || undefined} cat={item.cat} catColor={kindStyle[item.kinds[0]]?.fg ?? brand.purple} title={item.title}
-              sub={item.summary || ''} right={<HeartButton id={item.id} />} onPress={() => router.push(`/place/${item.id}`)} />
+              sub={item.summary || ''} right={<HeartButton id={item.id} />} onPress={() => { setList('place', all.map((x) => x.id)); router.push(`/place/${item.id}`); }} />
           </View>
         )}
       />
@@ -165,16 +165,6 @@ function Feature({ p, tall }: { p: Place; tall?: boolean }) {
 const MAP_INK = '#2B2745';
 
 /** نسبة صورة الغلاف لأصحابها: الصور الصحفية والمجانية (صور شوترستوك المشتراة ما تحتاج) */
-const CREDIT: Record<string, string> = {
-  umluj: 'البحر الأحمر الدولية',
-  riyadh: 'Hala AlGhanim عبر Unsplash',
-  alula: 'SALEH عبر Unsplash',
-  abha: 'Dr Muhammad Amer عبر Unsplash',
-  medina: 'Yasir Gürbüz عبر Pexels',
-  'tabuk-region': 'NEOM عبر Unsplash',
-  'makkah-region': 'Sam Riz عبر Unsplash',
-};
-
 const st = StyleSheet.create({
   addCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 20, backgroundColor: brand.card, borderWidth: 1.5, borderColor: brand.orange, borderStyle: 'dashed' },
   addIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },

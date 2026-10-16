@@ -26,8 +26,8 @@ const WD = isEn ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['الأح
 
 /** صفحة الفعالية — مثل التصميم: عدّاد تنازلي، الموعد، المكان، التذاكر، رايحين */
 export default function EventScreen() {
-  const pull = usePullUpClose();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const pull = usePullUpClose({ kind: 'event', id: Number(id), skipTop: 420 });
   useEffect(() => { if (id) track('event', Number(id)); }, [id]);
   const insets = useSafeAreaInsets();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);

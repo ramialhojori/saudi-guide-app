@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { setList as setBrowse } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { BackButton, Chip } from '@/components/ui';
@@ -58,7 +59,7 @@ export default function News() {
             {list === null ? <ActivityIndicator color={brand.purple} style={{ marginTop: 40 }} /> : null}
             {list && !shown.length ? <AppText center muted style={{ marginTop: 30 }}>{t('ما فيه أخبار هنا للحين.')}</AppText> : null}
             {top ? (
-              <Pressable style={st.hero} onPress={() => router.push(`/article/${top.id}`)}>
+              <Pressable style={st.hero} onPress={() => { setBrowse('article', shown.map((x) => x.id)); router.push(`/article/${top.id}`); }}>
                 <Image source={top.thumb} style={st.heroImg} contentFit="cover" />
                 <View style={{ padding: 14, gap: 6 }}>
                   {catOf(top) ? <AppText variant="tiny" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t(catOf(top))}</AppText> : null}
@@ -71,7 +72,7 @@ export default function News() {
           </View>
         }
         renderItem={({ item: a }) => (
-          <Pressable style={st.row} onPress={() => router.push(`/article/${a.id}`)}>
+          <Pressable style={st.row} onPress={() => { setBrowse('article', shown.map((x) => x.id)); router.push(`/article/${a.id}`); }}>
             <Image source={a.thumb} style={st.rowImg} contentFit="cover" />
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
               {catOf(a) ? <AppText variant="tiny" color={brand.pinkDeep} style={{ fontFamily: font.semibold }}>{t(catOf(a))}</AppText> : null}

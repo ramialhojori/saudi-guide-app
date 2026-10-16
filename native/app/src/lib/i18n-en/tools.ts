@@ -365,4 +365,13 @@ export default {
   "اسحب لفوق للرجوع": "Pull up to go back",
   "اترك للرجوع": "Release to go back",
   "المزيد": "More",
+  "السابق": "Previous",
+  "التالي": "Next",
+  "{i} من {n}": "{i} of {n}",
+  "حقوق الصور والبيانات": "Photo & data credits",
+  "صور المدن": "City photos",
+  "{who} عبر {site}": "{who} via {site}",
+  "باقي صور المدن مرخّصة من شوترستوك.": "Other city photos are licensed from Shutterstock.",
+  "بيانات الطقس": "Weather data",
+  "درجات الحرارة من معهد الأرصاد النرويجي MET Norway (api.met.no)، برخصة CC BY 4.0.": "Temperatures from the Norwegian Meteorological Institute, MET Norway (api.met.no), under CC BY 4.0.",
 } as Record<string, string>;

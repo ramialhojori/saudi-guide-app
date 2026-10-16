@@ -3,6 +3,7 @@ import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { setList } from '@/lib/browse';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -107,7 +108,7 @@ export default function TripScreen() {
           <View key={i}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
               <View style={[st.num, { backgroundColor: STEP[i % 4] }]}><AppText style={{ fontFamily: font.bold }} color="#fff">{i + 1}</AppText></View>
-              <Pressable style={st.stop} onPress={() => s.id && router.push(`/place/${s.id}`)} onLongPress={() => s.id && stopMenu(s.id, s.title)}>
+              <Pressable style={st.stop} onPress={() => { if (!s.id) return; setList('place', cur.map((x) => x.id).filter((v): v is number => !!v)); router.push(`/place/${s.id}`); }} onLongPress={() => s.id && stopMenu(s.id, s.title)}>
                 <Image source={s.img} style={st.stopImg} contentFit="cover" />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <AppText variant="tiny" color={brand.orangeDeep} style={{ fontFamily: font.semibold }}>{s.time}</AppText>

@@ -20,7 +20,7 @@ export default function ArticleScreen() {
   if (loading && !a) return <Screen showBack><Loading /></Screen>;
   if (!a) return <Screen showBack><Empty /></Screen>;
   return (
-    <Screen showBack title={a.section || t('الأخبار')} pad={false} pullClose>
+    <Screen showBack title={a.section || t('الأخبار')} pad={false} pullClose browse={{ kind: 'article', id: Number(id) }}>
       <Image source={a.images?.[0] || a.thumb} style={styles.img} contentFit="cover" />
       <View style={styles.body}>
         <AppText variant="small" muted>{riyadhDate(a.date, false)} · {a.author}</AppText>
