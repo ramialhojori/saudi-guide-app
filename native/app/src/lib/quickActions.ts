@@ -12,7 +12,7 @@ export function setupQuickActions() {
   const ios = Platform.OS === 'ios';
   setItems([
     { id: 'offers', title: t('العروض والكوبونات'), icon: ios ? 'symbol:ticket' : null, params: { href: '/offers' } },
-    { id: 'news', title: t('أخباري'), icon: ios ? 'symbol:newspaper' : null, params: { href: '/news?tab=mine' } },
+    { id: 'news', title: t('صحفي'), icon: ios ? 'symbol:newspaper' : null, params: { href: '/news?tab=mine' } },
     { id: 'plan', title: t('خطط لي رحلة'), icon: ios ? 'symbol:map' : null, params: { href: '/planner' } },
     { id: 'near', title: t('قريب مني الحين'), icon: ios ? 'symbol:location' : null, params: { href: '/nearby' } },
   ]).catch(() => {});

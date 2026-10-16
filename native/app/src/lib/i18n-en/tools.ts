@@ -417,7 +417,7 @@ export default {
   "تابع الصحف اللي تحبها، وتطلع لك أخبارها هنا ويوصلك إشعار بالجديد.": "Follow the papers you like to see their news here and get notified of new stories.",
   "ما فيه أخبار للحين.": "No news yet.",
   "تم": "Done",
-  "أخبار الصحف اللي تتابعها تطلع في «أخباري»، ويوصلك إشعار واحد يجمع الجديد كم مرة باليوم.": "News from papers you follow appears in “My news”, with one summary notification a few times a day.",
+  "أخبار الصحف اللي تتابعها تطلع في «صحفي»، ويوصلك إشعار واحد يجمع الجديد كم مرة باليوم.": "News from papers you follow appears in “My news”, with one summary notification a few times a day.",
   "يفتح الخبر في موقع {name}": "Opens the story on {name}",
   "اقرأ في {name}": "Read on {name}",
   "الحين": "Just now",
@@ -568,4 +568,5 @@ export default {
   "تبي تقعد قريب؟": "Want to stay nearby?",
   "جهّز حجوزات رحلتك": "Get your bookings ready",
   "العروض": "Offers",
+  "صحفي": "My papers",
 } as Record<string, string>;

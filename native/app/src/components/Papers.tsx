@@ -105,7 +105,7 @@ export function PapersFeed({ mine, onBrowse }: { mine?: boolean; onBrowse?: () =
             <AppText variant="title" style={{ flex: 1, fontSize: 21 }}>{t('تابع الصحف')}</AppText>
             <Pressable onPress={() => setManage(false)} hitSlop={10} style={st.done}><AppText style={{ fontFamily: font.bold }} color="#fff">{t('تم')}</AppText></Pressable>
           </View>
-          <AppText muted style={{ paddingHorizontal: 16, marginBottom: 8 }}>{t('أخبار الصحف اللي تتابعها تطلع في «أخباري»، ويوصلك إشعار واحد يجمع الجديد كم مرة باليوم.')}</AppText>
+          <AppText muted style={{ paddingHorizontal: 16, marginBottom: 8 }}>{t('أخبار الصحف اللي تتابعها تطلع في «صحفي»، ويوصلك إشعار واحد يجمع الجديد كم مرة باليوم.')}</AppText>
           <ScrollView contentContainerStyle={{ paddingBottom: 40 }}><PaperPicker papers={papers} /></ScrollView>
         </View>
       </Modal>

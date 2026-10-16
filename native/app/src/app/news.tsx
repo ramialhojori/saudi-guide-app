@@ -91,13 +91,13 @@ function GuideNews() {
 }
 
 type Tab = 'guide' | 'papers' | 'mine';
-/** الأخبار: «أخبار الدليل» (اللي نكتبها) | «الصحف» (آخر أخبار الصحف السعودية) | «أخباري» (الصحف اللي أتابعها) */
+/** الأخبار: «أخبار الدليل» (اللي نكتبها) | «الصحف» (آخر أخبار الصحف السعودية) | «صحفي» (الصحف اللي أتابعها) */
 export default function News() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>(params.tab === 'mine' || params.tab === 'papers' ? params.tab : 'guide');
   useEffect(() => { if (params.tab === 'mine' || params.tab === 'papers') setTab(params.tab); }, [params.tab]);
-  const tabs: [Tab, string][] = [['guide', t('أخبار الدليل')], ['papers', t('الصحف')], ['mine', t('أخباري')]];
+  const tabs: [Tab, string][] = [['guide', t('أخبار الدليل')], ['papers', t('الصحف')], ['mine', t('صحفي')]];
   return (
     <View style={{ flex: 1, backgroundColor: brand.bg }}>
       <View style={[st.band, { paddingTop: insets.top + 10 }]}>
@@ -107,7 +107,6 @@ export default function News() {
             <AppText variant="small" color="#E4DAF2">{t('من الدليل والصحف السعودية')}</AppText>
             <AppText variant="title" color="#fff" style={{ fontSize: 24 }}>{t('الأخبار')}</AppText>
           </View>
-          <View style={st.badge}><Icon name="news" color={brand.orange} size={22} /></View>
         </View>
         <View style={st.tabs}>
           {tabs.map(([k, label]) => (
