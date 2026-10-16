@@ -1,6 +1,7 @@
 /** تقييمات الأماكن وصور الزوار */
 import { api } from './api';
 import { session } from './auth';
+import { t } from './i18n';
 
 export type Review = { id: number; stars: number; tags: string[]; text: string; created: number; updated: number; author: { id: string; name: string; city: string }; mine: boolean; photos: string[]; status?: string };
 export type PlaceReviews = {
@@ -8,7 +9,8 @@ export type PlaceReviews = {
   reviews: Review[]; photos: { id: number; url: string; name: string }[]; mine: Review | null; myPending: number;
 };
 export const REVIEW_TAGS = ['مناسب للعائلة', 'منظّم', 'يستاهل الزيارة', 'تصوير حلو', 'أسعار معقولة', 'خدمة ممتازة', 'هادئ', 'زحمة', 'مواقف صعبة', 'غالي'];
-export const STAR_WORD = ['', 'ما عجبني', 'عادي', 'حلو', 'رائع', 'ممتاز'];
+/** وسوم التقييم تنرسل للسيرفر بالعربي، والعرض يكون بـ t(tag) */
+export const STAR_WORD = ['', t('ما عجبني'), t('عادي'), t('حلو'), t('رائع'), t('ممتاز')];
 
 const tok = () => session().token;
 export const placeReviews = (id: number) => api<PlaceReviews>(`/v1/places/${id}/reviews`, { token: tok() });

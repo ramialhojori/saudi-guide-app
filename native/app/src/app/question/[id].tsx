@@ -9,9 +9,10 @@ import { Avatar, BackButton, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ago, answer, block, errText, getPost, hideMine, initial, markBest, nAnswers, report, thank, tint, type CAnswer, type CPost } from '@/lib/community';
 import { cityName } from '@/lib/content';
+import { t } from '@/lib/i18n';
 import { brand, font, START, INPUT_START } from '@/theme/tokens';
 
-const KIND = { question: 'سؤال', tip: 'نصيحة', photo: 'صورة' } as const;
+const KIND = { question: t('سؤال'), tip: t('نصيحة'), photo: t('صورة') } as const;
 const REASONS = ['إساءة أو كلام جارح', 'إعلان أو سبام', 'معلومة غلط أو مضللة', 'محتوى غير لائق'];
 
 /** مشاركة في المجتمع مع إجاباتها */
@@ -38,9 +39,9 @@ export default function Question() {
         <BackButton />
         {state === 'loading' ? <ActivityIndicator color={brand.purple} style={{ marginTop: 60 }} /> : (
           <View style={st.gone}>
-            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{state === 'missing' ? 'المشاركة هذي ما عادت موجودة' : 'ما قدرنا نفتح المشاركة'}</AppText>
-            <AppText variant="small" muted center>{state === 'missing' ? 'يمكن صاحبها شالها أو انخفت بعد بلاغات.' : 'تأكد من النت وجرّب مرة ثانية.'}</AppText>
-            {state === 'error' ? <Pressable style={st.btn} onPress={() => { setState('loading'); load(); }}><AppText color="#fff" style={{ fontFamily: font.bold }}>جرّب مرة ثانية</AppText></Pressable> : null}
+            <AppText style={{ fontFamily: font.bold, fontSize: 17 }} center>{state === 'missing' ? t('المشاركة هذي ما عادت موجودة') : t('ما قدرنا نفتح المشاركة')}</AppText>
+            <AppText variant="small" muted center>{state === 'missing' ? t('يمكن صاحبها شالها أو انخفت بعد بلاغات.') : t('تأكد من النت وجرّب مرة ثانية.')}</AppText>
+            {state === 'error' ? <Pressable style={st.btn} onPress={() => { setState('loading'); load(); }}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('جرّب مرة ثانية')}</AppText></Pressable> : null}
           </View>
         )}
       </View>
@@ -70,15 +71,15 @@ export default function Question() {
   };
   const send = async () => {
     if (!user) return needLogin();
-    const t = text.trim();
-    if (t.length < 2 || sending) return;
+    const msg = text.trim();
+    if (msg.length < 2 || sending) return;
     setSending(true); setErr('');
     try {
-      const r = await answer(post.id, t);
-      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا ننشر إجابتك لأنها تخالف قواعد المجتمع.'); return; }
+      const r = await answer(post.id, msg);
+      if (r.status === 'rejected') { setErr(r.message || t('ما قدرنا ننشر إجابتك لأنها تخالف قواعد المجتمع.')); return; }
       setText('');
-      if (r.status === 'visible' && r.points === 10) Alert.alert('نقاط مضاعفة', 'أول إجابة على سؤال انتظر يوم كامل، فخذ 10 نقاط بدل 5. شكراً لأنك ساعدت!');
-      if (r.status === 'pending') Alert.alert('وصلت إجابتك', r.message || 'بتظهر بعد مراجعة سريعة من فريق الدليل.');
+      if (r.status === 'visible' && r.points === 10) Alert.alert(t('نقاط مضاعفة'), t('أول إجابة على سؤال انتظر يوم كامل، فخذ 10 نقاط بدل 5. شكراً لأنك ساعدت!'));
+      if (r.status === 'pending') Alert.alert(t('وصلت إجابتك'), r.message || t('بتظهر بعد مراجعة سريعة من فريق الدليل.'));
       await load();
     } catch (e) { setErr(errText(e)); } finally { setSending(false); }
   };
@@ -87,42 +88,42 @@ export default function Question() {
   const menu = (target: 'p' | 'a', item: { id: number; mine: boolean; author: { id: string; name: string } }) => {
     if (!user) return needLogin();
     if (item.mine) {
-      return Alert.alert(target === 'p' ? 'حذف المشاركة' : 'حذف الإجابة', 'بتختفي من المجتمع. متأكد؟', [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'احذف', style: 'destructive', onPress: async () => { try { await hideMine(target, item.id); if (target === 'p') router.back(); else load(); } catch (e) { Alert.alert(errText(e)); } } },
+      return Alert.alert(target === 'p' ? t('حذف المشاركة') : t('حذف الإجابة'), t('بتختفي من المجتمع. متأكد؟'), [
+        { text: t('إلغاء'), style: 'cancel' },
+        { text: t('احذف'), style: 'destructive', onPress: async () => { try { await hideMine(target, item.id); if (target === 'p') router.back(); else load(); } catch (e) { Alert.alert(errText(e)); } } },
       ]);
     }
-    Alert.alert('وش تبي تسوي؟', undefined, [
-      { text: 'إبلاغ', onPress: () => Alert.alert('سبب البلاغ', 'نراجع كل بلاغ، وتختفي المشاركة بعد ٣ بلاغات.', [
-        ...REASONS.map((r) => ({ text: r, onPress: async () => { try { await report(target, item.id, r); Alert.alert('وصلنا بلاغك', 'شكراً لك، بنراجعه.'); } catch (e) { Alert.alert(errText(e)); } } })),
-        { text: 'إلغاء', style: 'cancel' as const },
+    Alert.alert(t('وش تبي تسوي؟'), undefined, [
+      { text: t('إبلاغ'), onPress: () => Alert.alert(t('سبب البلاغ'), t('نراجع كل بلاغ، وتختفي المشاركة بعد ٣ بلاغات.'), [
+        ...REASONS.map((r) => ({ text: t(r), onPress: async () => { try { await report(target, item.id, r); Alert.alert(t('وصلنا بلاغك'), t('شكراً لك، بنراجعه.')); } catch (e) { Alert.alert(errText(e)); } } })),
+        { text: t('إلغاء'), style: 'cancel' as const },
       ]) },
-      { text: `حظر ${item.author.name}`, style: 'destructive', onPress: () => Alert.alert(`حظر ${item.author.name}؟`, 'ما عاد بتشوف مشاركاته ولا إجاباته.', [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'احظر', style: 'destructive', onPress: async () => { try { await block(item.author.id); if (target === 'p') router.back(); else load(); } catch (e) { Alert.alert(errText(e)); } } },
+      { text: t('حظر {name}', { name: item.author.name }), style: 'destructive', onPress: () => Alert.alert(t('حظر {name}؟', { name: item.author.name }), t('ما عاد بتشوف مشاركاته ولا إجاباته.'), [
+        { text: t('إلغاء'), style: 'cancel' },
+        { text: t('احظر'), style: 'destructive', onPress: async () => { try { await block(item.author.id); if (target === 'p') router.back(); else load(); } catch (e) { Alert.alert(errText(e)); } } },
       ]) },
-      { text: 'إلغاء', style: 'cancel' },
+      { text: t('إلغاء'), style: 'cancel' },
     ]);
   };
 
-  const sub = [post.city ? cityName(post.city) : '', post.answers ? nAnswers(post.answers) : 'بدون إجابات للحين'].filter(Boolean).join(' · ');
+  const sub = [post.city ? cityName(post.city) : '', post.answers ? nAnswers(post.answers) : t('بدون إجابات للحين')].filter(Boolean).join(' · ');
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: brand.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}>
           <BackButton />
           <View style={{ flex: 1 }}><AppText variant="title">{KIND[post.kind]}</AppText><AppText variant="small" muted>{sub}</AppText></View>
-          <Pressable style={st.round} onPress={() => Share.share({ message: `${post.text.slice(0, 120)}\n— من مجتمع دليل السعودية` }).catch(() => {})} accessibilityLabel="مشاركة"><Icon name="share" size={20} /></Pressable>
-          <Pressable style={st.round} onPress={() => menu('p', post)} accessibilityLabel="خيارات"><AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 22 }}>···</AppText></Pressable>
+          <Pressable style={st.round} onPress={() => Share.share({ message: `${post.text.slice(0, 120)}\n${t('— من مجتمع دليل السعودية')}` }).catch(() => {})} accessibilityLabel={t('مشاركة')}><Icon name="share" size={20} /></Pressable>
+          <Pressable style={st.round} onPress={() => menu('p', post)} accessibilityLabel={t('خيارات')}><AppText style={{ fontFamily: font.bold, fontSize: 18, lineHeight: 22 }}>···</AppText></Pressable>
         </View>
 
         {post.status ? (
           <View style={[st.modBox, post.status === 'rejected' && { backgroundColor: brand.pinkDeep + '14', borderColor: brand.pinkDeep + '55' }]}>
             <AppText style={{ fontFamily: font.bold }} color={post.status === 'rejected' ? brand.pinkDeep : brand.orangeDeep}>
-              {post.status === 'pending' ? 'وصلت مشاركتك وتنتظر مراجعة سريعة' : 'ما انتشرت مشاركتك'}
+              {post.status === 'pending' ? t('وصلت مشاركتك وتنتظر مراجعة سريعة') : t('ما انتشرت مشاركتك')}
             </AppText>
             <AppText variant="small" muted style={{ marginTop: 4, lineHeight: 22 }}>
-              {post.status === 'pending' ? 'فريق الدليل بيراجعها، وأول ما تنتشر يوصلك إشعار. محد يشوفها غيرك الحين.' : (post.modReason || 'لأنها تخالف قواعد المجتمع.') + ' تقدر تكتبها من جديد بشكل ثاني.'}
+              {post.status === 'pending' ? t('فريق الدليل بيراجعها، وأول ما تنتشر يوصلك إشعار. محد يشوفها غيرك الحين.') : (post.modReason || t('لأنها تخالف قواعد المجتمع.')) + ' ' + t('تقدر تكتبها من جديد بشكل ثاني.')}
             </AppText>
           </View>
         ) : null}
@@ -135,7 +136,7 @@ export default function Question() {
                 <AppText style={{ fontFamily: font.bold }}>{post.author.name}</AppText>
                 {post.author.badge ? <Pill label={post.author.badge} bg={brand.purple} fg="#fff" /> : null}
               </View>
-              <AppText variant="tiny" muted>{[post.author.city ? 'من ' + cityName(post.author.city) : '', ago(post.created)].filter(Boolean).join(' · ')}</AppText>
+              <AppText variant="tiny" muted>{[post.author.city ? t('من {city}', { city: cityName(post.author.city) }) : '', ago(post.created)].filter(Boolean).join(' · ')}</AppText>
             </View>
           </View>
           <AppText style={{ fontFamily: post.kind === 'question' ? font.bold : font.regular, fontSize: post.kind === 'question' ? 18 : 16, lineHeight: 30, marginTop: 10 }}>{post.text}</AppText>
@@ -143,20 +144,20 @@ export default function Question() {
           {post.placeId ? (
             <Pressable style={st.place} onPress={() => router.push(`/place/${post.placeId}`)}>
               <Icon name="pin" color={brand.pinkDeep} size={18} />
-              <AppText variant="small" style={{ flex: 1, fontFamily: font.bold }}>افتح المكان في الدليل</AppText>
+              <AppText variant="small" style={{ flex: 1, fontFamily: font.bold }}>{t('افتح المكان في الدليل')}</AppText>
               <Icon name="chevron" size={16} color={brand.faint} />
             </Pressable>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 18, marginTop: 12 }}>
             <Pressable onPress={thankPost} disabled={post.mine} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name={post.thanked ? 'heartFill' : 'heart'} color={brand.pinkDeep} size={18} />
-              <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{post.mine ? 'شكر' : 'شكراً'}{post.thanks ? ' · ' + post.thanks : ''}</AppText>
+              <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{post.mine ? t('شكر') : t('شكراً')}{post.thanks ? ' · ' + post.thanks : ''}</AppText>
             </Pressable>
           </View>
         </View>
 
         {post.mine && post.kind === 'question' && answers.length && !post.best ? (
-          <AppText variant="small" color={brand.green} style={{ paddingHorizontal: 22, paddingTop: 14, fontFamily: font.bold }}>لقيت جوابك؟ اختر أفضل إجابة عشان تفيد اللي بعدك.</AppText>
+          <AppText variant="small" color={brand.green} style={{ paddingHorizontal: 22, paddingTop: 14, fontFamily: font.bold }}>{t('لقيت جوابك؟ اختر أفضل إجابة عشان تفيد اللي بعدك.')}</AppText>
         ) : null}
 
         <View style={{ gap: 12, paddingHorizontal: 16, marginTop: 12 }}>
@@ -164,7 +165,7 @@ export default function Question() {
             const isBest = post.best === a.id;
             return (
               <View key={a.id} style={[st.a, isBest && { borderWidth: 2, borderColor: brand.green }]}>
-                {isBest ? <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold, marginBottom: 6 }}>✓ أفضل إجابة</AppText> : null}
+                {isBest ? <AppText variant="tiny" color={brand.green} style={{ fontFamily: font.bold, marginBottom: 6 }}>✓ {t('أفضل إجابة')}</AppText> : null}
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                   <Avatar t={initial(a.author.name)} c={tint(a.author.id)} size={36} />
                   <View style={{ flex: 1 }}>
@@ -172,25 +173,25 @@ export default function Question() {
                       <AppText style={{ fontFamily: font.bold, fontSize: 14 }}>{a.author.name}</AppText>
                       {a.expert ? <Pill label={a.expert} bg={brand.orangeDeep} fg="#fff" /> : a.author.badge ? <Pill label={a.author.badge} bg={brand.purple} fg="#fff" /> : null}
                     </View>
-                    <AppText variant="tiny" muted>{[a.author.city ? 'من ' + cityName(a.author.city) : '', ago(a.created)].filter(Boolean).join(' · ')}</AppText>
+                    <AppText variant="tiny" muted>{[a.author.city ? t('من {city}', { city: cityName(a.author.city) }) : '', ago(a.created)].filter(Boolean).join(' · ')}</AppText>
                   </View>
-                  <Pressable onPress={() => menu('a', a)} hitSlop={10} accessibilityLabel="خيارات"><AppText muted style={{ fontFamily: font.bold, fontSize: 16 }}>···</AppText></Pressable>
+                  <Pressable onPress={() => menu('a', a)} hitSlop={10} accessibilityLabel={t('خيارات')}><AppText muted style={{ fontFamily: font.bold, fontSize: 16 }}>···</AppText></Pressable>
                 </View>
                 <AppText style={{ marginTop: 8, lineHeight: 26 }}>{a.text}</AppText>
                 <View style={{ flexDirection: 'row', gap: 18, marginTop: 10, alignItems: 'center' }}>
                   <Pressable onPress={() => thankAnswer(a)} disabled={a.mine} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Icon name={a.thanked ? 'heartFill' : 'heart'} color={brand.pinkDeep} size={16} />
-                    <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>مفيد{a.thanks ? ' · ' + a.thanks : ''}</AppText>
+                    <AppText variant="small" color={brand.pinkDeep} style={{ fontFamily: font.bold }}>{t('مفيد')}{a.thanks ? ' · ' + a.thanks : ''}</AppText>
                   </Pressable>
                   {post.mine && post.kind === 'question' && !a.mine ? (
-                    <Pressable onPress={() => best(a)} hitSlop={8}><AppText variant="small" color={brand.green} style={{ fontFamily: font.bold }}>{isBest ? 'شيل أفضل إجابة' : 'أفضل إجابة ✓'}</AppText></Pressable>
+                    <Pressable onPress={() => best(a)} hitSlop={8}><AppText variant="small" color={brand.green} style={{ fontFamily: font.bold }}>{isBest ? t('شيل أفضل إجابة') : t('أفضل إجابة') + ' ✓'}</AppText></Pressable>
                   ) : null}
                 </View>
               </View>
             );
           })}
           {!answers.length ? (
-            <View style={st.none}><AppText style={{ fontFamily: font.bold }} center>{post.mine ? 'بنعلمك أول ما أحد يجاوب' : 'كن أول من يجاوب'}</AppText><AppText variant="small" muted center>{post.mine ? 'شارك السؤال مع أحد يعرف المدينة عشان يوصلك الجواب أسرع.' : (post.double ? 'السؤال صار له يوم بدون رد: أول إجابة تاخذ 10 نقاط بدل 5.' : 'جوابك يفيد ناس كثير يزورون المكان.')}</AppText></View>
+            <View style={st.none}><AppText style={{ fontFamily: font.bold }} center>{post.mine ? t('بنعلمك أول ما أحد يجاوب') : t('كن أول من يجاوب')}</AppText><AppText variant="small" muted center>{post.mine ? t('شارك السؤال مع أحد يعرف المدينة عشان يوصلك الجواب أسرع.') : (post.double ? t('السؤال صار له يوم بدون رد: أول إجابة تاخذ 10 نقاط بدل 5.') : t('جوابك يفيد ناس كثير يزورون المكان.'))}</AppText></View>
           ) : null}
         </View>
       </ScrollView>
@@ -200,13 +201,13 @@ export default function Question() {
         {user ? (
           <>
             <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={36} />
-            <TextInput value={text} onChangeText={setText} placeholder={post.kind === 'question' ? 'اكتب إجابتك...' : 'اكتب تعليقك...'} placeholderTextColor={brand.faint} style={st.input} multiline maxLength={1500} />
+            <TextInput value={text} onChangeText={setText} placeholder={post.kind === 'question' ? t('اكتب إجابتك...') : t('اكتب تعليقك...')} placeholderTextColor={brand.faint} style={st.input} multiline maxLength={1500} />
             <Pressable onPress={send} disabled={sending || text.trim().length < 2} style={[st.send, (sending || text.trim().length < 2) && { opacity: 0.4 }]}>
-              {sending ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>إرسال</AppText>}
+              {sending ? <ActivityIndicator color="#fff" /> : <AppText variant="small" color="#fff" style={{ fontFamily: font.bold }}>{t('إرسال')}</AppText>}
             </Pressable>
           </>
         ) : (
-          <Pressable style={[st.send, { flex: 1, alignItems: 'center' }]} onPress={needLogin}><AppText color="#fff" style={{ fontFamily: font.bold }}>سجّل عشان تجاوب</AppText></Pressable>
+          <Pressable style={[st.send, { flex: 1, alignItems: 'center' }]} onPress={needLogin}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('سجّل عشان تجاوب')}</AppText></Pressable>
         )}
       </View>}
     </KeyboardAvoidingView>

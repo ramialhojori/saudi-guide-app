@@ -8,6 +8,7 @@ import { useSyncExternalStore } from 'react';
 import type { EventItem } from './types';
 import { api } from './api';
 import { brand, type PhotoKey } from '@/theme/tokens';
+import { isEn, t } from './i18n';
 
 export const SEASON_RE = /^(موسم|لحظات) /;
 const LOOK: Record<string, { color: string; photo: PhotoKey; line: string }> = {
@@ -22,6 +23,20 @@ const LOOK: Record<string, { color: string; photo: PhotoKey; line: string }> = {
   'شتاء طنطورة': { color: brand.pinkDeep, photo: 'rock', line: 'مهرجان شتوي في العلا' },
   'مهرجان الرياض للكوميديا': { color: brand.orangeDeep, photo: 'art', line: 'عروض ستاند أب لأشهر الكوميديين' },
   'رالي حائل': { color: brand.orangeDeep, photo: 'land', line: 'رالي حائل الدولي في رمال النفود' },
+};
+/** الوصف الإنجليزي للمواسم الثابتة (نفس مفاتيح LOOK) */
+const LINE_EN: Record<string, string> = {
+  'موسم الرياض': 'Concerts, theater, sports and experiences in the heart of the capital',
+  'موسم جدة': 'The sea, Al-Balad and experiences on the Corniche',
+  'موسم الدرعية': 'Art and heritage in the birthplace of the Saudi state',
+  'لحظات العلا': 'Festivals and clear skies among the rocks',
+  'موسم عسير': 'Mountains, fog and summer experiences',
+  'موسم الخبر': 'The waterfront and shows in the Eastern Province',
+  'مهرجان صيف تبوك': 'Mild summer weather and family events',
+  'مدل بيست': 'The biggest music festival in the region',
+  'شتاء طنطورة': 'A winter festival in AlUla',
+  'مهرجان الرياض للكوميديا': 'Stand-up shows by top comedians',
+  'رالي حائل': 'The Hail International Rally in the Nafud sands',
 };
 export const slug = (name: string) => encodeURIComponent(name);
 
@@ -52,10 +67,10 @@ export function seasonsFrom(events: EventItem[], now = Date.now(), meta: SeasonM
       const zone = (e.address || '').split(/[،,]/)[0].trim();
       if (zone && !/^https?:/.test(zone)) z.set(zone, (z.get(zone) ?? 0) + 1);
     }
-    const look = LOOK[name] ?? { color: brand.lilac, photo: 'fest' as PhotoKey, line: 'فعاليات وتجارب الموسم' };
+    const look = LOOK[name] ?? { color: brand.lilac, photo: 'fest' as PhotoKey, line: t('فعاليات وتجارب الموسم') };
     const active = !isNaN(end) && end >= now;
     return {
-      name, ...look, line: md?.line || look.line, start, end, events: ev,
+      name, ...look, line: (isEn && LINE_EN[name]) || md?.line || look.line, start, end, events: ev,
       zones: [...z.entries()].map(([n, c]) => ({ name: n, n: c })).sort((a, b) => b.n - a.n).slice(0, 8),
       live: active && start <= now, returning: !active && !!md?.returning, cover: md?.cover || '', link: md?.link || '', when: md?.when || '',
     };
@@ -66,8 +81,8 @@ export function seasonsFrom(events: EventItem[], now = Date.now(), meta: SeasonM
 
 export function seasonStatus(s: Season, now = Date.now()) {
   const d = (ms: number) => Math.max(1, Math.ceil(ms / 86400e3));
-  if (s.returning) return `سيعود قريباً${s.when ? ' · ' + s.when : ''}`;
-  return s.live ? `شغّال الحين · باقي ${d(s.end - now)} يوم` : `يبدأ بعد ${d(s.start - now)} يوم`;
+  if (s.returning) return `${t('سيعود قريباً')}${s.when ? ' · ' + s.when : ''}`;
+  return s.live ? t('شغّال الحين · باقي {n} يوم', { n: d(s.end - now) }) : t('يبدأ بعد {n} يوم', { n: d(s.start - now) });
 }
 
 /* متابعة المواسم (محلياً — تنتقل للحساب مع الإشعارات) */
@@ -83,4 +98,4 @@ export function toggleFollow(name: string) {
 export const useFollowed = () => useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => followed);
 
 /** عدّ الفعاليات بالعربي الصحيح */
-export const countEvents = (n: number) => (n === 1 ? 'فعالية وحدة' : n === 2 ? 'فعاليتين' : n <= 10 ? `${n} فعاليات` : `${n} فعالية`);
+export const countEvents = (n: number) => isEn ? (n === 1 ? '1 event' : `${n} events`) : (n === 1 ? 'فعالية وحدة' : n === 2 ? 'فعاليتين' : n <= 10 ? `${n} فعاليات` : `${n} فعالية`);

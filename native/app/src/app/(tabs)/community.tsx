@@ -14,7 +14,7 @@ import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { posts as samples, type Post } from '@/lib/mock';
 import { api } from '@/lib/api';
 import { brand, font, photos } from '@/theme/tokens';
-import { t } from '@/lib/i18n';
+import { t, isEn } from '@/lib/i18n';
 
 const daysLeft = (end: string) => { const d = Math.ceil((new Date(end).getTime() - Date.now()) / 86400e3); return d <= 0 ? t('آخر يوم') : d === 1 ? t('باقي يوم') : d === 2 ? t('باقي يومين') : t('باقي {n} أيام', { n: d }); };
 
@@ -81,12 +81,12 @@ export default function Community() {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <BellButton style={st.glass} />
             <Pressable style={st.glass} onPress={() => router.push('/profile')} accessibilityLabel={t('ملفي')}>
-              {user ? <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={38} /> : <Icon name="user" color="#fff" />}
+              {user ? <Avatar t={initial(user.name || (isEn ? '?' : '؟'))} c={tint(user.id)} size={38} /> : <Icon name="user" color="#fff" />}
             </Pressable>
           </View>
         </View>
         <Pressable style={st.ask} onPress={ask}>
-          <Avatar t={initial(user?.name || '؟')} c={brand.lilac} size={36} />
+          <Avatar t={initial(user?.name || (isEn ? '?' : '؟'))} c={brand.lilac} size={36} />
           <AppText muted style={{ flex: 1 }}>{t('وش تبي تعرف عن السعودية؟')}</AppText>
           <View style={st.camBtn}><Icon name="cam" color={brand.pinkDeep} size={18} /></View>
         </Pressable>

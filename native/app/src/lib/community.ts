@@ -5,6 +5,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { env } from '@/config/env';
 import { api, ApiError } from './api';
 import { session } from './auth';
+import { isEn, t, tr } from './i18n';
 import { brand } from '@/theme/tokens';
 
 const TINTS = [brand.lilac, brand.sky, brand.pink, brand.orange, brand.green, brand.skyDeep, brand.pinkDeep];
@@ -85,25 +86,26 @@ export async function uploadPhoto(uri: string): Promise<string> {
 /** «قبل ٣ ساعات» */
 export function ago(sec: number) {
   const d = Math.max(0, Math.floor(Date.now() / 1000) - sec);
-  if (d < 60) return 'الحين';
+  if (d < 60) return tr('الحين', 'Just now');
   const m = Math.floor(d / 60), h = Math.floor(d / 3600), day = Math.floor(d / 86400);
   const n = (x: number, one: string, two: string, few: string, many: string) => (x === 1 ? one : x === 2 ? two : x <= 10 ? `${x} ${few}` : `${x} ${many}`);
-  if (d < 3600) return 'قبل ' + n(m, 'دقيقة', 'دقيقتين', 'دقائق', 'دقيقة');
-  if (d < 86400) return 'قبل ' + n(h, 'ساعة', 'ساعتين', 'ساعات', 'ساعة');
-  if (day < 30) return 'قبل ' + n(day, 'يوم', 'يومين', 'أيام', 'يوم');
-  return new Date(sec * 1000).toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long' });
+  const en = (x: number, u: string) => `${x} ${u}${x === 1 ? '' : 's'} ago`;
+  if (d < 3600) return isEn ? en(m, 'min') : 'قبل ' + n(m, 'دقيقة', 'دقيقتين', 'دقائق', 'دقيقة');
+  if (d < 86400) return isEn ? en(h, 'hour') : 'قبل ' + n(h, 'ساعة', 'ساعتين', 'ساعات', 'ساعة');
+  if (day < 30) return isEn ? en(day, 'day') : 'قبل ' + n(day, 'يوم', 'يومين', 'أيام', 'يوم');
+  return new Date(sec * 1000).toLocaleDateString(isEn ? 'en-GB' : 'ar-SA-u-ca-gregory', { day: 'numeric', month: 'long' });
 }
 
 /** رسائل الأخطاء بلغة الناس */
 export function errText(e: unknown) {
   const c = (e as { code?: string })?.code;
   return ({
-    login_required: 'سجّل دخولك أول.', too_short: 'اكتب شوي أكثر عشان يفهمونك.', rate_limited: 'وصلت الحد اليومي، جرّب بكرة.',
-    network: 'ما فيه اتصال، تأكد من النت.', timeout: 'السيرفر تأخر، جرّب مرة ثانية.', bad_size: 'الصورة كبيرة مرة.', own_content: 'ما تقدر تشكر نفسك',
-  } as Record<string, string>)[c || ''] || 'صار خطأ، جرّب بعد شوي.';
+    login_required: t('سجّل دخولك أول.'), too_short: t('اكتب شوي أكثر عشان يفهمونك.'), rate_limited: t('وصلت الحد اليومي، جرّب بكرة.'),
+    network: t('ما فيه اتصال، تأكد من النت.'), timeout: t('السيرفر تأخر، جرّب مرة ثانية.'), bad_size: t('الصورة كبيرة مرة.'), own_content: t('ما تقدر تشكر نفسك'),
+  } as Record<string, string>)[c || ''] || t('صار خطأ، جرّب بعد شوي.');
 }
 
-export const nAnswers = (n: number) => (n === 1 ? 'إجابة وحدة' : n === 2 ? 'إجابتين' : n <= 10 ? `${n} إجابات` : `${n} إجابة`);
+export const nAnswers = (n: number) => (isEn ? `${n} answer${n === 1 ? '' : 's'}` : n === 1 ? 'إجابة وحدة' : n === 2 ? 'إجابتين' : n <= 10 ? `${n} إجابات` : `${n} إجابة`);
 
 export type Stats = {
   balance: number; spent: number; role: string; impact: Impact | null;

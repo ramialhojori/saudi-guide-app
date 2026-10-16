@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import { allCities } from './content';
 import { km } from './text';
+import { t } from './i18n';
 
 const TEXT: [number[], string][] = [
-  [[0], 'صحو'], [[1, 2], 'غائم جزئياً'], [[3], 'غائم'], [[45, 48], 'ضباب'],
-  [[51, 53, 55, 56, 57], 'رذاذ'], [[61, 63, 65, 66, 67, 80, 81, 82], 'ممطر'], [[71, 73, 75, 77, 85, 86], 'ثلج'], [[95, 96, 99], 'عواصف رعدية'],
+  [[0], t('صحو')], [[1, 2], t('غائم جزئياً')], [[3], t('غائم')], [[45, 48], t('ضباب')],
+  [[51, 53, 55, 56, 57], t('رذاذ')], [[61, 63, 65, 66, 67, 80, 81, 82], t('ممطر')], [[71, 73, 75, 77, 85, 86], t('ثلج')], [[95, 96, 99], t('عواصف رعدية')],
 ];
 const desc = (code: number) => TEXT.find(([c]) => c.includes(code))?.[1] ?? '';
 let cache: { at: number; key: string; v: Weather } | null = null;
@@ -29,7 +30,7 @@ export function useWeather(homeCity?: string) {
       if (cache && cache.key === key && Date.now() - cache.at < 30 * 60e3) { if (alive) setW(cache.v); return; }
       try {
         const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=Asia%2FRiyadh`).then((x) => x.json());
-        const v = { city: near?.name ?? 'السعودية', temp: Math.round(r.current.temperature_2m), text: desc(r.current.weather_code) };
+        const v = { city: near?.name ?? t('السعودية'), temp: Math.round(r.current.temperature_2m), text: desc(r.current.weather_code) };
         cache = { at: Date.now(), key, v };
         if (alive) setW(v);
       } catch { /* بدون نت: نخفي الطقس */ }

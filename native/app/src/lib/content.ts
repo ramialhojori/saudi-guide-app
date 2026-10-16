@@ -9,6 +9,7 @@ import { searchKey, km } from './text';
 import type { Article, City, EventItem, Home, Kind, Place, PlaceFull } from './types';
 import snapshot from '@/data/snapshot.json';
 import weekly from '@/data/weekly_pool.json';
+import { isEn } from './i18n';
 
 type SnapPlace = { id: number; c: string; t: string; k: string[]; cat: string; th: string; img: string; s: string; lat: number | null; lng: number | null };
 const SNAP = snapshot as unknown as {
@@ -66,7 +67,7 @@ export function weeklyPicks(now = new Date()): Place[] {
 
 /** «مختارات الأسبوع · 11–17 أكتوبر» */
 export function weekLabel(now = new Date()): string {
-  const MO = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const MO = isEn ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const t = new Date(now.getTime() + 3 * 3600e3);
   const days = Math.floor(t.getTime() / 86400e3);
   const sun = days - ((days + 4) % 7);

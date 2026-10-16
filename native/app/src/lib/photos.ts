@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { t } from './i18n';
 
 /**
  * اختيار الصور من الكاميرا أو الاستديو بطريقة وحدة لكل الشاشات.
@@ -10,7 +11,7 @@ export async function pickPhotos(o: { camera: boolean; max?: number; edit?: bool
   try {
     if (o.camera) {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
-      if (!perm.granted) return { uris: [], error: 'نحتاج إذن الكاميرا من الإعدادات.' };
+      if (!perm.granted) return { uris: [], error: t('نحتاج إذن الكاميرا من الإعدادات.') };
     }
     const multi = !o.camera && !o.edit && (o.max ?? 1) > 1;
     const opts: ImagePicker.ImagePickerOptions = {
@@ -24,6 +25,6 @@ export async function pickPhotos(o: { camera: boolean; max?: number; edit?: bool
     if (r.canceled) return { uris: [] };
     return { uris: r.assets.map((a) => a.uri).slice(0, o.max ?? 1) };
   } catch (e) {
-    return { uris: [], error: `ما قدرنا نفتح الصورة. جرّب صورة ثانية (${String((e as Error)?.message || e).slice(0, 60)})` };
+    return { uris: [], error: t('ما قدرنا نفتح الصورة. جرّب صورة ثانية ({err})', { err: String((e as Error)?.message || e).slice(0, 60) }) };
   }
 }

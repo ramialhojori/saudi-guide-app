@@ -70,7 +70,7 @@ export default function TripScreen() {
           <AppText variant="hero" color="#fff">{real ? t('رحلتي إلى {city}', { city }) : t('ويكند العلا')}</AppText>
           <AppText variant="small" color="#E2DAEE">{t('{n} أيام', { n: days.length })}   ·   {t('{n} مكان', { n: total })}{real ? '' : `   ·   ${t('24° نهاراً')}`}</AppText>
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
-            {(real ? [] : [['ر', brand.lilac], ['ع', brand.pink], ['م', brand.sky]]).map(([t, c], i) => <View key={t} style={{ marginRight: i ? -8 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
+            {(real ? [] : [[tr('ر', 'R'), brand.lilac], [tr('ع', 'A'), brand.pink], [tr('م', 'M'), brand.sky]]).map(([t, c], i) => <View key={t} style={{ marginRight: i ? -8 : 0 }}><Avatar t={t} c={c} size={32} /></View>)}
           </View>
         </View>
       </View>

@@ -13,6 +13,7 @@ import { uploadPhoto } from '@/lib/community';
 import { cityName, getPlace } from '@/lib/content';
 import { couponErr } from '@/lib/coupons';
 import { useFeatures } from '@/lib/features';
+import { t, tr } from '@/lib/i18n';
 import { placeReviews, postReview, REVIEW_TAGS, STAR_WORD } from '@/lib/reviews';
 import type { Place } from '@/lib/types';
 import { brand, font, kindStyle } from '@/theme/tokens';
@@ -46,9 +47,9 @@ export default function ReviewScreen() {
         <BackButton />
         <View style={st.gate}>
           <Icon name="star" color={brand.orange} size={34} />
-          <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>سجّل عشان تقيّم</AppText>
-          <AppText variant="small" muted center>تقييمك يطلع باسمك ويساعد اللي بعدك.</AppText>
-          <Pressable style={st.loginBtn} onPress={() => router.replace('/login')}><AppText color="#fff" style={{ fontFamily: font.bold }}>سجّل دخولك</AppText></Pressable>
+          <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>{t('سجّل عشان تقيّم')}</AppText>
+          <AppText variant="small" muted center>{t('تقييمك يطلع باسمك ويساعد اللي بعدك.')}</AppText>
+          <Pressable style={st.loginBtn} onPress={() => router.replace('/login')}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('سجّل دخولك')}</AppText></Pressable>
         </View>
       </View>
     );
@@ -60,12 +61,12 @@ export default function ReviewScreen() {
     if (r.error) return setErr(r.error);
     if (r.uris.length) setPhotos((x) => [...x, ...r.uris.map((uri) => ({ uri }))].slice(0, 6));
   };
-  const toggleTag = (t: string) => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t].slice(0, 6)));
+  const toggleTag = (tg: string) => setTags((x) => (x.includes(tg) ? x.filter((y) => y !== tg) : [...x, tg].slice(0, 6)));
   const pts = (isEdit ? 0 : 3) + photos.length * 5;
 
   const submit = async () => {
-    if (!stars) return setErr('اختر عدد النجوم.');
-    if (photos.length && !consent) return setErr('وافق على نشر الصور أول.');
+    if (!stars) return setErr(t('اختر عدد النجوم.'));
+    if (photos.length && !consent) return setErr(t('وافق على نشر الصور أول.'));
     setBusy(true); setErr('');
     try {
       const urls: string[] = [];
@@ -75,9 +76,9 @@ export default function ReviewScreen() {
         try { urls.push(ph.url ?? (await uploadPhoto(ph.uri))); } catch { failed++; }
       }
       const r = await postReview(Number(id), { stars, tags, text: text.trim(), photos: urls, consent: consent && urls.length > 0 });
-      if (r.status === 'rejected') { setErr(r.message || 'ما قدرنا نحفظ التقييم.'); return; }
-      const msg = [r.pending ? r.message || '' : '', r.points ? `+${r.points} نقاط` : '', r.photosPending ? 'الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.' : '', failed ? `${failed === 1 ? 'صورة وحدة' : failed + ' صور'} ما ارتفعت، تقدر تضيفها بعدين من صفحة المكان.` : ''].filter(Boolean).join('\n');
-      Alert.alert(isEdit ? 'انحفظ تقييمك' : 'شكراً على تقييمك!', msg || undefined, [{ text: 'تمام', onPress: () => router.back() }]);
+      if (r.status === 'rejected') { setErr(r.message || t('ما قدرنا نحفظ التقييم.')); return; }
+      const msg = [r.pending ? r.message || '' : '', r.points ? t('+{n} نقاط', { n: r.points }) : '', r.photosPending ? t('الصور تنراجع وتنزل خلال يوم، ولك 5 نقاط على كل صورة تنقبل.') : '', failed ? tr(`${failed === 1 ? 'صورة وحدة' : failed + ' صور'} ما ارتفعت، تقدر تضيفها بعدين من صفحة المكان.`, `${failed === 1 ? '1 photo' : failed + ' photos'} didn't upload. You can add them later from the place page.`) : ''].filter(Boolean).join('\n');
+      Alert.alert(isEdit ? t('انحفظ تقييمك') : t('شكراً على تقييمك!'), msg || undefined, [{ text: t('تمام'), onPress: () => router.back() }]);
       if (Platform.OS === 'web') router.back();
     } catch (e) { setErr(couponErr(e)); } finally { setBusy(false); }
   };
@@ -86,7 +87,7 @@ export default function ReviewScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: brand.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 130 }} keyboardShouldPersistTaps="handled">
-        <View style={st.top}><BackButton /><AppText variant="title" style={{ flex: 1 }}>{isEdit ? 'عدّل تقييمك' : 'قيّم تجربتك'}</AppText></View>
+        <View style={st.top}><BackButton /><AppText variant="title" style={{ flex: 1 }}>{isEdit ? t('عدّل تقييمك') : t('قيّم تجربتك')}</AppText></View>
         {p ? (
           <View style={st.place}>
             {p.thumb || p.image ? <Image source={p.thumb || p.image} style={st.thumb} contentFit="cover" /> : <View style={[st.thumb, { backgroundColor: ks.bg }]} />}
@@ -100,59 +101,59 @@ export default function ReviewScreen() {
         <View style={{ alignItems: 'center', marginTop: 22 }}>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {[1, 2, 3, 4, 5].map((n) => (
-              <Pressable key={n} onPress={() => { setStars(n); setErr(''); }} hitSlop={4} accessibilityLabel={`${n} نجوم`}>
+              <Pressable key={n} onPress={() => { setStars(n); setErr(''); }} hitSlop={4} accessibilityLabel={tr(`${n} نجوم`, `${n} star${n === 1 ? '' : 's'}`)}>
                 <Icon name="star" size={42} color={brand.orange} fill={n <= stars ? brand.orange : 'none'} strokeWidth={1.5} />
               </Pressable>
             ))}
           </View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 15, marginTop: 6 }} color={brand.orangeDeep}>{STAR_WORD[stars] || 'اضغط على النجوم'}</AppText>
+          <AppText style={{ fontFamily: font.bold, fontSize: 15, marginTop: 6 }} color={brand.orangeDeep}>{STAR_WORD[stars] || t('اضغط على النجوم')}</AppText>
         </View>
 
         <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-          <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginBottom: 8 }}>وش عجبك؟ أو ما عجبك؟</AppText>
+          <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginBottom: 8 }}>{t('وش عجبك؟ أو ما عجبك؟')}</AppText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {REVIEW_TAGS.map((t) => {
-              const on = tags.includes(t);
-              const neg = ['زحمة', 'مواقف صعبة', 'غالي'].includes(t);
+            {REVIEW_TAGS.map((tg) => {
+              const on = tags.includes(tg);
+              const neg = ['زحمة', 'مواقف صعبة', 'غالي'].includes(tg);
               return (
-                <Pressable key={t} onPress={() => toggleTag(t)} style={[st.tag, on && { backgroundColor: neg ? brand.pinkDeep : brand.green }]}>
-                  <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={on ? '#fff' : brand.text}>{t}</AppText>
+                <Pressable key={tg} onPress={() => toggleTag(tg)} style={[st.tag, on && { backgroundColor: neg ? brand.pinkDeep : brand.green }]}>
+                  <AppText style={{ fontFamily: font.semibold, fontSize: 13 }} color={on ? '#fff' : brand.text}>{t(tg)}</AppText>
                 </Pressable>
               );
             })}
           </View>
 
-          <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>اكتب تجربتك <AppText variant="tiny" muted>(اختياري)</AppText></AppText>
-          <Input value={text} onChangeText={setText} multiline maxLength={1200} placeholder="متى رحت؟ وش أكثر شي عجبك؟ نصيحة للي بعدك؟" style={{ minHeight: 110 }} />
+          <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>{t('اكتب تجربتك')} <AppText variant="tiny" muted>{t('(اختياري)')}</AppText></AppText>
+          <Input value={text} onChangeText={setText} multiline maxLength={1200} placeholder={t('متى رحت؟ وش أكثر شي عجبك؟ نصيحة للي بعدك؟')} style={{ minHeight: 110 }} />
 
-          {F.photos ? <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>صورك</AppText> : null}
+          {F.photos ? <AppText style={{ fontFamily: font.semibold, fontSize: 14, marginTop: 18, marginBottom: 8 }}>{t('صورك')}</AppText> : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {photos.map((ph, i) => (
               <View key={ph.uri + i}>
                 <Image source={ph.uri} style={st.ph} contentFit="cover" />
-                <Pressable style={st.phX} onPress={() => setPhotos(photos.filter((_, k) => k !== i))} accessibilityLabel="شيل الصورة"><Icon name="x" color="#fff" size={14} /></Pressable>
+                <Pressable style={st.phX} onPress={() => setPhotos(photos.filter((_, k) => k !== i))} accessibilityLabel={t('شيل الصورة')}><Icon name="x" color="#fff" size={14} /></Pressable>
               </View>
             ))}
             {F.photos && photos.length < 6 && Platform.OS !== 'web' ? (
               <>
-                <Pressable style={st.add} onPress={() => pick(true)} accessibilityLabel="صوّر"><Icon name="cam" color={brand.link} size={24} /></Pressable>
-                <Pressable style={st.add} onPress={() => pick(false)} accessibilityLabel="من الصور"><Icon name="plus" color={brand.link} size={24} /></Pressable>
+                <Pressable style={st.add} onPress={() => pick(true)} accessibilityLabel={t('صوّر')}><Icon name="cam" color={brand.link} size={24} /></Pressable>
+                <Pressable style={st.add} onPress={() => pick(false)} accessibilityLabel={t('من الصور')}><Icon name="plus" color={brand.link} size={24} /></Pressable>
               </>
             ) : null}
           </View>
           {photos.length ? (
             <Pressable style={st.consent} onPress={() => setConsent(!consent)}>
               <View style={[st.box, consent && { backgroundColor: brand.purple, borderColor: brand.purple }]}>{consent ? <Icon name="check" color="#fff" size={14} strokeWidth={3} /> : null}</View>
-              <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>أوافق إن صوري تنشر في دليل السعودية مع اسمي، وأنا اللي صوّرتها.</AppText>
+              <AppText variant="small" style={{ flex: 1, lineHeight: 21 }}>{t('أوافق إن صوري تنشر في دليل السعودية مع اسمي، وأنا اللي صوّرتها.')}</AppText>
             </Pressable>
           ) : null}
-          {pts ? <View style={st.points}><AppText variant="small" color={brand.orangeInk} style={{ fontFamily: font.semibold }}>بتحصل +{pts} نقطة{photos.length ? ': 3 للتقييم و5 لكل صورة تنقبل' : ''}</AppText></View> : null}
+          {pts ? <View style={st.points}><AppText variant="small" color={brand.orangeInk} style={{ fontFamily: font.semibold }}>{t('بتحصل +{n} نقطة', { n: pts })}{photos.length ? t(': 3 للتقييم و5 لكل صورة تنقبل') : ''}</AppText></View> : null}
           {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 12, fontFamily: font.semibold }}>{err}</AppText> : null}
         </View>
       </ScrollView>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Pressable style={[st.cta, !stars && { opacity: 0.5 }]} onPress={submit} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{isEdit ? 'احفظ التعديل' : 'انشر التقييم'}</AppText>}
+          {busy ? <ActivityIndicator color="#fff" /> : <AppText style={{ fontFamily: font.bold, fontSize: 16 }} color="#fff">{isEdit ? t('احفظ التعديل') : t('انشر التقييم')}</AppText>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>

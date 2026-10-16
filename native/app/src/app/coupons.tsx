@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { allCities, cityName } from '@/lib/content';
 import { useFeatures } from '@/lib/features';
 import { BIZ_KINDS, OFFER_KINDS, cityCoupons, cityCouponsMe, couponAlert, setCouponAlert, couponErr, myCoupons, toggleSave, type Coupon, type Me } from '@/lib/coupons';
+import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
 /** كوبونات المدينة: عروض حقيقية من التجار بعد موافقة الإدارة، والمحفظة (المحفوظة) */
@@ -74,17 +75,17 @@ export default function Coupons() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
       <View style={[st.head, { paddingTop: insets.top + 12 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel="رجوع"><Icon name="back" color="#fff" /></Pressable>
+          <Pressable style={st.glass} onPress={() => router.back()} accessibilityLabel={t('رجوع')}><Icon name="back" color="#fff" /></Pressable>
           <Pressable style={{ flex: 1 }} onPress={() => setPick((v) => !v)}>
-            <AppText variant="small" color="#FFE6EC">كوبونات</AppText>
-            <AppText variant="title" color="#fff">{cityName(city) || 'اختر المدينة'} ▾</AppText>
+            <AppText variant="small" color="#FFE6EC">{t('كوبونات')}</AppText>
+            <AppText variant="title" color="#fff">{cityName(city) || t('اختر المدينة')} ▾</AppText>
           </Pressable>
           <Pressable style={st.wallet} onPress={() => setTab(tab === 'wallet' ? 'all' : 'wallet')}>
             <AppText style={{ fontFamily: font.bold, fontSize: 18 }} color="#fff" center>{wallet.length}</AppText>
-            <AppText variant="tiny" color="#fff" center>محفظتي</AppText>
+            <AppText variant="tiny" color="#fff" center>{t('محفظتي')}</AppText>
           </Pressable>
         </View>
-        <AppText variant="small" color="#fff" style={{ marginTop: 12 }}>افتح الكوبون عند الكاشير، ويطلع لك رمز يدخله في جهازه.</AppText>
+        <AppText variant="small" color="#fff" style={{ marginTop: 12 }}>{t('افتح الكوبون عند الكاشير، ويطلع لك رمز يدخله في جهازه.')}</AppText>
       </View>
 
       {pick ? (
@@ -94,29 +95,29 @@ export default function Coupons() {
       ) : null}
 
       <View style={st.tabs}>
-        {([['all', 'كل العروض'], ...(F.points ? [['points', 'بالنقاط']] : []), ['wallet', `محفظتي (${wallet.length})`]] as ['all' | 'points' | 'wallet', string][]).map(([k, t]) => (
-          <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)}><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={tab === k ? '#fff' : brand.muted} center>{t}</AppText></Pressable>
+        {([['all', t('كل العروض')], ...(F.points ? [['points', t('بالنقاط')]] : []), ['wallet', t('محفظتي ({n})', { n: wallet.length })]] as ['all' | 'points' | 'wallet', string][]).map(([k, x]) => (
+          <Pressable key={k} style={[st.tab, tab === k && st.tabOn]} onPress={() => setTab(k)}><AppText style={{ fontFamily: font.bold, fontSize: 14 }} color={tab === k ? '#fff' : brand.muted} center>{x}</AppText></Pressable>
         ))}
       </View>
       {tab === 'points' ? (
         <View style={st.bal}>
           <View style={{ flex: 1 }}>
-            <AppText style={{ fontFamily: font.bold }} color="#fff">{user ? `رصيدك ${me?.balance ?? 0} نقطة` : 'سجّل دخولك واجمع نقاط'}</AppText>
-            <AppText variant="small" color="#E2DAEE">{user ? `مستواك ${me?.level ?? 1}. اجمع نقاط من الأسئلة والإجابات والتقييمات وختم الجواز، واصرفها هنا.` : 'النقاط تجي من المشاركة في المجتمع والتقييمات وختم الجواز.'}</AppText>
+            <AppText style={{ fontFamily: font.bold }} color="#fff">{user ? t('رصيدك {n} نقطة', { n: me?.balance ?? 0 }) : t('سجّل دخولك واجمع نقاط')}</AppText>
+            <AppText variant="small" color="#E2DAEE">{user ? t('مستواك {n}. اجمع نقاط من الأسئلة والإجابات والتقييمات وختم الجواز، واصرفها هنا.', { n: me?.level ?? 1 }) : t('النقاط تجي من المشاركة في المجتمع والتقييمات وختم الجواز.')}</AppText>
           </View>
           <Icon name="star" color="#F9A158" size={30} />
         </View>
       ) : null}
       {(list ?? []).length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-          <Chip label="كل العروض" on={!offer} color={brand.orangeDeep} onPress={() => setOffer('')} />
-          {OFFER_KINDS.map(([k, t]) => <Chip key={k} label={t} on={offer === k} color={brand.orangeDeep} onPress={() => setOffer(offer === k ? '' : k)} />)}
+          <Chip label={t('كل العروض')} on={!offer} color={brand.orangeDeep} onPress={() => setOffer('')} />
+          {OFFER_KINDS.map(([k, x]) => <Chip key={k} label={x} on={offer === k} color={brand.orangeDeep} onPress={() => setOffer(offer === k ? '' : k)} />)}
         </ScrollView>
       ) : null}
       {kinds.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 6 }}>
-          <Chip label="الكل" on={!kind} color={brand.pinkDeep} onPress={() => setKind('')} />
-          {kinds.map(([k, t]) => <Chip key={k} label={t} on={kind === k} color={brand.pinkDeep} onPress={() => setKind(k)} />)}
+          <Chip label={t('الكل')} on={!kind} color={brand.pinkDeep} onPress={() => setKind('')} />
+          {kinds.map(([k, x]) => <Chip key={k} label={x} on={kind === k} color={brand.pinkDeep} onPress={() => setKind(k)} />)}
         </ScrollView>
       ) : null}
 
@@ -127,19 +128,19 @@ export default function Coupons() {
         {list !== null && !shown.length && !err ? (
           <View style={st.empty}>
             <Icon name="ticket" color={brand.pinkDeep} size={34} />
-            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{tab === 'wallet' ? 'محفظتك فاضية' : tab === 'points' ? 'ما فيه عروض بالنقاط للحين' : `ما فيه عروض في ${cityName(city)} للحين`}</AppText>
-            <AppText variant="small" muted center>{tab === 'wallet' ? 'اضغط القلب على أي كوبون عشان ينحفظ هنا.' : tab === 'points' ? 'أول ما تضيف المحلات عروض تتبادل بالنقاط بتلقاها هنا. خلك تجمع نقاطك.' : 'أول ما يضيف محل عرض هنا نبلغك، وتقدر تشوف عروض المدن الثانية تحت.'}</AppText>
+            <AppText style={{ fontFamily: font.bold, fontSize: 16 }} center>{tab === 'wallet' ? t('محفظتك فاضية') : tab === 'points' ? t('ما فيه عروض بالنقاط للحين') : t('ما فيه عروض في {city} للحين', { city: cityName(city) })}</AppText>
+            <AppText variant="small" muted center>{tab === 'wallet' ? t('اضغط القلب على أي كوبون عشان ينحفظ هنا.') : tab === 'points' ? t('أول ما تضيف المحلات عروض تتبادل بالنقاط بتلقاها هنا. خلك تجمع نقاطك.') : t('أول ما يضيف محل عرض هنا نبلغك، وتقدر تشوف عروض المدن الثانية تحت.')}</AppText>
             {tab === 'all' ? (
               <Pressable onPress={toggleAlert} style={[st.alertBtn, alertOn && { backgroundColor: brand.green }]}>
                 <Icon name={alertOn ? 'check' : 'bell'} color="#fff" size={16} />
-                <AppText color="#fff" style={{ fontFamily: font.bold }}>{alertOn ? `بنبلغك أول ما ينضاف عرض في ${cityName(city)}` : `نبهني لما ينضاف عرض في ${cityName(city)}`}</AppText>
+                <AppText color="#fff" style={{ fontFamily: font.bold }}>{alertOn ? t('بنبلغك أول ما ينضاف عرض في {city}', { city: cityName(city) }) : t('نبهني لما ينضاف عرض في {city}', { city: cityName(city) })}</AppText>
               </Pressable>
             ) : null}
           </View>
         ) : null}
         {tab === 'all' && list !== null && !list.length && others.length ? (
           <>
-            <AppText variant="section" style={{ marginTop: 10 }}>عروض في مدن ثانية</AppText>
+            <AppText variant="section" style={{ marginTop: 10 }}>{t('عروض في مدن ثانية')}</AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {otherCities.map(([c, n]) => <Chip key={c} label={`${cityName(c)} · ${n}`} color={brand.pinkDeep} onPress={() => { setCity(c); setList(null); }} />)}
             </ScrollView>
@@ -151,8 +152,8 @@ export default function Coupons() {
       {F.merchants ? <Pressable style={st.biz} onPress={() => router.push('/merchant')}>
         <View style={st.bizIcon}><Icon name="shop" color="#fff" size={22} /></View>
         <View style={{ flex: 1 }}>
-          <AppText style={{ fontFamily: font.bold }} color="#fff">عندك مطعم أو مقهى أو متجر؟</AppText>
-          <AppText variant="small" color="#CFC6DE">سجّل نشاطك مجاناً وأضف عرضك لزوار {cityName(city) || 'مدينتك'}.</AppText>
+          <AppText style={{ fontFamily: font.bold }} color="#fff">{t('عندك مطعم أو مقهى أو متجر؟')}</AppText>
+          <AppText variant="small" color="#CFC6DE">{t('سجّل نشاطك مجاناً وأضف عرضك لزوار {city}.', { city: cityName(city) || t('مدينتك') })}</AppText>
         </View>
         <Icon name="chevron" color="#fff" size={18} />
       </Pressable> : null}

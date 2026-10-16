@@ -39,7 +39,7 @@ export default function Profile() {
   const stampTotal = user ? pp?.all.length ?? 21 : passport.total;
   // الزائر يشوف مثال، والمسجّل يشوف أرقامه الحقيقية من السيرفر
   const me = user ? {
-    ...demo, name: user.name || t('مستخدم الدليل'), initial: (user.name || 'د').trim()[0], handle: user.handle, since: user.since,
+    ...demo, name: user.name || t('مستخدم الدليل'), initial: (user.name || tr('د', 'S')).trim()[0], handle: user.handle, since: user.since,
     city: user.city ? cityName(user.city) || user.city : '', bio: user.bio || t('اكتب نبذة عنك من الإعدادات.'),
     points: stats?.points ?? user.points, level: stats?.level ?? 1, nextLevelPts: stats?.nextAt ?? Math.max(user.points, 1), nextLevel: stats?.nextName ?? '',
     levelName: stats?.levelName ?? '', levelAt: stats?.levelAt ?? 0,

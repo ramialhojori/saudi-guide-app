@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui';
 import { couponCode, couponErr, couponFeedback, getCoupon, type Coupon } from '@/lib/coupons';
 import { ReportCoupon } from '@/components/ReportCoupon';
+import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
 /** استخدام الكوبون: رمز من السيرفر يتغير كل 30 ثانية (مربوط بحسابك) → الكاشير يدخله → يوصلك تأكيد هنا */
@@ -42,7 +43,7 @@ export default function CouponUse() {
         if (!alive) return;
         if (r.redeemed) { setDone(true); return; }
         if (r.code) { setCode(r.code); setLeft(r.left ?? 30); nextAt.current = Date.now() + (r.left ?? 30) * 1000; setErr(''); }
-      } catch (e) { if (alive) setErr((e as { code?: string })?.code === 'already_used' ? 'استخدمت هالكوبون قبل. العرض مرة وحدة لكل شخص.' : couponErr(e)); }
+      } catch (e) { if (alive) setErr((e as { code?: string })?.code === 'already_used' ? t('استخدمت هالكوبون قبل. العرض مرة وحدة لكل شخص.') : couponErr(e)); }
     };
     tick();
     const poll = setInterval(tick, 3000);
@@ -54,24 +55,24 @@ export default function CouponUse() {
     return (
       <View style={[st.wrap, { paddingTop: insets.top + 60, backgroundColor: brand.green }]}>
         <View style={st.doneIcon}><Icon name="check" color={brand.green} size={54} strokeWidth={3} /></View>
-        <AppText style={{ fontFamily: font.bold, fontSize: 28, lineHeight: 40, marginTop: 20 }} color="#fff" center>تم استخدام الكوبون</AppText>
-        <AppText color="#fff" center>{c ? `${c.off} في ${c.biz?.name ?? ''}` : ''}</AppText>
-        {c?.points ? <AppText variant="small" color="#E2F0E6" center>انخصم من رصيدك {c.points} نقطة</AppText> : null}
-        <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>بالعافية!</AppText>
+        <AppText style={{ fontFamily: font.bold, fontSize: 28, lineHeight: 40, marginTop: 20 }} color="#fff" center>{t('تم استخدام الكوبون')}</AppText>
+        <AppText color="#fff" center>{c ? t('{off} في {name}', { off: c.off, name: c.biz?.name ?? '' }) : ''}</AppText>
+        {c?.points ? <AppText variant="small" color="#E2F0E6" center>{t('انخصم من رصيدك {n} نقطة', { n: c.points })}</AppText> : null}
+        <AppText variant="small" color="#E2F0E6" center style={{ marginTop: 6 }}>{t('بالعافية!')}</AppText>
         <View style={st.fb}>
           {fb === null ? (
             <>
-              <AppText style={{ fontFamily: font.bold }} color="#fff" center>انطبق العرض مثل ما هو مكتوب؟</AppText>
+              <AppText style={{ fontFamily: font.bold }} color="#fff" center>{t('انطبق العرض مثل ما هو مكتوب؟')}</AppText>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                <Pressable style={st.fbBtn} onPress={() => { setFb(true); couponFeedback(Number(id), true).catch(() => {}); }}><AppText style={{ fontFamily: font.bold }} color={brand.green}>نعم</AppText></Pressable>
-                <Pressable style={st.fbBtn} onPress={() => { setFb(false); couponFeedback(Number(id), false).catch(() => {}); setRep('different'); }}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>لا</AppText></Pressable>
+                <Pressable style={st.fbBtn} onPress={() => { setFb(true); couponFeedback(Number(id), true).catch(() => {}); }}><AppText style={{ fontFamily: font.bold }} color={brand.green}>{t('نعم')}</AppText></Pressable>
+                <Pressable style={st.fbBtn} onPress={() => { setFb(false); couponFeedback(Number(id), false).catch(() => {}); setRep('different'); }}><AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>{t('لا')}</AppText></Pressable>
               </View>
             </>
-          ) : <AppText color="#fff" center style={{ fontFamily: font.semibold }}>{fb ? 'شكراً! رأيك يساعد غيرك يثق بالعروض.' : 'آسفين على هالتجربة. بلاغك يوصلنا ونراجعه.'}</AppText>}
+          ) : <AppText color="#fff" center style={{ fontFamily: font.semibold }}>{fb ? t('شكراً! رأيك يساعد غيرك يثق بالعروض.') : t('آسفين على هالتجربة. بلاغك يوصلنا ونراجعه.')}</AppText>}
         </View>
         <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
-          {c?.biz?.placeId ? <Button label="قيّم المكان" bg="rgba(255,255,255,0.2)" onPress={() => router.replace({ pathname: '/review/[id]', params: { id: String(c.biz!.placeId) } })} /> : null}
-          <Button label="تمام" bg="#fff" fg={brand.green} onPress={() => router.back()} />
+          {c?.biz?.placeId ? <Button label={t('قيّم المكان')} bg="rgba(255,255,255,0.2)" onPress={() => router.replace({ pathname: '/review/[id]', params: { id: String(c.biz!.placeId) } })} /> : null}
+          <Button label={t('تمام')} bg="#fff" fg={brand.green} onPress={() => router.back()} />
         </View>
         <ReportCoupon id={Number(id)} visible={!!rep} initial={rep || undefined} onClose={() => setRep('')} />
       </View>
@@ -82,17 +83,17 @@ export default function CouponUse() {
   return (
     <View style={[st.wrap, { paddingTop: insets.top + 10 }]}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Pressable onPress={() => router.back()} style={st.close} accessibilityLabel="إغلاق"><AppText color="#fff" style={{ fontSize: 22 }}>×</AppText></Pressable>
-        <View style={st.pill}><AppText variant="small" color="#fff">السطوع رفعناه لك</AppText></View>
+        <Pressable onPress={() => router.back()} style={st.close} accessibilityLabel={t('إغلاق')}><AppText color="#fff" style={{ fontSize: 22 }}>×</AppText></Pressable>
+        <View style={st.pill}><AppText variant="small" color="#fff">{t('السطوع رفعناه لك')}</AppText></View>
       </View>
       <View style={{ alignItems: 'center', marginTop: 24 }}>
         {c?.biz?.photo ? <Image source={c.biz.photo} style={st.logo} contentFit="cover" /> : <View style={[st.logo, { backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' }]}><Icon name="ticket" color="#fff" size={30} /></View>}
         <AppText color="#E2DAEE" style={{ marginTop: 10 }} center>{c?.biz?.name ?? ''}{c?.biz?.area ? ` · ${c.biz.area}` : ''}</AppText>
         <AppText variant="hero" color="#fff" center>{c?.off ?? ''}</AppText>
-        <AppText variant="small" color="#E2DAEE" center>{c?.title ?? ''}{c?.minOrder ? ` · الحد الأدنى ${c.minOrder} ر.س` : ''}</AppText>
+        <AppText variant="small" color="#E2DAEE" center>{c?.title ?? ''}{c?.minOrder ? ` · ${t('الحد الأدنى {n} ر.س', { n: c.minOrder })}` : ''}</AppText>
       </View>
       <View style={st.box}>
-        <AppText variant="small" muted center style={{ fontFamily: font.semibold }}>اعرض الرمز للكاشير</AppText>
+        <AppText variant="small" muted center style={{ fontFamily: font.semibold }}>{t('اعرض الرمز للكاشير')}</AppText>
         {err && !code ? (
           <AppText center style={{ marginTop: 18, paddingHorizontal: 16, fontFamily: font.semibold }} color={brand.pinkDeep}>{err}</AppText>
         ) : (
@@ -104,15 +105,15 @@ export default function CouponUse() {
           {code ? (
             <>
               <Svg width={26} height={26} viewBox="0 0 36 36"><Circle cx={18} cy={18} r={15} fill="none" stroke={brand.chip} strokeWidth={5} /><Circle cx={18} cy={18} r={15} fill="none" stroke={brand.orange} strokeWidth={5} strokeDasharray="94" strokeDashoffset={94 - (94 * left) / 30} transform="rotate(-90 18 18)" strokeLinecap="round" /></Svg>
-              <AppText style={{ fontFamily: font.semibold }}>يتجدد بعد {left} ثانية</AppText>
+              <AppText style={{ fontFamily: font.semibold }}>{t('يتجدد بعد {n} ثانية', { n: left })}</AppText>
             </>
           ) : !err ? <ActivityIndicator color={brand.purple} /> : null}
         </View>
       </View>
-      <AppText variant="small" color="#CFC6DE" center style={{ marginTop: 18, lineHeight: 24 }}>الرمز يتغير كل 30 ثانية عشان يكون لك أنت فقط.{'\n'}بعد ما يدخله الكاشير يوصلك تأكيد هنا.</AppText>
+      <AppText variant="small" color="#CFC6DE" center style={{ marginTop: 18, lineHeight: 24 }}>{t('الرمز يتغير كل 30 ثانية عشان يكون لك أنت فقط.')}{'\n'}{t('بعد ما يدخله الكاشير يوصلك تأكيد هنا.')}</AppText>
       <View style={{ position: 'absolute', left: 20, right: 20, bottom: Math.max(insets.bottom, 16) + 10, gap: 10 }}>
         {c?.terms ? <AppText variant="tiny" color="#CFC6DE" center numberOfLines={3}>{c.terms}</AppText> : null}
-        <Pressable onPress={() => setRep('refused')} hitSlop={8}><AppText variant="small" color="#F9A158" center style={{ fontFamily: font.bold }}>المحل رفض الكوبون؟ بلّغنا</AppText></Pressable>
+        <Pressable onPress={() => setRep('refused')} hitSlop={8}><AppText variant="small" color="#F9A158" center style={{ fontFamily: font.bold }}>{t('المحل رفض الكوبون؟ بلّغنا')}</AppText></Pressable>
       </View>
       <ReportCoupon id={Number(id)} visible={!!rep} initial={rep || undefined} onClose={() => setRep('')} />
     </View>

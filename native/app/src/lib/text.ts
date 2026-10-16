@@ -1,3 +1,4 @@
+import { isEn, t } from './i18n';
 /** نص البحث: بدون تشكيل، الهمزات والتاء المربوطة موحّدة، وبدون «ال» — نفس دالة السيرفر */
 export function searchKey(s: string): string {
   return s
@@ -42,20 +43,20 @@ export function htmlToBlocks(html: string): Block[] {
   return out;
 }
 
-const MO = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const MO = isEn ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 /** «23 أكتوبر · 9:00 م» بتوقيت مكة */
 export function riyadhDate(iso: string, withTime = true): string {
   if (!iso) return '';
   const d = new Date(new Date(iso).getTime() + 3 * 3600e3);
   const h = d.getUTCHours(), mi = d.getUTCMinutes();
-  const t = `${h % 12 || 12}:${String(mi).padStart(2, '0')} ${h < 12 ? 'ص' : 'م'}`;
+  const t = `${h % 12 || 12}:${String(mi).padStart(2, '0')} ${h < 12 ? t('ص') : t('م')}`;
   return `${d.getUTCDate()} ${MO[d.getUTCMonth()]}${withTime ? ' · ' + t : ''}`;
 }
 
 /** موعد الفعالية: لو بدأت وما خلصت → «مستمرة حتى 31 ديسمبر» */
 export function eventWhen(start: string, end: string): string {
   const now = Date.now();
-  if (start && new Date(start).getTime() < now && end && new Date(end).getTime() > now) return `مستمرة حتى ${riyadhDate(end, false)}`;
+  if (start && new Date(start).getTime() < now && end && new Date(end).getTime() > now) return t('مستمرة حتى {date}', { date: riyadhDate(end, false) });
   return riyadhDate(start);
 }
 

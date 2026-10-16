@@ -12,13 +12,14 @@ import { Avatar, BackButton, Chip } from '@/components/ui';
 import { env } from '@/config/env';
 import { useAuth } from '@/lib/auth';
 import { createPost, errText, initial, similarQuestions, tint, uploadPhoto } from '@/lib/community';
+import { t, tr } from '@/lib/i18n';
 import { brand, font, START, INPUT_START } from '@/theme/tokens';
 
 type Kind = 'question' | 'tip' | 'photo';
 const KINDS: [Kind, string, IconName, string][] = [
-  ['question', 'سؤال', 'chat', 'وش تبي تعرف؟ مثلاً: وين أحسن مكان نفطر فيه قريب من الحرم؟'],
-  ['tip', 'نصيحة', 'star', 'شارك شي تعرفه: وقت زحمة، مكان مخفي، تجربة تفيد غيرك…'],
-  ['photo', 'صورة', 'cam', 'اكتب كلمتين عن الصورة: وين صوّرتها ووش يميز المكان؟'],
+  ['question', t('سؤال'), 'chat', t('وش تبي تعرف؟ مثلاً: وين أحسن مكان نفطر فيه قريب من الحرم؟')],
+  ['tip', t('نصيحة'), 'star', t('شارك شي تعرفه: وقت زحمة، مكان مخفي، تجربة تفيد غيرك…')],
+  ['photo', t('صورة'), 'cam', t('اكتب كلمتين عن الصورة: وين صوّرتها ووش يميز المكان؟')],
 ];
 const CITIES: [string, string][] = ALL_CITY_IDS.map((c) => [c, cityName(c)]);
 
@@ -41,9 +42,9 @@ export default function Ask() {
         <BackButton />
         <View style={st.gate}>
           <View style={st.gateIcon}><Icon name="chat" color={brand.purple} size={30} /></View>
-          <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>سجّل عشان تسأل وتشارك</AppText>
-          <AppText variant="small" muted center>عشان يعرف الناس مين يكلمهم، وتوصلك إجاباتهم.</AppText>
-          <Pressable style={st.send} onPress={() => router.replace('/login')}><AppText color="#fff" style={{ fontFamily: font.bold }}>سجّل دخولك</AppText></Pressable>
+          <AppText style={{ fontFamily: font.bold, fontSize: 18 }} center>{t('سجّل عشان تسأل وتشارك')}</AppText>
+          <AppText variant="small" muted center>{t('عشان يعرف الناس مين يكلمهم، وتوصلك إجاباتهم.')}</AppText>
+          <Pressable style={st.send} onPress={() => router.replace('/login')}><AppText color="#fff" style={{ fontFamily: font.bold }}>{t('سجّل دخولك')}</AppText></Pressable>
         </View>
       </View>
     );
@@ -60,8 +61,8 @@ export default function Ask() {
   const [similar, setSimilar] = useState<{ id: number; text: string; answers: number }[]>([]);
   useEffect(() => {
     if (kind !== 'question' || text.trim().length < 10) { setSimilar([]); return; }
-    const t = setTimeout(() => { similarQuestions(text, city).then(setSimilar); }, 700);
-    return () => clearTimeout(t);
+    const tm = setTimeout(() => { similarQuestions(text, city).then(setSimilar); }, 700);
+    return () => clearTimeout(tm);
   }, [text, city, kind]);
   const ready = text.trim().length >= 8 && (kind !== 'photo' || !!photo) && !busy;
   const submit = async () => {
@@ -71,7 +72,7 @@ export default function Ask() {
       const url = photo ? await uploadPhoto(photo) : undefined;
       const r = await createPost({ kind, city, text: text.trim(), photo: url, placeId: prm.placeId ? Number(prm.placeId) : undefined });
       // المراجعة الذكية: مرفوضة → نبين السبب ويعدّل نصه، تنتظر مراجعة → نبلغه ونرجع
-      if (r.status === 'rejected') { setRej(r.message || 'ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.'); return; }
+      if (r.status === 'rejected') { setRej(r.message || t('ما قدرنا ننشر مشاركتك لأنها تخالف قواعد المجتمع.')); return; }
       router.replace(`/question/${r.id}`);
     } catch (e) { setErr(errText(e)); } finally { setBusy(false); }
   };
@@ -82,9 +83,9 @@ export default function Ask() {
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={st.top}>
           <BackButton />
-          <AppText variant="title" style={{ flex: 1 }}>{kind === 'question' ? 'سؤال جديد' : kind === 'tip' ? 'نصيحة جديدة' : 'شارك صورة'}</AppText>
+          <AppText variant="title" style={{ flex: 1 }}>{kind === 'question' ? t('سؤال جديد') : kind === 'tip' ? t('نصيحة جديدة') : t('شارك صورة')}</AppText>
           <Pressable onPress={submit} disabled={!ready} style={[st.post, !ready && { opacity: 0.4 }]}>
-            {busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold }}>انشر</AppText>}
+            {busy ? <ActivityIndicator color="#fff" /> : <AppText color="#fff" style={{ fontFamily: font.bold }}>{t('انشر')}</AppText>}
           </Pressable>
         </View>
 
@@ -101,8 +102,8 @@ export default function Ask() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Avatar t={initial(user.name || '؟')} c={tint(user.id)} size={40} />
             <View style={{ flex: 1 }}>
-              <AppText style={{ fontFamily: font.bold }}>{user.name || 'مستخدم الدليل'}</AppText>
-              {prm.place ? <AppText variant="tiny" color={brand.skyDeep}>عن: {prm.place}</AppText> : <AppText variant="tiny" muted>ينشر باسمك للكل</AppText>}
+              <AppText style={{ fontFamily: font.bold }}>{user.name || t('مستخدم الدليل')}</AppText>
+              {prm.place ? <AppText variant="tiny" color={brand.skyDeep}>{t('عن: {place}', { place: prm.place })}</AppText> : <AppText variant="tiny" muted>{t('ينشر باسمك للكل')}</AppText>}
             </View>
           </View>
           <TextInput value={text} onChangeText={setText} placeholder={hint} placeholderTextColor={brand.faint} multiline maxLength={1500} autoFocus={kind !== 'photo'}
@@ -110,12 +111,12 @@ export default function Ask() {
           <AppText variant="tiny" muted style={{ textAlign: 'left' }}>{text.length}/1500</AppText>
           {similar.length ? (
             <View style={st.similar}>
-              <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>يمكن جوابك موجود</AppText>
+              <AppText variant="small" style={{ fontFamily: font.bold }} color={brand.purple}>{t('يمكن جوابك موجود')}</AppText>
               {similar.map((q) => (
                 <Pressable key={q.id} onPress={() => router.push(`/question/${q.id}`)} style={st.simRow}>
                   <Icon name="chat" color={brand.purple} size={16} />
                   <AppText variant="small" style={{ flex: 1 }} numberOfLines={2}>{q.text}</AppText>
-                  <AppText variant="tiny" muted>{q.answers === 1 ? 'إجابة' : `${q.answers} إجابات`}</AppText>
+                  <AppText variant="tiny" muted>{q.answers === 1 ? tr('إجابة', '1 answer') : tr(`${q.answers} إجابات`, `${q.answers} answers`)}</AppText>
                 </Pressable>
               ))}
             </View>
@@ -124,18 +125,18 @@ export default function Ask() {
           {photo ? (
             <View style={st.photoWrap}>
               <Image source={{ uri: photo }} style={{ width: '100%', height: 220 }} contentFit="cover" />
-              <Pressable onPress={() => setPhoto(null)} style={st.photoX} accessibilityLabel="شيل الصورة"><Icon name="x" color="#fff" size={18} /></Pressable>
+              <Pressable onPress={() => setPhoto(null)} style={st.photoX} accessibilityLabel={t('شيل الصورة')}><Icon name="x" color="#fff" size={18} /></Pressable>
             </View>
           ) : null}
           {Platform.OS !== 'web' ? (
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-              <Pressable style={st.media} onPress={() => pick(false)}><Icon name="plus" color={brand.pinkDeep} size={18} /><AppText variant="small" style={{ fontFamily: font.bold }}>من الصور</AppText></Pressable>
-              <Pressable style={st.media} onPress={() => pick(true)}><Icon name="cam" color={brand.pinkDeep} size={18} /><AppText variant="small" style={{ fontFamily: font.bold }}>الكاميرا</AppText></Pressable>
+              <Pressable style={st.media} onPress={() => pick(false)}><Icon name="plus" color={brand.pinkDeep} size={18} /><AppText variant="small" style={{ fontFamily: font.bold }}>{t('من الصور')}</AppText></Pressable>
+              <Pressable style={st.media} onPress={() => pick(true)}><Icon name="cam" color={brand.pinkDeep} size={18} /><AppText variant="small" style={{ fontFamily: font.bold }}>{t('الكاميرا')}</AppText></Pressable>
             </View>
           ) : null}
         </View>
 
-        <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>عن أي مدينة؟</AppText>
+        <AppText variant="section" style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 10 }}>{t('عن أي مدينة؟')}</AppText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
           {CITIES.map(([id, n]) => <Chip key={id} label={n} on={city === id} color={brand.ink} onPress={() => setCity(city === id ? null : id)} />)}
         </ScrollView>
@@ -143,17 +144,17 @@ export default function Ask() {
         {err ? <AppText center color={brand.pinkDeep} style={{ marginTop: 16 }}>{err}</AppText> : null}
         {rej ? (
           <View style={st.rej}>
-            <AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>ما انتشرت مشاركتك</AppText>
+            <AppText style={{ fontFamily: font.bold }} color={brand.pinkDeep}>{t('ما انتشرت مشاركتك')}</AppText>
             <AppText variant="small" style={{ lineHeight: 23, marginTop: 4 }}>{rej}</AppText>
-            <AppText variant="tiny" muted style={{ marginTop: 6 }}>عدّل النص وانشر من جديد.</AppText>
+            <AppText variant="tiny" muted style={{ marginTop: 6 }}>{t('عدّل النص وانشر من جديد.')}</AppText>
           </View>
         ) : null}
 
         <View style={st.rules}>
-          <AppText variant="small" style={{ fontFamily: font.bold }}>قبل لا تنشر</AppText>
-          <AppText variant="small" muted style={{ lineHeight: 22 }}>احترم الناس، وبدون إعلانات أو أرقام جوالات أو روابط. المشاركات تمر بمراجعة سريعة قبل النشر، وتكرار المخالفات يوقف المشاركة مؤقتاً.</AppText>
+          <AppText variant="small" style={{ fontFamily: font.bold }}>{t('قبل لا تنشر')}</AppText>
+          <AppText variant="small" muted style={{ lineHeight: 22 }}>{t('احترم الناس، وبدون إعلانات أو أرقام جوالات أو روابط. المشاركات تمر بمراجعة سريعة قبل النشر، وتكرار المخالفات يوقف المشاركة مؤقتاً.')}</AppText>
           <AppText variant="tiny" muted style={{ marginTop: 4 }}>
-            بالنشر توافق على <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'community' } })}>شروط المجتمع</AppText>
+            {t('بالنشر توافق على')} <AppText variant="tiny" color={brand.purple} onPress={() => router.push({ pathname: '/legal', params: { doc: 'community' } })}>{t('شروط المجتمع')}</AppText>
           </AppText>
         </View>
       </ScrollView>

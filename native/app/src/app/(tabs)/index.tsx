@@ -56,7 +56,7 @@ export default function Home() {
           <Image source={require('../../../assets/brand/logo-white.png')} style={{ width: 150, height: 44 }} contentFit="contain" />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <BellButton style={st.glass} />
-            <Pressable accessibilityLabel={t('ملفي')} onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || '؟') : 'د'} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
+            <Pressable accessibilityLabel={t('ملفي')} onPress={() => router.push('/profile')} style={st.avRing}><Avatar t={user ? initial(user.name || tr('؟', '?')) : tr('د', 'S')} c={user ? tint(user.id) : brand.lilac} size={44} /></Pressable>
           </View>
         </View>
         <View style={st.heroTx}>
