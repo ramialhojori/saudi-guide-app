@@ -14,6 +14,7 @@ import { api } from '@/lib/api';
 import { ALL_CITY_IDS, cityName } from '@/lib/content';
 import { tint } from '@/lib/community';
 import { brand, font, START, INPUT_START } from '@/theme/tokens';
+import { rateApp, shareApp } from '@/lib/appShare';
 import { schemePref, setSchemePref, type SchemePref } from '@/theme/scheme';
 import { env } from '@/config/env';
 
@@ -100,6 +101,8 @@ export default function Settings() {
         <Row label={t('أخبار الصحف اللي أتابعها')}><Switch value={n.papers} onValueChange={(v) => setPref('papers', v)} trackColor={{ true: brand.green }} /></Row>
       </Group>
       <Group title={t('عن الدليل')}>
+        <Row label={t('شارك التطبيق مع أصحابك')} value={isEn ? '›' : '‹'} onPress={shareApp} />
+        <Row label={t('قيّم التطبيق في المتجر')} value={isEn ? '›' : '‹'} onPress={rateApp} />
         <Row label={t('تواصل معنا')} value={isEn ? '›' : '‹'} onPress={() => router.push('/contact')} />
         <Row label={t('سياسة الخصوصية')} value={isEn ? '›' : '‹'} onPress={() => router.push({ pathname: '/legal', params: { doc: 'privacy' } })} />
         <Row label={t('شروط الاستخدام')} value={isEn ? '›' : '‹'} onPress={() => router.push({ pathname: '/legal', params: { doc: 'terms' } })} />

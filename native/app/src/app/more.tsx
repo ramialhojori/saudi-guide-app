@@ -9,6 +9,8 @@ import { brand, colors, radius, space } from '@/theme/tokens';
 import { env } from '@/config/env';
 import { strings } from '@/i18n/ar';
 import { t } from '@/lib/i18n';
+import { rateApp, shareApp } from '@/lib/appShare';
+import { AdFreeCard } from '@/components/Ads';
 
 type Item = { icon: IconName; label: string; color: string; on: () => void; soon?: boolean };
 
@@ -20,6 +22,8 @@ const ITEMS: Item[] = [
   { icon: 'chat', label: t('اسأل أهل المدينة'), color: brand.pink, on: () => router.push('/community') },
   { icon: 'ticket', label: t('العروض والكوبونات'), color: brand.orange, on: () => router.push('/offers') },
   { icon: 'shop', label: t('عندك نشاط تجاري؟ دليل السعودية للأعمال'), color: brand.orangeDeep, on: () => router.push('/business') },
+  { icon: 'share', label: t('شارك التطبيق مع أصحابك'), color: brand.pink, on: shareApp },
+  { icon: 'star', label: t('قيّم التطبيق في المتجر'), color: '#E0A526', on: rateApp },
   { icon: 'share', label: t('تابعنا على إكس'), color: brand.purple, on: () => Linking.openURL('https://x.com/SAUDIA_GUIDE') },
   { icon: 'phone', label: t('تواصل معنا'), color: '#3E8E5A', on: () => router.push('/contact') },
 ];
@@ -27,6 +31,7 @@ const ITEMS: Item[] = [
 export default function MoreScreen() {
   return (
     <Screen>
+      <AdFreeCard />
       <View style={styles.card}>
         {ITEMS.map((it, i) => (
           <Pressable key={it.label} onPress={it.soon ? undefined : it.on} style={[styles.row, i > 0 && styles.line]} accessibilityRole="button" disabled={it.soon}>

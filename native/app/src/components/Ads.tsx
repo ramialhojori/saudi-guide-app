@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
-import { adsLib, unitId, useAds } from '@/lib/ads';
+import { adsLib, rewardedAvailable, unitId, useAdFreeUntil, useAds, watchForAdFree } from '@/lib/ads';
+import { Icon } from './Icon';
+import { alert } from '@/lib/alert';
 import { t } from '@/lib/i18n';
 import { brand, font } from '@/theme/tokens';
 
@@ -24,7 +26,8 @@ export function NativeAdCard({ style }: { style?: object }) {
   const { NativeAdView, NativeAsset, NativeAssetType, NativeMediaView } = L;
   const img = ad.images?.[0]?.url || ad.icon?.url;
   return (
-    <NativeAdView nativeAd={ad} style={[st.card, style]}>
+    <View style={style}>
+    <NativeAdView nativeAd={ad} style={st.card}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         {img ? <NativeMediaView style={st.media} resizeMode="cover" /> : null}
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -42,6 +45,8 @@ export function NativeAdCard({ style }: { style?: object }) {
         </NativeAsset>
       ) : null}
     </NativeAdView>
+    <View style={{ alignItems: 'center', paddingTop: 6 }}><HideAdsLink /></View>
+    </View>
   );
 }
 
@@ -59,7 +64,52 @@ export function BannerSlot({ style }: { style?: object }) {
   );
 }
 
+/** «أخفِ الإعلانات ساعة» (رابط صغير تحت الإعلان) */
+function HideAdsLink() {
+  const [busy, setBusy] = useState(false);
+  if (!rewardedAvailable()) return null;
+  return (
+    <Pressable onPress={async () => { setBusy(true); const ok = await watchForAdFree(); setBusy(false); if (!ok) alert(t('ما اكتمل الإعلان'), t('لازم تشاهد الإعلان للنهاية عشان تنخفي الإعلانات.')); }} hitSlop={6} disabled={busy}>
+      <AppText variant="tiny" color={brand.purple} style={{ fontFamily: font.bold }}>{busy ? t('لحظة…') : t('شاهد إعلان قصير وأخفِ الإعلانات ساعة')}</AppText>
+    </Pressable>
+  );
+}
+
+/** بطاقة «بدون إعلانات لمدة ساعة» (صفحة المزيد): زر مشاهدة إعلان، أو كم باقي من الساعة */
+export function AdFreeCard({ style }: { style?: object }) {
+  const on = useAds();
+  const until = useAdFreeUntil();
+  const [busy, setBusy] = useState(false);
+  const [, force] = useState(0);
+  useEffect(() => { if (!until) return; const i = setInterval(() => force((x) => x + 1), 30000); return () => clearInterval(i); }, [until]);
+  if (until) {
+    const m = Math.max(1, Math.round((until - Date.now()) / 60000));
+    return (
+      <View style={[st.free, style]}>
+        <View style={[st.freeIc, { backgroundColor: brand.green }]}><Icon name="check" color="#fff" size={20} /></View>
+        <View style={{ flex: 1 }}>
+          <AppText style={{ fontFamily: font.bold }}>{t('التطبيق بدون إعلانات')}</AppText>
+          <AppText variant="small" muted>{t('باقي {n} دقيقة', { n: m })}</AppText>
+        </View>
+      </View>
+    );
+  }
+  if (!on || !rewardedAvailable()) return null;
+  return (
+    <Pressable style={[st.free, style]} disabled={busy} onPress={async () => { setBusy(true); const ok = await watchForAdFree(); setBusy(false); if (!ok) alert(t('ما اكتمل الإعلان'), t('لازم تشاهد الإعلان للنهاية عشان تنخفي الإعلانات.')); }}>
+      <View style={st.freeIc}>{busy ? <ActivityIndicator color="#fff" /> : <Icon name="cam" color="#fff" size={20} />}</View>
+      <View style={{ flex: 1 }}>
+        <AppText style={{ fontFamily: font.bold }}>{t('ساعة بدون إعلانات')}</AppText>
+        <AppText variant="small" muted>{t('شاهد إعلان قصير، ونخفي كل الإعلانات ساعة كاملة')}</AppText>
+      </View>
+      <Icon name="chevron" color={brand.muted} size={18} />
+    </Pressable>
+  );
+}
+
 const st = StyleSheet.create({
+  free: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 18, padding: 12, marginBottom: 12 },
+  freeIc: { width: 40, height: 40, borderRadius: 13, backgroundColor: brand.orange, alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: brand.card, borderRadius: 20, padding: 10, gap: 10 },
   media: { width: 86, height: 86, borderRadius: 14, backgroundColor: brand.chip, overflow: 'hidden' },
   tag: { backgroundColor: brand.chip, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
