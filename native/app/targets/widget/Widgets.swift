@@ -6,6 +6,16 @@ let orange = Color("sgOrange")
 let pink = Color("sgPink")
 let ink = Color("sgInk")
 
+extension View {
+  /// لغة واتجاه الودجت حسب لغة التطبيق (العد التنازلي يطلع «بعد ٣ أيام» بالعربي)
+  func sgLocale() -> some View {
+    let ar = Store.lang() != "en"
+    return self
+      .environment(\.locale, Locale(identifier: ar ? "ar_SA" : "en_US"))
+      .environment(\.layoutDirection, ar ? .rightToLeft : .leftToRight)
+  }
+}
+
 @main
 struct SaudiGuideWidgets: WidgetBundle {
   var body: some Widget {
@@ -63,7 +73,7 @@ struct TodayView: View {
     }
     .foregroundStyle(.white)
     .padding(14)
-    .environment(\.layoutDirection, .rightToLeft)
+    .sgLocale()
     .widgetURL(URL(string: pick?.url ?? "saudiguide://"))
     .containerBackground(for: .widget) {
       ZStack {
@@ -143,7 +153,7 @@ struct GoingView: View {
         }
       }
     }
-    .environment(\.layoutDirection, .rightToLeft)
+    .sgLocale()
     .widgetURL(URL(string: list.first?.0.url ?? "saudiguide://events"))
     .containerBackground(for: .widget) {
       if family == .systemSmall || family == .systemMedium {
@@ -201,7 +211,7 @@ struct OfferView: View {
       }
     }
     .foregroundStyle(.white)
-    .environment(\.layoutDirection, .rightToLeft)
+    .sgLocale()
     .widgetURL(URL(string: o?.url ?? "saudiguide://offers"))
     .containerBackground(for: .widget) {
       LinearGradient(colors: [orange, pink], startPoint: .topLeading, endPoint: .bottomTrailing)

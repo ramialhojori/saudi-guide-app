@@ -9,6 +9,7 @@
 import { AppState, Platform } from 'react-native';
 import { api } from './api';
 import { session } from './auth';
+import { isEn } from './i18n';
 
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
 export const APP_GROUP = 'group.com.saudiguide';
@@ -33,6 +34,7 @@ export async function syncWidget(force = false) {
     const d = await api<Record<string, unknown>>(`/v1/widget?city=${encodeURIComponent(city)}`, { token, timeoutMs: 8000 });
     st.s.set('payload', JSON.stringify(d));
     st.s.set('city', city);
+    st.s.set('lang', isEn ? 'en' : 'ar'); // الودجت يكتب العد التنازلي بلغة التطبيق
     st.S.reloadWidget();
     last = Date.now();
   } catch { /* بدون نت: يبقى آخر شي */ } finally { busy = false; }

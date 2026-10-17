@@ -77,6 +77,9 @@ enum Store {
     return try? JSONDecoder().decode(WPayload.self, from: d)
   }
 
+  /// لغة التطبيق (يحفظها التطبيق): العربي افتراضياً
+  static func lang() -> String { defaults?.string(forKey: "lang") ?? "ar" }
+
   static func city() -> String {
     if let c = defaults?.string(forKey: "city"), !c.isEmpty { return c }
     return cached()?.city ?? "riyadh"
