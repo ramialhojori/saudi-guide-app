@@ -7,6 +7,7 @@
 import { sessionUser } from './auth.js';
 import { CITIES } from './normalize.js';
 import { offerOff } from './offers.js';
+import { nextBreak } from './calendar.js';
 
 const parse = (s, d) => { try { return JSON.parse(s); } catch { return d; } };
 const dayNo = () => Math.floor((Date.now() + 3 * 3600e3) / 86400e3); // يوم بتوقيت مكة
@@ -54,5 +55,6 @@ export async function widgetRoute(p, request, env, J, q) {
       .bind(me.id, nowIso).all().catch(() => ({ results: [] }));
     going = g.results.map((e) => ({ id: e.id, title: e.title, start: e.start || '', city: (CITIES.find((x) => x[0] === e.city) || [])[1] || '', url: `saudiguide://event/${e.id}` }));
   }
-  return J({ city: cid, cityName: cname, lat, lng, pick, offer, going, at: Math.floor(Date.now() / 1000) }, 200, me ? 0 : 600);
+  const next = await nextBreak(env).catch(() => null);
+  return J({ city: cid, cityName: cname, lat, lng, pick, offer, going, ...(next ? { next } : {}), at: Math.floor(Date.now() / 1000) }, 200, me ? 0 : 600);
 }

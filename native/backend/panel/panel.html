@@ -225,7 +225,7 @@ async function securityView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['affiliate', 'الحجز بالعمولة'], ['houseads', 'إعلانات داخلية'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['calendar', 'التقويم والإجازات'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['affiliate', 'الحجز بالعمولة'], ['houseads', 'إعلانات داخلية'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
   if (!KEY && !TOKEN) return loginView();
   if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
@@ -237,7 +237,7 @@ async function render() {
     <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, affiliate: affiliateView, houseads: houseAdsView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, calendar: calendarView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, affiliate: affiliateView, houseads: houseAdsView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -962,6 +962,44 @@ async function houseAdsView() {
   };
   $('#haNew').onclick = () => form();
   m.querySelectorAll('[data-he]').forEach((b) => (b.onclick = () => form(d.ads.find((x) => x.id === +b.dataset.he))));
+}
+async function calendarView() {
+  const m = $('#main');
+  const STT = { draft: ['مسودة', 'b-draft'], live: ['منشور', 'b-live'], hidden: ['مخفي', 'b-hidden'] };
+  const KN = { school: 'إجازة دراسية', national: 'مناسبة وطنية', religious: 'مناسبة دينية', other: 'أخرى' };
+  m.innerHTML = `<div class="row"><div class="grow"><h1>التقويم والإجازات</h1><p class="sub">قسم «التقويم» في التطبيق: الإجازات المدرسية والمناسبات الوطنية والدينية، مع عد تنازلي وتذكير وزر «خطط لي رحلة». المواسم والفعاليات تنضاف للتقويم لحالها من صفحاتها. الجديد ينزل مسودة لين تنشره.</p></div><button class="btn o" id="cNew">+ إضافة</button></div>
+    <div id="cForm"></div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  const d = await api('/admin/calendar');
+  const drafts = d.items.filter((x) => x.status === 'draft').length;
+  const fmtD = (s) => new Date(s + 'T12:00:00+03:00').toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { day: 'numeric', month: 'short', year: 'numeric' });
+  const daysOf = (x) => Math.round((Date.parse(x.end) - Date.parse(x.start)) / 86400e3) + 1;
+  $('#res').innerHTML = (drafts ? `<div class="post" style="background:var(--softOrange)"><div class="row"><b class="grow">${drafts} عنصر مسودة ما يطلع في التطبيق</b><button class="btn g" id="cPubAll">انشر الكل</button></div></div>` : '')
+    + d.items.map((x) => `<div class="post"${x.end < d.today ? ' style="opacity:.55"' : ''}><div class="row"><b class="grow">${h(x.title)} <span class="muted" style="font-size:13px">· ${KN[x.kind] || x.kind}</span></b>${x.end < d.today ? '<span class="badge b-hidden">انتهى</span>' : ''}<span class="badge ${(STT[x.status] || ['', 'b-hidden'])[1]}">${(STT[x.status] || [x.status])[0]}</span></div>
+      <div class="muted" style="font-size:13px">${fmtD(x.start)}${x.end !== x.start ? ' ← ' + fmtD(x.end) + ` (${daysOf(x)} يوم)` : ''}${x.cities.length ? ' · أفضل مدن: ' + x.cities.map(cityName).join('، ') : ''}</div>
+      ${x.note ? `<div style="font-size:14px">${h(x.note)}</div>` : ''}
+      <div class="row">${x.status !== 'live' ? `<button class="btn g" data-cs="${x.id}" data-s="live">انشره</button>` : `<button class="btn ghost" data-cs="${x.id}" data-s="draft">رجّعه مسودة</button>`}<button class="btn ghost" data-ce="${x.id}">عدّل</button>${x.status !== 'hidden' ? `<button class="btn ghost" data-cs="${x.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">التقويم فاضي</div>';
+  const ERR = { title_required: 'العنوان مطلوب', start_required: 'حدد البداية', bad_date: 'التاريخ غلط', bad_range: 'النهاية لازم بعد البداية' };
+  if ($('#cPubAll')) $('#cPubAll').onclick = async () => { if (!confirm(`تنشر ${drafts} عنصر في التطبيق؟`)) return; await api('/admin/calendar/publish-all', { method: 'POST', body: {} }); toast('انتشرت'); calendarView(); };
+  m.querySelectorAll('[data-cs]').forEach((b) => (b.onclick = async () => { await api('/admin/calendar/' + b.dataset.cs, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); calendarView(); }));
+  const form = (x = {}) => {
+    const sel = new Set(x.cities || []);
+    $('#cForm').innerHTML = `<div class="card" style="max-width:720px;margin-bottom:14px"><b>${x.id ? 'تعديل' : 'إضافة (تنزل مسودة)'}</b>
+      <div class="two"><div class="f"><label>النوع</label><select class="in" id="ck">${Object.entries(KN).map(([k, t]) => `<option value="${k}" ${x.kind === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div class="f"><label>العنوان *</label><input class="in" id="ct" maxlength="60" value="${h(x.title || '')}" placeholder="إجازة منتصف العام"></div></div>
+      <div class="two"><div class="f"><label>من *</label><input class="in" type="date" id="cst" value="${x.start || ''}"></div><div class="f"><label>إلى</label><input class="in" type="date" id="cen" value="${x.end || ''}"></div></div>
+      <div class="f"><label>سطر وصف (اختياري)</label><input class="in" id="cn" maxlength="140" value="${h(x.note || '')}" placeholder="أحلى وقت للعلا والبر"></div>
+      <details><summary style="cursor:pointer">English (اختياري)</summary><input class="in" id="cte" placeholder="Title" value="${h(x.titleEn || '')}" style="margin-top:6px"><input class="in" id="cne" placeholder="Note" value="${h(x.noteEn || '')}" style="margin-top:6px"></details>
+      <div class="f"><label>أفضل مدن لهالوقت (حتى 6، تطلع في «خطط لي رحلة»)</label><div class="chips" id="cc">${META.cities.map((c) => `<span class="chip ${sel.has(c.id) ? 'on' : ''}" data-c="${c.id}">${h(c.name)}</span>`).join('')}</div></div>
+      <div class="row" style="margin-top:12px"><button class="btn g" id="cSave">احفظ</button><button class="btn ghost" id="cCancel">إلغاء</button></div></div>`;
+    $('#cForm').querySelectorAll('[data-c]').forEach((c) => (c.onclick = () => { const id = c.dataset.c; if (sel.has(id)) sel.delete(id); else if (sel.size < 6) sel.add(id); c.classList.toggle('on', sel.has(id)); }));
+    $('#cCancel').onclick = () => ($('#cForm').innerHTML = '');
+    $('#cSave').onclick = async () => {
+      const body = { kind: $('#ck').value, title: $('#ct').value, start: $('#cst').value, end: $('#cen').value || $('#cst').value, note: $('#cn').value, title_en: $('#cte').value, note_en: $('#cne').value, cities: [...sel] };
+      try { await api(x.id ? '/admin/calendar/' + x.id : '/admin/calendar', { method: 'POST', body }); toast(x.id ? 'انحفظ' : 'انضاف مسودة'); calendarView(); } catch (e) { toast(ERR[e.message] || errMsg(e)); }
+    };
+    $('#cForm').scrollIntoView({ behavior: 'smooth' });
+  };
+  $('#cNew').onclick = () => form();
+  m.querySelectorAll('[data-ce]').forEach((b) => (b.onclick = () => form(d.items.find((x) => x.id === +b.dataset.ce))));
 }
 async function papersView() {
   const m = $('#main');

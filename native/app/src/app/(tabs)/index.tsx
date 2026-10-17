@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
+import { NextBreak } from '@/components/NextBreak';
 import { HeartButton } from '@/components/HeartButton';
 import { Icon, type IconName } from '@/components/Icon';
 import { BellButton } from '@/components/BellButton';
@@ -119,6 +120,9 @@ export default function Home() {
           ) : null}
         </View>
       ) : null}
+
+      {/* أقرب إجازة دراسية ← التقويم */}
+      <NextBreak style={{ marginHorizontal: 16, marginTop: 14 }} />
 
       {/* مختارات الأسبوع */}
       <View style={st.secHead}>

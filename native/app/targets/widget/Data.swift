@@ -32,6 +32,15 @@ struct WGoing: Codable {
   var url: String
 }
 
+struct WBreak: Codable {
+  var id: Int
+  var title: String
+  var titleEn: String
+  var start: String
+  var days: Int
+  var url: String
+}
+
 struct WPayload: Codable {
   var city: String
   var cityName: String
@@ -40,6 +49,7 @@ struct WPayload: Codable {
   var pick: WPick?
   var offer: WOffer?
   var going: [WGoing]
+  var next: WBreak?
   var at: Int
 }
 

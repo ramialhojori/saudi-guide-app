@@ -18,6 +18,7 @@ const ITEMS: Item[] = [
   { icon: 'star', label: t('اشترك في دليل+'), color: brand.orangeDeep, on: () => router.push('/plus') },
   { icon: 'spark', label: t('اسأل الدليل (مساعد ذكي)'), color: brand.purple, on: () => router.push('/ask-ai') },
   { icon: 'route', label: t('خطط لي رحلتي'), color: brand.orange, on: () => router.push('/planner') },
+  { icon: 'calendar', label: t('التقويم والإجازات'), color: brand.pink, on: () => router.push('/calendar') },
   { icon: 'news', label: t('الأخبار'), color: brand.sky, on: () => router.push('/news') },
   { icon: 'chat', label: t('اسأل أهل المدينة'), color: brand.pink, on: () => router.push('/community') },
   { icon: 'ticket', label: t('العروض والكوبونات'), color: brand.orange, on: () => router.push('/offers') },

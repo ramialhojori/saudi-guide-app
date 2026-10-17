@@ -107,3 +107,18 @@ export async function tripReminder(start: string, firstDay: number[] = []) {
     await AsyncStorage.setItem(TRIP_REMINDER, id);
   } catch { /* */ }
 }
+
+/** إشعار محلي بموعد (التقويم: «ذكّرني»). يرجع رقمه عشان نلغيه، أو null لو ما فيه إذن/الوقت فات */
+export async function scheduleLocal(title: string, body: string, at: Date, link: string): Promise<string | null> {
+  if (!mods() || at.getTime() < Date.now() + 5 * 60e3) return null;
+  try {
+    let { status } = await N.getPermissionsAsync();
+    if (status !== 'granted') status = (await N.requestPermissionsAsync()).status;
+    if (status !== 'granted') return null;
+    return await N.scheduleNotificationAsync({ content: { title, body, data: { link } }, trigger: { type: N.SchedulableTriggerInputTypes?.DATE ?? 'date', date: at } });
+  } catch { return null; }
+}
+export async function cancelLocal(id: string) {
+  if (!mods()) return;
+  await N.cancelScheduledNotificationAsync(id).catch(() => {});
+}

@@ -25,9 +25,9 @@ const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac, brand.green];
 /** خطط لي رحلة: تختار المدينة والأيام واهتماماتك، والدليل يرتبها لك يوم بيوم */
 export default function Planner() {
   const insets = useSafeAreaInsets();
-  const prm = useLocalSearchParams<{ city?: string }>();
+  const prm = useLocalSearchParams<{ city?: string; start?: string; days?: string }>();
   const [city, setCity] = useState(prm.city && CITIES.some((c) => c[0] === prm.city) ? prm.city : 'medina');
-  const [days, setDays] = useState(2);
+  const [days, setDays] = useState(() => { const n = parseInt(String(prm.days || ''), 10); return n >= 1 ? Math.min(n, 4) : 2; });
   const [want, setWant] = useState<string[]>(['sights', 'heritage', 'food']);
   const [pace, setPace] = useState<Pace>('normal');
   const [plan, setPlan] = useState<PlanStop[][] | null>(null);
@@ -37,8 +37,9 @@ export default function Planner() {
   const F = useFeatures();
   const { user } = useAuth();
   const [smart, setSmart] = useState(true);
-  const [when, setWhen] = useState<'' | 'today' | 'tomorrow' | 'weekend' | 'date'>('');
-  const [pick, setPick] = useState(''); // «تاريخ معيّن»: اليوم المختار من الشريط
+  const fromCal = /^\d{4}-\d{2}-\d{2}$/.test(String(prm.start || '')) ? String(prm.start) : ''; // جاي من التقويم بتاريخ جاهز
+  const [when, setWhen] = useState<'' | 'today' | 'tomorrow' | 'weekend' | 'date'>(fromCal ? 'date' : '');
+  const [pick, setPick] = useState(fromCal); // «تاريخ معيّن»: اليوم المختار من الشريط
   const formScroll = useRef<ScrollView>(null);
   const [party, setParty] = useState('');
   const [budget, setBudget] = useState('متوسطة');

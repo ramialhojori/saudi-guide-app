@@ -22,6 +22,7 @@ struct SaudiGuideWidgets: WidgetBundle {
     TodayWidget()
     GoingWidget()
     OfferWidget()
+    BreakWidget()
   }
 }
 
@@ -215,6 +216,99 @@ struct OfferView: View {
     .widgetURL(URL(string: o?.url ?? "saudiguide://offers"))
     .containerBackground(for: .widget) {
       LinearGradient(colors: [orange, pink], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+  }
+}
+
+// MARK: - «الإجازة الجاية»: عد تنازلي لأقرب إجازة دراسية أو مناسبة (من التقويم)
+
+struct BreakWidget: Widget {
+  let kind = "SGBreak"
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: kind, provider: SGProvider(withImage: false)) { e in
+      BreakView(e: e)
+    }
+    .configurationDisplayName("الإجازة الجاية")
+    .description("عد تنازلي لأقرب إجازة، وخطط رحلتك من الحين.")
+    .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
+  }
+}
+
+struct BreakView: View {
+  let e: SGEntry
+  @Environment(\.widgetFamily) var family
+
+  /// كم يوم باقي (بالأيام الكاملة بتوقيت مكة)
+  func daysLeft(_ d: Date) -> Int {
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "Asia/Riyadh") ?? .current
+    return max(0, cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: cal.startOfDay(for: d)).day ?? 0)
+  }
+
+  func leftText(_ n: Int, _ ar: Bool) -> String {
+    if n == 0 { return ar ? "اليوم" : "Today" }
+    if n == 1 { return ar ? "بكرة" : "Tomorrow" }
+    if !ar { return "In \(n) days" }
+    if n == 2 { return "بعد يومين" }
+    return n <= 10 ? "بعد \(n) أيام" : "بعد \(n) يوم"
+  }
+
+  func lenText(_ d: Int, _ ar: Bool) -> String {
+    if !ar { return "\(d) days" }
+    return d <= 10 ? "\(d) أيام" : "\(d) يوم"
+  }
+
+  var body: some View {
+    let ar = Store.lang() != "en"
+    let b = e.payload?.next
+    let date = b.flatMap { parseDate($0.start) }
+    let title = b.map { ar || $0.titleEn.isEmpty ? $0.title : $0.titleEn } ?? ""
+    let n = date.map { daysLeft($0) } ?? 0
+    let left = leftText(n, ar)
+    let len = lenText(b?.days ?? 0, ar)
+    Group {
+      switch family {
+      case .accessoryInline:
+        if b != nil { Text("\(title) · \(left)") } else { Text(ar ? "التقويم والإجازات" : "Calendar") }
+      case .accessoryRectangular:
+        VStack(alignment: .leading, spacing: 1) {
+          Text(b != nil ? title : (ar ? "الإجازة الجاية" : "Next break")).font(.headline).lineLimit(1)
+          Text(b != nil ? left : (ar ? "افتح التقويم" : "Open the calendar")).font(.system(size: 13, weight: .semibold))
+          if b != nil { Text(len).font(.caption2).opacity(0.8) }
+        }
+      default:
+        VStack(alignment: .leading, spacing: 4) {
+          HStack(spacing: 4) {
+            Image(systemName: "calendar")
+            Text(ar ? "الإجازة الجاية" : "Next break").font(.system(size: 12, weight: .bold))
+          }.opacity(0.9)
+          Spacer(minLength: 0)
+          if b != nil {
+            if n > 1 {
+              HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(n)").font(.system(size: family == .systemSmall ? 38 : 44, weight: .heavy))
+                Text(ar ? (n <= 10 ? "أيام" : "يوم") : "days").font(.system(size: 14, weight: .bold)).opacity(0.9)
+              }
+            } else {
+              Text(left).font(.system(size: 28, weight: .heavy))
+            }
+            Text(title).font(.system(size: 15, weight: .bold)).lineLimit(2).minimumScaleFactor(0.85)
+            if family == .systemMedium { Text((ar ? "مدتها " : "Lasts ") + len + (ar ? " · خطط رحلتك من الحين" : " · plan your trip now")).font(.system(size: 12)).opacity(0.85).lineLimit(1) }
+          } else {
+            Text(ar ? "افتح التقويم وشوف الإجازات الجاية" : "Open the calendar to see upcoming breaks").font(.system(size: 13, weight: .bold)).lineLimit(3)
+          }
+        }
+        .foregroundStyle(.white)
+      }
+    }
+    .sgLocale()
+    .widgetURL(URL(string: b?.url ?? "saudiguide://calendar"))
+    .containerBackground(for: .widget) {
+      if family == .systemSmall || family == .systemMedium {
+        LinearGradient(colors: [pink, purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+      } else {
+        AccessoryWidgetBackground()
+      }
     }
   }
 }

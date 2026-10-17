@@ -31,6 +31,7 @@ import { tripsRoute, tripsAdmin } from './trips.js';
 import { affiliateRoute, affiliateAdmin } from './affiliate.js';
 import { widgetRoute } from './widget.js';
 import { houseAdsRoute, houseAdsAdmin } from './houseads.js';
+import { calendarRoute, calendarAdmin } from './calendar.js';
 import { errorsRoute, insightsAdmin, weeklyReport } from './insights.js';
 import { videosRoute, videosAdmin } from './videos.js';
 import { papersRoute, papersAdmin, runPapers, saveDevicePapers } from './papers.js';
@@ -167,7 +168,7 @@ async function route(request, env, ctx) {
       await env.DB.prepare("INSERT OR REPLACE INTO kv (k,v) VALUES ('weekly_pool',?)").bind(JSON.stringify(body.pool || [])).run();
       return J({ ok: true, count: (body.pool || []).length });
     }
-    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await tripsAdmin(p, request, env, J)) || (await affiliateAdmin(p, request, env, J)) || (await houseAdsAdmin(p, request, env, J)) || (await insightsAdmin(p, request, env, J)) || (await videosAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
+    const ar = (await contactAdmin(request, env, p, q, J)) || (await businessAdmin(p, request, env, J, q)) || (await offersAdmin(p, request, env, J, q)) || (await commentsAdmin(p, request, env, J, q)) || (await papersAdmin(p, request, env, J)) || (await tripsAdmin(p, request, env, J)) || (await affiliateAdmin(p, request, env, J)) || (await houseAdsAdmin(p, request, env, J)) || (await calendarAdmin(p, request, env, J)) || (await insightsAdmin(p, request, env, J)) || (await videosAdmin(p, request, env, J, q)) || (await seasonsAdmin(p, request, env, J)) || (await aiAdmin(p, request, env, J)) || (await adminRoute(p, request, env, J, q)) || (await merchantAdmin(p, request, env, J, q)) || (await reviewsAdmin(p, request, env, J, q)) || (await messagesAdmin(p, request, env, J, q)) || (await guideAdmin(p, request, env, J)) || (await contribAdmin(p, request, env, J, q));
     if (ar) return ar;
     if (p.startsWith('/admin/community/')) {
       const r = await communityAdmin(p, request, env, J);
@@ -193,6 +194,7 @@ async function route(request, env, ctx) {
   if (/^\/v1\/places\/\d+\/videos$/.test(p)) { const r = await videosRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/errors') { const r = await errorsRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/widget') { const r = await widgetRoute(p, request, env, J, q); if (r) return r; }
+  if (p === '/v1/calendar') { const r = await calendarRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/push/open') { const r = await pushOpenRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/house-ads')) { const r = await houseAdsRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/affiliate') { const r = await affiliateRoute(p, request, env, J); if (r) return r; }
