@@ -35,13 +35,16 @@ export async function videosRoute(p, request, env, J) {
   if (!place) return J({ error: 'not_found' }, 404);
   const pending = await env.DB.prepare("SELECT COUNT(*) n FROM place_videos WHERE user_id=? AND status='pending'").bind(me.id).first();
   if ((pending?.n || 0) >= 3) return J({ error: 'too_many_pending' }, 429);
-  const type = (request.headers.get('Content-Type') || '').split(';')[0];
-  const ext = { 'video/mp4': 'mp4', 'video/quicktime': 'mov' }[type];
-  if (!ext) return J({ error: 'bad_type' }, 400);
+  // نوع الملف: نعتمد على محتواه (توقيع ftyp لملفات MP4/MOV) لأن الجوال أحياناً يرسل Content-Type عام مثل application/octet-stream
   const len = +(request.headers.get('Content-Length') || 0);
   if (len > MAX) return J({ error: 'too_big' }, 413);
   const buf = await request.arrayBuffer();
   if (buf.byteLength < 20000 || buf.byteLength > MAX) return J({ error: 'bad_size' }, 400);
+  const head = new Uint8Array(buf, 0, 12);
+  const tag = String.fromCharCode(...head.slice(4, 8)), brand = String.fromCharCode(...head.slice(8, 12));
+  if (tag !== 'ftyp') return J({ error: 'bad_type' }, 400);
+  const ext = brand.startsWith('qt') ? 'mov' : 'mp4';
+  const type = ext === 'mov' ? 'video/quicktime' : 'video/mp4';
   const u = new URL(request.url);
   const key = `v/${me.id}/${crypto.randomUUID()}.${ext}`;
   await env.MEDIA.put(key, buf, { httpMetadata: { contentType: type, cacheControl: 'public, max-age=31536000, immutable' } });
