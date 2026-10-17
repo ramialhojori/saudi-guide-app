@@ -117,14 +117,15 @@ export const type = {
 export const photos = {
   rock: require('../../assets/photos/home-hero.jpg'), // صورة الرئيسية: تبوك (NEOM عبر Unsplash) مؤقتاً لين نشتري صخرة الفيل — القديمة غير مرخّصة ومحفوظة في صور-المدن/احتياط
   land: require('../../assets/photos/welcome.jpg'), // العلا (SALEH عبر Unsplash)
-  riyadh: require('../../assets/photos/riyadh.jpg'),
-  gate: require('../../assets/photos/jeddah-gate.jpg'),
-  heritage: require('../../assets/photos/heritage.jpg'),
-  jold: require('../../assets/photos/jeddah-old.jpg'),
-  water: require('../../assets/photos/waterfront.jpg'),
-  sea: require('../../assets/photos/seafood.jpg'),
-  art: require('../../assets/photos/art.jpg'),
-  fest: require('../../assets/photos/festival.jpg'),
+  // البقية من صور المدن المرخّصة (صور-المدن/للتطبيق) بعرض 1290 — 17 أكتوبر 2026
+  riyadh: require('../../assets/photos/riyadh.jpg'), // برج المملكة
+  gate: require('../../assets/photos/jeddah-gate.jpg'), // المسجد النبوي (المدينة)
+  heritage: require('../../assets/photos/heritage.jpg'), // الدرعية
+  jold: require('../../assets/photos/jeddah-old.jpg'), // نافورة جدة
+  water: require('../../assets/photos/waterfront.jpg'), // نافورة جدة (موسم جدة)
+  sea: require('../../assets/photos/seafood.jpg'), // إثراء — الظهران قرب الخبر (موسم الخبر)
+  art: require('../../assets/photos/art.jpg'), // حافة العالم — منطقة الرياض
+  fest: require('../../assets/photos/festival.jpg'), // منطاد القصيم (بديل عام للفعاليات)
 } as const;
 export type PhotoKey = keyof typeof photos;
 

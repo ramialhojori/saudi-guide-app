@@ -210,6 +210,13 @@ export default function Planner() {
           ))}
         </View>
 
+        <AppText variant="section" style={st.h}>{t('متى؟')}</AppText>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+          {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي'], ['date', 'تاريخ معيّن']] as const).map(([k, lb]) => <Chip key={k} label={k === 'date' && pick && when === 'date' ? tripDayDate(pick, 0, isEn) : t(lb)} on={when === k} color={brand.purple} onPress={() => { setWhen(k); if (k === 'date' && !pick) setPick(nextDays(1)[0]); }} />)}
+        </ScrollView>
+        {when === 'date' ? <DateStrip value={pick} onChange={setPick} /> : null}
+        {startDate() ? <AppText variant="small" muted style={{ paddingHorizontal: 20, marginTop: 8 }}>{days === 1 ? tripDayDate(startDate(), 0, isEn) : t('من {a} إلى {b}', { a: tripDayDate(startDate(), 0, isEn), b: tripDayDate(startDate(), days - 1, isEn) })}</AppText> : null}
+
         <AppText variant="section" style={st.h}>{t('وش تحب؟')}</AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16 }}>
           {kinds.map((k) => {
@@ -233,12 +240,6 @@ export default function Planner() {
           ))}
         </View>
 
-        <AppText variant="section" style={st.h}>{t('متى؟')}</AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-          {([['', 'ما حددت'], ['today', 'من اليوم'], ['tomorrow', 'من بكرة'], ['weekend', 'الويكند الجاي'], ['date', 'تاريخ معيّن']] as const).map(([k, lb]) => <Chip key={k} label={k === 'date' && pick && when === 'date' ? tripDayDate(pick, 0, isEn) : t(lb)} on={when === k} color={brand.purple} onPress={() => { setWhen(k); if (k === 'date' && !pick) setPick(nextDays(1)[0]); }} />)}
-        </ScrollView>
-        {when === 'date' ? <DateStrip value={pick} onChange={setPick} /> : null}
-        {startDate() ? <AppText variant="small" muted style={{ paddingHorizontal: 20, marginTop: 8 }}>{days === 1 ? tripDayDate(startDate(), 0, isEn) : t('من {a} إلى {b}', { a: tripDayDate(startDate(), 0, isEn), b: tripDayDate(startDate(), days - 1, isEn) })}</AppText> : null}
 
         {useSmart ? (
           <>

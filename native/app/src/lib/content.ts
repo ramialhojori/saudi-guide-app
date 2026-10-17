@@ -22,6 +22,8 @@ const fromSnap = (p: SnapPlace): Place => ({
 });
 const PLACES = SNAP.places.map(fromSnap);
 const BY_ID = new Map(PLACES.map((p) => [p.id, p]));
+/** صورة مكان من النسخة المدمجة (للأمثلة الثابتة مثل الرحلة التجريبية) */
+export const snapImage = (id: number) => { const p = BY_ID.get(id); return p?.image || p?.thumb || ''; };
 const KEYS = new Map(PLACES.map((p) => [p.id, searchKey(p.title + ' ' + p.cat)]));
 const withImageFirst = (a: Place[]) => [...a.filter((p) => p.thumb), ...a.filter((p) => !p.thumb)];
 

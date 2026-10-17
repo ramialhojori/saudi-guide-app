@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui';
-import { cityName, getPlacesByIds } from '@/lib/content';
+import { cityName, getPlacesByIds, snapImage } from '@/lib/content';
 import { encodeTrip, trip, tripDayDate, useTrip } from '@/lib/trip';
 import { DateStrip } from '@/components/DateStrip';
 import { env } from '@/config/env';
@@ -23,12 +23,12 @@ const STEP = [brand.orange, brand.pink, brand.sky, brand.lilac];
 /** رحلة تجريبية (نفس التصميم) تظهر لين يحفظ المستخدم أماكنه */
 const DEMO: Stop[][] = [
   [
-    { time: tr('4:30 م · الغروب', '4:30 PM · Sunset'), title: tr('صخرة الفيل', 'Elephant Rock'), sub: tr('معالم · ساعة ونص', 'Sights · 1.5 hours'), img: photos.rock, drive: tr('12 دقيقة بالسيارة', '12 min drive') },
-    { time: tr('7:00 م · عشاء', '7:00 PM · Dinner'), title: tr('مطعم مرايا', 'Maraya Restaurant'), sub: tr('مطاعم · يحتاج حجز', 'Restaurants · Booking needed'), img: photos.sea, drive: tr('20 دقيقة بالسيارة', '20 min drive') },
-    { time: tr('9:30 م · فعالية', '9:30 PM · Event'), title: tr('مشاهدة النجوم في غرابيلة', 'Stargazing at Gharameel'), sub: tr('تذكرة · 2 شخص', 'Ticket · 2 people'), img: photos.fest },
+    { time: tr('4:30 م · الغروب', '4:30 PM · Sunset'), title: tr('صخرة الفيل', 'Elephant Rock'), sub: tr('معالم · ساعة ونص', 'Sights · 1.5 hours'), img: snapImage(59231322) || photos.land, drive: tr('12 دقيقة بالسيارة', '12 min drive') },
+    { time: tr('7:00 م · عشاء', '7:00 PM · Dinner'), title: tr('مطعم مرايا', 'Maraya Restaurant'), sub: tr('مطاعم · يحتاج حجز', 'Restaurants · Booking needed'), img: snapImage(75569286) || photos.land, drive: tr('20 دقيقة بالسيارة', '20 min drive') },
+    { time: tr('9:30 م · فعالية', '9:30 PM · Event'), title: tr('مشاهدة النجوم في غرابيلة', 'Stargazing at Gharameel'), sub: tr('تذكرة · 2 شخص', 'Ticket · 2 people'), img: snapImage(59231533) || photos.land },
   ],
-  [{ time: tr('8:00 ص · الشروق', '8:00 AM · Sunrise'), title: tr('البلدة القديمة', 'AlUla Old Town'), sub: tr('تراث · ساعتين', 'Heritage · 2 hours'), img: photos.heritage }],
-  [{ time: tr('10:00 ص', '10:00 AM'), title: tr('مزرعة فيرنا', 'Verna Farm'), sub: tr('تجارب · فطور مزرعة', 'Experiences · Farm breakfast'), img: photos.land }],
+  [{ time: tr('8:00 ص · الشروق', '8:00 AM · Sunrise'), title: tr('البلدة القديمة', 'AlUla Old Town'), sub: tr('تراث · ساعتين', 'Heritage · 2 hours'), img: snapImage(59231603) || photos.land }],
+  [{ time: tr('10:00 ص', '10:00 AM'), title: tr('ديمومة', 'Daimumah'), sub: tr('تجارب · مزرعة في الواحة', 'Experiences · Oasis farm'), img: snapImage(98082992) || photos.land }],
 ];
 
 export default function TripScreen() {
