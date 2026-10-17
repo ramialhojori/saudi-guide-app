@@ -572,4 +572,6 @@ export default {
   "شغّل الموقع عشان نعرض الأماكن اللي حولك بالضبط": "Turn on location to see places right around you",
   "شغّل": "Turn on",
   "ما لقينا أماكن قريبة منك في الدليل للحين.": "No places near you in the guide yet.",
+  "برعاية": "Sponsored",
+  "اكتشف": "Discover",
 } as Record<string, string>;

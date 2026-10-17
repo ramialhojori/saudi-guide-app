@@ -4,6 +4,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { BannerSlot } from '@/components/Ads';
 import { useAds } from '@/lib/ads';
+import { useHouseAd } from '@/lib/houseAds';
 import { PlaceVideos } from '@/components/PlaceVideos';
 import { BookStrip } from '@/components/BookStrip';
 import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
@@ -39,8 +40,9 @@ export default function PlaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const pull = usePullUpClose({ kind: 'place', id: Number(id), skipTop: 440 });
   const insets = useSafeAreaInsets();
-  const adsOn = useAds();
   const { data: p, loading, error } = useAsync(() => getPlace(Number(id)), [id]);
+  const houseBanner = useHouseAd('banner', p?.city).ad;
+  const adsOn = useAds() || !!houseBanner;
   const { data: near } = useAsync(() => (p?.lat && p?.lng ? nearby(p.lat, p.lng, 5) : Promise.resolve([])), [p?.id]);
   const { ids } = useTrip();
   const [img, setImg] = useState(0);
@@ -413,7 +415,7 @@ export default function PlaceScreen() {
           <Button label={t('الاتجاهات')} bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
         </View>
         {/* بانر ثابت تحت الأزرار، بمسافة كافية عنها عشان ما ينضغط بالغلط (سياسة AdMob) */}
-        <BannerSlot sticky />
+        <BannerSlot sticky city={p.city} />
       </View>
     </Animated.View>
   );

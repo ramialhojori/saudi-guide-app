@@ -7,6 +7,7 @@ import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } fro
 import { usePullUpClose } from '@/components/PullUpClose';
 import { BannerSlot } from '@/components/Ads';
 import { useAds } from '@/lib/ads';
+import { useHouseAd } from '@/lib/houseAds';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { RichText } from '@/components/RichText';
@@ -33,8 +34,9 @@ export default function EventScreen() {
   const pull = usePullUpClose({ kind: 'event', id: Number(id), skipTop: 420 });
   useEffect(() => { if (id) track('event', Number(id)); }, [id]);
   const insets = useSafeAreaInsets();
-  const adsOn = useAds();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);
+  const houseBanner = useHouseAd('banner', e?.city || undefined).ad;
+  const adsOn = useAds() || !!houseBanner;
   const [going, setGoing] = useState(false);
   const { user } = useAuth();
   const [goers, setGoers] = useState<{ count: number; who: { id: string; name: string }[] }>({ count: 0, who: [] });
@@ -121,7 +123,7 @@ export default function EventScreen() {
               onPress={() => { WebBrowser.openBrowserAsync(ticket).catch(() => {}); }} />
           ) : null}
           {/* بانر ثابت أسفل الصفحة، بمسافة عن زر الحجز (سياسة AdMob) */}
-          <BannerSlot sticky style={ticket ? undefined : { marginTop: 0 }} />
+          <BannerSlot sticky city={e.city || undefined} style={ticket ? undefined : { marginTop: 0 }} />
         </View>
       ) : null}
     </Animated.View>

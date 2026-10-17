@@ -143,7 +143,7 @@ export default function CityScreen() {
           <View style={{ paddingHorizontal: 16 }}>
             <ImageRow img={item.thumb || undefined} cat={item.cat} catColor={kindStyle[item.kinds[0]]?.fg ?? brand.purple} title={item.title}
               sub={item.summary || ''} right={<HeartButton id={item.id} />} onPress={() => { setList('place', all.map((x) => x.id)); router.push(`/place/${item.id}`); }} />
-            {index % 8 === 5 ? <NativeAdCard style={{ marginTop: 10 }} /> : null}
+            {index % 8 === 5 ? <NativeAdCard city={id} style={{ marginTop: 10 }} /> : null}
           </View>
         )}
       />

@@ -225,7 +225,7 @@ async function securityView() {
 }
 
 /* ——— الهيكل ——— */
-const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['affiliate', 'الحجز بالعمولة'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
+const NAV = [['home', 'الرئيسية'], ['places', 'الأماكن'], ['events', 'الفعاليات'], ['seasons', 'المواسم'], ['weekly', 'مختارات الأسبوع'], ['articles', 'الأخبار'], ['community', 'المجتمع'], ['comments', 'تعليقات الأخبار'], ['papers', 'الصحف'], ['trips', 'رحلات جاهزة'], ['affiliate', 'الحجز بالعمولة'], ['houseads', 'إعلانات داخلية'], ['merchants', 'التجار والكوبونات'], ['photos', 'صور وتقييمات'], ['videos', 'فيديوهات الزوار'], ['messages', 'الرسائل'], ['suggest', 'اقتراحات الزوار'], ['contact', 'رسائل التواصل'], ['badges', 'الأوسمة والنقاط'], ['analytics', 'التحليلات'], ['report', 'التقرير الأسبوعي'], ['errors', 'الأعطال'], ['users', 'المستخدمين'], ['ai', 'الذكاء ودليل+'], ['features', 'المميزات'], ['security', 'الأمان والدخول']];
 async function render() {
   if (!KEY && !TOKEN) return loginView();
   if (TOKEN && !ME) { try { ME = (await api('/admin/session')).user; } catch { return; } }
@@ -237,7 +237,7 @@ async function render() {
     <div class="foot">${ME ? h(ME.name || ME.email) + '<br>' : ''}كل وقت بتوقيت مكة<br><a href="#" id="out" style="color:#CFC6DE">خروج</a></div></aside><main id="main"></main></div>`;
   document.querySelectorAll('.nav').forEach((b) => (b.onclick = () => { VIEW = b.dataset.v; render(); }));
   $('#out').onclick = (e) => { e.preventDefault(); signOut(false); render(); };
-  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, affiliate: affiliateView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
+  ({ home: homeView, places: placesView, events: eventsView, seasons: seasonsView, weekly: weeklyView, articles: articlesView, community: communityView, comments: commentsView, papers: papersView, trips: tripsView, affiliate: affiliateView, houseads: houseAdsView, report: reportView, videos: videosView, errors: errorsView, merchants: merchantsView, photos: photosView, messages: messagesView, badges: badgesView, analytics: analyticsView, users: usersView, suggest: suggestView, contact: contactView, features: featuresView, ai: aiView, security: securityView })[VIEW]();
   if (!SUMMARY && VIEW !== 'home') api('/admin/summary').then((x) => { SUMMARY = x; }).catch(() => {});
 }
 
@@ -904,6 +904,64 @@ async function affiliateView() {
     try { await api('/admin/affiliate', { method: 'POST', body: { on: $('#afOn').checked, links } }); toast('انحفظ'); affiliateView(); }
     catch (e) { toast(e.message === 'bad_url' ? 'الرابط لازم يبدأ بـ https://' : errMsg(e)); }
   };
+}
+async function houseAdsView() {
+  const m = $('#main');
+  const STT = { draft: ['مسودة', 'b-draft'], live: ['منشور', 'b-live'], hidden: ['مخفي', 'b-hidden'] };
+  const PL = { banner: 'شريط أسفل الصفحة', native: 'بطاقة بين المحتوى' };
+  m.innerHTML = `<h1>إعلانات داخلية</h1><p class="sub">إعلاناتك أنت داخل التطبيق: ترويج لأقسام دليل (دليل+، الرحلات الجاهزة، العروض…) أو راعي مجاني. تطلع مكان إعلانات قوقل بالنسبة اللي تحددها، ومكتوب عليها «إعلان». مشتركين دليل+ ما يشوفونها. كل إعلان جديد ينزل مسودة لين تنشره.</p>
+    <div class="card" style="max-width:720px;margin-bottom:14px"><div class="row" style="flex-wrap:wrap;gap:10px"><b class="grow">نسبة ظهور إعلاناتك بدل قوقل</b><input class="in" id="haShare" type="number" min="0" max="100" style="width:90px"> %<button class="btn" id="haShareSave">احفظ</button></div>
+    <div class="muted" style="font-size:13px;margin-top:6px">0 = إعلانات قوقل بس · 100 = إعلاناتك دايماً (لما يكون فيه إعلان منشور). الأرباح تجي من قوقل، فلا ترفعها كثير إلا وقت حملة.</div></div>
+    <div class="row" style="margin-bottom:12px"><button class="btn g" id="haNew">+ إعلان جديد</button></div>
+    <div id="haForm"></div><div id="res" class="list"><p class="muted">لحظة...</p></div>`;
+  const d = await api('/admin/house-ads');
+  $('#haShare').value = d.share;
+  $('#haShareSave').onclick = async () => { try { await api('/admin/house-ads/settings', { method: 'POST', body: { share: +$('#haShare').value } }); toast('انحفظ'); } catch (e) { toast(errMsg(e)); } };
+  const dt = (t) => t ? new Date((t + 3 * 3600) * 1000).toISOString().slice(0, 10) : '';
+  const ctr = (a) => a.views ? ((a.clicks / a.views) * 100).toFixed(1) + '%' : '—';
+  const expired = (a) => a.ends && a.ends <= d.now;
+  $('#res').innerHTML = d.ads.map((a) => `<div class="post"><div class="row" style="align-items:flex-start;gap:12px">
+      ${a.image ? `<img src="${h(a.image)}" style="width:120px;height:68px;object-fit:cover;border-radius:10px;flex:none">` : '<div style="width:120px;height:68px;border-radius:10px;background:#eee;flex:none;display:grid;place-items:center;font-size:12px" class="muted">بدون صورة</div>'}
+      <div class="grow"><div class="row"><b class="grow">${h(a.title)}${a.sponsor ? ` <span class="muted" style="font-size:13px">· برعاية ${h(a.sponsor)}</span>` : ''}</b>${expired(a) ? '<span class="badge b-hidden">انتهى</span>' : ''}<span class="badge ${(STT[a.status] || ['', 'b-hidden'])[1]}">${(STT[a.status] || [a.status])[0]}</span></div>
+      ${a.body ? `<div style="font-size:14px">${h(a.body)}</div>` : ''}
+      <div class="muted" style="font-size:13px">${a.placements.map((x) => PL[x] || x).join(' + ')} · ${a.cities.length ? a.cities.map(cityName).join('، ') : 'كل المدن'}${a.starts || a.ends ? ` · ${dt(a.starts) || '…'} ← ${dt(a.ends) || '…'}` : ''} · الرابط: <span dir="ltr">${h(a.link || '—')}</span></div>
+      <div style="font-size:13px;margin-top:2px">👁 ${a.views} مشاهدة · 👆 ${a.clicks} ضغطة · نسبة الضغط ${ctr(a)}</div></div></div>
+    <div class="row">${a.status !== 'live' ? `<button class="btn g" data-hs="${a.id}" data-s="live">انشره</button>` : `<button class="btn ghost" data-hs="${a.id}" data-s="draft">رجّعه مسودة</button>`}<button class="btn ghost" data-he="${a.id}">عدّل</button>${a.status !== 'hidden' ? `<button class="btn ghost" data-hs="${a.id}" data-s="hidden" style="color:var(--pinkDeep)">أخفه</button>` : ''}</div></div>`).join('') || '<div class="empty">ما فيه إعلانات للحين. اضغط «إعلان جديد»</div>';
+  const ERR = { title_required: 'العنوان مطلوب', bad_image: 'رابط الصورة لازم https', bad_link: 'الرابط لازم يبدأ بـ / (داخل التطبيق) أو https://', no_placement: 'اختر مكان واحد على الأقل', bad_date: 'التاريخ غلط', bad_range: 'النهاية لازم بعد البداية', image_required: 'أضف صورة قبل النشر' };
+  m.querySelectorAll('[data-hs]').forEach((b) => (b.onclick = async () => { try { await api('/admin/house-ads/' + b.dataset.hs, { method: 'POST', body: { status: b.dataset.s } }); toast('تم'); houseAdsView(); } catch (e) { toast(ERR[e.message] || errMsg(e)); } }));
+  const form = (a = {}) => {
+    const pl = a.placements || ['banner', 'native'];
+    let img = a.image || '';
+    $('#haForm').innerHTML = `<div class="card" style="max-width:720px;margin-bottom:14px"><b>${a.id ? 'تعديل الإعلان' : 'إعلان جديد (ينزل مسودة)'}</b>
+      <div class="f"><label>الصورة * (عرضية، 1200×630 تقريباً)</label><div class="row" style="gap:10px"><img id="haImg" style="width:160px;height:84px;object-fit:cover;border-radius:10px;background:#eee;${img ? '' : 'display:none'}" src="${h(img)}"><input type="file" id="haFile" accept="image/jpeg,image/png,image/webp" style="display:none"><button class="btn ghost" id="haUp">ارفع صورة</button></div></div>
+      <div class="f"><label>العنوان *</label><input class="in" id="haT" maxlength="80" value="${h(a.title || '')}" placeholder="مثلاً: جرّب دليل+ مجاناً"></div>
+      <div class="f"><label>النص</label><input class="in" id="haB" maxlength="200" value="${h(a.body || '')}" placeholder="سطر قصير يوضح الفكرة"></div>
+      <div class="row" style="gap:10px;flex-wrap:wrap"><div class="f grow"><label>نص الزر</label><input class="in" id="haC" maxlength="24" value="${h(a.cta || '')}" placeholder="اكتشف"></div><div class="f grow"><label>اسم الراعي (اختياري)</label><input class="in" id="haS" maxlength="60" value="${h(a.sponsor || '')}"></div></div>
+      <div class="f"><label>الرابط: داخل التطبيق يبدأ بـ / (مثل /plus ، /offers ، /place/123 ، /trips/5) أو موقع https://</label><input class="in" id="haL" dir="ltr" value="${h(a.link || '')}" placeholder="/plus"></div>
+      <div class="row" style="gap:10px;flex-wrap:wrap"><details class="grow" style="margin-top:4px"><summary style="cursor:pointer">English (اختياري)</summary><input class="in" id="haTe" placeholder="Title" value="${h(a.titleEn || '')}" style="margin-top:6px"><input class="in" id="haBe" placeholder="Text" value="${h(a.bodyEn || '')}" style="margin-top:6px"><input class="in" id="haCe" placeholder="Button" value="${h(a.ctaEn || '')}" style="margin-top:6px"></details></div>
+      <div class="f"><label>مكان الظهور</label><div class="row" style="gap:16px">${Object.entries(PL).map(([k, t]) => `<label><input type="checkbox" data-hp="${k}" ${pl.includes(k) ? 'checked' : ''}> ${t}</label>`).join('')}</div></div>
+      <div class="f"><label>المدن (فاضي = كل المدن)</label><div style="display:flex;flex-wrap:wrap;gap:6px 14px">${META.cities.map((c) => `<label style="font-size:14px"><input type="checkbox" data-hc="${c.id}" ${(a.cities || []).includes(c.id) ? 'checked' : ''}> ${h(c.name)}</label>`).join('')}</div></div>
+      <div class="row" style="gap:10px;flex-wrap:wrap"><div class="f grow"><label>يبدأ (اختياري)</label><input class="in" type="date" id="haSt" value="${dt(a.starts)}"></div><div class="f grow"><label>ينتهي (اختياري)</label><input class="in" type="date" id="haEn" value="${dt(a.ends)}"></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn g" id="haSave">احفظ</button><button class="btn ghost" id="haCancel">إلغاء</button></div></div>`;
+    $('#haUp').onclick = () => $('#haFile').click();
+    $('#haFile').onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast('الصورة لازم JPG أو PNG أو WEBP');
+      toast('يرفع الصورة...');
+      try { const r = await api('/admin/upload', { method: 'POST', body: f, headers: { 'Content-Type': f.type } }); img = r.url; $('#haImg').src = img; $('#haImg').style.display = ''; toast('انرفعت'); } catch (er) { toast(errMsg(er)); }
+    };
+    $('#haCancel').onclick = () => ($('#haForm').innerHTML = '');
+    $('#haSave').onclick = async () => {
+      const body = { title: $('#haT').value, body: $('#haB').value, cta: $('#haC').value, sponsor: $('#haS').value, link: $('#haL').value, image: img,
+        title_en: $('#haTe').value, body_en: $('#haBe').value, cta_en: $('#haCe').value,
+        placements: [...m.querySelectorAll('[data-hp]:checked')].map((x) => x.dataset.hp), cities: [...m.querySelectorAll('[data-hc]:checked')].map((x) => x.dataset.hc),
+        starts: $('#haSt').value || null, ends: $('#haEn').value ? $('#haEn').value + 'T23:59' : null };
+      try { await api(a.id ? '/admin/house-ads/' + a.id : '/admin/house-ads', { method: 'POST', body }); toast(a.id ? 'انحفظ' : 'انضاف مسودة'); houseAdsView(); } catch (e) { toast(ERR[e.message] || errMsg(e)); }
+    };
+    $('#haForm').scrollIntoView({ behavior: 'smooth' });
+  };
+  $('#haNew').onclick = () => form();
+  m.querySelectorAll('[data-he]').forEach((b) => (b.onclick = () => form(d.ads.find((x) => x.id === +b.dataset.he))));
 }
 async function papersView() {
   const m = $('#main');
