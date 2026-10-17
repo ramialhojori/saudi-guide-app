@@ -51,11 +51,16 @@ export function NativeAdCard({ style }: { style?: object }) {
 }
 
 /** بانر صغير يتكيّف مع عرض الشاشة (آخر الخبر وصفحة المكان بس) */
-export function BannerSlot({ style }: { style?: object }) {
+export function BannerSlot({ style, sticky }: { style?: object; sticky?: boolean }) {
   const on = useAds();
   const [failed, setFailed] = useState(false);
   if (!on || failed) return null;
   const { BannerAd, BannerAdSize } = adsLib();
+  if (sticky) return (
+    <View style={[{ alignItems: 'center', marginTop: 14, marginHorizontal: -16 }, style]}>
+      <BannerAd unitId={unitId('banner')} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} onAdFailedToLoad={() => setFailed(true)} />
+    </View>
+  );
   return (
     <View style={[{ alignItems: 'center', marginVertical: 10 }, style]}>
       <AppText variant="tiny" muted style={{ marginBottom: 4 }}>{t('إعلان')}</AppText>

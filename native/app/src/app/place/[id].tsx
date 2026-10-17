@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { BannerSlot } from '@/components/Ads';
+import { useAds } from '@/lib/ads';
 import { PlaceVideos } from '@/components/PlaceVideos';
 import { BookStrip } from '@/components/BookStrip';
 import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
@@ -38,6 +39,7 @@ export default function PlaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const pull = usePullUpClose({ kind: 'place', id: Number(id), skipTop: 440 });
   const insets = useSafeAreaInsets();
+  const adsOn = useAds();
   const { data: p, loading, error } = useAsync(() => getPlace(Number(id)), [id]);
   const { data: near } = useAsync(() => (p?.lat && p?.lng ? nearby(p.lat, p.lng, 5) : Promise.resolve([])), [p?.id]);
   const { ids } = useTrip();
@@ -102,7 +104,7 @@ export default function PlaceScreen() {
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: brand.bg }, pull.style]}>
-      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: adsOn ? 190 : 120 }} showsVerticalScrollIndicator={false}>
         {/* الصور */}
         {images.length ? (
           <View style={{ height: 440, backgroundColor: brand.ink }}>
@@ -396,7 +398,6 @@ export default function PlaceScreen() {
             </ScrollView>
           </>
         ) : null}
-        <BannerSlot style={{ marginTop: 16 }} />
         {pull.footer}
       </ScrollView>
 
@@ -407,8 +408,12 @@ export default function PlaceScreen() {
         </Pressable>
       </Modal>
       <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Button label={saved ? t('✓ في رحلتي') : t('أضف لرحلتي')} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
-        <Button label={t('الاتجاهات')} bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Button label={saved ? t('✓ في رحلتي') : t('أضف لرحلتي')} icon={saved ? undefined : 'plus'} style={{ flex: 1.4 }} onPress={() => { if (!saved) track('trip_add', p.id); trip.toggle(p.id); }} />
+          <Button label={t('الاتجاهات')} bg={brand.ink} style={{ flex: 1 }} onPress={() => { track('directions', p.id); openDirections(p.lat, p.lng, p.title); }} />
+        </View>
+        {/* بانر ثابت تحت الأزرار، بمسافة كافية عنها عشان ما ينضغط بالغلط (سياسة AdMob) */}
+        <BannerSlot sticky />
       </View>
     </Animated.View>
   );
@@ -461,5 +466,5 @@ const st = StyleSheet.create({
   rvTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: brand.chip },
   rvFill: { height: '100%', borderRadius: 3, backgroundColor: brand.orange },
   viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
 });
