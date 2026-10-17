@@ -1,0 +1,13 @@
+{
+  "CFBundleDisplayName": "Saudi Guide",
+  "NSLocationWhenInUseUsageDescription": "We use your location to show places near you.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to show places near you.",
+  "NSLocationAlwaysUsageDescription": "We use your location to show places near you.",
+  "NSMicrophoneUsageDescription": "We use the microphone for voice search and to record sound with the place videos you share.",
+  "NSFaceIDUsageDescription": "We use Face ID to protect your saved sign-in on this device.",
+  "NSMotionUsageDescription": "The app may use motion sensors with your location to show nearby places more accurately.",
+  "NSCameraUsageDescription": "Saudi Guide needs the camera so you can shoot a place and share it with the community.",
+  "NSPhotoLibraryUsageDescription": "Saudi Guide needs access to your photos so you can share place photos with the community.",
+  "NSSpeechRecognitionUsageDescription": "We turn your speech into text to search places for you.",
+  "NSUserTrackingUsageDescription": "This lets us show ads that match your interests. You can decline and see general ads instead."
+}

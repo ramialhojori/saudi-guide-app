@@ -1,0 +1,13 @@
+{
+  "CFBundleDisplayName": "دليل السعودية",
+  "NSLocationWhenInUseUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك.",
+  "NSMicrophoneUsageDescription": "نستخدم المايكروفون عشان تبحث بصوتك في الدليل، ولتسجيل الصوت مع فيديو المكان اللي تشاركه.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك.",
+  "NSLocationAlwaysUsageDescription": "نستخدم موقعك عشان نعرض لك الأماكن القريبة منك.",
+  "NSFaceIDUsageDescription": "نستخدم Face ID لحماية بيانات دخولك المحفوظة في الجهاز.",
+  "NSMotionUsageDescription": "قد يستخدم التطبيق مستشعرات الحركة مع موقعك لعرض الأماكن القريبة بدقة أكبر.",
+  "NSCameraUsageDescription": "يحتاج دليل السعودية الكاميرا عشان تصوّر المكان وتشاركه في المجتمع.",
+  "NSPhotoLibraryUsageDescription": "يحتاج دليل السعودية الوصول لصورك عشان تشارك صور الأماكن في المجتمع.",
+  "NSSpeechRecognitionUsageDescription": "نحوّل كلامك لنص عشان نبحث لك عن الأماكن.",
+  "NSUserTrackingUsageDescription": "نستخدم هذا لعرض إعلانات تناسب اهتماماتك. تقدر ترفض وتظهر لك إعلانات عامة."
+}
