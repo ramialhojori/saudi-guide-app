@@ -65,17 +65,18 @@ export function watchForAdFree(): Promise<boolean> {
   const L = adsLib();
   if (!L || !unitId('rewarded')) return Promise.resolve(false);
   return new Promise((resolve) => {
-    let earned = false, done = false;
-    const finish = (ok: boolean) => { if (done) return; done = true; subs.forEach((u) => u()); resolve(ok); };
+    let earned = false, done = false, shown = false;
+    const finish = (ok: boolean) => { if (done) return; done = true; subs.forEach((u) => u()); resolve(ok || earned); };
     const ad = L.RewardedAd.createForAdRequest(unitId('rewarded'));
     const subs = [
-      ad.addAdEventListener(L.RewardedAdEventType.LOADED, () => { ad.show().catch(() => finish(false)); }),
+      ad.addAdEventListener(L.RewardedAdEventType.LOADED, () => { shown = true; ad.show().catch(() => finish(false)); }),
       ad.addAdEventListener(L.RewardedAdEventType.EARNED_REWARD, () => { earned = true; setFree(Date.now() + FREE_MS); }),
+      // النتيجة بعد ما يقفل المستخدم الإعلان (مو قبل) — الإعلانات الطويلة كانت تطلع رسالة «ما اكتمل» فوقها
       ad.addAdEventListener(L.AdEventType.CLOSED, () => finish(earned)),
       ad.addAdEventListener(L.AdEventType.ERROR, () => finish(false)),
     ];
     start().then(() => ad.load());
-    setTimeout(() => finish(earned), 45000); // ما وصل إعلان خلال 45 ثانية
+    setTimeout(() => { if (!shown) finish(false); }, 30000); // مهلة تحميل الإعلان بس؛ بعد ما يظهر ننتظر لين ينقفل
   });
 }
 
