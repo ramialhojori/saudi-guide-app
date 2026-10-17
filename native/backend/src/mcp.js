@@ -215,7 +215,7 @@ const TOOLS = [
   /* —— الرسائل والإشعارات —— */
   ['list_messages', 'الرسائل المرسلة والمجدولة وعدد الأجهزة.', S({}), () => ['GET', '/admin/messages']],
   ['estimate_message', 'كم شخص بتوصله الرسالة (cities، segment: all|inactive|new|guides|merchants).', S({ cities: { type: 'array', items: { type: 'string' } }, segment: str('') }), (a) => ['POST', '/admin/messages/estimate', a]],
-  ['send_message', 'يرسل أو يجدول رسالة/إشعار للمستخدمين (title حتى 60، text حتى 178، link مثل /event/123، cities، segment، at ISO مع +03:00 للجدولة، push، inapp). ساعات الهدوء 23:00-08:00 مكة تتأجل تلقائياً. ⚠️ لازم confirmed=true وبس بعد ما يوافق رامي على النص والجمهور والوقت بالحرف.', S({ title: str(''), text: str(''), link: str(''), cities: { type: 'array', items: { type: 'string' } }, segment: str(''), at: str(''), push: { type: 'boolean' }, inapp: { type: 'boolean' }, confirmed: { type: 'boolean' } }, ['text', 'confirmed']), null, 'send'],
+  ['send_message', 'يرسل أو يجدول رسالة/إشعار للمستخدمين (title حتى 60، text حتى 178، link مثل /event/123، image رابط https لصورة تطلع داخل الإشعار (اختياري)، cities، segment، at ISO مع +03:00 للجدولة، push، inapp). ساعات الهدوء 23:00-08:00 مكة تتأجل تلقائياً. ⚠️ لازم confirmed=true وبس بعد ما يوافق رامي على النص والجمهور والوقت بالحرف.', S({ title: str(''), text: str(''), link: str(''), image: str(''), cities: { type: 'array', items: { type: 'string' } }, segment: str(''), at: str(''), push: { type: 'boolean' }, inapp: { type: 'boolean' }, confirmed: { type: 'boolean' } }, ['text', 'confirmed']), null, 'send'],
   ['cancel_message', 'يلغي رسالة مجدولة ما انرسلت.', S({ id: num('') }, ['id']), (a) => ['POST', `/admin/messages/${+a.id}/cancel`, {}]],
 
   /* —— مفاتيح الميزات —— */

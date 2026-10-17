@@ -47,10 +47,41 @@ export async function estimate(env, a) {
   return { users: users.n, devices: dev.n };
 }
 
+/** نوع الإشعار (للإحصائيات): من الرابط، أو m.kind */
+export function pushKind(m) {
+  if (m.kind) return String(m.kind).slice(0, 20);
+  const l = String(m.link || '');
+  if (l.startsWith('/event') || l.startsWith('/season')) return 'events';
+  if (l.startsWith('/coupons') || l.startsWith('/offers')) return 'offers';
+  if (l.startsWith('/news')) return 'papers';
+  if (l.startsWith('/question')) return 'community';
+  if (l.startsWith('/city') || l.startsWith('/place')) return 'places';
+  if (l.startsWith('/trip')) return 'trip';
+  return 'other';
+}
+const statDay = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
+async function bumpStat(env, kind, col, n) {
+  if (!n) return;
+  await env.DB.prepare(`INSERT INTO push_stats (day, kind, sent, opens) VALUES (?, ?, ?, ?) ON CONFLICT(day, kind) DO UPDATE SET ${col}=${col}+?`)
+    .bind(statDay(), kind, col === 'sent' ? n : 0, col === 'opens' ? n : 0, n).run().catch(() => {});
+}
+
+/**
+ * يرسل إشعار جوال (Expo Push).
+ * m: { title, text, link, image?, kind?, mid? }
+ *  - image (https): تطلع الصورة داخل الإشعار (iOS عن طريق إضافة الإشعارات في التطبيق)
+ *  - kind/mid: عشان نعرف كم واحد فتح الإشعار (/v1/push/open)
+ */
 export async function sendPush(env, tokens, m) {
   let ok = 0, bad = 0;
+  const kind = pushKind(m);
+  const image = /^https:\/\//.test(String(m.image || '')) ? String(m.image) : '';
+  const data = { k: kind };
+  if (m.link) data.link = m.link;
+  if (m.mid) data.mid = m.mid;
+  if (image) data.image = image;
   for (let i = 0; i < tokens.length; i += 100) {
-    const batch = tokens.slice(i, i + 100).map((to) => ({ to, title: m.title || 'دليل السعودية', body: m.text, sound: 'default', data: m.link ? { link: m.link } : {} }));
+    const batch = tokens.slice(i, i + 100).map((to) => ({ to, title: m.title || 'دليل السعودية', body: m.text, sound: 'default', data, ...(image ? { mutableContent: true, richContent: { image } } : {}) }));
     try {
       const r = await fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(batch) });
       const j = await r.json().catch(() => ({}));
@@ -62,7 +93,19 @@ export async function sendPush(env, tokens, m) {
       if (!res.length) bad += batch.length;
     } catch { bad += batch.length; }
   }
+  await bumpStat(env, kind, 'sent', ok);
   return { ok, bad };
+}
+
+/** التطبيق يبلّغ لما المستخدم يفتح إشعار: { k, mid } */
+export async function pushOpenRoute(p, request, env, J) {
+  if (p !== '/v1/push/open' || request.method !== 'POST') return null;
+  const b = await request.json().catch(() => ({}));
+  const kind = String(b.k || 'other').replace(/[^a-z_]/g, '').slice(0, 20) || 'other';
+  await bumpStat(env, kind, 'opens', 1);
+  const mid = parseInt(b.mid, 10);
+  if (mid > 0) await env.DB.prepare('UPDATE messages SET opens=opens+1 WHERE id=?').bind(mid).run().catch(() => {});
+  return J({ ok: true });
 }
 
 /** يرسل رسالة واحدة. الجزء داخل التطبيق ينزل مرة، والجوال لو بساعات الهدوء يتأجل */
@@ -81,7 +124,7 @@ async function deliver(env, m) {
     else {
       const d = deviceSql(a);
       const { results } = await env.DB.prepare(d.sql).bind(...d.args).all();
-      const r = await sendPush(env, [...new Set(results.map((x) => x.token))], m);
+      const r = await sendPush(env, [...new Set(results.map((x) => x.token))], { ...m, mid: m.id, kind: 'msg' });
       push = r.ok || -1; errors = r.bad; // -1 = حاولنا وما فيه أجهزة
     }
   }
@@ -103,20 +146,24 @@ export async function messagesAdmin(p, request, env, J, q) {
   if (p === '/admin/messages' && M === 'GET') {
     const { results } = await env.DB.prepare('SELECT * FROM messages ORDER BY id DESC LIMIT 60').all();
     const dev = await env.DB.prepare('SELECT COUNT(*) n FROM devices').first();
-    return J({ devices: dev.n, messages: results.map((m) => ({ ...m, audience: parse(m.audience) })) });
+    const since = new Date(Date.now() + 3 * 3600e3 - 30 * 86400e3).toISOString().slice(0, 10);
+    const st = await env.DB.prepare('SELECT kind, SUM(sent) sent, SUM(opens) opens FROM push_stats WHERE day>=? GROUP BY kind ORDER BY sent DESC').bind(since).all().catch(() => ({ results: [] }));
+    return J({ devices: dev.n, messages: results.map((m) => ({ ...m, audience: parse(m.audience) })), stats: st.results || [] });
   }
   if (p === '/admin/messages' && M === 'POST') {
     const b = await request.json().catch(() => ({}));
     const text = String(b.text || '').trim().slice(0, 178), title = String(b.title || '').trim().slice(0, 60);
     const link = /^\/[a-z0-9/_?=&.-]*$/i.test(String(b.link || '')) ? String(b.link) : '';
+    const image = String(b.image || '').trim();
+    if (image && !/^https:\/\/\S+$/.test(image)) return J({ error: 'bad_image' }, 400);
     if (text.length < 4) return J({ error: 'text_required' }, 400);
     const aud = { cities: (Array.isArray(b.cities) ? b.cities : []).slice(0, 21), segment: SEGMENTS.includes(b.segment) ? b.segment : 'all' };
     const at = b.at ? Math.floor(new Date(b.at).getTime() / 1000) : now();
     if (!at || at < now() - 300) return J({ error: 'bad_time' }, 400);
     const inapp = b.inapp === false ? 0 : 1, push = b.push === false ? 0 : 1;
     if (!inapp && !push) return J({ error: 'no_channel' }, 400);
-    const r = await env.DB.prepare('INSERT INTO messages (title,text,link,audience,inapp,push,at,created) VALUES (?,?,?,?,?,?,?,?)')
-      .bind(title, text, link, JSON.stringify(aud), inapp, push, at, now()).run();
+    const r = await env.DB.prepare('INSERT INTO messages (title,text,link,image,audience,inapp,push,at,created) VALUES (?,?,?,?,?,?,?,?,?)')
+      .bind(title, text, link, image.slice(0, 600) || null, JSON.stringify(aud), inapp, push, at, now()).run();
     const id = r.meta.last_row_id;
     if (at <= now() + 60) {
       const m = await env.DB.prepare('SELECT * FROM messages WHERE id=?').bind(id).first();

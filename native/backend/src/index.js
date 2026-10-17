@@ -15,7 +15,7 @@ import { communityRoute, communityAdmin, myStats, myNotifications, passportRoute
 import { adminRoute } from './admin.js';
 import { merchantRoute, merchantAdmin, merchantWeekly } from './merchants.js';
 import { reviewsRoute, reviewsAdmin } from './reviews.js';
-import { messagesAdmin, runQueue } from './messages.js';
+import { messagesAdmin, runQueue, pushOpenRoute } from './messages.js';
 import { contribRoute, contribAdmin, weeklyImpact } from './contrib.js';
 import { seasonsRoute, seasonsAdmin } from './seasons.js';
 import { aiRoute, aiAdmin } from './ai.js';
@@ -193,6 +193,7 @@ async function route(request, env, ctx) {
   if (/^\/v1\/places\/\d+\/videos$/.test(p)) { const r = await videosRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/errors') { const r = await errorsRoute(p, request, env, J); if (r) return r; }
   if (p === '/v1/widget') { const r = await widgetRoute(p, request, env, J, q); if (r) return r; }
+  if (p === '/v1/push/open') { const r = await pushOpenRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/house-ads')) { const r = await houseAdsRoute(p, request, env, J, q); if (r) return r; }
   if (p === '/v1/affiliate') { const r = await affiliateRoute(p, request, env, J); if (r) return r; }
   if (p.startsWith('/v1/trips')) { const r = await tripsRoute(p, request, env, J, q); if (r) return r; }

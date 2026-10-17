@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import { api } from './api';
 import { session } from './auth';
-import { tr } from './i18n';
+import { isEn, tr } from './i18n';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let N: any = null;
@@ -47,6 +47,18 @@ export async function registerPush(ask = false, logout = false): Promise<boolean
   return true;
 }
 
+/** نبلّغ السيرفر إن الإشعار انفتح (مرة وحدة لكل إشعار) عشان تعرف نسبة الفتح في اللوحة */
+const OPENED_KEY = 'sg_push_opened_v1';
+async function reportOpen(id: string | undefined, data: any) {
+  if (!data?.k) return; // التذكيرات المحلية (رحلتي) ما تنحسب
+  try {
+    const seen: string[] = JSON.parse((await AsyncStorage.getItem(OPENED_KEY)) || '[]');
+    if (id && seen.includes(id)) return;
+    if (id) await AsyncStorage.setItem(OPENED_KEY, JSON.stringify([...seen.slice(-30), id]));
+    await api('/v1/push/open', { method: 'POST', body: { k: String(data.k), mid: data.mid || undefined }, timeoutMs: 8000 });
+  } catch { /* */ }
+}
+
 let started = false;
 /** مرة وحدة عند التشغيل: طريقة عرض الإشعار وفتح الرابط لما ينضغط */
 export function startPush() {
@@ -54,8 +66,11 @@ export function startPush() {
   started = true;
   N.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) });
   const open = (resp: any) => {
-    const link = resp?.notification?.request?.content?.data?.link;
+    const req = resp?.notification?.request;
+    const data = req?.content?.data || {};
+    const link = data.link;
     if (typeof link === 'string' && link.startsWith('/')) setTimeout(() => router.push(link as never), 300);
+    reportOpen(req?.identifier, data);
   };
   N.addNotificationResponseReceivedListener(open);
   N.getLastNotificationResponseAsync?.().then(open).catch(() => {});
@@ -64,7 +79,7 @@ export function startPush() {
 
 /** تذكير محلي قبل الرحلة بيوم (6 المغرب بتوقيت مكة) لما يحدد المستخدم تاريخها. تغيير التاريخ يلغي القديم */
 const TRIP_REMINDER = 'sg_trip_reminder_id';
-export async function tripReminder(start: string) {
+export async function tripReminder(start: string, firstDay: number[] = []) {
   if (!mods()) return;
   try {
     const old = await AsyncStorage.getItem(TRIP_REMINDER);
@@ -75,8 +90,18 @@ export async function tripReminder(start: string) {
     if (at.getTime() < Date.now() + 10 * 60e3) return;
     const { status } = await N.getPermissionsAsync();
     if (status !== 'granted') return;
+    // أول يوم: أسماء أول 3 أماكن عشان يعرف وش ينتظره
+    let names: string[] = [];
+    try {
+      const { getPlace } = require('./content');
+      const ps = await Promise.all(firstDay.slice(0, 3).map((pid) => getPlace(pid).catch(() => null)));
+      names = ps.filter(Boolean).map((p: any) => (isEn && p.title_en) || p.title).filter(Boolean);
+    } catch { /* */ }
+    const body = names.length
+      ? tr(`أول يوم: ${names.join('، ')}${firstDay.length > 3 ? ' وغيرها' : ''}. خطتك كاملة في «رحلتي».`, `Day 1: ${names.join(', ')}${firstDay.length > 3 ? ' and more' : ''}. Your full plan is in My Trip.`)
+      : tr('جهّز نفسك! خطتك يوم بيوم جاهزة في «رحلتي».', 'Get ready! Your day-by-day plan is waiting in My Trip.');
     const id = await N.scheduleNotificationAsync({
-      content: { title: tr('رحلتك بكرة', 'Your trip is tomorrow'), body: tr('جهّز نفسك! خطتك يوم بيوم جاهزة في «رحلتي».', 'Get ready! Your day-by-day plan is waiting in My Trip.'), data: { link: '/trip' } },
+      content: { title: tr('رحلتك بكرة', 'Your trip is tomorrow'), body, data: { link: '/trip' } },
       trigger: { type: N.SchedulableTriggerInputTypes?.DATE ?? 'date', date: at },
     });
     await AsyncStorage.setItem(TRIP_REMINDER, id);

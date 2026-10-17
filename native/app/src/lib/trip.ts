@@ -40,13 +40,16 @@ const commit = (next: number[][], notify = true) => {
   AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {});
   emit();
   if (notify) listeners.forEach((f) => f(ids, days));
+  // لو الرحلة لها تاريخ، نحدّث تذكير «رحلتك بكرة» بأماكن أول يوم الجديدة
+  if (start) { clearTimeout(remindT); remindT = setTimeout(() => { try { require('./push').tripReminder(start, days[0] || []); } catch { /* */ } }, 3000); }
 };
+let remindT: ReturnType<typeof setTimeout> | undefined;
 function setStart(d: string) {
   start = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
   AsyncStorage.setItem(KEY_START, start).catch(() => {});
   emit();
   // تذكير قبل الرحلة بيوم (push.ts يحمّل مكتبة الإشعارات بس في الجوال)
-  try { require('./push').tripReminder(start); } catch { /* */ }
+  try { require('./push').tripReminder(start, days[0] || []); } catch { /* */ }
 }
 const without = (id: number) => days.map((d) => d.filter((x) => x !== id));
 

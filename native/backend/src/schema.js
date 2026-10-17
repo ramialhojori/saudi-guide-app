@@ -132,6 +132,9 @@ const ALTERS = [
   'ALTER TABLE ready_trips ADD COLUMN plus_only INTEGER NOT NULL DEFAULT 0', // رحلة «حصرية دليل+» (trips.js)
   'ALTER TABLE devices ADD COLUMN papers TEXT', // الصحف اللي يتابعها الجهاز (papers.js)
   'ALTER TABLE users ADD COLUMN plus_grant_until INTEGER', // منحة دليل+ من المشرف (منفصلة عن اشتراك آبل)
+  'ALTER TABLE messages ADD COLUMN image TEXT', // صورة داخل الإشعار (messages.js)
+  'ALTER TABLE messages ADD COLUMN opens INTEGER NOT NULL DEFAULT 0', // كم مرة انفتح إشعار الرسالة
+  'CREATE TABLE IF NOT EXISTS push_stats ( day TEXT NOT NULL, kind TEXT NOT NULL, sent INTEGER NOT NULL DEFAULT 0, opens INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, kind) )', // إشعارات انرسلت/انفتحت يومياً حسب النوع
   // المنح القديمة كانت تنكتب في plus_until مباشرة: ننقلها للمنحة (لمن ما عنده اشتراك آبل)
   'UPDATE users SET plus_grant_until=plus_until WHERE plus_grant_until IS NULL AND plus_until IS NOT NULL AND id NOT IN (SELECT user_id FROM iap_subs)', // إيقاف مؤقت عن المشاركة في المجتمع بعد تكرار المخالفات
 ];
