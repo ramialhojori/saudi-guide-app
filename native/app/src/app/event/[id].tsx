@@ -5,6 +5,8 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { usePullUpClose } from '@/components/PullUpClose';
+import { BannerSlot } from '@/components/Ads';
+import { useAds } from '@/lib/ads';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { RichText } from '@/components/RichText';
@@ -31,6 +33,7 @@ export default function EventScreen() {
   const pull = usePullUpClose({ kind: 'event', id: Number(id), skipTop: 420 });
   useEffect(() => { if (id) track('event', Number(id)); }, [id]);
   const insets = useSafeAreaInsets();
+  const adsOn = useAds();
   const { data: e, loading } = useAsync(() => getEvent(Number(id)), [id]);
   const [going, setGoing] = useState(false);
   const { user } = useAuth();
@@ -55,7 +58,7 @@ export default function EventScreen() {
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: brand.bg }, pull.style]}>
-      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView {...pull.scroll} contentContainerStyle={{ paddingBottom: adsOn ? 190 : 120 }}>
         <View style={{ height: 420, backgroundColor: brand.ink }}>
           <Image source={e.image || e.thumb || photos.fest} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient colors={['rgba(32,22,54,0.2)', 'rgba(32,22,54,0.92)']} style={StyleSheet.absoluteFill} />
@@ -111,10 +114,14 @@ export default function EventScreen() {
         {pull.footer}
       </ScrollView>
 
-      {ticket ? (
+      {ticket || adsOn ? (
         <View style={[st.bottom, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <Button label={extLink(e.tickets?.startsWith('http') ? e.tickets : '') ? t('احجز تذكرتك') : t('الموقع الرسمي للفعالية')} style={{ flex: 1 }}
-            onPress={() => { WebBrowser.openBrowserAsync(ticket).catch(() => {}); }} />
+          {ticket ? (
+            <Button label={extLink(e.tickets?.startsWith('http') ? e.tickets : '') ? t('احجز تذكرتك') : t('الموقع الرسمي للفعالية')}
+              onPress={() => { WebBrowser.openBrowserAsync(ticket).catch(() => {}); }} />
+          ) : null}
+          {/* بانر ثابت أسفل الصفحة، بمسافة عن زر الحجز (سياسة AdMob) */}
+          <BannerSlot sticky style={ticket ? undefined : { marginTop: 0 }} />
         </View>
       ) : null}
     </Animated.View>
@@ -139,5 +146,5 @@ const st = StyleSheet.create({
   dir: { backgroundColor: brand.chip, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
   going: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: brand.card, borderRadius: 20, padding: 12, marginTop: 16 },
   goBtn: { backgroundColor: brand.pink, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 12, backgroundColor: brand.bg },
 });
